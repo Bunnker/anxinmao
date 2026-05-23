@@ -1,65 +1,206 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { loadOrSeedStore } from "@/lib/storage";
+import { Disclaimer } from "@/components/Disclaimer";
+import type { Cat, CatRecord } from "@/types/cat";
+
+function greeting(): string {
+  const h = new Date().getHours();
+  if (h < 6) return "凌晨好";
+  if (h < 11) return "早上好";
+  if (h < 13) return "中午好";
+  if (h < 18) return "下午好";
+  return "晚上好";
+}
+
+// 把 ISO 时间显示成口语化的相对日期。
+function formatDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const dayIndex = (x: Date) =>
+    Math.floor(
+      new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime() / 86400000,
+    );
+  const diff = dayIndex(new Date()) - dayIndex(d);
+  if (diff <= 0) return "今天";
+  if (diff === 1) return "昨天";
+  if (diff < 7) return `${diff} 天前`;
+  return `${d.getMonth() + 1} 月 ${d.getDate()} 日`;
+}
+
+function Arrow({ className = "" }: { className?: string }) {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <svg
+      className={className}
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M5 12h14M13 6l6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+const TIER_DOT: Record<string, string> = {
+  red: "var(--red)",
+  yellow: "var(--amber)",
+  green: "var(--green)",
+};
+
+function RecentRow({ record }: { record: CatRecord }) {
+  const dot =
+    record.kind === "triage" && record.tier
+      ? TIER_DOT[record.tier]
+      : "var(--ink-ghost)";
+  return (
+    <div className="flex items-center gap-3.5 border-b border-[var(--line-soft)] py-3.5 last:border-b-0">
+      <span
+        className="size-[7px] shrink-0 rounded-full"
+        style={{ background: dot }}
+      />
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-medium text-ink">
+          {record.summary}
+        </span>
+        <span className="mt-0.5 block text-[12px] tracking-wide text-ink-faint">
+          {formatDate(record.date)}
+        </span>
+      </span>
     </div>
+  );
+}
+
+export default function HomePage() {
+  const [cat, setCat] = useState<Cat | null>(null);
+  const [records, setRecords] = useState<CatRecord[]>([]);
+
+  useEffect(() => {
+    const store = loadOrSeedStore();
+    const active =
+      store.cats.find((c) => c.id === store.activeCatId) ?? store.cats[0];
+    setCat(active);
+    setRecords(store.records.filter((r) => r.catId === active.id));
+  }, []);
+
+  // localStorage 仅客户端可读:首帧 cat 为空,渲染空壳避免水合不一致。
+  if (!cat) return <main className="min-h-dvh" aria-hidden="true" />;
+
+  const meta = [`${cat.ageMonths} 个月`, cat.sex, cat.coat, `${cat.weight} kg`]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <main
+      className="mx-auto flex min-h-dvh max-w-[430px] flex-col px-7 pb-7 pt-5"
+      style={{
+        background:
+          "linear-gradient(180deg, var(--surface) 0%, var(--paper) 58%)",
+      }}
+    >
+      {/* 顶栏 */}
+      <header className="flex items-center justify-between">
+        <span className="text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+          {greeting()}
+        </span>
+        <Link
+          href="/onboarding"
+          aria-label="猫咪档案"
+          className="grid size-9 place-items-center rounded-full border border-[var(--line)] bg-surface text-ink-soft"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.5" />
+            <path
+              d="M5.5 19.5c1.2-3.4 3.8-5 6.5-5s5.3 1.6 6.5 5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+        </Link>
+      </header>
+
+      {/* hero */}
+      <section className="pt-10">
+        <p className="mb-3 text-[13px] leading-relaxed text-ink-soft">
+          ——别担心,先告诉我,
+        </p>
+        <h1 className="font-serif text-[2.7rem] font-medium leading-[1.1] tracking-tight text-ink">
+          {cat.name}
+          <span className="ml-2 text-[0.62em] font-normal text-ink-soft">
+            怎么了?
+          </span>
+        </h1>
+        <p className="mt-3 text-[13px] tracking-wide text-ink-soft">{meta}</p>
+      </section>
+
+      {/* 主次入口 */}
+      <section className="mt-8 flex flex-col gap-3">
+        <Link
+          href="/symptoms"
+          className="flex items-center gap-4 rounded-2xl bg-accent px-6 py-5 text-accent-fg shadow-[0_5px_18px_-9px_rgba(60,40,20,0.45)] transition-transform active:translate-y-px"
+        >
+          <span className="flex-1">
+            <span className="block text-[1.35rem] font-medium leading-tight tracking-tight">
+              我家猫不太对劲
+            </span>
+            <span className="mt-1.5 block text-[12.5px] tracking-wide opacity-80">
+              吐了 · 不吃饭 · 精神差 · 误食
+            </span>
+          </span>
+          <Arrow />
+        </Link>
+
+        <Link
+          href="/behavior"
+          className="flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-surface px-6 py-5 text-ink transition-transform active:translate-y-px"
+        >
+          <span className="flex-1">
+            <span className="block text-[1.15rem] font-medium leading-tight tracking-tight">
+              我想问点什么
+            </span>
+            <span className="mt-1.5 block text-[12.5px] tracking-wide text-ink-soft">
+              喂养 · 训练 · 行为习惯
+            </span>
+          </span>
+          <Arrow className="text-ink-soft" />
+        </Link>
+      </section>
+
+      {/* 最近 */}
+      <section className="mt-9 flex-1">
+        <p className="text-[11px] font-semibold tracking-[0.22em] text-ink-faint">
+          最近
+        </p>
+        {records.length === 0 ? (
+          <p className="mt-3 text-[13px] leading-relaxed text-ink-faint">
+            还没有记录 —— {cat.name}有情况,点上面就行。
+          </p>
+        ) : (
+          <div className="mt-1">
+            {records.slice(0, 6).map((r) => (
+              <RecentRow key={r.id} record={r} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <Disclaimer />
+    </main>
   );
 }
