@@ -33,6 +33,11 @@ export const SYMPTOM_LABELS: Record<string, string> = {
   lethargy: "精神差",
   sneeze: "打喷嚏 / 流鼻涕",
   ear: "耳朵问题",
+  skin: "皮肤痒 / 掉毛",
+  eye: "眼睛问题",
+  mouth: "口腔问题",
+  behavior: "行为突变",
+  limp: "跛行 / 走路异常",
   eat: "可能误食",
   breath: "呼吸怪",
   blood: "看到血",
@@ -446,6 +451,320 @@ const earFlow: TriageQuestion[] = [
   },
 ];
 
+// 皮肤问题专属流 —— 依据 docs/product/证据-cat-skin-皮肤问题.md(Cornell + Merck)。
+// 涵盖猫癣 / 跳蚤 / 过敏 / 过度梳理 / 自家伤口。Q2 里「家人皮肤也出现红痒圈」=
+// 红旗(强提示真菌癣 + 人感染);开放伤口流脓 / 精神差不吃也是红旗。
+const skinFlow: TriageQuestion[] = [
+  {
+    id: "look",
+    text: "皮肤问题主要长什么样?",
+    options: [
+      { label: "局部脱毛 + 皮屑、结痂、皮肤发红", weight: 2 },
+      { label: "全身大面积痒,一直挠或蹭家具", weight: 2 },
+      { label: "皮肤上有伤口、流脓、结痂", weight: 2 },
+      { label: "只是毛粗糙、皮屑多一点,没明显病灶", weight: 1 },
+    ],
+  },
+  {
+    id: "with",
+    text: "除了皮肤本身,还有这些吗?",
+    hint: "可多选 —— 神经类信号是真急症;都没有就选最后一项。",
+    multi: true,
+    options: [
+      {
+        label: "我自己 / 家人皮肤上也出现了红痒圈、脱皮",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "毛根能看到跳蚤,或皮屑里有黑色小颗粒(跳蚤粪)",
+        weight: 2,
+      },
+      { label: "猫一直舔同一个地方,把毛舔秃了", weight: 2 },
+      { label: "皮肤变厚、变色、闻到异味", weight: 2 },
+      { label: "猫精神变差、不太吃东西", weight: 2, redFlag: true },
+      {
+        label: "有明显伤口在流血 / 流脓 / 红肿发热",
+        weight: 2,
+        redFlag: true,
+      },
+      { label: "都没有", weight: 0 },
+    ],
+  },
+  {
+    id: "since",
+    text: "这样多久了?",
+    options: [
+      { label: "几天", weight: 0 },
+      { label: "一两周", weight: 1 },
+      { label: "超过两周,或反复出现", weight: 2 },
+    ],
+  },
+];
+
+// 眼睛问题专属流 —— 依据 docs/product/证据-cat-eye-眼睛问题.md(Cornell)。
+// 多数结膜炎可控,但必须由兽医做 fluorescein 染色排除角膜溃疡(可致失明)。
+// Q1 / Q2 里的「眯眼揉眼怕光」「角膜混浊」「第三眼睑突出」「外伤后」「视力像异常」
+// 都是红旗 —— 指向角膜溃疡或眼内问题,延误可不可逆。
+const eyeFlow: TriageQuestion[] = [
+  {
+    id: "look",
+    text: "眼睛主要长什么样?",
+    options: [
+      { label: "只是流眼泪、眼角有点分泌物", weight: 1 },
+      { label: "眼睛红肿、分泌物变多", weight: 2 },
+      {
+        label: "眯眼不睁、一直揉、对光线敏感",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "眼里看到白色雾状、白点、或异物",
+        weight: 2,
+        redFlag: true,
+      },
+    ],
+  },
+  {
+    id: "with",
+    text: "还有这些吗?",
+    hint: "可多选 —— 神经 / 外伤 / 视力相关都是真急症;都没有就选最后一项。",
+    multi: true,
+    options: [
+      { label: "分泌物变黄、绿、脓性", weight: 2 },
+      {
+        label: "第三眼睑突出(眼内角白膜往外鼓盖住眼球)",
+        weight: 2,
+        redFlag: true,
+      },
+      { label: "也在打喷嚏、流鼻涕", weight: 2 },
+      {
+        label: "刚被其它猫打过架,或撞到过东西",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "好像看不见(撞东西、对光不躲、走路不灵活)",
+        weight: 2,
+        redFlag: true,
+      },
+      { label: "都没有", weight: 0 },
+    ],
+  },
+  {
+    id: "since",
+    text: "这样多久了?",
+    options: [
+      { label: "今天才开始,或一两天", weight: 0 },
+      { label: "三五天", weight: 1 },
+      { label: "超过一周,或反复出现", weight: 2 },
+    ],
+  },
+];
+
+// 口腔问题专属流 —— 依据 docs/product/证据-cat-mouth-口腔问题.md(Cornell + Merck)。
+// 重点:50-90% 4 岁+ 猫有牙病;严重 FCGS 唯一有效治疗是拔牙;舌下线异物 / 颌下
+// 肿块 / 烫伤电伤 / 可疑肿瘤 / 看食物哆嗦拒食(FCGS 严重疼痛信号)都是红旗。
+// 幼猫换牙期掉小乳牙、少量血是正常生理过程,不必慌。
+const mouthFlow: TriageQuestion[] = [
+  {
+    id: "look",
+    text: "口腔问题主要长什么样?",
+    options: [
+      { label: "口臭、有点流口水", weight: 1 },
+      {
+        label: "明显流口水 / 嘴边毛沾湿 / 单边咀嚼",
+        weight: 2,
+      },
+      { label: "嘴里看到溃疡、红肿、出血", weight: 2 },
+      {
+        label: "看食物哆嗦、靠近又躲开、完全拒食",
+        weight: 2,
+        redFlag: true,
+      },
+    ],
+  },
+  {
+    id: "with",
+    text: "还有这些吗?",
+    hint: "可多选 —— 异物 / 肿块 / 灼伤都是真急症;都没有就选最后一项。",
+    multi: true,
+    options: [
+      {
+        label: "嘴里 / 舌头底下看到线、绳、丝带卡住",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "下颌或喉部出现肿块",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "嘴里有不愈合的伤口、肿瘤样东西、反复出血",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "刚被电线 / 化学品 / 烫水接触过嘴巴",
+        weight: 2,
+        redFlag: true,
+      },
+      { label: "有牙齿松动 / 掉牙", weight: 2 },
+      { label: "也在打喷嚏 / 流鼻涕", weight: 2 },
+      {
+        label: "幼猫(2-7 月)换牙期掉小乳牙、少量血(正常生理)",
+        weight: 0,
+      },
+      { label: "都没有", weight: 0 },
+    ],
+  },
+  {
+    id: "since",
+    text: "这样多久了?",
+    options: [
+      { label: "几天", weight: 0 },
+      { label: "一两周", weight: 1 },
+      { label: "超过两周,或反复出现", weight: 2 },
+    ],
+  },
+];
+
+// 行为突变专属流 —— 依据 docs/product/证据-cat-behavior-行为问题.md(Merck +
+// Cornell)。核心医学原则:行为问题先排除医学原因。Q2 里「触碰激发攻击」=
+// pain aggression(那里在疼)、联合躯体症状 / 神经症状都是红旗;母猫发情和应激
+// 是正常生理过程(weight 0/1)。
+const behaviorFlow: TriageQuestion[] = [
+  {
+    id: "change",
+    text: "行为变化主要是什么样?",
+    options: [
+      { label: "稍微敏感、偶尔躲一下", weight: 1 },
+      { label: "突然变凶 / 攻击 / 咬人", weight: 2 },
+      { label: "突然躲起来不出门、不见人", weight: 2 },
+      { label: "突然半夜大叫 / 过度发声", weight: 2 },
+      { label: "突然乱尿 / 拉在猫砂盆外", weight: 2 },
+      { label: "突然不爱玩、对喜欢的东西没兴趣", weight: 2 },
+    ],
+  },
+  {
+    id: "with",
+    text: "还有这些吗?",
+    hint: "可多选 —— 联合身体症状 / 神经异常是真急症;都没有就选最后一项。",
+    multi: true,
+    options: [
+      {
+        label: "一碰它就嚎叫 / 攻击,像在保护某个部位",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "也开始不太吃东西、呕吐、或拉肚子",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "也开始流口水、张口喘、或瘫软",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "突然走路转圈、撞东西、像看不见",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "老年猫(> 10 岁):白天睡多、晚上叫、在家里走丢迷路",
+        weight: 2,
+      },
+      {
+        label: "母猫处于发情期(吼叫、在地上打滚、抬尾巴)",
+        weight: 0,
+      },
+      {
+        label: "最近有大变化:搬家 / 新成员 / 装修 / 新猫狗",
+        weight: 1,
+      },
+      { label: "都没有,只是行为有变", weight: 0 },
+    ],
+  },
+  {
+    id: "since",
+    text: "这样多久了?",
+    options: [
+      { label: "刚一两天", weight: 0 },
+      { label: "一两周", weight: 1 },
+      { label: "超过两周持续,或反复出现", weight: 2 },
+    ],
+  },
+];
+
+// 跛行 / 走路异常专属流 —— 依据 docs/product/证据-cat-limp-跛行问题.md
+// (Merck + VCA)。Q1 里「突然后腿瘫软+大叫+冰凉」是 ATE 真急症(几小时窗口);
+// Q2 里腿部肿胀畸形 / 刚摔过车祸打架 / 联合发热不吃萎靡都是红旗。
+// 60-90% 老年猫有 OA 但常被忽视(Merck)—— 跳跃减少是关键线索。
+const limpFlow: TriageQuestion[] = [
+  {
+    id: "state",
+    text: "走路问题主要是什么样?",
+    options: [
+      { label: "偶尔一瘸一拐,过一会就好", weight: 1 },
+      { label: "持续一瘸一拐,某条腿不太敢用", weight: 2 },
+      { label: "完全不能用某条腿,提着走", weight: 2 },
+      {
+        label: "突然后腿瘫软 + 大叫 + 后腿冰凉(可能动脉血栓)",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "跳不上以前能跳的地方、犹豫上下台阶",
+        weight: 2,
+      },
+    ],
+  },
+  {
+    id: "with",
+    text: "还有这些吗?",
+    hint: "可多选 —— 外伤 / 系统症状 / 明显畸形是真急症;都没有就选最后一项。",
+    multi: true,
+    options: [
+      {
+        label: "腿部肿胀、有开放伤口、或明显畸形",
+        weight: 2,
+        redFlag: true,
+      },
+      {
+        label: "刚摔过 / 出过车祸 / 被打架过",
+        weight: 2,
+        redFlag: true,
+      },
+      { label: "一碰那条腿就嚎叫 / 攻击", weight: 2 },
+      {
+        label: "也在发热 / 不吃 / 明显萎靡",
+        weight: 2,
+        redFlag: true,
+      },
+      { label: "肉垫里看到刺、玻璃、异物", weight: 2 },
+      { label: "脚指甲断了、流血、嵌入肉垫", weight: 2 },
+      {
+        label: "老年猫(> 10 岁):最近躲在低处、不爱上下跳",
+        weight: 2,
+      },
+      { label: "幼猫,疯玩后偶尔瘸一下", weight: 1 },
+      { label: "都没有", weight: 0 },
+    ],
+  },
+  {
+    id: "since",
+    text: "这样多久了?",
+    options: [
+      { label: "今天才开始,或一两天", weight: 0 },
+      { label: "几天到一周", weight: 1 },
+      { label: "超过一周持续,或反复出现", weight: 2 },
+    ],
+  },
+];
+
 // 症状 → 分诊流。未列出的(精神差 / 其它)走通用流。
 const FLOWS: Record<string, TriageQuestion[]> = {
   vomit: vomitFlow,
@@ -457,6 +776,11 @@ const FLOWS: Record<string, TriageQuestion[]> = {
   noeat: noeatFlow,
   sneeze: sneezeFlow,
   ear: earFlow,
+  skin: skinFlow,
+  eye: eyeFlow,
+  mouth: mouthFlow,
+  behavior: behaviorFlow,
+  limp: limpFlow,
 };
 
 export function getFlow(symptom: string): TriageFlow {
