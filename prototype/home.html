@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>豆豆怎么了 · 首页原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper:      #ece1cd;
+    --paper-top:  #f2e9d8;
+    --paper-low:  #e4d6ba;
+    --surface:    #fbf6ea;
+    --ink:        #2c2720;
+    --ink-2:      #7a6d58;
+    --ink-3:      #a99a80;
+    --rust:       #a84e2a;
+    --rust-low:   #97431f;
+    --rust-deep:  #7f3717;
+    --amber:      #c4882c;
+    --line:       #ddcfb4;
+    --radius:     22px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100dvh;
+  }
+
+  /* the screen — phone on desktop, full-bleed on mobile */
+  .screen {
+    position: relative;
+    width: 100%;
+    max-width: 412px;
+    min-height: 100dvh;
+    padding: 24px 26px 30px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 60% at 80% 0%, rgba(168,78,42,.07) 0%, transparent 60%),
+      linear-gradient(180deg, var(--paper-top) 0%, var(--paper) 56%, var(--paper-low) 100%);
+  }
+  @media (min-width: 480px) {
+    body { padding: 44px 0; }
+    .screen {
+      min-height: 868px;
+      border-radius: 44px;
+      box-shadow:
+        0 50px 90px -34px rgba(58,38,18,.55),
+        0 0 0 1px rgba(58,38,18,.06);
+    }
+  }
+
+  /* paper grain */
+  .screen::after {
+    content: "";
+    position: absolute; inset: 0;
+    pointer-events: none; z-index: 9;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .05;
+    mix-blend-mode: multiply;
+  }
+
+  /* staggered entrance */
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .rise { animation: rise .68s cubic-bezier(.22,.61,.36,1) both; animation-delay: var(--d, 0s); }
+
+  /* ---- top bar ---- */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 40px;
+  }
+  .greeting { font-size: 13px; color: var(--ink-2); letter-spacing: .12em; }
+  .avatar-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid var(--line); background: var(--surface);
+    display: grid; place-items: center; cursor: pointer;
+    transition: transform .15s ease, border-color .2s ease;
+  }
+  .avatar-btn:active { transform: scale(.93); }
+  .avatar-btn svg { width: 19px; height: 19px; stroke: var(--ink-2); }
+
+  /* ---- hero ---- */
+  .hero { margin-bottom: 22px; }
+  .lead {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 14px; color: var(--ink-2); margin-bottom: 14px;
+  }
+  .lead::before {
+    content: ""; width: 18px; height: 1.5px;
+    background: var(--rust); border-radius: 2px; flex: none;
+  }
+  .headline {
+    font-family: 'Noto Serif SC', serif;
+    font-weight: 600;
+    font-size: 52px;
+    line-height: 1.12;
+    letter-spacing: -.01em;
+    color: var(--ink);
+  }
+  .catname {
+    position: relative;
+    color: var(--rust);
+    white-space: nowrap;
+  }
+  .catname::after {
+    content: "";
+    position: absolute; left: 2%; right: 2%; bottom: .1em;
+    height: 7px; border-radius: 4px;
+    background: rgba(168,78,42,.18);
+    z-index: -1;
+  }
+
+  /* ---- profile chip ---- */
+  .profile {
+    margin-top: 18px;
+    align-self: flex-start;
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 9px 12px 9px 15px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    cursor: pointer;
+    transition: transform .15s ease, border-color .2s ease;
+  }
+  .profile:active { transform: scale(.97); }
+  .profile-text { font-size: 12.5px; color: var(--ink-2); letter-spacing: .02em; }
+  .profile-text b { color: var(--ink); font-weight: 600; }
+  .profile .chev { width: 14px; height: 14px; stroke: var(--ink-3); flex: none; }
+
+  /* ---- actions ---- */
+  .actions {
+    margin-top: 34px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .act {
+    position: relative;
+    display: flex; align-items: center; gap: 16px;
+    width: 100%; text-align: left;
+    padding: 22px 22px;
+    border-radius: var(--radius);
+    border: 0; cursor: pointer; font-family: inherit;
+    transition: transform .14s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .act-body { flex: 1; min-width: 0; }
+  .act-title { font-size: 21px; font-weight: 600; letter-spacing: .01em; }
+  .act-sub { margin-top: 6px; font-size: 12.5px; letter-spacing: .03em; }
+  .act-arrow {
+    flex: none; width: 38px; height: 38px; border-radius: 50%;
+    display: grid; place-items: center;
+  }
+  .act-arrow svg { width: 17px; height: 17px; }
+
+  .act--primary {
+    background: linear-gradient(168deg, var(--rust) 0%, var(--rust-low) 100%);
+    color: #fff;
+    box-shadow: 0 16px 28px -14px rgba(127,55,23,.7);
+  }
+  .act--primary .act-sub { color: rgba(255,255,255,.72); }
+  .act--primary .act-arrow { background: rgba(255,255,255,.16); }
+  .act--primary .act-arrow svg { stroke: #fff; }
+  .act--primary:hover { transform: translateY(-2px); box-shadow: 0 22px 34px -14px rgba(127,55,23,.72); }
+  .act--primary:active { transform: translateY(1px); background: linear-gradient(168deg, var(--rust-low), var(--rust-deep)); }
+
+  .act--ghost {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+  }
+  .act--ghost .act-sub { color: var(--ink-2); }
+  .act--ghost .act-arrow { background: #ece2cf; }
+  .act--ghost .act-arrow svg { stroke: var(--ink-2); }
+  .act--ghost:hover { transform: translateY(-2px); border-color: #cdbd9c; }
+  .act--ghost:active { transform: translateY(1px); background: #f3ecdc; }
+
+  /* ---- recent ---- */
+  .recent { margin-top: 38px; }
+  .recent-label {
+    font-size: 11.5px; color: var(--ink-3);
+    letter-spacing: .22em; margin-bottom: 4px;
+  }
+  .entry {
+    display: flex; align-items: center; gap: 13px;
+    padding: 16px 2px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--line);
+  }
+  .entry:last-child { border-bottom: 0; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot--amber { background: var(--amber); box-shadow: 0 0 0 4px rgba(196,136,44,.13); }
+  .dot--mute  { background: var(--ink-3); }
+  .entry-body { flex: 1; min-width: 0; }
+  .entry-title { font-size: 15px; font-weight: 500; color: var(--ink); }
+  .entry-meta { margin-top: 3px; font-size: 12px; color: var(--ink-2); letter-spacing: .03em; }
+  .entry .chev { width: 15px; height: 15px; stroke: var(--ink-3); flex: none; }
+
+  /* ---- footer ---- */
+  .footer {
+    margin-top: auto; padding-top: 28px;
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+  }
+  .footer span { font-size: 11px; color: var(--ink-3); letter-spacing: .14em; }
+  .footer i { width: 16px; height: 1px; background: var(--line); display: block; }
+</style>
+</head>
+<body>
+  <main class="screen">
+
+    <header class="topbar rise" style="--d:0s">
+      <div class="greeting" id="greeting">晚上好</div>
+      <button class="avatar-btn" aria-label="我的">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="3.4" /><path d="M5.5 19c.7-3.4 3.3-5 6.5-5s5.8 1.6 6.5 5" />
+        </svg>
+      </button>
+    </header>
+
+    <section class="hero">
+      <p class="lead rise" style="--d:.08s">别担心，先告诉我</p>
+      <h1 class="headline rise" style="--d:.16s"><span class="catname">豆豆</span>怎么了？</h1>
+      <button class="profile rise" style="--d:.24s">
+        <span class="profile-text"><b>3 个月</b> · 雌 · 短毛 · 2.1 kg</span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+      </button>
+    </section>
+
+    <section class="actions">
+      <button class="act act--primary rise" style="--d:.34s">
+        <div class="act-body">
+          <div class="act-title">我家猫不太对劲</div>
+          <div class="act-sub">吐了 · 不吃饭 · 精神差 · 误食</div>
+        </div>
+        <span class="act-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6" /></svg>
+        </span>
+      </button>
+
+      <button class="act act--ghost rise" style="--d:.42s">
+        <div class="act-body">
+          <div class="act-title">我想问点什么</div>
+          <div class="act-sub">喂养 · 训练 · 行为习惯</div>
+        </div>
+        <span class="act-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6" /></svg>
+        </span>
+      </button>
+    </section>
+
+    <section class="recent rise" style="--d:.52s">
+      <div class="recent-label">最近</div>
+      <div class="entry">
+        <span class="dot dot--amber"></span>
+        <div class="entry-body">
+          <div class="entry-title">呕吐 2 次</div>
+          <div class="entry-meta">昨天 · 黄档 · 在家观察</div>
+        </div>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+      </div>
+      <div class="entry">
+        <span class="dot dot--mute"></span>
+        <div class="entry-body">
+          <div class="entry-title">多大可以洗澡？</div>
+          <div class="entry-meta">3 天前 · 问答</div>
+        </div>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
+      </div>
+    </section>
+
+    <footer class="footer rise" style="--d:.6s">
+      <i></i><span>AI 整理 · 不能替代兽医</span><i></i>
+    </footer>
+
+  </main>
+
+<script>
+  // greeting by time of day
+  (function () {
+    var h = new Date().getHours();
+    var g = h < 6 ? '凌晨好' : h < 11 ? '早上好' : h < 13 ? '中午好' : h < 18 ? '下午好' : '晚上好';
+    document.getElementById('greeting').textContent = g;
+  })();
+</script>
+</body>
+</html>
