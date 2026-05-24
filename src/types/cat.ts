@@ -17,6 +17,11 @@ export interface Cat {
   vaccines: Vaccine[];
   deworm: string; // ISO date
   notes: string;
+  // AI 生成的卡通头像 base64 dataURL,仅做身份 / 伴侣角色用。
+  // 边界见 docs/product/AI生成形象-实施说明.md §二 —— 不出现在症状示意 /
+  // 分诊页 / 报告主体内容,仅 greeting / 报告卡角落等位置。
+  // 空字符串 / undefined = 用默认 icon 兜底。
+  avatar?: string;
 }
 
 // 风险三色 —— 分诊的核心输出。

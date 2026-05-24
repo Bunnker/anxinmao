@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { loadOrSeedStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
+import { CatAvatar } from "@/components/CatAvatar";
 import type { Cat, CatRecord } from "@/types/cat";
 
 function greeting(): string {
@@ -112,26 +113,8 @@ export default function HomePage() {
         <span className="text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
           {greeting()}
         </span>
-        <Link
-          href="/onboarding"
-          aria-label="猫咪档案"
-          className="grid size-9 place-items-center rounded-full border border-[var(--line)] bg-surface text-ink-soft"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="8" r="3.2" stroke="currentColor" strokeWidth="1.5" />
-            <path
-              d="M5.5 19.5c1.2-3.4 3.8-5 6.5-5s5.3 1.6 6.5 5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-          </svg>
+        <Link href="/onboarding" aria-label={`${cat.name}的档案`}>
+          <CatAvatar avatar={cat.avatar} name={cat.name} size={36} />
         </Link>
       </header>
 

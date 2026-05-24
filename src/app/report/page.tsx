@@ -6,6 +6,7 @@ import { loadStore } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
 import { Disclaimer } from "@/components/Disclaimer";
 import { UnreviewedNotice } from "@/components/UnreviewedNotice";
+import { CatAvatar } from "@/components/CatAvatar";
 import type { RiskTier } from "@/types/cat";
 
 // ⚠️ 未经兽医审核 ——
@@ -1229,6 +1230,7 @@ export default function ReportPage() {
   const [tier, setTier] = useState<RiskTier | null>(null);
   const [symptom, setSymptom] = useState("");
   const [catName, setCatName] = useState("它");
+  const [catAvatar, setCatAvatar] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -1239,6 +1241,7 @@ export default function ReportPage() {
     if (store) {
       const cat = store.cats.find((c) => c.id === store.activeCatId) ?? store.cats[0];
       if (cat?.name) setCatName(cat.name);
+      if (cat?.avatar) setCatAvatar(cat.avatar);
     }
   }, []);
 
@@ -1256,9 +1259,10 @@ export default function ReportPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col bg-paper px-7 pb-9 pt-3">
-      {/* 顶栏 */}
+      {/* 顶栏 —— 左上角的猫头像是「这是关于你家猫的报告」身份标识。
+          护栏:这个位置是 docs/AI生成形象-实施说明.md §二 明确允许的「报告卡角落」。 */}
       <header className="flex items-center">
-        <span className="size-9" />
+        <CatAvatar avatar={catAvatar} name={catName} size={36} />
         <span className="flex-1 text-center text-[12px] font-medium uppercase tracking-[0.18em] text-ink-soft">
           安心报告
         </span>

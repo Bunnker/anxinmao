@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { loadStore, saveStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
+import { CatAvatar } from "@/components/CatAvatar";
 import type { Cat, Store, Vaccine } from "@/types/cat";
 
 function newCat(): Cat {
@@ -95,6 +96,10 @@ export default function OnboardingPage() {
   const [draft, setDraft] = useState<Cat | null>(null);
   const [store, setStore] = useState<Store | null>(null);
   const [isEdit, setIsEdit] = useState(false);
+  // 头像生成 —— 仅 UI 状态,生成结果落到 draft.avatar
+  const [avatarDesc, setAvatarDesc] = useState("");
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   useEffect(() => {
     const s = loadStore();
@@ -128,6 +133,31 @@ export default function OnboardingPage() {
   }
 
   const ready = draft.name.trim().length > 0;
+
+  async function generateAvatar() {
+    if (!avatarDesc.trim() || avatarLoading || !draft) return;
+    setAvatarLoading(true);
+    setAvatarError(null);
+    try {
+      const res = await fetch("/api/avatar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: avatarDesc.trim(),
+          name: draft.name || undefined,
+        }),
+      });
+      const data = (await res.json()) as { dataUrl?: string; error?: string };
+      if (!res.ok || !data.dataUrl) {
+        throw new Error(data.error ?? `生成失败 (${res.status})`);
+      }
+      set("avatar", data.dataUrl);
+    } catch (e) {
+      setAvatarError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAvatarLoading(false);
+    }
+  }
 
   function commit() {
     if (!ready || !draft) return;
@@ -243,6 +273,77 @@ export default function OnboardingPage() {
             options={["是", "否", "暂未"]}
             onChange={(v) => set("neutered", v as Cat["neutered"])}
           />
+        </Field>
+
+        {/* 卡通形象 —— 一次性生成,作为身份/伴侣角色出现在 greeting / 报告卡角落
+            生成时机:用户主动点击。边界:docs/product/AI生成形象-实施说明.md §二 */}
+        <Field
+          label="卡通形象 · 可选"
+          hint={draft.avatar ? "已生成" : ""}
+        >
+          <div className="flex flex-col gap-3.5">
+            <textarea
+              value={avatarDesc}
+              onChange={(e) => setAvatarDesc(e.target.value)}
+              placeholder={`比如:橘虎斑,白肚皮,圆脸贪吃;或:奶牛猫,黑色三角耳,神态机灵`}
+              rows={2}
+              maxLength={200}
+              className="w-full resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
+            />
+
+            {draft.avatar ? (
+              <div className="flex items-center gap-4">
+                <CatAvatar
+                  avatar={draft.avatar}
+                  name={draft.name}
+                  size={88}
+                />
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={generateAvatar}
+                    disabled={!avatarDesc.trim() || avatarLoading}
+                    className="self-start rounded-full border border-[var(--line)] bg-surface px-3 py-1.5 text-[12.5px] text-ink disabled:opacity-50"
+                  >
+                    {avatarLoading ? "重新生成中…" : "重新生成"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      set("avatar", undefined);
+                      setAvatarError(null);
+                    }}
+                    className="self-start text-[12px] text-ink-faint underline underline-offset-2"
+                  >
+                    清除头像
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={generateAvatar}
+                disabled={!avatarDesc.trim() || avatarLoading}
+                className={
+                  "rounded-xl py-3 text-[14px] font-medium tracking-wide transition-colors " +
+                  (avatarDesc.trim() && !avatarLoading
+                    ? "bg-[var(--surface-2)] text-ink"
+                    : "bg-[var(--surface-2)] text-ink-faint")
+                }
+              >
+                {avatarLoading ? "生成中…(约 10 秒)" : "生成卡通形象 →"}
+              </button>
+            )}
+
+            {avatarError && (
+              <p className="text-[12.5px] leading-relaxed text-[var(--red-ink)]">
+                {avatarError}
+              </p>
+            )}
+            <p className="text-[11.5px] leading-relaxed text-ink-faint">
+              AI 出图,仅做头像 / 角色装饰用,不做症状示意。
+            </p>
+          </div>
         </Field>
       </div>
 
