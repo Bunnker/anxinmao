@@ -1,40 +1,46 @@
-// 卡通头像生成 API —— 服务端调 DashScope wanx2.1-turbo,密钥不进浏览器。
+// 卡通头像生成 API —— 服务端调,密钥不进浏览器。
 //
-// 输入:用户在 onboarding 给的「这只猫长什么样」自由文本描述。
-// 输出:base64 dataURL,前端直接塞 localStorage 的 cat.avatar 即可显示。
+// 两个 provider 自动选:
+//   - 有照片 → 火山引擎 ARK 平台 Doubao-Seedream-5.0-lite i2i
+//     (`doubao-seedream-5-0-lite-260128` · bearer auth · image_url 字段)
+//     效果接近用户家猫的卡通版,质量明显比 wanx 强一档。
+//     注意:Seedream 5 lite 强制输出 ≥ 1920×1920,所以用 2048×2048。
+//   - 无照片 → DashScope wanx2.1-turbo t2i(回退路径,纯文字描述)
+//
+// 输出统一:{ dataUrl: "data:image/png;base64,..." , provider: "..." }
 //
 // 边界(护栏):docs/product/AI生成形象-实施说明.md §二 ——
-// 这里生成的形象只用于头像 / 伴侣角色,前端调用方不应将返回值用于症状示意图。
-// 服务端不强制(无法判断调用方意图),但产品红线写在了 CLAUDE.md。
+// 生成的形象只用于头像 / 伴侣角色,前端调用方不应将返回值用于症状示意图。
 
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 
-const API_BASE = "https://dashscope.aliyuncs.com/api/v1";
-const MODEL = "wanx2.1-t2i-turbo";
+const DASHSCOPE_BASE = "https://dashscope.aliyuncs.com/api/v1";
+const WANX_MODEL = "wanx2.1-t2i-turbo";
 
-// 风格 token —— 头像专属(圆形构图、暖米色,与 app 主题一致)。
-// 强调"close-up portrait" 让 model 出头像而不是全身场景。
-const STYLE_SUFFIX =
+const ARK_BASE = "https://ark.cn-beijing.volces.com/api/v3";
+// Seedream 5 lite —— 用户账号上开通的图像模型,支持图生图(image_url 字段)。
+// 注意:此模型要求 size ≥ 1920×1920 像素,所以输出 2048×2048。
+const ARK_IMAGE_MODEL = "doubao-seedream-5-0-lite-260128";
+const ARK_IMAGE_SIZE = "2048x2048";
+
+const STYLE_SUFFIX_EN =
   "Cute cartoon cat avatar portrait, head and shoulders close-up centered, " +
   "warm beige background, flat illustration style, children's picture book quality, " +
   "gentle peaceful expression, soft warm lighting, no text, no watermark.";
 
+const STYLE_SUFFIX_CN =
+  "把这只猫画成可爱卡通头像,胸像构图,暖米色背景,扁平插画风格," +
+  "儿童绘本质感,温柔表情,柔和光线,无文字无水印";
+
 type ReqBody = {
   description?: string;
+  photoDataUrl?: string; // "data:image/png;base64,..."
   name?: string;
 };
 
 export async function POST(req: NextRequest): Promise<Response> {
-  const apiKey = process.env.DASHSCOPE_API_KEY;
-  if (!apiKey) {
-    return Response.json(
-      { error: "服务端没配置 DASHSCOPE_API_KEY,头像生成暂不可用。" },
-      { status: 503 },
-    );
-  }
-
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;
@@ -43,21 +49,24 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   const description = (body.description ?? "").trim().slice(0, 200);
-  if (!description) {
+  const photo = body.photoDataUrl?.trim();
+
+  // 没照片也没描述 → 没法做
+  if (!photo && !description) {
     return Response.json(
-      { error: "需要先描述一下这只猫长什么样(毛色 / 特征都行)。" },
+      { error: "需要照片或文字描述至少一项。" },
       { status: 400 },
     );
   }
 
-  // 用户描述放前面 —— wanx 对 prompt 前几句更敏感。
-  const prompt = `${description}. ${STYLE_SUFFIX}`;
-
   try {
-    const taskId = await submitTask(apiKey, prompt);
-    const url = await pollTask(apiKey, taskId);
-    const dataUrl = await downloadAsDataUrl(url);
-    return Response.json({ dataUrl });
+    if (photo) {
+      const dataUrl = await arkSeedreamI2I(photo, description);
+      return Response.json({ dataUrl, provider: "ark-seedream-5.0-lite" });
+    } else {
+      const dataUrl = await wanxT2I(description);
+      return Response.json({ dataUrl, provider: "wanx-t2i" });
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return Response.json(
@@ -67,9 +76,74 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 }
 
-async function submitTask(apiKey: string, prompt: string): Promise<string> {
+// ----- ARK Seedream 5.0 lite i2i ----- //
+
+async function arkSeedreamI2I(
+  photoDataUrl: string,
+  description: string,
+): Promise<string> {
+  const apiKey = process.env.ARK_API_KEY;
+  if (!apiKey) throw new Error("ARK_API_KEY 未配置");
+
+  const prompt = description
+    ? `${description}。${STYLE_SUFFIX_CN}`
+    : STYLE_SUFFIX_CN;
+
+  const res = await fetch(`${ARK_BASE}/images/generations`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: ARK_IMAGE_MODEL,
+      prompt,
+      // Seedream 5 lite 接受 base64 dataURL 直传(实测 OK,不需要 OSS)。
+      // 字段名是 image_url 不是 image —— ARK 的 OpenAI 兼容差异。
+      image_url: photoDataUrl,
+      seed: -1,
+      response_format: "b64_json",
+      size: ARK_IMAGE_SIZE,
+      // 关掉默认「AI生成」水印 —— 头像角落带水印影响视觉。
+      // 国内合规要求生成内容标注 AI,UI 层用「AI 出图」文字声明替代水印。
+      watermark: false,
+    }),
+  });
+
+  if (!res.ok) {
+    const errBody = (await res.text()).slice(0, 300);
+    throw new Error(`ARK ${res.status}: ${errBody}`);
+  }
+  const data = (await res.json()) as {
+    data?: { b64_json?: string; url?: string }[];
+    error?: { message?: string };
+  };
+  const item = data?.data?.[0];
+  if (item?.b64_json) {
+    // Seedream 实测返回 JPEG(b64 开头是 /9j/),不是 PNG
+    return `data:image/jpeg;base64,${item.b64_json}`;
+  }
+  if (item?.url) {
+    return await downloadAsDataUrl(item.url);
+  }
+  throw new Error(`ARK 返回里没拿到图: ${JSON.stringify(data).slice(0, 200)}`);
+}
+
+// ----- wanx t2i(DashScope,无照片时回退) ----- //
+
+async function wanxT2I(description: string): Promise<string> {
+  const apiKey = process.env.DASHSCOPE_API_KEY;
+  if (!apiKey) throw new Error("DASHSCOPE_API_KEY 未配置");
+
+  const prompt = `${description}。${STYLE_SUFFIX_EN}`;
+  const taskId = await wanxSubmit(apiKey, prompt);
+  const url = await wanxPoll(apiKey, taskId);
+  return await downloadAsDataUrl(url);
+}
+
+async function wanxSubmit(apiKey: string, prompt: string): Promise<string> {
   const res = await fetch(
-    `${API_BASE}/services/aigc/text2image/image-synthesis`,
+    `${DASHSCOPE_BASE}/services/aigc/text2image/image-synthesis`,
     {
       method: "POST",
       headers: {
@@ -78,55 +152,46 @@ async function submitTask(apiKey: string, prompt: string): Promise<string> {
         "X-DashScope-Async": "enable",
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: WANX_MODEL,
         input: { prompt },
-        parameters: {
-          // 头像 512×512 够用,生成更快、占 localStorage 也更小。
-          size: "512*512",
-          n: 1,
-          prompt_extend: true,
-        },
+        parameters: { size: "512*512", n: 1, prompt_extend: true },
       }),
     },
   );
   if (!res.ok) {
-    throw new Error(`submit ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    throw new Error(`wanx submit ${res.status}: ${(await res.text()).slice(0, 200)}`);
   }
   const data = await res.json();
   const taskId = data?.output?.task_id;
-  if (!taskId) throw new Error("submit 返回里没拿到 task_id");
+  if (!taskId) throw new Error("wanx submit 没拿到 task_id");
   return taskId;
 }
 
-async function pollTask(apiKey: string, taskId: string): Promise<string> {
+async function wanxPoll(apiKey: string, taskId: string): Promise<string> {
   const maxMs = 120000;
   const intervalMs = 1500;
   const start = Date.now();
   while (true) {
-    const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
+    const res = await fetch(`${DASHSCOPE_BASE}/tasks/${taskId}`, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
-    if (!res.ok) {
-      throw new Error(
-        `poll ${res.status}: ${(await res.text()).slice(0, 200)}`,
-      );
-    }
+    if (!res.ok) throw new Error(`wanx poll ${res.status}`);
     const data = await res.json();
     const status = data?.output?.task_status as string | undefined;
     if (status === "SUCCEEDED") {
       const url = data?.output?.results?.[0]?.url;
-      if (!url) throw new Error("SUCCEEDED 但没拿到图 URL");
+      if (!url) throw new Error("wanx SUCCEEDED 但没拿到图 URL");
       return url;
     }
     if (status === "FAILED" || status === "CANCELED" || status === "UNKNOWN") {
-      throw new Error(`task ${status}`);
+      throw new Error(`wanx task ${status}`);
     }
-    if (Date.now() - start > maxMs) {
-      throw new Error(`轮询超时(${status})`);
-    }
+    if (Date.now() - start > maxMs) throw new Error(`wanx 轮询超时(${status})`);
     await new Promise((r) => setTimeout(r, intervalMs));
   }
 }
+
+// ----- 工具 ----- //
 
 async function downloadAsDataUrl(url: string): Promise<string> {
   const res = await fetch(url);
