@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 知识页配图历史版本(本地对比用,不入仓)
+/.knowledge-wanx-backup/
