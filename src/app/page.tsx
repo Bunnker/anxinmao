@@ -182,6 +182,14 @@ export default function HomePage() {
         </Link>
       </section>
 
+      {/* 安心知识入口 —— 「看着吓人但不必慌」 */}
+      <Link
+        href="/knowledge"
+        className="mt-5 self-center text-[13px] tracking-wide text-ink-soft"
+      >
+        看着吓人但不必慌的几种情况 →
+      </Link>
+
       {/* 最近 */}
       <section className="mt-9 flex-1">
         <p className="text-[11px] font-semibold tracking-[0.22em] text-ink-faint">
