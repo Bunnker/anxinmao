@@ -20,10 +20,12 @@ const DASHSCOPE_BASE = "https://dashscope.aliyuncs.com/api/v1";
 const WANX_MODEL = "wanx2.1-t2i-turbo";
 
 const ARK_BASE = "https://ark.cn-beijing.volces.com/api/v3";
-// Seedream 5 lite —— 用户账号上开通的图像模型,支持图生图(image_url 字段)。
-// 注意:此模型要求 size ≥ 1920×1920 像素,所以输出 2048×2048。
-const ARK_IMAGE_MODEL = "doubao-seedream-5-0-lite-260128";
-const ARK_IMAGE_SIZE = "2048x2048";
+// Seedream 5 (canonical id 不含 -lite-,虽然控制台显示叫「lite」)。
+// 官方 OpenAI 兼容示例用 size="2K" / image 字段 / response_format=url。
+// 我们 size="2K"(等价 2048x2048,Seedream 5 强制 ≥ 1920),
+// response_format=b64_json(省一次下载往返,直接返回 base64)。
+const ARK_IMAGE_MODEL = "doubao-seedream-5-0-260128";
+const ARK_IMAGE_SIZE = "2K";
 
 const STYLE_SUFFIX_EN =
   "Cute cartoon cat avatar portrait, head and shoulders close-up centered, " +
@@ -98,9 +100,8 @@ async function arkSeedreamI2I(
     body: JSON.stringify({
       model: ARK_IMAGE_MODEL,
       prompt,
-      // Seedream 5 lite 接受 base64 dataURL 直传(实测 OK,不需要 OSS)。
-      // 字段名是 image_url 不是 image —— ARK 的 OpenAI 兼容差异。
-      image_url: photoDataUrl,
+      // 字段名 image(对齐官方 OpenAI 兼容示例),接受 base64 dataURL 或 HTTPS URL。
+      image: photoDataUrl,
       seed: -1,
       response_format: "b64_json",
       size: ARK_IMAGE_SIZE,
