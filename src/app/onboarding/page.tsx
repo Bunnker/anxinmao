@@ -101,6 +101,8 @@ export default function OnboardingPage() {
   const [avatarPhoto, setAvatarPhoto] = useState<string | null>(null); // dataURL
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  // 视觉守门:照片被判非猫 → 显示「用默认头像 / 换一张」 inline 选项
+  const [avatarNotCat, setAvatarNotCat] = useState(false);
 
   useEffect(() => {
     const s = loadStore();
@@ -140,6 +142,7 @@ export default function OnboardingPage() {
     if ((!avatarDesc.trim() && !avatarPhoto) || avatarLoading || !draft) return;
     setAvatarLoading(true);
     setAvatarError(null);
+    setAvatarNotCat(false);
     try {
       const res = await fetch("/api/avatar", {
         method: "POST",
@@ -150,8 +153,18 @@ export default function OnboardingPage() {
           name: draft.name || undefined,
         }),
       });
-      const data = (await res.json()) as { dataUrl?: string; error?: string };
+      const data = (await res.json()) as {
+        dataUrl?: string;
+        error?: string;
+        code?: string;
+      };
       if (!res.ok || !data.dataUrl) {
+        // 视觉守门特判:照片不是猫
+        if (data.code === "NOT_A_CAT") {
+          setAvatarNotCat(true);
+          setAvatarError(data.error ?? "上传的照片看着不像是猫。");
+          return;
+        }
         throw new Error(data.error ?? `生成失败 (${res.status})`);
       }
       set("avatar", data.dataUrl);
@@ -160,6 +173,15 @@ export default function OnboardingPage() {
     } finally {
       setAvatarLoading(false);
     }
+  }
+
+  // 用默认头像:清掉照片 + avatar 字段,前端 CatAvatar 会自动 fallback 到默认 icon
+  function useDefaultAvatar() {
+    setAvatarPhoto(null);
+    setAvatarDesc("");
+    set("avatar", undefined);
+    setAvatarNotCat(false);
+    setAvatarError(null);
   }
 
   // 选照片 → 转 dataURL → 存到 avatarPhoto(用户预览 + 提交时发给后端)
@@ -419,13 +441,38 @@ export default function OnboardingPage() {
             )}
 
             {avatarError && (
-              <p className="text-[12.5px] leading-relaxed text-[var(--red-ink)]">
-                {avatarError}
-              </p>
+              <div className="rounded-xl border border-[var(--red)]/30 bg-[var(--red)]/5 p-3">
+                <p className="text-[12.5px] leading-relaxed text-[var(--red-ink)]">
+                  {avatarError}
+                </p>
+                {avatarNotCat && (
+                  <div className="mt-2.5 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={useDefaultAvatar}
+                      className="rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-[12px] text-ink"
+                    >
+                      用默认头像
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAvatarPhoto(null);
+                        setAvatarError(null);
+                        setAvatarNotCat(false);
+                      }}
+                      className="rounded-full border border-[var(--line)] px-3 py-1.5 text-[12px] text-ink-soft"
+                    >
+                      换一张照片
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
             <p className="text-[11.5px] leading-relaxed text-ink-faint">
               AI 出图,仅做头像 / 角色装饰用,不做症状示意。
-              传照片效果更贴近自家猫(走即梦图生图);纯描述也行(走 wanx 文生图)。
+              传猫照片效果最好(系统会先检测是不是猫,不是猫不出图);
+              纯文字描述也行(走文生图回退)。
             </p>
           </div>
         </Field>
