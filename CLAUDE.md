@@ -12,7 +12,9 @@
 - **Next.js 16 (App Router) + React 19 + TypeScript** —— 前端页面 + 后端 API 一体
 - **Tailwind CSS v4** —— 样式;设计令牌在 `src/app/globals.css`(`:root` + `@theme`)
 - **localStorage** —— MVP 数据持久化。**不做数据库、不做登录**
-- **大模型(DeepSeek / 通义,待定)** —— 经 `src/app/api/` 服务端路由调用,密钥不进浏览器
+- **大模型(DeepSeek 或 通义,二选一)** —— provider 无关,按 `.env.local` 里填的 key
+  自动选用;经 `src/app/api/` 服务端路由调用,密钥不进浏览器。SSE 流式输出 +
+  对话摘要压缩(20 轮以上自动 compact)。客户端见 `src/lib/llm.ts`
 - **部署:Vercel**
 - 移动端 H5,竖屏,中文。日后可用 PWA / Capacitor 打包成 App(复用同一份代码)
 
@@ -24,6 +26,8 @@
       lib/          逻辑:分诊引擎、localStorage、LLM 客户端
       types/        TypeScript 类型
     docs/           产品 / 设计 / 调研文档(入口看 docs/README.md)
+    scripts/        utility 脚本 —— harness 测试、知识页配图生成
+    public/         静态资产(含 public/knowledge/ 的 6 张知识页配图)
     prototype/      设计原型(home.html + claude.ai 导出的 claude-design/)
 
 ## 跑起来
@@ -53,6 +57,42 @@
 
 ## 当前进度
 
-工程脚手架 + 标准化目录已就绪(`src/app` 各屏为占位页)。
-**下一步:** 把 `prototype/claude-design/` 的原型端口成真实页面 —— 端口时补上原型缺的:
-红旗症状急停、各症状独立分诊流、空 / 加载 / 错误状态。
+仓库:[github.com/Bunnker/anxinmao](https://github.com/Bunnker/anxinmao)(产品名「安心猫」)。
+
+### 已经上线的页面
+
+- **`/`** —— 首页:greeting + 猫资料 + 两个主入口(分诊 / 行为问答)+ 安心知识入口
+  + 最近记录
+- **`/onboarding`** —— 猫咪档案首次录入(姓名、月龄、性别、毛色、体重)
+- **`/symptoms`** —— 16 张症状卡(吐 / 拉 / 不吃 / 萎靡 / 打喷嚏 / 耳朵 / 皮肤 / 眼 /
+  口腔 / 行为 / 跛行 / 误食 / 呼吸困难 / 大量出血 / 尿闭 / 其它)
+- **`/triage`** —— 症状分诊流程,15 个症状专属轨道(`src/lib/triage.ts` 的 `FLOWS`)
+- **`/report`** —— 红 / 黄 / 绿三色风险报告,11 个 group 各有专属文案;5 个红线急停
+  group(digest / breath / blood / urethra / ingest)对应权威源(VCA / Anicira /
+  iCatCare 尿道阻塞 / Cornell / Merck)
+- **`/behavior`** —— 行为问答:DeepSeek/通义流式回复 + 对话摘要压缩(20 轮以上)
+- **`/knowledge`** —— 「看着吓人但不必慌」Anicira 非急症清单(6 张 gpt-image-2 配图 +
+  ✓ chips overlay + 升级条件)
+
+### 后端 API(`src/app/api/`)
+
+- `triage` —— 分诊结果生成(LLM)
+- `behavior` —— 行为问答 SSE 流式
+- `summarize` —— 对话摘要压缩
+
+### 证据底稿
+
+15+ 份 `docs/product/证据-*.md`,每个症状轨道 / 急症 entity 都对接到具体权威源
+(Cornell / Merck / VCA / Anicira / iCatCare / AVMA / ASPCA)。
+
+### 测试 harness
+
+`scripts/harness-behavior.mjs` —— 行为问答压缩 + 上下文连贯性测试。
+
+### 下一步候选(按当前优先级排序)
+
+1. **用户家猫卡通头像** —— `/onboarding` 加一步(文字描述 + 可选拍照),codex/gpt-image-2
+   出图,Vercel Blob 存储。边界严格按 [docs/product/AI生成形象-实施说明.md](docs/product/AI生成形象-实施说明.md) §二
+2. **行为问答 Q&A 持久化** —— 数据模型已留 `kind:"behavior"`,落 localStorage
+3. **Vercel 部署** —— 让产品真正 demo 起来
+4. **找执业兽医审 docs/product/证据-*.md** —— 所有页面 `UnreviewedNotice` 才能撤下
