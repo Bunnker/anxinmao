@@ -100,10 +100,14 @@ function ItemCard({ item }: { item: Item }) {
           文字承担「升级条件」。三层递进,严格不画症状细节。
           边界:docs/product/AI生成形象-实施说明.md §二 + §四 */}
       <div className="relative aspect-[3/2] w-full bg-[#f5e6cf]">
+        {/* unoptimized:静态资产直接发原图,不走 Next/Image 优化器缓存。
+            否则换图后浏览器会一直拿 cached webp 版本(dev / 生产都遇到过)。
+            代价:不做 webp 转换;1.5MB PNG × 6 在移动端可接受,知识页非首屏关键路径。 */}
         <Image
           src={`/knowledge/${item.id}.png`}
           alt={`${item.title} 场景示意`}
           fill
+          unoptimized
           className="object-cover"
           sizes="(max-width: 430px) 100vw, 430px"
         />
