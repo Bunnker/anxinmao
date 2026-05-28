@@ -2,7 +2,8 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { loadOrSeedStore } from "@/lib/storage";
+import { useRouter } from "next/navigation";
+import { loadStore, seedDemoStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
 import type { Cat } from "@/types/cat";
 
@@ -165,6 +166,7 @@ function EmptyState({
 }
 
 export default function BehaviorPage() {
+  const router = useRouter();
   const [cat, setCat] = useState<Cat | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -176,11 +178,20 @@ export default function BehaviorPage() {
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const store = loadOrSeedStore();
+    const store = loadStore();
+    // 无档案:引导建档(开发环境 seed 演示猫方便测)
+    if (!store || store.cats.length === 0) {
+      if (process.env.NODE_ENV === "development") {
+        setCat(seedDemoStore().cats[0]);
+      } else {
+        router.replace("/onboarding");
+      }
+      return;
+    }
     const active =
       store.cats.find((c) => c.id === store.activeCatId) ?? store.cats[0];
     setCat(active ?? null);
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     // 流式输出会频繁更新,用瞬时滚动,避免 smooth 抖动。

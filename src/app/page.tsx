@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { loadOrSeedStore } from "@/lib/storage";
+import { useRouter } from "next/navigation";
+import { loadStore, seedDemoStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
 import type { Cat, CatRecord } from "@/types/cat";
@@ -82,16 +83,29 @@ function RecentRow({ record }: { record: CatRecord }) {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const [cat, setCat] = useState<Cat | null>(null);
   const [records, setRecords] = useState<CatRecord[]>([]);
 
   useEffect(() => {
-    const store = loadOrSeedStore();
+    const store = loadStore();
+    // 无档案(新用户首次进入):引导去建档,不再塞演示猫。
+    // 开发环境例外 —— seed 演示猫方便本地测试。
+    if (!store || store.cats.length === 0) {
+      if (process.env.NODE_ENV === "development") {
+        const seeded = seedDemoStore();
+        setCat(seeded.cats[0]);
+        setRecords([]);
+      } else {
+        router.replace("/onboarding");
+      }
+      return;
+    }
     const active =
       store.cats.find((c) => c.id === store.activeCatId) ?? store.cats[0];
     setCat(active);
     setRecords(store.records.filter((r) => r.catId === active.id));
-  }, []);
+  }, [router]);
 
   // localStorage 仅客户端可读:首帧 cat 为空,渲染空壳避免水合不一致。
   if (!cat) return <main className="min-h-dvh" aria-hidden="true" />;

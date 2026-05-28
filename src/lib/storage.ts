@@ -26,7 +26,7 @@ export function saveStore(store: Store): void {
   }
 }
 
-// 演示猫 —— 开发期便利。
+// 演示猫 —— 仅开发期 / 用户主动「先看看 demo」时使用,不再自动塞给新用户。
 export const DEMO_CAT: Cat = {
   id: "demo-cat",
   name: "豆豆",
@@ -41,11 +41,11 @@ export const DEMO_CAT: Cat = {
   notes: "",
 };
 
-// 首次使用且无档案时,用演示猫兜底,保证 App 可见可用。
-// TODO(端口建档页后):首次使用应改为引导去 /onboarding,而非默认演示猫。
-export function loadOrSeedStore(): Store {
-  const existing = loadStore();
-  if (existing) return existing;
+// 显式 seed 演示猫 —— 仅在「开发期方便测试」或「用户主动选择先看 demo」时调用。
+// ⚠️ 不再像旧的 loadOrSeedStore 那样对所有新用户无脑 seed ——
+// 新用户首次进入应被引导去 /onboarding 建自己的档案(localStorage 本身按设备隔离,
+// 每台设备 = 一个独立用户,不需要登录系统)。
+export function seedDemoStore(): Store {
   const seeded: Store = {
     cats: [DEMO_CAT],
     activeCatId: DEMO_CAT.id,
