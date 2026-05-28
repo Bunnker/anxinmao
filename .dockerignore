@@ -1,0 +1,13 @@
+# 不进镜像 —— 减小 build context + 避免泄密
+node_modules
+.next
+.git
+.env.local
+.env*.local
+.knowledge-wanx-backup
+npm-debug.log*
+*.md
+.DS_Store
+public/sw.js
+public/workbox-*.js
+public/worker-*.js
