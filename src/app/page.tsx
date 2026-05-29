@@ -173,7 +173,7 @@ export default function HomePage() {
               我想问点什么
             </span>
             <span className="mt-1.5 block text-[12.5px] tracking-wide text-ink-soft">
-              喂养 · 训练 · 行为习惯
+              生病拿不准 · 喂养 · 行为 · 多轮问诊
             </span>
           </span>
           <Arrow className="text-ink-soft" />

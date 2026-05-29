@@ -12,6 +12,7 @@
 // 边界:docs/product/AI生成形象-实施说明.md §二
 
 import type { NextRequest } from "next/server";
+import { checkAndConsume, getClientIp, rateLimitMessage } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
@@ -73,6 +74,16 @@ export async function POST(req: NextRequest): Promise<Response> {
     return Response.json(
       { error: "需要照片或文字描述至少一项。" },
       { status: 400 },
+    );
+  }
+
+  // 限流:生图是主要花费(~¥0.3/张),扣 image 额度。放在输入校验后、
+  // 真正调用视觉检测 / Seedream 之前,避免无效请求白扣。
+  const rl = checkAndConsume(getClientIp(req), "image");
+  if (!rl.ok) {
+    return Response.json(
+      { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
+      { status: 429 },
     );
   }
 

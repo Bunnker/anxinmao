@@ -7,16 +7,16 @@ import { loadStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
 import type { Cat } from "@/types/cat";
 
-// 行为 / 养育问答 —— 对话式,接服务端 /api/behavior 调大模型。
-// 产品红线:这里只聊喂养 / 训练 / 行为,健康判断交给「分诊」(系统提示词里
-// 已强约束;页面再留一个显式「去分诊」入口兜底)。
+// 问诊 / 养育问答 —— 对话式,接服务端 /api/behavior 调大模型。
+// 产品红线:可以聊健康,但绝不诊断 / 开药;红旗症状急停送医;每条健康回答带
+// 「不能替代兽医」。系统提示词强约束;页面留「去分诊」入口给结构化分诊兜底。
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 const STARTERS = [
-  "小猫总咬我的手,怎么训?",
+  "猫一直打喷嚏,要紧吗?",
   "幼猫一天喂几次、喂多少?",
-  "猫为什么半夜跑酷、闹腾?",
+  "猫不太爱吃饭,要不要去医院?",
   "怎么让猫慢慢接受剪指甲?",
 ];
 
@@ -145,7 +145,7 @@ function EmptyState({
         {catName ? `关于${catName},想问点什么?` : "养猫的事,想问点什么?"}
       </h1>
       <p className="mt-2.5 text-[13.5px] leading-relaxed text-ink-soft">
-        喂养、训练、行为习惯都行 —— 像问朋友一样问就好。生病、要不要就医的判断不在这儿,那边有「分诊」。
+        生病拿不准、喂养、训练、行为都能问 —— 像问朋友一样。我会多问几句再帮你判断要不要就医;急症会直接让你去医院。不能替代兽医。
       </p>
       <div className="mt-6 flex flex-col gap-2.5">
         {STARTERS.map((s) => (
@@ -362,7 +362,7 @@ export default function BehaviorPage() {
           className="flex items-center justify-between rounded-xl border border-dashed border-[var(--line)] px-3.5 py-2.5"
         >
           <span className="text-[12.5px] text-ink-soft">
-            猫看着不舒服?这边只聊养育
+            想要红黄绿分诊报告?
           </span>
           <span className="shrink-0 text-[12.5px] font-medium text-accent">
             去分诊 →
@@ -380,7 +380,7 @@ export default function BehaviorPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={loading}
-            placeholder="问问喂养、训练、习惯…"
+            placeholder="生病、喂养、行为…都能问"
             enterKeyHint="send"
             maxLength={500}
             className="min-w-0 flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-faint disabled:opacity-60"
