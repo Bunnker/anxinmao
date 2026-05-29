@@ -55,6 +55,10 @@ export type RateResult =
 
 // 检查并扣减一次额度。返回 ok:false 时调用方应返回 429。
 export function checkAndConsume(ip: string, kind: Kind): RateResult {
+  // 仅生产环境限流。dev 本地反复测试不被额度挡。
+  if (process.env.NODE_ENV !== "production") {
+    return { ok: true };
+  }
   rollIfNewDay();
 
   // 全局兜底先查
