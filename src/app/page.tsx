@@ -208,9 +208,25 @@ export default function HomePage() {
 
       <Link
         href="/feedback"
-        className="mt-6 self-center text-[12px] tracking-wide text-ink-faint underline-offset-4 hover:underline"
+        className="mt-7 inline-flex items-center justify-center gap-2 self-center rounded-full border border-[var(--line)] bg-surface px-5 py-2.5 text-[13px] font-medium tracking-wide text-ink-soft shadow-[0_4px_14px_-9px_rgba(60,40,20,0.5)] transition-transform active:translate-y-px"
       >
-        有想说的?给我提个意见 →
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+          className="text-accent"
+        >
+          <path
+            d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 9 9 0 0 1-3.8-.8L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        有话想说?给我提个意见
       </Link>
 
       <Disclaimer />
