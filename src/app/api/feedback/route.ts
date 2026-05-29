@@ -84,10 +84,11 @@ export async function POST(req: NextRequest): Promise<Response> {
       // 图片不合法 / 超限就忽略,仍然保存文字反馈
     }
 
+    // 不持久化 IP —— 反馈页向用户承诺「不收集身份信息」。IP 只在上面
+    // 给限流(checkAndConsume)临时用,不落盘。
     const entry = {
       id,
       at: new Date().toISOString(),
-      ip,
       text,
       contact: (body.contact ?? "").trim().slice(0, MAX_CONTACT) || null,
       image: imageFile,
