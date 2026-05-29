@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { loadStore, saveStore, seedDemoStore } from "@/lib/storage";
+import { loadStore, saveStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
 import type { Cat, Store, Vaccine } from "@/types/cat";
@@ -217,15 +217,9 @@ export default function OnboardingPage() {
     router.push("/");
   }
 
-  // 离开建档页(返回 / 跳过)。新建模式下若没建档就走,塞演示猫兜底 ——
-  // 否则首页发现无档案又把用户弹回这里,造成死循环。
+  // 离开建档页(返回)。直接回首页 —— 无档案时首页显示欢迎页(有选择,非死胡同),
+  // 不再 seed 豆豆。
   function leaveOnboarding() {
-    if (!isEdit) {
-      const existing = loadStore();
-      if (!existing || existing.cats.length === 0) {
-        seedDemoStore();
-      }
-    }
     router.push("/");
   }
 
@@ -612,15 +606,6 @@ export default function OnboardingPage() {
         >
           {isEdit ? "保存修改" : "建档,开始 →"}
         </button>
-        {!isEdit && (
-          <button
-            type="button"
-            onClick={leaveOnboarding}
-            className="mt-3.5 w-full text-center text-[12.5px] text-ink-faint underline underline-offset-4"
-          >
-            先用演示猫看看
-          </button>
-        )}
         {!ready && (
           <p className="mt-3 text-center text-[12px] text-ink-faint">
             给它起个名字就能开始。

@@ -41,14 +41,38 @@ export const DEMO_CAT: Cat = {
   notes: "",
 };
 
-// 显式 seed 演示猫 —— 仅在「开发期方便测试」或「用户主动选择先看 demo」时调用。
-// ⚠️ 不再像旧的 loadOrSeedStore 那样对所有新用户无脑 seed ——
-// 新用户首次进入应被引导去 /onboarding 建自己的档案(localStorage 本身按设备隔离,
-// 每台设备 = 一个独立用户,不需要登录系统)。
+// 显式 seed 演示猫 —— 仅开发期想要 rich 数据(疫苗记录等)时手动用。默认不调用。
 export function seedDemoStore(): Store {
   const seeded: Store = {
     cats: [DEMO_CAT],
     activeCatId: DEMO_CAT.id,
+    records: [],
+  };
+  saveStore(seeded);
+  return seeded;
+}
+
+// 默认模版猫 —— 中性空白起点「我的猫」,不是豆豆那种「别人填好的猫」。
+// 用户在欢迎页选「先用默认模版逛逛」时 seed;之后可随时点头像进 onboarding 编辑成真实信息。
+// 关键:无疫苗 / 驱虫 / notes / avatar —— 让用户感觉「这是我的猫,还没填」而不是「这是谁的猫」。
+export const TEMPLATE_CAT: Cat = {
+  id: "my-cat",
+  name: "我的猫",
+  ageMonths: 6,
+  sex: "不确定",
+  coat: "",
+  weight: 3,
+  neutered: "暂未",
+  homeDate: "",
+  vaccines: [],
+  deworm: "",
+  notes: "",
+};
+
+export function seedTemplateStore(): Store {
+  const seeded: Store = {
+    cats: [{ ...TEMPLATE_CAT }],
+    activeCatId: TEMPLATE_CAT.id,
     records: [],
   };
   saveStore(seeded);

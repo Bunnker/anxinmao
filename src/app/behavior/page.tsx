@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { loadStore, seedDemoStore } from "@/lib/storage";
+import { loadStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
 import type { Cat } from "@/types/cat";
 
@@ -179,13 +179,9 @@ export default function BehaviorPage() {
 
   useEffect(() => {
     const store = loadStore();
-    // 无档案:引导建档(开发环境 seed 演示猫方便测)
+    // 无档案:回首页(首页会显示欢迎页让用户选建档 / 默认模版)
     if (!store || store.cats.length === 0) {
-      if (process.env.NODE_ENV === "development") {
-        setCat(seedDemoStore().cats[0]);
-      } else {
-        router.replace("/onboarding");
-      }
+      router.replace("/");
       return;
     }
     const active =

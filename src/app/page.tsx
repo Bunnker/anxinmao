@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { loadStore, seedDemoStore } from "@/lib/storage";
+import { loadStore, seedTemplateStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
+import { Welcome } from "@/components/Welcome";
 import type { Cat, CatRecord } from "@/types/cat";
 
 function greeting(): string {
@@ -83,32 +83,33 @@ function RecentRow({ record }: { record: CatRecord }) {
 }
 
 export default function HomePage() {
-  const router = useRouter();
   const [cat, setCat] = useState<Cat | null>(null);
   const [records, setRecords] = useState<CatRecord[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     const store = loadStore();
-    // 无档案(新用户首次进入):引导去建档,不再塞演示猫。
-    // 开发环境例外 —— seed 演示猫方便本地测试。
-    if (!store || store.cats.length === 0) {
-      if (process.env.NODE_ENV === "development") {
-        const seeded = seedDemoStore();
-        setCat(seeded.cats[0]);
-        setRecords([]);
-      } else {
-        router.replace("/onboarding");
-      }
-      return;
+    if (store && store.cats.length > 0) {
+      const active =
+        store.cats.find((c) => c.id === store.activeCatId) ?? store.cats[0];
+      setCat(active);
+      setRecords(store.records.filter((r) => r.catId === active.id));
     }
-    const active =
-      store.cats.find((c) => c.id === store.activeCatId) ?? store.cats[0];
-    setCat(active);
-    setRecords(store.records.filter((r) => r.catId === active.id));
-  }, [router]);
+    setLoaded(true);
+  }, []);
 
-  // localStorage 仅客户端可读:首帧 cat 为空,渲染空壳避免水合不一致。
-  if (!cat) return <main className="min-h-dvh" aria-hidden="true" />;
+  // 用户在欢迎页选「先用默认模版逛逛」—— seed 中性「我的猫」,首页就地重渲染。
+  function useTemplate() {
+    const store = seedTemplateStore();
+    setCat(store.cats[0]);
+    setRecords([]);
+  }
+
+  // localStorage 仅客户端可读:首帧渲染空壳避免水合不一致。
+  if (!loaded) return <main className="min-h-dvh" aria-hidden="true" />;
+
+  // 无档案(新用户首次进入):欢迎页,不再直接甩进表单、不再 seed 豆豆。
+  if (!cat) return <Welcome onUseTemplate={useTemplate} />;
 
   const meta = [`${cat.ageMonths} 个月`, cat.sex, cat.coat, `${cat.weight} kg`]
     .filter(Boolean)
