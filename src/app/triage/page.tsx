@@ -78,10 +78,20 @@ export default function TriagePage() {
         next[step] = [optIdx];
         return next;
       }
+      // 「都没有」与其它项互斥:选它 → 清空其它;选其它项 → 自动取消它。
+      const noneIdx = q.options.findIndex((o) => o.label === "都没有");
       const cur = next[step] ? next[step].slice() : [];
       const at = cur.indexOf(optIdx);
-      if (at >= 0) cur.splice(at, 1);
-      else cur.push(optIdx);
+      if (at >= 0) {
+        cur.splice(at, 1);
+      } else if (optIdx === noneIdx) {
+        next[step] = [optIdx];
+        return next;
+      } else {
+        const ni = cur.indexOf(noneIdx);
+        if (ni >= 0) cur.splice(ni, 1);
+        cur.push(optIdx);
+      }
       next[step] = cur;
       return next;
     });
@@ -186,7 +196,9 @@ export default function TriagePage() {
               <span className="flex-1 text-[15.5px] text-ink">{opt.label}</span>
               <span
                 className={
-                  "grid size-5 shrink-0 place-items-center rounded-full border " +
+                  "grid size-5 shrink-0 place-items-center border " +
+                  // 多选用方框、单选用圆圈 —— 形状即语义,符合表单直觉
+                  (q.multi ? "rounded-md " : "rounded-full ") +
                   (on
                     ? "border-[var(--accent)] bg-accent text-accent-fg"
                     : "border-[var(--hairline)]")

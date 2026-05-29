@@ -44,8 +44,12 @@ next-env.d.ts
 # 知识页配图历史版本(本地对比用,不入仓)
 /.knowledge-wanx-backup/
 
+# 用户意见反馈本地落盘(/api/feedback 写入,生产挂卷持久化,不入仓)
+/.data/
+
 # next-pwa 自动生成的 service worker(每次 build 重新生成,无需入仓)
 /public/sw.js
 /public/workbox-*.js
 /public/worker-*.js
 /public/fallback-*.js
+.gstack/

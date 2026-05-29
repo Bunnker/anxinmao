@@ -51,10 +51,10 @@ export function Welcome({ onUseTemplate }: { onUseTemplate: () => void }) {
         onClick={onUseTemplate}
         className="mt-3 w-full rounded-2xl border border-[var(--line)] bg-surface py-4 text-[15px] font-medium tracking-wide text-ink-soft transition-transform active:translate-y-px"
       >
-        先用默认模版逛逛
+        先随便逛逛
       </button>
       <p className="mt-3 text-center text-[12px] leading-relaxed text-ink-faint">
-        模版是个空白起点,随时能填成你家猫的真实信息。
+        会先给你一只空白小猫,随时能改成自己家猫的信息。
       </p>
 
       <div className="mt-6">

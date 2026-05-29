@@ -158,7 +158,7 @@ export default function HomePage() {
               我家猫不太对劲
             </span>
             <span className="mt-1.5 block text-[12.5px] tracking-wide opacity-80">
-              吐了 · 不吃饭 · 精神差 · 误食
+              选症状 → 答几个问题 → 红黄绿就医建议
             </span>
           </span>
           <Arrow />
@@ -173,7 +173,7 @@ export default function HomePage() {
               我想问点什么
             </span>
             <span className="mt-1.5 block text-[12.5px] tracking-wide text-ink-soft">
-              生病拿不准 · 喂养 · 行为 · 多轮问诊
+              直接打字问,生病 / 喂养 / 行为都能聊
             </span>
           </span>
           <Arrow className="text-ink-soft" />
@@ -205,6 +205,13 @@ export default function HomePage() {
           </div>
         )}
       </section>
+
+      <Link
+        href="/feedback"
+        className="mt-6 self-center text-[12px] tracking-wide text-ink-faint underline-offset-4 hover:underline"
+      >
+        有想说的?给我提个意见 →
+      </Link>
 
       <Disclaimer />
     </main>

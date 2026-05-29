@@ -71,3 +71,14 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
+
+/* 隐藏滚动条 —— 移动端 / PWA 体验:不显示侧边滚动条,但保留滚动能力。 */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* 旧 Edge / IE */
+}
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* WebKit:Chrome / Safari / 新 Edge */
+}

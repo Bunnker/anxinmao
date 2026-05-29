@@ -5,6 +5,7 @@ node_modules
 .env.local
 .env*.local
 .knowledge-wanx-backup
+.data
 npm-debug.log*
 *.md
 .DS_Store

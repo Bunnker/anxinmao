@@ -6,16 +6,17 @@
 //   退化为只看全局额度,仍然护住总花费。
 // - 按服务器本地日期滚动归零。
 
-type Kind = "chat" | "image";
+type Kind = "chat" | "image" | "feedback";
 
-// 中等档(用户选定):per-IP 对话 30 / 生图 5;全局 对话 300 / 生图 40
-const PER_IP: Record<Kind, number> = { chat: 30, image: 5 };
-const GLOBAL: Record<Kind, number> = { chat: 300, image: 40 };
+// 中等档(用户选定):per-IP 对话 30 / 生图 5;全局 对话 300 / 生图 40。
+// feedback 纯防刷(写本地文件、无外部成本),给得宽松些。
+const PER_IP: Record<Kind, number> = { chat: 30, image: 5, feedback: 8 };
+const GLOBAL: Record<Kind, number> = { chat: 300, image: 40, feedback: 200 };
 
-type Bucket = { chat: number; image: number };
+type Bucket = { chat: number; image: number; feedback: number };
 
 function emptyBucket(): Bucket {
-  return { chat: 0, image: 0 };
+  return { chat: 0, image: 0, feedback: 0 };
 }
 
 let dayKey = todayKey();
@@ -33,6 +34,7 @@ function rollIfNewDay(): void {
     perIp.clear();
     globalBucket.chat = 0;
     globalBucket.image = 0;
+    globalBucket.feedback = 0;
   }
 }
 
@@ -80,7 +82,8 @@ export function checkAndConsume(ip: string, kind: Kind): RateResult {
 
 // 友好提示文案
 export function rateLimitMessage(kind: Kind, scope: "ip" | "global"): string {
-  const what = kind === "image" ? "头像生成" : "问答";
+  const what =
+    kind === "image" ? "头像生成" : kind === "feedback" ? "反馈" : "问答";
   if (scope === "global") {
     return `今天大家把${what}额度用得有点多,服务器歇会儿,明天再来 🐱`;
   }
