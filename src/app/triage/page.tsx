@@ -78,8 +78,8 @@ export default function TriagePage() {
         next[step] = [optIdx];
         return next;
       }
-      // 「都没有」与其它项互斥:选它 → 清空其它;选其它项 → 自动取消它。
-      const noneIdx = q.options.findIndex((o) => o.label === "都没有");
+      // 否定 / 兜底项(exclusive)与其它项互斥:选它 → 清空其它;选其它项 → 自动取消它。
+      const noneIdx = q.options.findIndex((o) => o.exclusive);
       const cur = next[step] ? next[step].slice() : [];
       const at = cur.indexOf(optIdx);
       if (at >= 0) {

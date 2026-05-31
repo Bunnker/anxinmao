@@ -53,3 +53,6 @@ next-env.d.ts
 /public/worker-*.js
 /public/fallback-*.js
 .gstack/
+
+# 医学资料抓取的原始网页/PDF缓存,只在本地用于证据核对,不入仓或随产品发布
+/docs/medical/raw/

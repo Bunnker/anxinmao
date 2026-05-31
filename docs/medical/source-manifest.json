@@ -1,0 +1,458 @@
+{
+  "generated_at": "2026-05-30",
+  "description": "Authoritative medical source crawl manifest for Anxinmao triage evidence. Fetch with scripts/fetch-medical-sources.mjs.",
+  "batches": [
+    {
+      "id": "batch2-core-risk",
+      "description": "Vomiting, diarrhea, anorexia, toxin ingestion, and dyspnea. These are the next highest-risk/high-frequency triage paths.",
+      "sources": [
+        {
+          "id": "cornell_vomiting",
+          "condition_ids": ["cat_vomiting"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/vomiting",
+          "use": ["red_flags", "severity", "diagnosis_context", "home_care"]
+        },
+        {
+          "id": "merck_vomiting",
+          "condition_ids": ["cat_vomiting"],
+          "source_name": "Merck Veterinary Manual",
+          "authority_level": "L1",
+          "url": "https://www.merckvetmanual.com/cat-owners/digestive-disorders-of-cats/vomiting-in-cats",
+          "use": ["severity", "home_care", "medicine_boundary"]
+        },
+        {
+          "id": "vca_vomiting",
+          "condition_ids": ["cat_vomiting"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/premier/know-your-pet/vomiting-in-cats",
+          "use": ["green_boundary", "user_explanation"]
+        },
+        {
+          "id": "vca_linear_foreign_body",
+          "condition_ids": ["cat_vomiting", "cat_toxin_ingestion"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/linear-foreign-body-in-cats",
+          "use": ["red_flags", "forbidden_home_action"]
+        },
+        {
+          "id": "cornell_diarrhea",
+          "condition_ids": ["cat_diarrhea"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/diarrhea",
+          "use": ["severity", "host_risk", "vet_visit_boundary"]
+        },
+        {
+          "id": "vca_diarrhea",
+          "condition_ids": ["cat_diarrhea"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/diarrhea-in-cats",
+          "use": ["severity", "home_care", "vet_visit_boundary"]
+        },
+        {
+          "id": "icatcare_diarrhoea",
+          "condition_ids": ["cat_diarrhea"],
+          "source_name": "International Cat Care",
+          "authority_level": "L1",
+          "url": "https://icatcare.org/articles/diarrhoea-in-cats",
+          "use": ["severity", "home_care", "red_flags"]
+        },
+        {
+          "id": "cornell_anorexia",
+          "condition_ids": ["cat_anorexia"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/anorexia",
+          "use": ["red_flags", "host_risk", "medicine_boundary"]
+        },
+        {
+          "id": "vca_anorexia",
+          "condition_ids": ["cat_anorexia"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/anorexia-in-cats",
+          "use": ["severity", "home_care", "medicine_boundary"]
+        },
+        {
+          "id": "icatcare_inappetence_pdf",
+          "condition_ids": ["cat_anorexia"],
+          "source_name": "International Cat Care",
+          "authority_level": "L1",
+          "url": "https://icatcare.org/resources/cat-carer-guide-managing-the-cat-that-wont-eat.pdf",
+          "use": ["home_care", "forbidden_home_action"],
+          "kind": "pdf"
+        },
+        {
+          "id": "cornell_poisons",
+          "condition_ids": ["cat_toxin_ingestion"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/poisons",
+          "use": ["red_flags", "forbidden_home_action", "toxin_examples"]
+        },
+        {
+          "id": "aspca_poison_control",
+          "condition_ids": ["cat_toxin_ingestion"],
+          "source_name": "ASPCA Animal Poison Control Center",
+          "authority_level": "L1",
+          "url": "https://www.aspca.org/pet-care/animal-poison-control",
+          "use": ["poison_control", "red_flags"]
+        },
+        {
+          "id": "aspca_people_foods",
+          "condition_ids": ["cat_toxin_ingestion"],
+          "source_name": "ASPCA Animal Poison Control Center",
+          "authority_level": "L1",
+          "url": "https://www.aspca.org/pet-care/aspca-poison-control/people-foods-avoid-feeding-your-pets",
+          "use": ["toxin_foods"]
+        },
+        {
+          "id": "aspca_household_products",
+          "condition_ids": ["cat_toxin_ingestion"],
+          "source_name": "ASPCA Animal Poison Control Center",
+          "authority_level": "L1",
+          "url": "https://www.aspca.org/pet-care/aspca-poison-control/poisonous-household-products",
+          "use": ["toxin_household", "medicine_boundary"]
+        },
+        {
+          "id": "aspca_lily",
+          "condition_ids": ["cat_toxin_ingestion"],
+          "source_name": "ASPCA Animal Poison Control Center",
+          "authority_level": "L1",
+          "url": "https://www.aspca.org/pet-care/animal-poison-control/toxic-and-non-toxic-plants/lily",
+          "use": ["toxin_plants", "red_flags"]
+        },
+        {
+          "id": "aspca_asian_lily",
+          "condition_ids": ["cat_toxin_ingestion"],
+          "source_name": "ASPCA Animal Poison Control Center",
+          "authority_level": "L1",
+          "url": "https://www.aspca.org/pet-care/aspca-poison-control/toxic-and-non-toxic-plants/asian-lily",
+          "use": ["toxin_plants", "red_flags"]
+        },
+        {
+          "id": "vca_toxic_hazards_cats",
+          "condition_ids": ["cat_toxin_ingestion"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/greater-savannah/know-your-pet/household-hazards-toxic-hazards-for-cats",
+          "use": ["toxin_examples", "forbidden_home_action", "medicine_boundary"]
+        },
+        {
+          "id": "merck_human_analgesics",
+          "condition_ids": ["cat_toxin_ingestion", "cat_limping"],
+          "source_name": "Merck Veterinary Manual",
+          "authority_level": "L1",
+          "url": "https://www.merckvetmanual.com/toxicology/toxicities-from-human-drugs/toxicities-from-over-the-counter-drugs",
+          "use": ["human_medication_toxicity", "medicine_boundary"]
+        },
+        {
+          "id": "merck_chocolate_toxicosis",
+          "condition_ids": ["cat_toxin_ingestion"],
+          "source_name": "Merck Veterinary Manual",
+          "authority_level": "L1",
+          "url": "https://www.merckvetmanual.com/toxicology/food-hazards/chocolate-toxicosis-in-animals",
+          "use": ["toxin_foods"]
+        },
+        {
+          "id": "fda_pain_relief_pets",
+          "condition_ids": ["cat_toxin_ingestion", "cat_limping"],
+          "source_name": "FDA Center for Veterinary Medicine",
+          "authority_level": "L1",
+          "url": "https://www.fda.gov/animal-veterinary/animal-health-literacy/get-facts-about-pain-relievers-pets",
+          "use": ["human_medication_toxicity", "medicine_boundary"]
+        },
+        {
+          "id": "cornell_dyspnea",
+          "condition_ids": ["cat_dyspnea"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/dyspnea-difficulty-breathing",
+          "use": ["red_flags", "severity", "diagnosis_context"]
+        },
+        {
+          "id": "cornell_feline_asthma",
+          "condition_ids": ["cat_dyspnea"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/feline-asthma-risky-business-many-cats",
+          "use": ["severity", "red_flags"]
+        },
+        {
+          "id": "vca_emergencies_cats",
+          "condition_ids": ["cat_dyspnea", "cat_toxin_ingestion", "cat_vomiting", "cat_diarrhea"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/emergencies-in-cats?sf154871043=1",
+          "use": ["red_flags", "user_explanation"]
+        },
+        {
+          "id": "avma_pet_first_aid_pdf",
+          "condition_ids": ["cat_dyspnea", "cat_toxin_ingestion", "cat_bleeding"],
+          "source_name": "AVMA",
+          "authority_level": "L1",
+          "url": "https://ebusiness.avma.org/files/ProductDownloads/mcm-client-brochures-pet-first-aid-2025.pdf",
+          "use": ["emergency_first_aid", "forbidden_home_action"],
+          "kind": "pdf"
+        },
+        {
+          "id": "fda_pet_emergency_contacts",
+          "condition_ids": ["cat_toxin_ingestion"],
+          "source_name": "FDA Center for Veterinary Medicine",
+          "authority_level": "L1",
+          "url": "https://www.fda.gov/animal-veterinary/animal-health-literacy/who-do-you-call-if-you-have-pet-emergency",
+          "use": ["poison_control", "emergency_contacts"]
+        },
+        {
+          "id": "moa_vet_drug_query_app",
+          "condition_ids": ["medicine_cn_availability"],
+          "source_name": "农业农村部",
+          "authority_level": "CN-RX",
+          "url": "https://www.moa.gov.cn/xw/zwdt/201503/t20150305_4426327.htm",
+          "use": ["cn_drug_database_entry"]
+        },
+        {
+          "id": "ivdc_home",
+          "condition_ids": ["medicine_cn_availability"],
+          "source_name": "中国兽医药品监察所 / 中国兽药信息网",
+          "authority_level": "CN-RX",
+          "url": "http://www.ivdc.org.cn/",
+          "use": ["cn_drug_database_entry"]
+        }
+      ]
+    },
+    {
+      "id": "batch3-sensory-emergency",
+      "description": "Eye, ear, bleeding, and lethargy. These are high-anxiety triage paths with strong medication and emergency boundaries.",
+      "sources": [
+        {
+          "id": "cornell_conjunctivitis",
+          "condition_ids": ["cat_eye_problem"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/conjunctivitis",
+          "use": ["severity", "diagnosis_context", "medicine_boundary"]
+        },
+        {
+          "id": "cornell_corneal_ulcers",
+          "condition_ids": ["cat_eye_problem"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/corneal-ulcers",
+          "use": ["red_flags", "diagnosis_context", "medicine_boundary"]
+        },
+        {
+          "id": "cornell_ear_mites",
+          "condition_ids": ["cat_ear_problem"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/ear-mites-tiny-critters-can-pose-major-threat",
+          "use": ["severity", "host_risk", "medicine_boundary"]
+        },
+        {
+          "id": "merck_otitis_externa",
+          "condition_ids": ["cat_ear_problem"],
+          "source_name": "Merck Veterinary Manual",
+          "authority_level": "L1",
+          "url": "https://www.merckvetmanual.com/cat-owners/ear-disorders-of-cats/otitis-externa-in-cats",
+          "use": ["severity", "diagnosis_context", "forbidden_home_action"]
+        },
+        {
+          "id": "merck_otitis_media_interna",
+          "condition_ids": ["cat_ear_problem"],
+          "source_name": "Merck Veterinary Manual",
+          "authority_level": "L1",
+          "url": "https://www.merckvetmanual.com/cat-owners/ear-disorders-of-cats/otitis-media-and-interna-in-cats",
+          "use": ["red_flags", "diagnosis_context", "medicine_boundary"]
+        },
+        {
+          "id": "vca_first_aid_bleeding",
+          "condition_ids": ["cat_bleeding"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/first-aid-for-bleeding-cats",
+          "use": ["red_flags", "home_care", "forbidden_home_action"]
+        },
+        {
+          "id": "merck_gi_disorders",
+          "condition_ids": ["cat_bleeding", "cat_vomiting", "cat_diarrhea"],
+          "source_name": "Merck Veterinary Manual",
+          "authority_level": "L1",
+          "url": "https://www.merckvetmanual.com/cat-owners/digestive-disorders-of-cats/disorders-of-the-stomach-and-intestines-in-cats",
+          "use": ["red_flags", "diagnosis_context"]
+        },
+        {
+          "id": "vca_rodenticide_warfarin",
+          "condition_ids": ["cat_bleeding", "cat_toxin_ingestion"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/rodenticide-warfarin-poisoning-in-cats",
+          "use": ["red_flags", "toxin_examples"]
+        },
+        {
+          "id": "vca_epistaxis",
+          "condition_ids": ["cat_bleeding"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/nose-bleeds-or-epistaxis-in-cats",
+          "use": ["red_flags", "home_care"]
+        },
+        {
+          "id": "vca_open_wounds",
+          "condition_ids": ["cat_bleeding"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/care-of-open-wounds-in-cats",
+          "use": ["home_care", "forbidden_home_action", "yellow_boundary"]
+        },
+        {
+          "id": "vca_recognizing_illness",
+          "condition_ids": ["cat_lethargy"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/recognizing-signs-of-illness-in-cats",
+          "use": ["severity", "host_risk", "questioning"]
+        },
+        {
+          "id": "anicira_emergency_10",
+          "condition_ids": ["cat_emergency_red_flags", "cat_lethargy", "cat_bleeding"],
+          "source_name": "Anicira",
+          "authority_level": "L3",
+          "url": "https://anicira.org/resources/10-signs-your-cat-is-having-a-veterinary-emergency/",
+          "use": ["red_flags", "home_self_check", "user_explanation"]
+        },
+        {
+          "id": "petmd_pale_gums",
+          "condition_ids": ["cat_lethargy", "cat_bleeding"],
+          "source_name": "PetMD",
+          "authority_level": "L3",
+          "url": "https://www.petmd.com/cat/symptom/pale-gums-in-cats",
+          "use": ["auxiliary_single_sign"]
+        },
+        {
+          "id": "merck_panleukopenia",
+          "condition_ids": ["cat_lethargy", "cat_anorexia", "cat_diarrhea", "cat_vomiting"],
+          "source_name": "Merck Veterinary Manual",
+          "authority_level": "L1",
+          "url": "https://www.merckvetmanual.com/cat-owners/disorders-affecting-multiple-body-systems-of-cats/feline-panleukopenia",
+          "use": ["host_risk", "diagnosis_context", "red_flags"]
+        },
+        {
+          "id": "icatcare_panleukopenia",
+          "condition_ids": ["cat_lethargy", "cat_anorexia", "cat_diarrhea", "cat_vomiting"],
+          "source_name": "International Cat Care",
+          "authority_level": "L1",
+          "url": "https://icatcare.org/articles/feline-infectious-enteritis-feline-parvovirus-panleukopenia-virus",
+          "use": ["host_risk", "diagnosis_context", "red_flags"]
+        }
+      ]
+    },
+    {
+      "id": "batch4-chronic-specialty",
+      "description": "Skin, mouth/dental, behavior change, and limping. Chronic and specialty triage paths with strong 'don't self-medicate' and 'rule out the medical cause first' boundaries.",
+      "sources": [
+        {
+          "id": "cornell_ringworm",
+          "condition_ids": ["cat_skin_problem"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/ringworm-serious-readily-treatable-affliction",
+          "use": ["severity", "zoonosis", "forbidden_home_action", "medicine_boundary"]
+        },
+        {
+          "id": "merck_ringworm",
+          "condition_ids": ["cat_skin_problem"],
+          "source_name": "Merck Veterinary Manual",
+          "authority_level": "L1",
+          "url": "https://www.merckvetmanual.com/cat-owners/skin-disorders-of-cats/ringworm-dermatophytosis-in-cats",
+          "use": ["severity", "host_risk", "zoonosis", "medicine_boundary"]
+        },
+        {
+          "id": "vca_allergies_cats",
+          "condition_ids": ["cat_skin_problem"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/allergies-in-cats",
+          "use": ["severity", "home_care", "diagnosis_context"]
+        },
+        {
+          "id": "cornell_dental_disease",
+          "condition_ids": ["cat_oral_problem"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/feline-dental-disease",
+          "use": ["severity", "diagnosis_context", "forbidden_home_action", "medicine_boundary"]
+        },
+        {
+          "id": "merck_mouth_disorders",
+          "condition_ids": ["cat_oral_problem"],
+          "source_name": "Merck Veterinary Manual",
+          "authority_level": "L1",
+          "url": "https://www.merckvetmanual.com/cat-owners/digestive-disorders-of-cats/disorders-of-the-mouth-in-cats",
+          "use": ["red_flags", "severity", "diagnosis_context", "forbidden_home_action"]
+        },
+        {
+          "id": "vca_dental_disease_cats",
+          "condition_ids": ["cat_oral_problem"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/dental-disease-in-cats",
+          "use": ["severity", "home_care", "user_explanation"]
+        },
+        {
+          "id": "merck_behavior_problems",
+          "condition_ids": ["cat_behavior_change"],
+          "source_name": "Merck Veterinary Manual",
+          "authority_level": "L1",
+          "url": "https://www.merckvetmanual.com/cat-owners/behavior-of-cats/behavior-problems-in-cats",
+          "use": ["rule_out_medical", "severity", "host_risk"]
+        },
+        {
+          "id": "cornell_behavior_aggression",
+          "condition_ids": ["cat_behavior_change"],
+          "source_name": "Cornell Feline Health Center",
+          "authority_level": "L1",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics/feline-behavior-problems-aggression",
+          "use": ["red_flags", "rule_out_medical", "user_explanation"]
+        },
+        {
+          "id": "vca_aggression_cats",
+          "condition_ids": ["cat_behavior_change"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/aggression-in-cats",
+          "use": ["rule_out_medical", "user_explanation", "home_care"]
+        },
+        {
+          "id": "merck_joint_disorders",
+          "condition_ids": ["cat_limping"],
+          "source_name": "Merck Veterinary Manual",
+          "authority_level": "L1",
+          "url": "https://www.merckvetmanual.com/cat-owners/bone-joint-and-muscle-disorders-of-cats/joint-disorders-in-cats",
+          "use": ["severity", "host_risk", "medicine_boundary"]
+        },
+        {
+          "id": "vca_limping_first_aid",
+          "condition_ids": ["cat_limping"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/first-aid-for-limping-cats",
+          "use": ["red_flags", "home_care", "forbidden_home_action"]
+        },
+        {
+          "id": "vca_aortic_thromboembolism",
+          "condition_ids": ["cat_limping", "cat_emergency_red_flags"],
+          "source_name": "VCA Hospitals",
+          "authority_level": "L2",
+          "url": "https://vcahospitals.com/know-your-pet/aortic-thromboembolism-in-cats",
+          "use": ["red_flags", "diagnosis_context"]
+        }
+      ]
+    }
+  ]
+}

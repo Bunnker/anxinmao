@@ -7,7 +7,10 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "harness": "node scripts/harness-behavior.mjs"
+    "harness": "node scripts/harness-behavior.mjs",
+    "medical:fetch": "node scripts/fetch-medical-sources.mjs",
+    "medical:validate": "node scripts/validate-medical-docs.mjs",
+    "triage:check": "node scripts/check-triage-cards.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

@@ -11,6 +11,9 @@ export interface TriageOption {
   label: string;
   weight?: number; // 风险分,用于黄 / 绿判定
   redFlag?: boolean; // 选中 → 立刻判红、分诊中途急停
+  exclusive?: boolean; // 多选题的「否定 / 兜底」项:选它 → 清空其它;选其它 → 自动取消它
+  claim?: string; // 依据的医学 claim_id(单条),挂到 docs/medical 的病情卡;见 npm run triage:check
+  claims?: string[]; // 依据的多条 claim_id
 }
 
 export interface TriageQuestion {
@@ -48,14 +51,15 @@ export const SYMPTOM_LABELS: Record<string, string> = {
 // 跨症状「立刻送医」红旗 —— 依据 v0.2 §3.3 + docs/product/证据-anicira-急诊10信号.md §一.9。
 // 任何一个被勾中 → 直接判红、分诊急停。多个流程复用这一组。
 const RED_FLAG_OPTIONS: TriageOption[] = [
-  { label: "呼吸急促 / 张口喘 / 喘不上气", redFlag: true },
-  { label: "大量出血,或吐血、便血、尿血", redFlag: true },
-  { label: "抽搐 / 站不稳 / 意识不清", redFlag: true },
-  { label: "一直尿不出来", redFlag: true },
-  { label: "牙龈或舌头发白、发紫", redFlag: true },
-  { label: "超过 24 小时不吃不喝", redFlag: true },
-  { label: "后腿突然拖行、瘫软,还大声叫", redFlag: true },
-  { label: "都没有", weight: 0 },
+  { label: "呼吸急促 / 张口喘 / 喘不上气", redFlag: true, claims: ["emg_001", "emg_002"] },
+  { label: "大量出血,或吐血、便血、尿血", redFlag: true, claims: ["emg_003", "emg_004"] },
+  { label: "抽搐 / 站不稳 / 意识不清", redFlag: true, claims: ["emg_005", "emg_006"] },
+  { label: "一直尿不出来", redFlag: true, claim: "emg_007" },
+  { label: "牙龈或舌头发白、发黄、发紫", redFlag: true, claim: "emg_009" },
+  { label: "皮肤捏起来回弹很慢,或眼窝发陷(明显脱水)", redFlag: true, claim: "emg_009" },
+  { label: "超过 24 小时不吃不喝", redFlag: true, claim: "emg_012" },
+  { label: "后腿突然拖行、瘫软,还大声叫", redFlag: true, claim: "emg_010" },
+  { label: "都没有", weight: 0, exclusive: true },
 ];
 
 // 呕吐专属流 —— 依据 v0.2 §1.1。
@@ -65,9 +69,9 @@ const vomitFlow: TriageQuestion[] = [
     text: "今天吐了几次?",
     hint: "从早上算到现在,看到一次算一次。",
     options: [
-      { label: "1–2 次", weight: 1 },
-      { label: "3 次或更多", weight: 2, redFlag: true },
-      { label: "我没数清楚", weight: 2 },
+      { label: "1–2 次", weight: 1, claim: "vom_001" },
+      { label: "3 次或更多", weight: 2, redFlag: true, claims: ["vom_002", "vom_005"] },
+      { label: "我没数清楚", weight: 2, claim: "vom_002" },
     ],
   },
   {
@@ -76,12 +80,12 @@ const vomitFlow: TriageQuestion[] = [
     hint: "可多选,都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "没什么精神 / 很萎靡", weight: 2, redFlag: true },
-      { label: "不吃东西", weight: 2, redFlag: true },
-      { label: "呕吐物里带血", weight: 2, redFlag: true },
-      { label: "肚子鼓胀,或一碰就叫", weight: 2, redFlag: true },
-      { label: "也在拉肚子", weight: 1 },
-      { label: "都没有", weight: 0 },
+      { label: "没什么精神 / 很萎靡", weight: 2, redFlag: true, claim: "vom_005" },
+      { label: "不吃东西", weight: 2, redFlag: true, claim: "vom_005" },
+      { label: "呕吐物里带血", weight: 2, redFlag: true, claims: ["vom_005", "emg_003"] },
+      { label: "肚子鼓胀,或一碰就叫", weight: 2, redFlag: true, claims: ["vom_005", "vom_006"] },
+      { label: "也在拉肚子", weight: 1, claim: "vom_007" },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
   {
@@ -90,8 +94,8 @@ const vomitFlow: TriageQuestion[] = [
     hint: "线性异物对猫很危险。",
     options: [
       { label: "应该没有", weight: 0 },
-      { label: "不太确定", weight: 1 },
-      { label: "很可能吞了", weight: 2, redFlag: true },
+      { label: "不太确定", weight: 1, claim: "vom_009" },
+      { label: "很可能吞了", weight: 2, redFlag: true, claim: "vom_009" },
     ],
   },
   {
@@ -100,8 +104,8 @@ const vomitFlow: TriageQuestion[] = [
     hint: "百合等植物、人用药、化学品…",
     options: [
       { label: "应该没有", weight: 0 },
-      { label: "不太确定", weight: 1 },
-      { label: "很可能误食了", weight: 2, redFlag: true },
+      { label: "不太确定", weight: 1, claim: "vom_008" },
+      { label: "很可能误食了", weight: 2, redFlag: true, claim: "vom_008" },
     ],
   },
   {
@@ -119,18 +123,33 @@ const generalFlow: TriageQuestion[] = [
     id: "now",
     text: "现在它的状态,哪个最接近?",
     options: [
-      { label: "看着很难受,或一直没停", weight: 3, redFlag: true },
-      { label: "有点不对劲,但还算稳定", weight: 2 },
-      { label: "好像缓解了,可能是我多虑", weight: 0 },
+      { label: "看着很难受、叫不醒、站不起来,或一直没停", weight: 3, redFlag: true, claims: ["leth_006", "emg_006"] },
+      { label: "有点不对劲,但还算稳定", weight: 2, claims: ["leth_001", "leth_002"] },
+      { label: "好像缓解了,可能是我多虑", weight: 0, claims: ["leth_001", "leth_013"] },
     ],
   },
   {
     id: "since",
     text: "这个情况持续多久了?",
     options: [
-      { label: "几个小时内", weight: 0 },
-      { label: "一两天", weight: 1 },
-      { label: "三天以上", weight: 2 },
+      { label: "几个小时内", weight: 0, claim: "leth_013" },
+      { label: "一两天", weight: 1, claim: "leth_013" },
+      { label: "三天以上", weight: 2, claim: "leth_013" },
+    ],
+  },
+  {
+    id: "context",
+    text: "为了判断能不能先观察,这些情况有吗?",
+    hint: "可多选 —— 这些会明显缩短观察窗口;都没有就选最后一项。",
+    multi: true,
+    options: [
+      { label: "张口喘、呼吸很快 / 很费力", weight: 2, redFlag: true, claims: ["leth_007", "emg_001"] },
+      { label: "牙龈、舌头或眼白发白、发黄、发蓝紫", weight: 2, redFlag: true, claims: ["leth_005", "emg_009"] },
+      { label: "皮肤捏起来回弹慢、眼窝发陷,或明显不喝水", weight: 2, redFlag: true, claims: ["leth_004", "emg_009"] },
+      { label: "不正常吃东西接近或超过 24 小时", weight: 2, redFlag: true, claims: ["leth_003", "emg_012"] },
+      { label: "频繁蹲猫砂盆,但尿不出或只有几滴", weight: 2, redFlag: true, claims: ["leth_008", "emg_007"] },
+      { label: "幼猫 / 未免疫,还伴随呕吐、腹泻、发热感或不吃", weight: 2, redFlag: true, claims: ["leth_009", "leth_010", "leth_011"] },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
   {
@@ -153,13 +172,13 @@ const eatFlow: TriageQuestion[] = [
     hint: "可多选 —— 它真的接触到的才勾;都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "人吃的药(止痛药、感冒药、保健品…)", weight: 2, redFlag: true },
-      { label: "百合,或其它植物、鲜花(含花粉、插花的水)", weight: 2, redFlag: true },
-      { label: "灭鼠药、杀虫剂、防冻液等化学品", weight: 2, redFlag: true },
-      { label: "巧克力、洋葱大蒜、葡萄、木糖醇口香糖等", weight: 2, redFlag: true },
-      { label: "线、绳、丝带、橡皮筋这类细长东西", weight: 2, redFlag: true },
-      { label: "别的不该吃的东西(说不清,或不在上面)", weight: 2 },
-      { label: "其实没有,只是担心", weight: 0 },
+      { label: "人吃的药(止痛药、感冒药、保健品…)", weight: 2, redFlag: true, claims: ["tox_003", "tox_004"] },
+      { label: "百合,或其它植物、鲜花(含花粉、插花的水)", weight: 2, redFlag: true, claim: "tox_005" },
+      { label: "灭鼠药、杀虫剂、防冻液等化学品", weight: 2, redFlag: true, claims: ["tox_002", "tox_010"] },
+      { label: "巧克力、洋葱大蒜、葡萄、木糖醇口香糖等", weight: 2, redFlag: true, claims: ["tox_006", "tox_007", "tox_008"] },
+      { label: "线、绳、丝带、橡皮筋这类细长东西", weight: 2, redFlag: true, claim: "tox_011" },
+      { label: "别的不该吃的东西(说不清,或不在上面)", weight: 2, claims: ["tox_012", "tox_014"] },
+      { label: "其实没有,只是担心", weight: 0, exclusive: true },
     ],
   },
   {
@@ -168,12 +187,12 @@ const eatFlow: TriageQuestion[] = [
     hint: "可多选 —— 这些都建议立刻就医;都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "没精神、发蔫、反应迟钝", weight: 2, redFlag: true },
-      { label: "走路晃、站不稳,或发抖、抽搐", weight: 2, redFlag: true },
-      { label: "流口水变多,或突然呕吐、拉肚子", weight: 2, redFlag: true },
-      { label: "呼吸变快、变沉重,或张口喘", weight: 2, redFlag: true },
-      { label: "牙龈或舌头发白、发黄、发紫", weight: 2, redFlag: true },
-      { label: "都没有", weight: 0 },
+      { label: "没精神、发蔫、反应迟钝", weight: 2, redFlag: true, claims: ["tox_001", "emg_006"] },
+      { label: "走路晃、站不稳,或发抖、抽搐", weight: 2, redFlag: true, claims: ["tox_001", "emg_005"] },
+      { label: "流口水变多,或突然呕吐、拉肚子", weight: 2, redFlag: true, claim: "tox_001" },
+      { label: "呼吸变快、变沉重,或张口喘", weight: 2, redFlag: true, claims: ["tox_001", "emg_001"] },
+      { label: "牙龈或舌头发白、发黄、发紫", weight: 2, redFlag: true, claims: ["tox_001", "emg_009"] },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
 ];
@@ -185,9 +204,9 @@ const breathFlow: TriageQuestion[] = [
     id: "now",
     text: "它现在的呼吸,哪个最接近?",
     options: [
-      { label: "张着嘴喘、喘不上气,或呼吸很费力", redFlag: true },
-      { label: "比平时快,或感觉有点费劲", weight: 2 },
-      { label: "看着还算平稳,只是我觉得不太对", weight: 1 },
+      { label: "张着嘴喘、喘不上气,或呼吸很费力", redFlag: true, claims: ["bre_001", "bre_004", "emg_001"] },
+      { label: "比平时快,或感觉有点费劲", weight: 2, redFlag: true, claims: ["bre_002", "bre_003"] },
+      { label: "看着还算平稳,只是我觉得不太对", weight: 1, claim: "bre_007" },
     ],
   },
   {
@@ -196,11 +215,11 @@ const breathFlow: TriageQuestion[] = [
     hint: "可多选 —— 这些都建议立刻就医;都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "牙龈、舌头或鼻子发青、发紫", weight: 2, redFlag: true },
-      { label: "为了呼吸,蹲着伸脖子、肘部外撑、不肯趴下", weight: 2, redFlag: true },
-      { label: "肚子和胸口起伏得很用力、很明显", weight: 2, redFlag: true },
-      { label: "没力气、发蔫,或一直在咳", weight: 2, redFlag: true },
-      { label: "都没有", weight: 0 },
+      { label: "牙龈、舌头或鼻子发青、发紫", weight: 2, redFlag: true, claims: ["bre_004", "emg_001"] },
+      { label: "为了呼吸,蹲着伸脖子、肘部外撑、不肯趴下", weight: 2, redFlag: true, claims: ["bre_001", "bre_002"] },
+      { label: "肚子和胸口起伏得很用力、很明显", weight: 2, redFlag: true, claims: ["bre_001", "bre_002"] },
+      { label: "没力气、发蔫,或一直在咳", weight: 2, redFlag: true, claims: ["bre_005", "emg_006"] },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
   {
@@ -208,10 +227,17 @@ const breathFlow: TriageQuestion[] = [
     text: "趁它安静或睡着,数 30 秒呼吸、再乘 2 —— 大概多少?",
     hint: "胸口一起一伏算一次。安静时正常约每分钟 15–30 次。",
     options: [
-      { label: "30 次以内", weight: 0 },
-      { label: "超过 30 次", weight: 2, redFlag: true },
-      { label: "数不清,或它没法安静下来让我数", weight: 2 },
+      { label: "30 次以内", weight: 0, claim: "bre_007" },
+      { label: "超过 30 次", weight: 2, redFlag: true, claims: ["bre_001", "bre_004"] },
+      { label: "数不清,或它没法安静下来让我数", weight: 2, claim: "bre_001" },
     ],
+  },
+  {
+    id: "flags",
+    text: "有没有同时出现下面任何一个?",
+    hint: "可多选 —— 这些都建议立刻就医;都没有就选最后一项。",
+    multi: true,
+    options: RED_FLAG_OPTIONS,
   },
 ];
 
@@ -228,19 +254,20 @@ const bloodFlow: TriageQuestion[] = [
         label: "吐出来的血,或粪便、尿里带血,或粪便发黑发亮",
         weight: 2,
         redFlag: true,
+        claims: ["bld_012", "emg_003"],
       },
-      { label: "口、鼻里流血", weight: 2 },
-      { label: "身上有伤口在流血", weight: 1 },
-      { label: "皮下有瘀青、肿块,但没破皮", weight: 2 },
+      { label: "口、鼻里流血", weight: 2, claim: "bld_007" },
+      { label: "身上有伤口在流血", weight: 1, claims: ["bld_003", "bld_009"] },
+      { label: "皮下有瘀青、肿块,但没破皮", weight: 2, claim: "bld_010" },
     ],
   },
   {
     id: "much",
     text: "出血的情况,更像哪种?",
     options: [
-      { label: "量很大(像装满一咖啡杯了),或压了十几分钟还止不住", redFlag: true },
-      { label: "不算多,或已经止住了", weight: 1 },
-      { label: "我没看清、说不准", weight: 2 },
+      { label: "量很大(像装满一咖啡杯了),或压了十几分钟还止不住", redFlag: true, claims: ["bld_004", "emg_004"] },
+      { label: "不算多,或已经止住了", weight: 1, claim: "bld_003" },
+      { label: "我没看清、说不准", weight: 2, claim: "bld_004" },
     ],
   },
   {
@@ -249,11 +276,13 @@ const bloodFlow: TriageQuestion[] = [
     hint: "可多选 —— 这些都建议立刻就医;都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "牙龈发白、发紫", weight: 2, redFlag: true },
-      { label: "呼吸又快又浅,或没力气、站不稳", weight: 2, redFlag: true },
-      { label: "最近摔过、出过车祸,或和猫狗打过架", weight: 2, redFlag: true },
-      { label: "可能舔到、啃过灭鼠药", weight: 2, redFlag: true },
-      { label: "都没有", weight: 0 },
+      { label: "牙龈发白、发紫", weight: 2, redFlag: true, claims: ["bld_002", "emg_009"] },
+      { label: "呼吸又快又浅,或没力气、站不稳", weight: 2, redFlag: true, claims: ["bld_002", "emg_006"] },
+      { label: "最近摔过、出过车祸,或和猫狗打过架", weight: 2, redFlag: true, claim: "bld_006" },
+      { label: "可能舔到、啃过灭鼠药", weight: 2, redFlag: true, claims: ["bld_010", "bld_011", "emg_008"] },
+      { label: "肚子明显膨大、发硬(可能腹腔内出血)", weight: 2, redFlag: true, claims: ["bld_001", "bld_006"] },
+      { label: "身上扎着 / 插着异物(先别拔)", weight: 2, redFlag: true, claim: "bld_005" },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
 ];
@@ -266,9 +295,9 @@ const peeFlow: TriageQuestion[] = [
     text: "它进猫砂盆使劲之后,有没有尿出来?",
     hint: "这一点最关键 —— 完全尿不出可能是要命的急症,公猫尤其危险。",
     options: [
-      { label: "几乎尿不出,或只有几滴", redFlag: true },
-      { label: "尿得出,但比平时少、或次数变多", weight: 2 },
-      { label: "尿得出,但好像很不舒服,或带血", weight: 2 },
+      { label: "几乎尿不出,或只有几滴", redFlag: true, claims: ["uo_001", "uo_002"] },
+      { label: "尿得出,但比平时少、或次数变多", weight: 2, claims: ["uo_006", "uo_007"] },
+      { label: "尿得出,但好像很不舒服,或带血", weight: 2, claim: "uo_007" },
     ],
   },
   {
@@ -277,10 +306,11 @@ const peeFlow: TriageQuestion[] = [
     hint: "可多选 —— 这些都建议立刻就医;都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "在猫砂盆里嚎叫,或因疼痛大叫", weight: 2, redFlag: true },
-      { label: "没精神、不吃东西,或在呕吐", weight: 2, redFlag: true },
-      { label: "肚子绷得紧、一碰就疼,或不停舔屁股", weight: 2, redFlag: true },
-      { label: "都没有", weight: 0 },
+      { label: "在猫砂盆里嚎叫,或因疼痛大叫", weight: 2, redFlag: true, claim: "uo_003" },
+      { label: "没精神、不吃东西,或在呕吐", weight: 2, redFlag: true, claim: "uo_004" },
+      { label: "肚子绷得紧、一碰就疼,或不停舔屁股", weight: 2, redFlag: true, claims: ["uo_003", "uo_004"] },
+      { label: "它是公猫,而且这次尿费劲、尿量明显变少", weight: 2, redFlag: true, claim: "uo_005" },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
 ];
@@ -292,9 +322,9 @@ const noeatFlow: TriageQuestion[] = [
     id: "how",
     text: "它不吃的情况,更像哪种?",
     options: [
-      { label: "一口都不吃,水也不太喝", weight: 2 },
-      { label: "比平时吃得少很多,但还吃一点", weight: 2 },
-      { label: "只是不碰新换的粮,或某一种食物", weight: 1 },
+      { label: "一口都不吃,水也不太喝", weight: 2, claims: ["ano_001", "ano_005"] },
+      { label: "比平时吃得少很多,但还吃一点", weight: 2, claim: "ano_007" },
+      { label: "只是不碰新换的粮,或某一种食物", weight: 1, claims: ["ano_007", "ano_009"] },
     ],
   },
   {
@@ -302,10 +332,10 @@ const noeatFlow: TriageQuestion[] = [
     text: "它大概多久没好好吃东西了?",
     hint: "幼猫、和本来就不太吃的猫,饿太久很伤身体。",
     options: [
-      { label: "不到一天", weight: 1 },
-      { label: "一天到两天", weight: 2 },
-      { label: "超过两天", weight: 2, redFlag: true },
-      { label: "说不准,有一阵了", weight: 2 },
+      { label: "不到一天", weight: 1, claim: "ano_007" },
+      { label: "一天到两天", weight: 2, claim: "ano_001" },
+      { label: "超过两天", weight: 2, redFlag: true, claim: "ano_003" },
+      { label: "说不准,有一阵了", weight: 2, claims: ["ano_001", "ano_003"] },
     ],
   },
   {
@@ -314,15 +344,18 @@ const noeatFlow: TriageQuestion[] = [
     hint: "可多选 —— 这些都建议立刻就医;都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "没精神、发蔫,或躲起来不动", weight: 2, redFlag: true },
-      { label: "动一动就僵硬,或总睡在奇怪的地方", weight: 2, redFlag: true },
+      { label: "没精神、发蔫,或躲起来不动", weight: 2, redFlag: true, claims: ["ano_005", "emg_006"] },
+      { label: "动一动就僵硬,或总睡在奇怪的地方", weight: 2, redFlag: true, claim: "ano_005" },
       {
         label: "凑近食物又走开、咂嘴、流口水,或对着食物干呕",
         weight: 2,
         redFlag: true,
+        claim: "ano_006",
       },
-      { label: "也在吐,或在拉肚子", weight: 2, redFlag: true },
-      { label: "都没有", weight: 0 },
+      { label: "也在吐,或在拉肚子", weight: 2, redFlag: true, claim: "ano_005" },
+      { label: "很小的奶猫(还没断奶 / 一个多月大),已经半天左右没吃", weight: 2, redFlag: true, claim: "ano_002" },
+      { label: "它明显偏胖 / 超重(超重猫饿久了容易脂肪肝)", weight: 2, claim: "ano_004" },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
 ];
@@ -334,9 +367,9 @@ const diarrheaFlow: TriageQuestion[] = [
     id: "look",
     text: "它拉的便便,最接近哪种?",
     options: [
-      { label: "粪便发黑,或像柏油一样黑亮", weight: 2, redFlag: true },
-      { label: "很稀、像水,量大、次数也多", weight: 2 },
-      { label: "比平时软、不太成形,但不算严重", weight: 1 },
+      { label: "粪便发黑,或像柏油一样黑亮", weight: 2, redFlag: true, claim: "dia_006" },
+      { label: "很稀、像水,量大、次数也多", weight: 2, claims: ["dia_004", "dia_008"] },
+      { label: "比平时软、不太成形,但不算严重", weight: 1, claims: ["dia_001", "dia_002"] },
     ],
   },
   {
@@ -345,12 +378,14 @@ const diarrheaFlow: TriageQuestion[] = [
     hint: "可多选 —— 有这些都要让兽医尽快看;都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "便便里带血(红色血丝、血点)", weight: 2 },
-      { label: "也在吐,或反复吐个不停", weight: 2, redFlag: true },
-      { label: "没精神、发蔫,或不太吃东西", weight: 2, redFlag: true },
-      { label: "肚子一碰就叫、弓着背,或身上发烫", weight: 2, redFlag: true },
-      { label: "整个塌下去没力气,或嘴干、眼窝发陷", weight: 2, redFlag: true },
-      { label: "都没有", weight: 0 },
+      { label: "便便里带血(红色血丝、血点)", weight: 2, claim: "dia_006" },
+      { label: "便血量大、有血块,或反复血便", weight: 2, redFlag: true, claims: ["dia_004", "emg_003"] },
+      { label: "也在吐,或反复吐个不停", weight: 2, redFlag: true, claim: "dia_004" },
+      { label: "没精神、发蔫,或不太吃东西", weight: 2, redFlag: true, claims: ["dia_004", "dia_005"] },
+      { label: "肚子一碰就叫、弓着背,或身上发烫", weight: 2, redFlag: true, claim: "dia_005" },
+      { label: "整个塌下去没力气,或嘴干、眼窝发陷", weight: 2, redFlag: true, claims: ["dia_005", "emg_009"] },
+      { label: "很小的奶猫(一个多月大),在拉稀", weight: 2, claim: "dia_010" },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
   {
@@ -359,9 +394,9 @@ const diarrheaFlow: TriageQuestion[] = [
     hint: "幼猫拉久了,脱水会很快。",
     options: [
       { label: "今天才开始,或就几个小时", weight: 0 },
-      { label: "一两天", weight: 1 },
-      { label: "超过两天", weight: 2 },
-      { label: "说不准,反正有一阵了", weight: 2 },
+      { label: "一两天", weight: 1, claim: "dia_003" },
+      { label: "超过两天", weight: 2, claims: ["dia_003", "dia_007"] },
+      { label: "说不准,反正有一阵了", weight: 2, claim: "dia_007" },
     ],
   },
 ];
@@ -375,9 +410,9 @@ const sneezeFlow: TriageQuestion[] = [
     id: "freq",
     text: "它打喷嚏的情况,哪种最接近?",
     options: [
-      { label: "偶尔打一两个,平时正常", weight: 0 },
-      { label: "一阵一阵打,中间有缓解", weight: 1 },
-      { label: "一直在打,或一天打很多次", weight: 2 },
+      { label: "偶尔打一两个,平时正常", weight: 0, claims: ["uri_006", "uri_007"] },
+      { label: "一阵一阵打,中间有缓解", weight: 1, claim: "uri_002" },
+      { label: "一直在打,或一天打很多次", weight: 2, claim: "uri_002" },
     ],
   },
   {
@@ -386,23 +421,23 @@ const sneezeFlow: TriageQuestion[] = [
     hint: "可多选 —— 有些是急症;都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "流鼻涕、鼻子结鼻屎", weight: 1 },
-      { label: "眼睛红 / 流泪,或眼角有黄、绿色分泌物", weight: 2 },
-      { label: "鼻涕黄 / 绿 / 带血", weight: 2 },
-      { label: "嘴里有溃疡、流口水、不愿吃硬粮", weight: 2, redFlag: true },
-      { label: "明显不吃东西,或活动量明显减少", weight: 2, redFlag: true },
-      { label: "呼吸费力、张口喘", weight: 2, redFlag: true },
-      { label: "都没有", weight: 0 },
+      { label: "流鼻涕、鼻子结鼻屎", weight: 1, claim: "uri_002" },
+      { label: "眼睛红 / 流泪,或眼角有黄、绿色分泌物", weight: 2, claims: ["uri_002", "uri_008"] },
+      { label: "鼻涕黄 / 绿 / 带血", weight: 2, redFlag: true, claim: "uri_008" },
+      { label: "嘴里有溃疡、流口水、不愿吃硬粮", weight: 2, redFlag: true, claim: "uri_003" },
+      { label: "明显不吃东西,或活动量明显减少", weight: 2, redFlag: true, claims: ["uri_002", "uri_009"] },
+      { label: "呼吸费力、张口喘", weight: 2, redFlag: true, claims: ["uri_001", "emg_001"] },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
   {
     id: "since",
     text: "这样多久了?",
     options: [
-      { label: "今天才开始,或一两天", weight: 0 },
-      { label: "三五天", weight: 1 },
-      { label: "超过一周", weight: 2 },
-      { label: "时好时坏,反复出现(可能是 FHV 应激复发型)", weight: 2 },
+      { label: "今天才开始,或一两天", weight: 0, claim: "uri_007" },
+      { label: "三五天", weight: 1, claim: "uri_010" },
+      { label: "超过一周", weight: 2, claim: "uri_010" },
+      { label: "时好时坏,反复出现(可能是 FHV 应激复发型)", weight: 1, claim: "uri_011" },
     ],
   },
 ];
@@ -415,29 +450,30 @@ const earFlow: TriageQuestion[] = [
     id: "state",
     text: "它耳朵的情况,哪种最接近?",
     options: [
-      { label: "偶尔挠一下耳朵,平时正常", weight: 0 },
-      { label: "明显挠耳、甩头,耳里能看到一些东西", weight: 1 },
-      { label: "一直挠 / 甩头,耳里有明显分泌物或气味", weight: 2 },
+      { label: "偶尔挠一下耳朵,平时正常", weight: 0, claim: "ear_007" },
+      { label: "明显挠耳、甩头,耳里能看到一些东西", weight: 1, claims: ["ear_001", "ear_004"] },
+      { label: "一直挠 / 甩头,耳里有明显分泌物或气味", weight: 2, claims: ["ear_001", "ear_004"] },
     ],
   },
   {
     id: "with",
     text: "除了挠耳 / 甩头,还有这些吗?",
-    hint: "可多选 —— 神经类信号是真急症;都没有就选最后一项。",
+    hint: "可多选 —— 红旗项建议立刻就医;都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "耳里有像咖啡渣的黑色分泌物", weight: 2 },
-      { label: "耳里黄 / 褐色分泌物,带臭味", weight: 2 },
-      { label: "耳廓突然肿胀、变厚(可能耳血肿)", weight: 2, redFlag: true },
-      { label: "头持续歪向一侧、走路转圈,或跳不上去了", weight: 2, redFlag: true },
-      { label: "眼球快速左右晃动", weight: 2, redFlag: true },
+      { label: "耳里有像咖啡渣的黑色分泌物", weight: 2, claim: "ear_001" },
+      { label: "耳里黄 / 褐色分泌物,带臭味", weight: 2, claims: ["ear_001", "ear_004"] },
+      { label: "耳廓突然肿胀、变厚(可能耳血肿)", weight: 2, redFlag: true, claims: ["ear_004", "ear_010"] },
+      { label: "头持续歪向一侧、走路转圈,或跳不上去了", weight: 2, redFlag: true, claims: ["ear_008", "ear_009"] },
+      { label: "眼球快速左右晃动", weight: 2, redFlag: true, claims: ["ear_008", "ear_009"] },
       {
         label: "嘴歪、眨不了眼、眼睑下垂、第三眼睑突出",
         weight: 2,
         redFlag: true,
+        claim: "ear_008",
       },
-      { label: "完全不让碰耳朵,或一碰就尖叫", weight: 2, redFlag: true },
-      { label: "都没有", weight: 0 },
+      { label: "完全不让碰耳朵,或一碰就尖叫", weight: 2, redFlag: true, claims: ["ear_004", "ear_010"] },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
   {
@@ -445,59 +481,74 @@ const earFlow: TriageQuestion[] = [
     text: "这样多久了?",
     options: [
       { label: "几天", weight: 0 },
-      { label: "一两周", weight: 1 },
-      { label: "超过两周,或时好时坏反复出现", weight: 2 },
+      { label: "一两周", weight: 1, claim: "ear_010" },
+      { label: "超过两周,或时好时坏反复出现", weight: 2, claim: "ear_010" },
     ],
   },
 ];
 
 // 皮肤问题专属流 —— 依据 docs/product/证据-cat-skin-皮肤问题.md(Cornell + Merck)。
-// 涵盖猫癣 / 跳蚤 / 过敏 / 过度梳理 / 自家伤口。Q2 里「家人皮肤也出现红痒圈」=
-// 红旗(强提示真菌癣 + 人感染);开放伤口流脓 / 精神差不吃也是红旗。
+// 涵盖猫癣 / 跳蚤 / 过敏 / 过度梳理 / 自家伤口。Q2 里「家人皮肤也出现红痒圈」
+// 是黄档人畜共患提示;开放伤口流脓 / 精神差不吃 / 幼猫蚤贫血风险才是红旗。
 const skinFlow: TriageQuestion[] = [
   {
     id: "look",
     text: "皮肤问题主要长什么样?",
     options: [
-      { label: "局部脱毛 + 皮屑、结痂、皮肤发红", weight: 2 },
-      { label: "全身大面积痒,一直挠或蹭家具", weight: 2 },
-      { label: "皮肤上有伤口、流脓、结痂", weight: 2 },
-      { label: "只是毛粗糙、皮屑多一点,没明显病灶", weight: 1 },
+      { label: "局部脱毛 + 皮屑、结痂、皮肤发红", weight: 2, claim: "skin_008" },
+      { label: "全身大面积痒,一直挠或蹭家具", weight: 2, claim: "skin_016" },
+      { label: "皮肤上有伤口、流脓、结痂", weight: 2, claims: ["skin_010", "skin_015"] },
+      { label: "只是毛粗糙、皮屑多一点,没明显病灶", weight: 1, claim: "skin_021" },
     ],
   },
   {
     id: "with",
     text: "除了皮肤本身,还有这些吗?",
-    hint: "可多选 —— 神经类信号是真急症;都没有就选最后一项。",
+    hint: "可多选 —— 红旗项建议立刻就医;都没有就选最后一项。",
     multi: true,
     options: [
       {
         label: "我自己 / 家人皮肤上也出现了红痒圈、脱皮",
         weight: 2,
-        redFlag: true,
+        claim: "skin_003",
       },
       {
         label: "毛根能看到跳蚤,或皮屑里有黑色小颗粒(跳蚤粪)",
         weight: 2,
+        claim: "skin_014",
       },
-      { label: "猫一直舔同一个地方,把毛舔秃了", weight: 2 },
-      { label: "皮肤变厚、变色、闻到异味", weight: 2 },
-      { label: "猫精神变差、不太吃东西", weight: 2, redFlag: true },
+      { label: "猫一直舔同一个地方,把毛舔秃了", weight: 2, claim: "skin_016" },
+      { label: "皮肤变厚、变色、闻到异味", weight: 2, claim: "skin_011" },
+      { label: "猫精神变差、不太吃东西", weight: 2, redFlag: true, claims: ["skin_004", "skin_017"] },
       {
         label: "有明显伤口在流血 / 流脓 / 红肿发热",
         weight: 2,
         redFlag: true,
+        claims: ["skin_010", "skin_015"],
       },
-      { label: "都没有", weight: 0 },
+      {
+        label: "疑似跳蚤,而且是很小的奶猫、已经很虚弱或牙龈发白(跳蚤会让小猫贫血)",
+        weight: 2,
+        redFlag: true,
+        claims: ["skin_014", "emg_009"],
+      },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
+  },
+  {
+    id: "flags",
+    text: "有没有同时出现下面任何一个?",
+    hint: "可多选 —— 这些都建议立刻就医;都没有就选最后一项。",
+    multi: true,
+    options: RED_FLAG_OPTIONS,
   },
   {
     id: "since",
     text: "这样多久了?",
     options: [
-      { label: "几天", weight: 0 },
-      { label: "一两周", weight: 1 },
-      { label: "超过两周,或反复出现", weight: 2 },
+      { label: "几天", weight: 0, claim: "skin_021" },
+      { label: "一两周", weight: 1, claim: "skin_021" },
+      { label: "超过两周,或反复出现", weight: 2, claim: "skin_021" },
     ],
   },
 ];
@@ -511,17 +562,19 @@ const eyeFlow: TriageQuestion[] = [
     id: "look",
     text: "眼睛主要长什么样?",
     options: [
-      { label: "只是流眼泪、眼角有点分泌物", weight: 1 },
-      { label: "眼睛红肿、分泌物变多", weight: 2 },
+      { label: "只是流眼泪、眼角有点分泌物", weight: 1, claims: ["eye_001", "eye_003"] },
+      { label: "眼睛红肿、分泌物变多", weight: 2, claim: "eye_001" },
       {
         label: "眯眼不睁、一直揉、对光线敏感",
         weight: 2,
         redFlag: true,
+        claims: ["eye_004", "eye_008"],
       },
       {
         label: "眼里看到白色雾状、白点、或异物",
         weight: 2,
         redFlag: true,
+        claims: ["eye_004", "eye_005"],
       },
     ],
   },
@@ -531,24 +584,27 @@ const eyeFlow: TriageQuestion[] = [
     hint: "可多选 —— 神经 / 外伤 / 视力相关都是真急症;都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "分泌物变黄、绿、脓性", weight: 2 },
+      { label: "分泌物变黄、绿、脓性", weight: 2, claims: ["eye_001", "eye_002"] },
       {
         label: "第三眼睑突出(眼内角白膜往外鼓盖住眼球)",
         weight: 2,
         redFlag: true,
+        claim: "eye_001",
       },
-      { label: "也在打喷嚏、流鼻涕", weight: 2 },
+      { label: "也在打喷嚏、流鼻涕", weight: 2, claims: ["eye_002", "eye_003"] },
       {
-        label: "刚被其它猫打过架,或撞到过东西",
+        label: "刚被打架 / 撞到,或被清洁剂、刺激性液体、异物溅进或进了眼睛",
         weight: 2,
         redFlag: true,
+        claims: ["eye_005", "eye_006"],
       },
       {
         label: "好像看不见(撞东西、对光不躲、走路不灵活)",
         weight: 2,
         redFlag: true,
+        claims: ["eye_004", "eye_005"],
       },
-      { label: "都没有", weight: 0 },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
   {
@@ -571,16 +627,18 @@ const mouthFlow: TriageQuestion[] = [
     id: "look",
     text: "口腔问题主要长什么样?",
     options: [
-      { label: "口臭、有点流口水", weight: 1 },
+      { label: "口臭、有点流口水", weight: 1, claim: "oral_004" },
       {
         label: "明显流口水 / 嘴边毛沾湿 / 单边咀嚼",
         weight: 2,
+        claim: "oral_004",
       },
-      { label: "嘴里看到溃疡、红肿、出血", weight: 2 },
+      { label: "嘴里看到溃疡、红肿、出血", weight: 2, claims: ["oral_004", "oral_005"] },
       {
         label: "看食物哆嗦、靠近又躲开、完全拒食",
         weight: 2,
         redFlag: true,
+        claims: ["oral_006", "oral_007"],
       },
     ],
   },
@@ -594,29 +652,40 @@ const mouthFlow: TriageQuestion[] = [
         label: "嘴里 / 舌头底下看到线、绳、丝带卡住",
         weight: 2,
         redFlag: true,
+        claim: "oral_010",
       },
       {
         label: "下颌或喉部出现肿块",
         weight: 2,
         redFlag: true,
+        claims: ["oral_012", "oral_021"],
       },
       {
         label: "嘴里有不愈合的伤口、肿瘤样东西、反复出血",
         weight: 2,
         redFlag: true,
+        claim: "oral_013",
       },
       {
         label: "刚被电线 / 化学品 / 烫水接触过嘴巴",
         weight: 2,
         redFlag: true,
+        claim: "oral_011",
       },
-      { label: "有牙齿松动 / 掉牙", weight: 2 },
-      { label: "也在打喷嚏 / 流鼻涕", weight: 2 },
+      { label: "有牙齿松动 / 掉牙", weight: 2, claims: ["oral_002", "oral_003", "oral_004"] },
+      { label: "也在打喷嚏 / 流鼻涕", weight: 2, claim: "oral_005" },
       {
         label: "幼猫(2-7 月)换牙期掉小乳牙、少量血(正常生理)",
         weight: 0,
+        claim: "oral_016",
       },
-      { label: "都没有", weight: 0 },
+      {
+        label: "突然大量流口水,而且没打疫苗 / 近期被流浪猫狗咬过抓过",
+        weight: 2,
+        redFlag: true,
+        claim: "oral_014",
+      },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
   {
@@ -624,8 +693,8 @@ const mouthFlow: TriageQuestion[] = [
     text: "这样多久了?",
     options: [
       { label: "几天", weight: 0 },
-      { label: "一两周", weight: 1 },
-      { label: "超过两周,或反复出现", weight: 2 },
+      { label: "一两周", weight: 1, claim: "oral_020" },
+      { label: "超过两周,或反复出现", weight: 2, claim: "oral_020" },
     ],
   },
 ];
@@ -639,12 +708,12 @@ const behaviorFlow: TriageQuestion[] = [
     id: "change",
     text: "行为变化主要是什么样?",
     options: [
-      { label: "稍微敏感、偶尔躲一下", weight: 1 },
-      { label: "突然变凶 / 攻击 / 咬人", weight: 2 },
-      { label: "突然躲起来不出门、不见人", weight: 2 },
-      { label: "突然半夜大叫 / 过度发声", weight: 2 },
-      { label: "突然乱尿 / 拉在猫砂盆外", weight: 2 },
-      { label: "突然不爱玩、对喜欢的东西没兴趣", weight: 2 },
+      { label: "稍微敏感、偶尔躲一下", weight: 1, claims: ["beh_001", "beh_013"] },
+      { label: "突然变凶 / 攻击 / 咬人", weight: 2, claim: "beh_002" },
+      { label: "突然躲起来不出门、不见人", weight: 2, claims: ["beh_001", "beh_013"] },
+      { label: "突然半夜大叫 / 过度发声", weight: 2, claims: ["beh_001", "beh_017"] },
+      { label: "突然乱尿 / 拉在猫砂盆外", weight: 2, claims: ["beh_004", "beh_015"] },
+      { label: "突然不爱玩、对喜欢的东西没兴趣", weight: 2, claims: ["beh_001", "beh_010"] },
     ],
   },
   {
@@ -657,25 +726,30 @@ const behaviorFlow: TriageQuestion[] = [
         label: "一碰它就嚎叫 / 攻击,像在保护某个部位",
         weight: 2,
         redFlag: true,
+        claims: ["beh_006", "beh_007"],
       },
       {
         label: "也开始不太吃东西、呕吐、或拉肚子",
         weight: 2,
         redFlag: true,
+        claim: "beh_008",
       },
       {
         label: "也开始流口水、张口喘、或瘫软",
         weight: 2,
         redFlag: true,
+        claims: ["beh_008", "emg_001", "emg_006"],
       },
       {
         label: "突然走路转圈、撞东西、像看不见",
         weight: 2,
         redFlag: true,
+        claims: ["beh_009", "emg_005", "emg_006"],
       },
       {
         label: "老年猫(> 10 岁):白天睡多、晚上叫、在家里走丢迷路",
         weight: 2,
+        claim: "beh_017",
       },
       {
         label: "母猫处于发情期(吼叫、在地上打滚、抬尾巴)",
@@ -684,17 +758,18 @@ const behaviorFlow: TriageQuestion[] = [
       {
         label: "最近有大变化:搬家 / 新成员 / 装修 / 新猫狗",
         weight: 1,
+        claim: "beh_013",
       },
-      { label: "都没有,只是行为有变", weight: 0 },
+      { label: "都没有,只是行为有变", weight: 0, exclusive: true },
     ],
   },
   {
     id: "since",
     text: "这样多久了?",
     options: [
-      { label: "刚一两天", weight: 0 },
-      { label: "一两周", weight: 1 },
-      { label: "超过两周持续,或反复出现", weight: 2 },
+      { label: "刚一两天", weight: 0, claim: "beh_013" },
+      { label: "一两周", weight: 1, claim: "beh_015" },
+      { label: "超过两周持续,或反复出现", weight: 2, claim: "beh_015" },
     ],
   },
 ];
@@ -708,17 +783,19 @@ const limpFlow: TriageQuestion[] = [
     id: "state",
     text: "走路问题主要是什么样?",
     options: [
-      { label: "偶尔一瘸一拐,过一会就好", weight: 1 },
-      { label: "持续一瘸一拐,某条腿不太敢用", weight: 2 },
-      { label: "完全不能用某条腿,提着走", weight: 2 },
+      { label: "偶尔一瘸一拐,过一会就好", weight: 1, claim: "limp_014" },
+      { label: "持续一瘸一拐,某条腿不太敢用", weight: 2, claim: "limp_002" },
+      { label: "完全不能用某条腿,提着走", weight: 2, redFlag: true, claim: "limp_004" },
       {
         label: "突然后腿瘫软 + 大叫 + 后腿冰凉(可能动脉血栓)",
         weight: 2,
         redFlag: true,
+        claims: ["limp_010", "limp_011", "emg_010"],
       },
       {
         label: "跳不上以前能跳的地方、犹豫上下台阶",
         weight: 2,
+        claim: "limp_005",
       },
     ],
   },
@@ -732,35 +809,39 @@ const limpFlow: TriageQuestion[] = [
         label: "腿部肿胀、有开放伤口、或明显畸形",
         weight: 2,
         redFlag: true,
+        claims: ["limp_003", "limp_004"],
       },
       {
         label: "刚摔过 / 出过车祸 / 被打架过",
         weight: 2,
         redFlag: true,
+        claim: "limp_012",
       },
-      { label: "一碰那条腿就嚎叫 / 攻击", weight: 2 },
+      { label: "一碰那条腿就嚎叫 / 攻击", weight: 2, claims: ["limp_006", "limp_007"] },
       {
         label: "也在发热 / 不吃 / 明显萎靡",
         weight: 2,
         redFlag: true,
+        claims: ["limp_006", "limp_007"],
       },
-      { label: "肉垫里看到刺、玻璃、异物", weight: 2 },
-      { label: "脚指甲断了、流血、嵌入肉垫", weight: 2 },
+      { label: "肉垫里看到刺、玻璃、异物", weight: 2, claim: "limp_009" },
+      { label: "脚指甲断了、流血、嵌入肉垫", weight: 2, claim: "limp_009" },
       {
         label: "老年猫(> 10 岁):最近躲在低处、不爱上下跳",
         weight: 2,
+        claim: "limp_005",
       },
-      { label: "幼猫,疯玩后偶尔瘸一下", weight: 1 },
-      { label: "都没有", weight: 0 },
+      { label: "幼猫,疯玩后偶尔瘸一下", weight: 1, claim: "limp_014" },
+      { label: "都没有", weight: 0, exclusive: true },
     ],
   },
   {
     id: "since",
     text: "这样多久了?",
     options: [
-      { label: "今天才开始,或一两天", weight: 0 },
-      { label: "几天到一周", weight: 1 },
-      { label: "超过一周持续,或反复出现", weight: 2 },
+      { label: "今天才开始,或一两天", weight: 0, claim: "limp_014" },
+      { label: "几天到一周", weight: 1, claims: ["limp_002", "limp_014"] },
+      { label: "超过一周持续,或反复出现", weight: 2, claim: "limp_002" },
     ],
   },
 ];
