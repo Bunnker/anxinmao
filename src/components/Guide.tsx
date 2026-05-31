@@ -22,9 +22,9 @@ function GuideCat({ variant }: { variant: number }) {
       src={CAT_SRC[variant] ?? CAT_SRC[0]}
       alt=""
       aria-hidden="true"
-      width={140}
-      height={140}
-      className="h-[140px] w-[140px] object-contain drop-shadow-[0_8px_16px_rgba(60,40,20,0.12)]"
+      width={150}
+      height={150}
+      className="h-[150px] w-[150px] object-contain"
     />
   );
 }
@@ -66,7 +66,8 @@ export function Guide({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-paper"
+      className="fixed inset-0 z-50"
+      style={{ background: "#faf1e1" }}
       role="dialog"
       aria-modal="true"
       aria-label="安心猫使用教程"
