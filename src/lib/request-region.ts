@@ -44,16 +44,15 @@ function regionFromBody(body: Record<string, unknown>): UserRegionContext | null
       : {};
   const locale = cleanText(nested.locale ?? body.locale, 40);
   const timeZone = cleanText(nested.timeZone ?? body.timeZone, 80);
+  const nestedExplicit =
+    nested.source === "explicit" || nested.userSelected === true
+      ? nested.countryCode ?? nested.country
+      : undefined;
   const explicit = countryCode(
-    nested.countryCode ?? nested.country ?? body.countryCode ?? body.country,
+    nestedExplicit ?? body.countryCode ?? body.country,
   );
   if (explicit) return { countryCode: explicit, source: "explicit", locale, timeZone };
 
-  const fromLocale = localeCountry(locale);
-  if (fromLocale) return { countryCode: fromLocale, source: "locale", locale, timeZone };
-  if (timeZone === "Asia/Shanghai") {
-    return { countryCode: "CN", source: "locale", locale, timeZone };
-  }
   return locale || timeZone ? { source: "unknown", locale, timeZone } : null;
 }
 
@@ -86,6 +85,25 @@ export function userRegionFromRequest(
       source: "header",
       locale: fromBody?.locale,
       timeZone: fromBody?.timeZone,
+    };
+  }
+
+  const fromLocale = localeCountry(fromBody?.locale);
+  if (fromLocale) {
+    return {
+      countryCode: fromLocale,
+      source: "locale",
+      locale: fromBody?.locale,
+      timeZone: fromBody?.timeZone,
+    };
+  }
+
+  if (fromBody?.timeZone === "Asia/Shanghai") {
+    return {
+      countryCode: "CN",
+      source: "locale",
+      locale: fromBody.locale,
+      timeZone: fromBody.timeZone,
     };
   }
 

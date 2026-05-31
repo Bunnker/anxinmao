@@ -44,6 +44,21 @@ const CASES = [
     expectProductBoundary: true,
   },
   {
+    name: "口腔处理建议不误触商品",
+    content: "猫牙龈红肿怎么处理,推荐怎么办?",
+    expect: ["cat-oral-problem"],
+    expectNoProductBoundary: true,
+  },
+  {
+    name: "地区以 IP Header 优先",
+    content: "推荐一下猫牙膏牙刷",
+    expect: ["cat-oral-problem"],
+    expectProductBoundary: true,
+    region: { locale: "en-US", timeZone: "America/New_York" },
+    headers: { "x-vercel-ip-country": "CN" },
+    expectRegionPreview: ["detected_country: CN", "source: header"],
+  },
+  {
     name: "口腔隐藏疼痛",
     content: "猫吃饭时总掉食,牙齿咯咯响,还用爪子抓嘴,下巴有点肿",
     expect: ["cat-oral-problem"],
@@ -56,15 +71,15 @@ const CASES = [
   },
 ];
 
-async function postDryRun(content) {
+async function postDryRun(c) {
   const res = await fetch(`${BASE}/api/behavior`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(c.headers ?? {}) },
     body: JSON.stringify({
       messages: [
         {
           role: "user",
-          content,
+          content: c.content,
         },
       ],
       cat: {
@@ -75,7 +90,7 @@ async function postDryRun(content) {
         neutered: "否",
       },
       dryRun: true,
-      region: { countryCode: "CN", locale: "zh-CN", timeZone: "Asia/Shanghai" },
+      region: c.region ?? { countryCode: "CN", locale: "zh-CN", timeZone: "Asia/Shanghai" },
     }),
   });
   const data = await res.json().catch(() => ({}));
@@ -140,6 +155,23 @@ function assertCase(c, data) {
       fail(`${c.name}: 商品边界没有覆盖直接推荐/地区核验/疼痛刷牙边界`, boundary);
     }
   }
+
+  if (c.expectNoProductBoundary && (data.productBoundaryPreview ?? "")) {
+    fail(`${c.name}: 普通处理建议不应触发商品边界`, data.productBoundaryPreview);
+  }
+
+  if (c.expectNoProductBoundary && web.query?.includes("VOHC accepted products")) {
+    fail(`${c.name}: 普通处理建议不应触发 VOHC 商品搜索`, web.query);
+  }
+
+  if (c.expectRegionPreview) {
+    const region = data.regionPreview ?? "";
+    for (const expected of c.expectRegionPreview) {
+      if (!region.includes(expected)) {
+        fail(`${c.name}: 地区预览缺少 ${expected}`, region);
+      }
+    }
+  }
 }
 
 async function main() {
@@ -148,7 +180,7 @@ async function main() {
   console.log("模式:dryRun(不调用大模型,不消耗额度;不实际联网)\n");
 
   for (const c of CASES) {
-    const data = await postDryRun(c.content);
+    const data = await postDryRun(c);
     assertCase(c, data);
   }
 

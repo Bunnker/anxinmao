@@ -156,7 +156,7 @@ function queryTerms(query: string): string[] {
 }
 
 function isProductQuery(query: string): boolean {
-  return /牌子|品牌|推荐|买|购买|哪里|牙膏|牙刷|洁齿|漱口|喷剂|凝胶|用品|产品/.test(
+  return /牌子|品牌|哪款|买|购买|哪里|牙膏|牙刷|洁齿|漱口|喷剂|凝胶|用品|产品/.test(
     query,
   );
 }

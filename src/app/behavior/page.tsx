@@ -35,9 +35,7 @@ function clientRegionPayload() {
   if (typeof navigator === "undefined") return undefined;
   const locale = navigator.language;
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const countryCode = locale?.split(/[-_]/)[1]?.toUpperCase();
   return {
-    countryCode: /^[A-Z]{2}$/.test(countryCode ?? "") ? countryCode : undefined,
     locale,
     timeZone,
   };
