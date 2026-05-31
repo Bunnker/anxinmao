@@ -127,6 +127,9 @@ async function main() {
 
   // 2. claim 注解校验。
   const src = await readFile(TRIAGE_FILE, "utf8");
+  if (/label:\s*["'`]牙齿发黄、黄棕色牙垢 \/ 牙结石["'`]\s*,\s*weight:\s*1/.test(src)) {
+    errors.push("mouthFlow 把轻微牙黄和硬黄棕牙结石合并成 weight=1;硬牙结石应单独 weight=2 以保持 yellow");
+  }
   const blocks = parseBlocks(src);
   let annotated = 0;
   const perSymptom = {};

@@ -628,7 +628,8 @@ const mouthFlow: TriageQuestion[] = [
     text: "口腔问题主要长什么样?",
     options: [
       { label: "口臭、有点流口水", weight: 1, claim: "oral_004" },
-      { label: "牙齿发黄、黄棕色牙垢 / 牙结石", weight: 1, claim: "oral_025" },
+      { label: "牙齿只是轻微发黄 / 软垢", weight: 1, claim: "oral_025" },
+      { label: "硬的黄棕色牙垢 / 牙结石", weight: 2, claim: "oral_025" },
       {
         label: "明显流口水 / 嘴边毛沾湿 / 单边咀嚼",
         weight: 2,
