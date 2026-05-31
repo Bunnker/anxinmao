@@ -104,8 +104,26 @@ async function loadLocalDocs(): Promise<LocalDoc[]> {
 function queryTerms(query: string): string[] {
   const q = query.toLowerCase();
   const terms = new Set<string>();
-  for (const token of q.match(/[a-z0-9_]{2,}|[\u4e00-\u9fff]{1,4}/g) ?? []) {
-    if (token.length > 1 || /[\u4e00-\u9fff]/.test(token)) terms.add(token);
+  const stopwords = new Set([
+    "猫",
+    "它",
+    "这",
+    "那",
+    "要",
+    "吗",
+    "的",
+    "了",
+    "和",
+    "是",
+    "有",
+    "没",
+    "我",
+    "怎么",
+    "需要",
+    "可以",
+  ]);
+  for (const token of q.match(/[a-z0-9_]{2,}|[\u4e00-\u9fff]{2,8}/g) ?? []) {
+    if (!stopwords.has(token)) terms.add(token);
   }
 
   const expansions: [RegExp, string[]][] = [
@@ -115,8 +133,10 @@ function queryTerms(query: string): string[] {
     [/拉稀|腹泻|软便|便血|黑便/, ["腹泻", "软便", "便血", "dia_", "diarrhea"]],
     [/不吃|食欲|厌食|拒食/, ["不吃", "食欲", "厌食", "ano_", "anorexia"]],
     [/打喷嚏|鼻涕|流鼻|上呼吸|感冒/, ["打喷嚏", "鼻涕", "uri_", "respiratory"]],
-    [/呼吸|喘|张口喘|咳|胸口/, ["呼吸", "张口喘", "bre_", "dyspnea"]],
-    [/百合|中毒|误食|巧克力|葡萄|洋葱|人药|药/, ["中毒", "误食", "tox_", "toxin", "poison"]],
+    [/耳朵|挠耳|甩头|咖啡渣|耳螨|外耳/, ["耳朵", "挠耳", "甩头", "咖啡渣", "耳螨", "ear_"]],
+    [/眼睛|流泪|眼泪|分泌物|结膜|眯眼/, ["眼睛", "流泪", "分泌物", "eye_"]],
+    [/呼吸|喘|张口喘|急诊|咳|胸口/, ["呼吸", "张口喘", "bre_", "dyspnea", "cat-emergency-red-flags", "emg_"]],
+    [/百合|中毒|误食|巧克力|葡萄|洋葱|人药|药|花粉/, ["中毒", "误食", "百合", "tox_", "toxin", "poison", "cat-emergency-red-flags", "emg_"]],
     [/疫苗|免疫|猫三联|狂犬/, ["疫苗", "免疫", "未免疫", "vaccine"]],
     [/驱虫|寄生虫|跳蚤|耳螨/, ["驱虫", "寄生虫", "跳蚤", "耳螨", "parasite"]],
   ];
@@ -159,6 +179,12 @@ function scoreDoc(doc: LocalDoc, terms: string[], input: AgentRetrievalInput): n
   }
   const hint = cardHint(input.symptom);
   if (hint && doc.path.includes(hint)) score += 24;
+  if (
+    terms.includes("cat-emergency-red-flags") &&
+    doc.path.includes("cat-emergency-red-flags")
+  ) {
+    score += 40;
+  }
   for (const claim of input.claimIds ?? []) {
     if (doc.text.includes(claim)) score += 18;
   }
