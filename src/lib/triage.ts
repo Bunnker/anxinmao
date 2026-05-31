@@ -80,8 +80,8 @@ const vomitFlow: TriageQuestion[] = [
     hint: "可多选,都没有就选最后一项。",
     multi: true,
     options: [
-      { label: "没什么精神 / 很萎靡", weight: 2, redFlag: true, claim: "vom_005" },
-      { label: "不吃东西", weight: 2, redFlag: true, claim: "vom_005" },
+      { label: "没什么精神 / 很萎靡", weight: 2, claim: "vom_005" },
+      { label: "不吃东西", weight: 2, claim: "vom_005" },
       { label: "呕吐物里带血", weight: 2, redFlag: true, claims: ["vom_005", "emg_003"] },
       { label: "肚子鼓胀,或一碰就叫", weight: 2, redFlag: true, claims: ["vom_005", "vom_006"] },
       { label: "也在拉肚子", weight: 1, claim: "vom_007" },
@@ -345,11 +345,10 @@ const noeatFlow: TriageQuestion[] = [
     multi: true,
     options: [
       { label: "没精神、发蔫,或躲起来不动", weight: 2, redFlag: true, claims: ["ano_005", "emg_006"] },
-      { label: "动一动就僵硬,或总睡在奇怪的地方", weight: 2, redFlag: true, claim: "ano_005" },
+      { label: "动一动就僵硬,或总睡在奇怪的地方", weight: 2, claim: "ano_005" },
       {
         label: "凑近食物又走开、咂嘴、流口水,或对着食物干呕",
         weight: 2,
-        redFlag: true,
         claim: "ano_006",
       },
       { label: "也在吐,或在拉肚子", weight: 2, redFlag: true, claim: "ano_005" },
@@ -381,7 +380,7 @@ const diarrheaFlow: TriageQuestion[] = [
       { label: "便便里带血(红色血丝、血点)", weight: 2, claim: "dia_006" },
       { label: "便血量大、有血块,或反复血便", weight: 2, redFlag: true, claims: ["dia_004", "emg_003"] },
       { label: "也在吐,或反复吐个不停", weight: 2, redFlag: true, claim: "dia_004" },
-      { label: "没精神、发蔫,或不太吃东西", weight: 2, redFlag: true, claims: ["dia_004", "dia_005"] },
+      { label: "没精神、发蔫,或不太吃东西", weight: 2, claims: ["dia_004", "dia_005"] },
       { label: "肚子一碰就叫、弓着背,或身上发烫", weight: 2, redFlag: true, claim: "dia_005" },
       { label: "整个塌下去没力气,或嘴干、眼窝发陷", weight: 2, redFlag: true, claims: ["dia_005", "emg_009"] },
       { label: "很小的奶猫(一个多月大),在拉稀", weight: 2, claim: "dia_010" },
@@ -423,7 +422,7 @@ const sneezeFlow: TriageQuestion[] = [
     options: [
       { label: "流鼻涕、鼻子结鼻屎", weight: 1, claim: "uri_002" },
       { label: "眼睛红 / 流泪,或眼角有黄、绿色分泌物", weight: 2, claims: ["uri_002", "uri_008"] },
-      { label: "鼻涕黄 / 绿 / 带血", weight: 2, redFlag: true, claim: "uri_008" },
+      { label: "鼻涕黄 / 绿 / 带血", weight: 2, claim: "uri_008" },
       { label: "嘴里有溃疡、流口水、不愿吃硬粮", weight: 2, redFlag: true, claim: "uri_003" },
       { label: "明显不吃东西,或活动量明显减少", weight: 2, redFlag: true, claims: ["uri_002", "uri_009"] },
       { label: "呼吸费力、张口喘", weight: 2, redFlag: true, claims: ["uri_001", "emg_001"] },
@@ -618,9 +617,10 @@ const eyeFlow: TriageQuestion[] = [
   },
 ];
 
-// 口腔问题专属流 —— 依据 docs/product/证据-cat-mouth-口腔问题.md(Cornell + Merck)。
-// 重点:50-90% 4 岁+ 猫有牙病;严重 FCGS 唯一有效治疗是拔牙;舌下线异物 / 颌下
-// 肿块 / 烫伤电伤 / 可疑肿瘤 / 看食物哆嗦拒食(FCGS 严重疼痛信号)都是红旗。
+// 口腔问题专属流 —— 依据 docs/medical/source/cat-oral-problem.source.md。
+// 重点:50-90% 4 岁+ 猫有牙病;严重 FCGS/牙吸收/牙周病常被藏起来;
+// 舌下线异物 / 颌下肿块 / 烫伤电伤 / 可疑肿瘤 / 面部下巴肿胀流脓 /
+// 看食物哆嗦拒食(FCGS 严重疼痛信号)都是红旗或当天就医信号。
 // 幼猫换牙期掉小乳牙、少量血是正常生理过程,不必慌。
 const mouthFlow: TriageQuestion[] = [
   {
@@ -628,10 +628,22 @@ const mouthFlow: TriageQuestion[] = [
     text: "口腔问题主要长什么样?",
     options: [
       { label: "口臭、有点流口水", weight: 1, claim: "oral_004" },
+      { label: "牙齿发黄、黄棕色牙垢 / 牙结石", weight: 1, claim: "oral_025" },
       {
         label: "明显流口水 / 嘴边毛沾湿 / 单边咀嚼",
         weight: 2,
         claim: "oral_004",
+      },
+      {
+        label: "抓嘴、甩头、牙齿咯咯响 / 下巴抖、吃饭掉出来",
+        weight: 2,
+        claim: "oral_029",
+      },
+      {
+        label: "张嘴、打哈欠或叼食时会叫 / 跳开",
+        weight: 2,
+        redFlag: true,
+        claims: ["oral_032", "oral_007"],
       },
       { label: "嘴里看到溃疡、红肿、出血", weight: 2, claims: ["oral_004", "oral_005"] },
       {
@@ -673,6 +685,27 @@ const mouthFlow: TriageQuestion[] = [
         claim: "oral_011",
       },
       { label: "有牙齿松动 / 掉牙", weight: 2, claims: ["oral_002", "oral_003", "oral_004"] },
+      {
+        label: "牙面有粉红小洞、缺损,或像牙缺了一块",
+        weight: 2,
+        claims: ["oral_030", "oral_003"],
+      },
+      {
+        label: "脸 / 眼下 / 下巴肿起来,或有流脓口",
+        weight: 2,
+        redFlag: true,
+        claim: "oral_031",
+      },
+      {
+        label: "嘴里有白色斑块 / 白膜,或舌头嘴巴像破了",
+        weight: 2,
+        claims: ["oral_033", "oral_005"],
+      },
+      {
+        label: "一直咂嘴、伸舌头,像口干,想吃又退开",
+        weight: 2,
+        claims: ["oral_034", "oral_020"],
+      },
       { label: "也在打喷嚏 / 流鼻涕", weight: 2, claim: "oral_005" },
       {
         label: "幼猫(2-7 月)换牙期掉小乳牙、少量血(正常生理)",

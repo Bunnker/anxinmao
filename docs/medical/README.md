@@ -81,6 +81,7 @@ docs/medical/
 - 分诊问答原文和报告摘要不放进 URL;用 `src/lib/triage-handoff.ts` 暂存在 `sessionStorage`,URL 只带短 `handoff` id。
 - 服务端 `src/lib/medical-knowledge.ts` 负责把 `symptom + claimIds` 映射回相关 `ai-cards/*.ai-card.md`,生成给 LLM 的资料库上下文。
 - 服务端 `src/lib/agent-retrieval.ts` 是受控 Agent 工具层:先用 `local_medical_recall` 从 `docs/medical` 召回本地资料;本地资料不足时,`authority_web_search` 只允许搜索白名单权威域名作为临时补充。
+- 服务端 `src/lib/request-region.ts` / `src/lib/product-boundary.ts` 负责地区化商品边界:IP 国家头、浏览器语言/时区或显式地区只作为弱信号;涉及品牌/购买时,地区用于购买核验,不是拒绝推荐理由。护理用品可基于 VOHC/Cornell/VCA 等专业来源直接给候选或选购标准;药品仍不得给商品名/剂量。
 - `/api/triage` 会直接读取这份上下文做追问 / 分级解释。
 - `/api/behavior` 支持可选 `medical: { symptom, tier, claimIds }`,用于从报告页或未来问诊入口带入同一份证据上下文。
 

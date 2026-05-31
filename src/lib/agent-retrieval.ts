@@ -5,6 +5,7 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
+import type { UserRegionContext } from "@/lib/request-region";
 import type { RiskTier } from "@/types/cat";
 
 const MEDICAL_ROOT = path.join(process.cwd(), "docs/medical");
@@ -13,6 +14,9 @@ const MAX_QUERY_CHARS = 240;
 const WEB_TIMEOUT_MS = 4500;
 
 export const AUTHORITY_WEB_DOMAINS = [
+  "vohc.org",
+  "aaha.org",
+  "wsava.org",
   "vet.cornell.edu",
   "merckvetmanual.com",
   "msdvetmanual.com",
@@ -58,6 +62,7 @@ export type AgentRetrievalInput = {
   claimIds?: string[];
   dryRun?: boolean;
   maxChars?: number;
+  region?: UserRegionContext;
 };
 
 export type AgentRetrievalContext = {
@@ -135,6 +140,10 @@ function queryTerms(query: string): string[] {
     [/打喷嚏|鼻涕|流鼻|上呼吸|感冒/, ["打喷嚏", "鼻涕", "uri_", "respiratory"]],
     [/耳朵|挠耳|甩头|咖啡渣|耳螨|外耳/, ["耳朵", "挠耳", "甩头", "咖啡渣", "耳螨", "ear_"]],
     [/眼睛|流泪|眼泪|分泌物|结膜|眯眼/, ["眼睛", "流泪", "分泌物", "eye_"]],
+    [
+      /牙|牙龈|牙齿|牙黄|牙膏|牙刷|刷牙|口腔|口臭|牙结石|流口水|抓嘴|挠嘴|掉食|牙齿打颤|下巴肿|脸肿|口水带血|白斑|白膜|咂嘴|伸舌|口干/,
+      ["牙龈", "牙齿", "牙膏", "牙刷", "刷牙", "口腔", "牙病", "牙结石", "口炎", "oral_"],
+    ],
     [/呼吸|喘|张口喘|急诊|咳|胸口/, ["呼吸", "张口喘", "bre_", "dyspnea", "cat-emergency-red-flags", "emg_"]],
     [/百合|中毒|误食|巧克力|葡萄|洋葱|人药|药|花粉/, ["中毒", "误食", "百合", "tox_", "toxin", "poison", "cat-emergency-red-flags", "emg_"]],
     [/疫苗|免疫|猫三联|狂犬/, ["疫苗", "免疫", "未免疫", "vaccine"]],
@@ -144,6 +153,16 @@ function queryTerms(query: string): string[] {
     if (pattern.test(q)) words.forEach((word) => terms.add(word.toLowerCase()));
   }
   return [...terms].slice(0, 40);
+}
+
+function isProductQuery(query: string): boolean {
+  return /牌子|品牌|推荐|买|购买|哪里|牙膏|牙刷|洁齿|漱口|喷剂|凝胶|用品|产品/.test(
+    query,
+  );
+}
+
+function isOralCareProductQuery(query: string): boolean {
+  return /牙|牙龈|牙齿|牙黄|牙膏|牙刷|刷牙|口腔|口臭|洁齿|牙结石|抓嘴|挠嘴|掉食|下巴肿|脸肿|白斑|白膜|咂嘴|口干/.test(query);
 }
 
 function cardHint(symptom?: string): string | undefined {
@@ -192,13 +211,38 @@ function scoreDoc(doc: LocalDoc, terms: string[], input: AgentRetrievalInput): n
   return score;
 }
 
-function excerptAround(text: string, terms: string[], maxChars: number): string {
-  const lower = text.toLowerCase();
-  const hit = terms
+function firstHit(lower: string, terms: string[]): number | undefined {
+  return terms
     .map((term) => lower.indexOf(term.toLowerCase()))
     .filter((i) => i >= 0)
     .sort((a, b) => a - b)[0];
-  const start = hit >= 0 ? Math.max(0, hit - Math.floor(maxChars / 3)) : 0;
+}
+
+function preferredExcerptTerms(input: AgentRetrievalInput): string[] {
+  if (isProductQuery(input.query) && isOralCareProductQuery(input.query)) {
+    return [
+      "product_recommendation_policy",
+      "examples_from_vohc",
+      "VOHC 猫用候选示例",
+      "oral_023",
+      "Healthymouth",
+      "Feline Greenies",
+      "Purina DentaLife",
+    ];
+  }
+  return [];
+}
+
+function excerptAround(
+  text: string,
+  terms: string[],
+  maxChars: number,
+  preferredTerms: string[] = [],
+): string {
+  const lower = text.toLowerCase();
+  const hit = firstHit(lower, preferredTerms) ?? firstHit(lower, terms);
+  const start =
+    typeof hit === "number" ? Math.max(0, hit - Math.floor(maxChars / 3)) : 0;
   const excerpt = text.slice(start, start + maxChars);
   return compact(`${start > 0 ? "..." : ""}${excerpt}${start + maxChars < text.length ? "..." : ""}`);
 }
@@ -208,6 +252,7 @@ export async function localMedicalRecall(
 ): Promise<AgentToolTrace> {
   const docs = await loadLocalDocs();
   const terms = queryTerms(input.query);
+  const preferredTerms = preferredExcerptTerms(input);
   const results = docs
     .map((doc) => ({
       doc,
@@ -220,7 +265,7 @@ export async function localMedicalRecall(
       path: doc.path,
       title: doc.title,
       score,
-      excerpt: excerptAround(doc.text, terms, 900),
+      excerpt: excerptAround(doc.text, terms, 900, preferredTerms),
     }));
 
   return {
@@ -232,10 +277,10 @@ export async function localMedicalRecall(
   };
 }
 
-function isAllowedAuthorityUrl(raw: string): boolean {
+function isAllowedAuthorityUrl(raw: string, domains = AUTHORITY_WEB_DOMAINS): boolean {
   try {
     const url = new URL(raw);
-    return AUTHORITY_WEB_DOMAINS.some(
+    return domains.some(
       (domain) => url.hostname === domain || url.hostname.endsWith(`.${domain}`),
     );
   } catch {
@@ -284,19 +329,62 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Respons
   }
 }
 
+function authoritySearchPlan(
+  input: AgentRetrievalInput,
+  needsProfessionalProductSource: boolean,
+): { domains: string[]; query: string } {
+  let domains = AUTHORITY_WEB_DOMAINS;
+  if (needsProfessionalProductSource) {
+    domains = [
+      "vohc.org",
+      "aaha.org",
+      "wsava.org",
+      "vet.cornell.edu",
+      "vcahospitals.com",
+      "merckvetmanual.com",
+      "msdvetmanual.com",
+      "ivdc.org.cn",
+      "moa.gov.cn",
+      "xmsyj.moa.gov.cn",
+    ];
+  } else if (input.region?.countryCode === "CN") {
+    const cnDomains = ["ivdc.org.cn", "moa.gov.cn", "xmsyj.moa.gov.cn"];
+    domains = [
+      ...cnDomains,
+      ...AUTHORITY_WEB_DOMAINS.filter((domain) => !cnDomains.includes(domain)),
+    ];
+  }
+
+  const productHint = needsProfessionalProductSource
+    ? " VOHC accepted products cats toothpaste toothbrush"
+    : "";
+  const regionHint = input.region?.countryCode === "CN" ? " 中国 国内" : "";
+  const siteClause = domains
+    .slice(0, 8)
+    .map((domain) => `site:${domain}`)
+    .join(" OR ");
+  return {
+    domains,
+    query: `${input.query.slice(0, MAX_QUERY_CHARS)}${regionHint}${productHint} cat veterinary ${siteClause}`,
+  };
+}
+
 async function authorityWebSearch(
   input: AgentRetrievalInput,
   localTrace: AgentToolTrace,
 ): Promise<AgentToolTrace> {
   const topScore = localTrace.results?.[0]?.score ?? 0;
+  const needsProfessionalProductSource =
+    isProductQuery(input.query) && isOralCareProductQuery(input.query);
+  const plan = authoritySearchPlan(input, needsProfessionalProductSource);
   const enabled = process.env.AUTHORITY_WEB_SEARCH !== "off";
   if (input.dryRun) {
     return {
       name: "authority_web_search",
       status: "skipped",
       reason: "dry_run_no_network",
-      allowedDomains: AUTHORITY_WEB_DOMAINS,
-      query: input.query.slice(0, MAX_QUERY_CHARS),
+      allowedDomains: plan.domains,
+      query: plan.query,
       results: [],
     };
   }
@@ -305,34 +393,30 @@ async function authorityWebSearch(
       name: "authority_web_search",
       status: "skipped",
       reason: "disabled_by_AUTHORITY_WEB_SEARCH=off",
-      allowedDomains: AUTHORITY_WEB_DOMAINS,
-      query: input.query.slice(0, MAX_QUERY_CHARS),
+      allowedDomains: plan.domains,
+      query: plan.query,
       results: [],
     };
   }
-  if (topScore >= 18) {
+  if (topScore >= 18 && !needsProfessionalProductSource) {
     return {
       name: "authority_web_search",
       status: "skipped",
       reason: "local_context_sufficient",
-      allowedDomains: AUTHORITY_WEB_DOMAINS,
-      query: input.query.slice(0, MAX_QUERY_CHARS),
+      allowedDomains: plan.domains,
+      query: plan.query,
       results: [],
     };
   }
 
   try {
-    const siteClause = AUTHORITY_WEB_DOMAINS.slice(0, 8)
-      .map((domain) => `site:${domain}`)
-      .join(" OR ");
-    const q = `${input.query.slice(0, MAX_QUERY_CHARS)} cat veterinary ${siteClause}`;
-    const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(q)}`;
+    const searchUrl = `https://duckduckgo.com/html/?q=${encodeURIComponent(plan.query)}`;
     const res = await fetchWithTimeout(searchUrl, WEB_TIMEOUT_MS);
     if (!res.ok) throw new Error(`search ${res.status}`);
     const html = await res.text();
     const links = [...html.matchAll(/<a[^>]+class="result__a"[^>]+href="([^"]+)"/g)]
       .map((match) => decodeDuckDuckGoHref(match[1] ?? ""))
-      .filter((url): url is string => !!url && isAllowedAuthorityUrl(url))
+      .filter((url): url is string => !!url && isAllowedAuthorityUrl(url, plan.domains))
       .filter((url, index, arr) => arr.indexOf(url) === index)
       .slice(0, 2);
 
@@ -354,9 +438,14 @@ async function authorityWebSearch(
     return {
       name: "authority_web_search",
       status: results.length > 0 ? "used" : "skipped",
-      reason: results.length > 0 ? "local_context_low_confidence" : "no_allowed_result",
-      allowedDomains: AUTHORITY_WEB_DOMAINS,
-      query: input.query.slice(0, MAX_QUERY_CHARS),
+      reason:
+        results.length > 0
+          ? needsProfessionalProductSource
+            ? "product_query_needs_professional_source"
+            : "local_context_low_confidence"
+          : "no_allowed_result",
+      allowedDomains: plan.domains,
+      query: plan.query,
       results,
     };
   } catch (e) {
@@ -364,8 +453,8 @@ async function authorityWebSearch(
       name: "authority_web_search",
       status: "failed",
       reason: e instanceof Error ? e.message.slice(0, 120) : "unknown_error",
-      allowedDomains: AUTHORITY_WEB_DOMAINS,
-      query: input.query.slice(0, MAX_QUERY_CHARS),
+      allowedDomains: plan.domains,
+      query: plan.query,
       results: [],
     };
   }

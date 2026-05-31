@@ -38,6 +38,17 @@ const CASES = [
     expect: ["cat-ear-problem"],
   },
   {
+    name: "口腔护理用品边界",
+    content: "小猫牙龈红肿,牙齿发黄,能不能用小猫牙膏牙刷刷牙?推荐什么牌子的牙膏牙刷?",
+    expect: ["cat-oral-problem"],
+    expectProductBoundary: true,
+  },
+  {
+    name: "口腔隐藏疼痛",
+    content: "猫吃饭时总掉食,牙齿咯咯响,还用爪子抓嘴,下巴有点肿",
+    expect: ["cat-oral-problem"],
+  },
+  {
     name: "幼猫喂养",
     content: "幼猫一天喂几次,每次喂多少?",
     expect: [],
@@ -64,6 +75,7 @@ async function postDryRun(content) {
         neutered: "否",
       },
       dryRun: true,
+      region: { countryCode: "CN", locale: "zh-CN", timeZone: "Asia/Shanghai" },
     }),
   });
   const data = await res.json().catch(() => ({}));
@@ -103,6 +115,30 @@ function assertCase(c, data) {
   }
   if (web.status !== "skipped") {
     fail(`${c.name}: dryRun 下 authority_web_search 不应实际联网`, JSON.stringify(web));
+  }
+
+  if (c.expectProductBoundary) {
+    const boundary = data.productBoundaryPreview ?? "";
+    if (!boundary.includes("detected_country: CN")) {
+      fail(`${c.name}: 缺少中国地区商品边界`, boundary);
+    }
+    if (!web.allowedDomains.includes("vohc.org")) {
+      fail(`${c.name}: 口腔用品问题没有纳入 VOHC 专业来源`, JSON.stringify(web));
+    }
+    if (!web.allowedDomains.includes("aaha.org") || !web.allowedDomains.includes("wsava.org")) {
+      fail(`${c.name}: 口腔用品问题没有纳入 AAHA/WSAVA 牙科来源`, JSON.stringify(web));
+    }
+    if (!preview.includes("VOHC") && !preview.includes("product_recommendation_policy")) {
+      fail(`${c.name}: 本地召回没有优先截到口腔护理产品依据`, preview);
+    }
+    if (
+      !boundary.includes("可以直接给候选品牌") ||
+      !boundary.includes("不是拒绝推荐的理由") ||
+      !boundary.includes("牙龈红肿") ||
+      !boundary.includes("先建议兽医检查")
+    ) {
+      fail(`${c.name}: 商品边界没有覆盖直接推荐/地区核验/疼痛刷牙边界`, boundary);
+    }
   }
 }
 

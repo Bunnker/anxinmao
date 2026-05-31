@@ -6,7 +6,11 @@ import { loadStore, seedTemplateStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
 import { Welcome } from "@/components/Welcome";
+import { Guide } from "@/components/Guide";
 import type { Cat, CatRecord } from "@/types/cat";
+
+// 新手教程「看过了」标记 —— 与猫档案分开,首次进入弹一次,首页可重开。
+const GUIDE_SEEN_KEY = "catTriage:guideSeen:v1";
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -86,6 +90,7 @@ export default function HomePage() {
   const [cat, setCat] = useState<Cat | null>(null);
   const [records, setRecords] = useState<CatRecord[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     const store = loadStore();
@@ -95,8 +100,23 @@ export default function HomePage() {
       setCat(active);
       setRecords(store.records.filter((r) => r.catId === active.id));
     }
+    // 首次进入(没看过教程)自动弹一次。
+    try {
+      if (!window.localStorage.getItem(GUIDE_SEEN_KEY)) setShowGuide(true);
+    } catch {
+      // localStorage 不可用就不弹,不影响主流程
+    }
     setLoaded(true);
   }, []);
+
+  function closeGuide() {
+    setShowGuide(false);
+    try {
+      window.localStorage.setItem(GUIDE_SEEN_KEY, "1");
+    } catch {
+      // 忽略
+    }
+  }
 
   // 用户在欢迎页选「先用默认模版逛逛」—— seed 中性「我的猫」,首页就地重渲染。
   function useTemplate() {
@@ -108,26 +128,45 @@ export default function HomePage() {
   // localStorage 仅客户端可读:首帧渲染空壳避免水合不一致。
   if (!loaded) return <main className="min-h-dvh" aria-hidden="true" />;
 
+  const guide = showGuide ? <Guide onClose={closeGuide} /> : null;
+
   // 无档案(新用户首次进入):欢迎页,不再直接甩进表单、不再 seed 豆豆。
-  if (!cat) return <Welcome onUseTemplate={useTemplate} />;
+  if (!cat)
+    return (
+      <>
+        {guide}
+        <Welcome onUseTemplate={useTemplate} />
+      </>
+    );
 
   const meta = [`${cat.ageMonths} 个月`, cat.sex, cat.coat, `${cat.weight} kg`]
     .filter(Boolean)
     .join(" · ");
 
   return (
-    <main
-      className="mx-auto flex min-h-dvh max-w-[430px] flex-col px-7 pb-7 pt-5"
-      style={{
-        background:
-          "linear-gradient(180deg, var(--surface) 0%, var(--paper) 58%)",
-      }}
-    >
+    <>
+      {guide}
+      <main
+        className="mx-auto flex min-h-dvh max-w-[430px] flex-col px-7 pb-7 pt-5"
+        style={{
+          background:
+            "linear-gradient(180deg, var(--surface) 0%, var(--paper) 58%)",
+        }}
+      >
       {/* 顶栏 */}
       <header className="flex items-center justify-between">
-        <span className="text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
-          {greeting()}
-        </span>
+        <div className="flex items-center gap-2.5">
+          <span className="text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+            {greeting()}
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowGuide(true)}
+            className="text-[11px] tracking-wide text-accent"
+          >
+            使用说明
+          </button>
+        </div>
         <Link href="/onboarding" aria-label={`${cat.name}的档案`}>
           <CatAvatar avatar={cat.avatar} name={cat.name} size={36} />
         </Link>
@@ -230,6 +269,7 @@ export default function HomePage() {
       </Link>
 
       <Disclaimer />
-    </main>
+      </main>
+    </>
   );
 }

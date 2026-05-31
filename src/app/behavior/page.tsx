@@ -31,6 +31,18 @@ type MedicalChatContext = {
   qa?: string; // 分诊问答记录(问了什么、用户答了什么)
 };
 
+function clientRegionPayload() {
+  if (typeof navigator === "undefined") return undefined;
+  const locale = navigator.language;
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const countryCode = locale?.split(/[-_]/)[1]?.toUpperCase();
+  return {
+    countryCode: /^[A-Z]{2}$/.test(countryCode ?? "") ? countryCode : undefined,
+    locale,
+    timeZone,
+  };
+}
+
 const STARTERS = [
   "猫一直打喷嚏,要紧吗?",
   "幼猫一天喂几次、喂多少?",
@@ -343,6 +355,7 @@ function BehaviorContent() {
           messages: msgs.slice(memoCount),
           memo,
           cat: catProfilePayload(cat),
+          region: clientRegionPayload(),
           medical: medicalContext,
         }),
       });

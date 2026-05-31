@@ -18,6 +18,8 @@
 | ASPCA / APCC | `aspca.org` | L1 | 中毒、家庭危险物、人药/植物/食物风险 | 中毒类主源。 |
 | AVMA | `avma.org` | L1 | 急症标准、行业政策、动物健康公共信息 | 适合通用急症、误食、政策边界。 |
 | Anicira | `anicira.org` | L3 | 通用急诊 10 信号、家庭自评、用户话术 | 非体系源,但急症清单很实用。 |
+| Veterinary Oral Health Council | `vohc.org` | L1-product | 口腔护理产品 plaque/tartar 控制背书、猫用产品候选 | 只证明按指示使用时的口腔护理有效性,不证明本地可买或能治疗当前牙龈红肿。 |
+| AAHA / WSAVA Dental Guidelines | `aaha.org` / `wsava.org` | L1 | 牙科基础医疗、全麻洁牙、牙片、居家刷牙边界 | 适合口腔问题和护理用品边界;产品候选仍以 VOHC 或兽医审核为准。 |
 
 ## 普及类辅助源
 
