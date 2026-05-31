@@ -877,6 +877,42 @@ export function hasRedFlag(q: TriageQuestion, selected: number[]): boolean {
   return selected.some((i) => q.options[i]?.redFlag === true);
 }
 
+function claimIdsOfOption(opt: TriageOption): string[] {
+  return [...(opt.claim ? [opt.claim] : []), ...(opt.claims ?? [])];
+}
+
+// 把用户已经选中的选项映射为医学资料库 claim_id,供报告页 / AI prompt 串起证据链。
+export function selectedClaimIds(flow: TriageFlow, answers: number[][]): string[] {
+  const seen = new Set<string>();
+  const ids: string[] = [];
+  flow.questions.forEach((q, i) => {
+    (answers[i] ?? []).forEach((optIdx) => {
+      const opt = q.options[optIdx];
+      if (!opt) return;
+      claimIdsOfOption(opt).forEach((id) => {
+        if (seen.has(id)) return;
+        seen.add(id);
+        ids.push(id);
+      });
+    });
+  });
+  return ids;
+}
+
+// 把这次分诊「问了什么、用户答了什么」整理成简短问答记录,喂给 AI 当上下文。
+// 只包含已作答的题(中途急停时自然只到答过的那几题)。
+export function triageTranscript(flow: TriageFlow, answers: number[][]): string {
+  const lines: string[] = [];
+  flow.questions.forEach((q, i) => {
+    const picked = (answers[i] ?? [])
+      .map((idx) => q.options[idx]?.label)
+      .filter((label): label is string => Boolean(label));
+    if (picked.length === 0) return;
+    lines.push(`问:${q.text} 答:${picked.join("、")}`);
+  });
+  return lines.join("\n");
+}
+
 // 偏急症的症状 —— 依据 v0.2 §2(呼吸异常 / 出血 / 尿不出均属急症)、
 // §1.3(不吃东西没有「放着不管」的安全区间)。这些症状即便每题都答得还行,
 // 判级也【不给绿档】—— 最轻也是黄(建议尽快就医)。

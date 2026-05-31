@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { loadStore } from "@/lib/storage";
+import { useSearchParams } from "next/navigation";
+import { loadStore, STORAGE_KEY } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
+import {
+  createTriageHandoffId,
+  loadTriageHandoff,
+  saveTriageHandoff,
+} from "@/lib/triage-handoff";
 import { Disclaimer } from "@/components/Disclaimer";
 import { UnreviewedNotice } from "@/components/UnreviewedNotice";
 import { CatAvatar } from "@/components/CatAvatar";
-import type { RiskTier } from "@/types/cat";
+import type { RiskTier, Store } from "@/types/cat";
 
 // ⚠️ 未经兽医审核 ——
 //   报告文案、护理步骤、升级清单依据 docs/product/分诊证据-草稿-v0.2.md
@@ -1226,26 +1232,64 @@ function Step({ n, text }: { n: number; text: string }) {
   );
 }
 
-export default function ReportPage() {
-  const [tier, setTier] = useState<RiskTier | null>(null);
-  const [symptom, setSymptom] = useState("");
-  const [catName, setCatName] = useState("它");
-  const [catAvatar, setCatAvatar] = useState<string | undefined>(undefined);
+let cachedStoreRaw: string | null | undefined;
+let cachedStore: Store | null = null;
 
-  useEffect(() => {
-    const p = new URLSearchParams(window.location.search);
-    const t = p.get("tier");
-    setTier(t === "red" || t === "yellow" || t === "green" ? t : "yellow");
-    setSymptom(p.get("symptom") ?? "");
-    const store = loadStore();
-    if (store) {
-      const cat = store.cats.find((c) => c.id === store.activeCatId) ?? store.cats[0];
-      if (cat?.name) setCatName(cat.name);
-      if (cat?.avatar) setCatAvatar(cat.avatar);
-    }
-  }, []);
+function subscribeStore(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", onStoreChange);
+  return () => window.removeEventListener("storage", onStoreChange);
+}
 
-  if (!tier) return <main className="min-h-dvh" aria-hidden="true" />;
+function getStoreSnapshot(): Store | null {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(STORAGE_KEY);
+  if (raw === cachedStoreRaw) return cachedStore;
+  cachedStoreRaw = raw;
+  cachedStore = loadStore();
+  return cachedStore;
+}
+
+function getServerStoreSnapshot(): Store | null {
+  return null;
+}
+
+function parseClaimIds(raw: string | null): string[] {
+  if (!raw) return [];
+  const seen = new Set<string>();
+  return raw
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => /^[a-z]+_\d{3}$/.test(id))
+    .filter((id) => {
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    })
+    .slice(0, 32);
+}
+
+function ReportContent() {
+  const searchParams = useSearchParams();
+  const store = useSyncExternalStore(
+    subscribeStore,
+    getStoreSnapshot,
+    getServerStoreSnapshot,
+  );
+  const tierParam = searchParams.get("tier");
+  const tier: RiskTier =
+    tierParam === "red" || tierParam === "yellow" || tierParam === "green"
+      ? tierParam
+      : "yellow";
+  const symptom = searchParams.get("symptom") ?? "";
+  const claimsParam = searchParams.get("claims");
+  const claimIds = useMemo(() => parseClaimIds(claimsParam), [claimsParam]);
+  const queryHandoffId = searchParams.get("handoff") ?? "";
+  const generatedHandoffId = useMemo(() => createTriageHandoffId(), []);
+  const handoffId = queryHandoffId || generatedHandoffId;
+  const cat = store?.cats.find((c) => c.id === store.activeCatId) ?? store?.cats[0];
+  const catName = cat?.name || "它";
+  const catAvatar = cat?.avatar;
 
   const group = GROUP_OF[symptom] ?? "general";
   const shownTier = resolveTier(group, tier);
@@ -1256,9 +1300,38 @@ export default function ReportPage() {
     .replace("{name}", catName)
     .replace("{symptom}", symptomLabel);
   const alarm = shownTier !== "green";
+  // 带给问诊的分诊结论摘要 —— 让 AI 知道刚才判了什么档、为什么,别从头重复问。
+  const reportSummary = [
+    `${info.badge} · ${symptomLabel}`,
+    info.headline,
+    info.why[0] ? `判断依据:${info.why[0]}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .slice(0, 300);
+  const askParams = new URLSearchParams({ tier: shownTier });
+  if (symptom) askParams.set("symptom", symptom);
+  if (claimIds.length > 0) askParams.set("claims", claimIds.join(","));
+  askParams.set("handoff", handoffId);
+  const askHref = `/behavior?${askParams.toString()}`;
+
+  function saveAskHandoff() {
+    const existing = loadTriageHandoff(handoffId);
+    saveTriageHandoff(handoffId, {
+      ...existing,
+      symptom,
+      tier: shownTier,
+      claimIds,
+      report: reportSummary,
+    });
+  }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col bg-paper px-7 pb-9 pt-3">
+    <main
+      className="mx-auto flex min-h-dvh max-w-[430px] flex-col bg-paper px-7 pb-9 pt-3"
+      data-medical-claim-count={claimIds.length}
+      data-medical-claim-ids={claimIds.length > 0 ? claimIds.join(",") : undefined}
+    >
       {/* 顶栏 —— 左上角的猫头像是「这是关于你家猫的报告」身份标识。
           护栏:这个位置是 docs/AI生成形象-实施说明.md §二 明确允许的「报告卡角落」。 */}
       <header className="flex items-center">
@@ -1321,6 +1394,17 @@ export default function ReportPage() {
       {/* 未经兽医审核 —— 产品诚实红线,紧跟分级结论,不可错过 */}
       <UnreviewedNotice className="mt-3" />
 
+      <Link
+        href={askHref}
+        onClick={saveAskHandoff}
+        className="mt-3 flex items-center justify-between rounded-2xl border border-[var(--line)] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink"
+      >
+        <span>继续补充问问</span>
+        <span className="text-ink-faint" aria-hidden="true">
+          →
+        </span>
+      </Link>
+
       {/* 现在做什么 */}
       <section className="mt-8">
         <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-faint">
@@ -1378,5 +1462,13 @@ export default function ReportPage() {
       <div className="flex-1" />
       <Disclaimer />
     </main>
+  );
+}
+
+export default function ReportPage() {
+  return (
+    <Suspense fallback={<main className="min-h-dvh" aria-hidden="true" />}>
+      <ReportContent />
+    </Suspense>
   );
 }

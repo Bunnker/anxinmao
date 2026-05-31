@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Disclaimer } from "@/components/Disclaimer";
 import {
   getFlow,
   decideTier,
   hasRedFlag,
+  selectedClaimIds,
+  triageTranscript,
   SYMPTOM_LABELS,
-  type TriageFlow,
 } from "@/lib/triage";
+import { createTriageHandoffId, saveTriageHandoff } from "@/lib/triage-handoff";
 import { loadStore, saveStore } from "@/lib/storage";
 import type { CatRecord, RiskTier } from "@/types/cat";
 
@@ -28,7 +30,7 @@ function CheckIcon() {
 }
 
 // 分诊完成时,把这次写进猫的历史记录(长期记忆 → 首页"最近")。
-function recordTriage(symptom: string, tier: RiskTier) {
+function recordTriage(symptom: string, tier: RiskTier, claimIds: string[]) {
   const store = loadStore();
   if (!store) return;
   const catId = store.activeCatId ?? store.cats[0]?.id;
@@ -45,24 +47,17 @@ function recordTriage(symptom: string, tier: RiskTier) {
     kind: "triage",
     symptom: label,
     tier,
+    ...(claimIds.length > 0 ? { claimIds } : {}),
     summary: `${label} · ${tierShort}`,
   };
   saveStore({ ...store, records: [rec, ...store.records] });
 }
 
-export default function TriagePage() {
+function TriageSession({ symptom }: { symptom: string }) {
   const router = useRouter();
-  const [flow, setFlow] = useState<TriageFlow | null>(null);
+  const flow = useMemo(() => getFlow(symptom), [symptom]);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[][]>([]);
-
-  useEffect(() => {
-    const symptom =
-      new URLSearchParams(window.location.search).get("symptom") ?? "other";
-    setFlow(getFlow(symptom));
-  }, []);
-
-  if (!flow) return <main className="min-h-dvh" aria-hidden="true" />;
 
   const total = flow.questions.length;
   const q = flow.questions[step];
@@ -97,9 +92,21 @@ export default function TriagePage() {
     });
   }
 
-  function toReport(tier: string) {
-    recordTriage(flow!.symptom, tier as RiskTier);
-    router.push(`/report?tier=${tier}&symptom=${flow!.symptom}`);
+  function toReport(tier: RiskTier) {
+    const claimIds = selectedClaimIds(flow, answers);
+    recordTriage(flow.symptom, tier, claimIds);
+    const params = new URLSearchParams({ tier, symptom: flow.symptom });
+    if (claimIds.length > 0) params.set("claims", claimIds.join(","));
+    const qa = triageTranscript(flow, answers).slice(0, 800);
+    const handoffId = createTriageHandoffId();
+    saveTriageHandoff(handoffId, {
+      symptom: flow.symptom,
+      tier,
+      claimIds,
+      qa,
+    });
+    params.set("handoff", handoffId);
+    router.push(`/report?${params.toString()}`);
   }
 
   function next() {
@@ -109,7 +116,7 @@ export default function TriagePage() {
       return;
     }
     if (isLast) {
-      toReport(decideTier(flow!, answers));
+      toReport(decideTier(flow, answers));
       return;
     }
     setStep(step + 1);
@@ -236,5 +243,19 @@ export default function TriagePage() {
 
       <Disclaimer />
     </main>
+  );
+}
+
+function TriageContent() {
+  const searchParams = useSearchParams();
+  const symptom = searchParams.get("symptom") ?? "other";
+  return <TriageSession key={symptom} symptom={symptom} />;
+}
+
+export default function TriagePage() {
+  return (
+    <Suspense fallback={<main className="min-h-dvh" aria-hidden="true" />}>
+      <TriageContent />
+    </Suspense>
   );
 }

@@ -74,6 +74,15 @@ docs/medical/
 
 抓取脚本会保存 `raw.html`/`raw.pdf`、`text.txt` 和 `meta.json`。如果本机有 `pdftotext`,PDF 会自动转为 `text.txt`。
 
+## 运行时接入
+
+- 分诊选项在 `src/lib/triage.ts` 里挂 `claim` / `claims`。
+- `selectedClaimIds()` 会把用户本次选择映射为去重后的 claim 列表,写入报告 URL 和本地 `CatRecord.claimIds`。
+- 分诊问答原文和报告摘要不放进 URL;用 `src/lib/triage-handoff.ts` 暂存在 `sessionStorage`,URL 只带短 `handoff` id。
+- 服务端 `src/lib/medical-knowledge.ts` 负责把 `symptom + claimIds` 映射回相关 `ai-cards/*.ai-card.md`,生成给 LLM 的资料库上下文。
+- `/api/triage` 会直接读取这份上下文做追问 / 分级解释。
+- `/api/behavior` 支持可选 `medical: { symptom, tier, claimIds }`,用于从报告页或未来问诊入口带入同一份证据上下文。
+
 ## 当前批次
 
 - 已生成 batch 1:通用红旗、上呼吸道/打喷嚏、尿道阻塞。

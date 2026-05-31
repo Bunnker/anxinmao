@@ -1,7 +1,7 @@
 // localStorage 持久化 —— MVP 不做数据库、不做登录,猫档案与历史存本地。
 import type { Cat, Store } from "@/types/cat";
 
-const STORAGE_KEY = "catTriage:v1";
+export const STORAGE_KEY = "catTriage:v1";
 
 export function loadStore(): Store | null {
   if (typeof window === "undefined") return null;

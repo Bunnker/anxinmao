@@ -1,17 +1,34 @@
 "use client";
 
-import { Fragment, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { loadStore } from "@/lib/storage";
+import { useRouter, useSearchParams } from "next/navigation";
+import { loadStore, STORAGE_KEY } from "@/lib/storage";
+import { SYMPTOM_LABELS } from "@/lib/triage";
+import { loadTriageHandoff } from "@/lib/triage-handoff";
 import { Disclaimer } from "@/components/Disclaimer";
-import type { Cat } from "@/types/cat";
+import type { Cat, RiskTier, Store } from "@/types/cat";
 
 // 问诊 / 养育问答 —— 对话式,接服务端 /api/behavior 调大模型。
 // 产品红线:可以聊健康,但绝不诊断 / 开药;红旗症状急停送医;每条健康回答带
 // 「不能替代兽医」。系统提示词强约束;页面留「去分诊」入口给结构化分诊兜底。
 
 type Msg = { role: "user" | "assistant"; content: string };
+type MedicalChatContext = {
+  symptom?: string;
+  tier?: RiskTier;
+  claimIds: string[];
+  report?: string; // 报告页带来的分诊结论摘要(档位 + 结论 + 判断依据)
+  qa?: string; // 分诊问答记录(问了什么、用户答了什么)
+};
 
 const STARTERS = [
   "猫一直打喷嚏,要紧吗?",
@@ -165,9 +182,108 @@ function EmptyState({
   );
 }
 
-export default function BehaviorPage() {
+// 分诊衔接条 —— 带着分诊上下文进来时显示,让用户感知到「接着刚才的分诊聊」。
+function ContextChip({ symptom, tier }: { symptom?: string; tier?: RiskTier }) {
+  const label = (symptom && SYMPTOM_LABELS[symptom]) || "这次情况";
+  const tierText =
+    tier === "red"
+      ? "红档 · 立刻就医"
+      : tier === "yellow"
+        ? "黄档 · 尽快就医"
+        : tier === "green"
+          ? "绿档 · 先观察"
+          : "";
+  return (
+    <div className="flex items-center gap-2 self-start rounded-full border border-[var(--line)] bg-[var(--surface-2)] px-3.5 py-1.5">
+      <span className="size-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+      <span className="text-[12px] text-ink-soft">
+        接着刚才的分诊:{label}
+        {tierText ? ` · ${tierText}` : ""}
+      </span>
+    </div>
+  );
+}
+
+let cachedStoreRaw: string | null | undefined;
+let cachedStore: Store | null | undefined;
+
+function subscribeStore(onStoreChange: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener("storage", onStoreChange);
+  return () => window.removeEventListener("storage", onStoreChange);
+}
+
+function getStoreSnapshot(): Store | null | undefined {
+  if (typeof window === "undefined") return undefined;
+  const raw = window.localStorage.getItem(STORAGE_KEY);
+  if (raw === cachedStoreRaw) return cachedStore;
+  cachedStoreRaw = raw;
+  cachedStore = loadStore();
+  return cachedStore;
+}
+
+function getServerStoreSnapshot(): Store | null | undefined {
+  return undefined;
+}
+
+function parseTier(raw: string | null): RiskTier | undefined {
+  return raw === "red" || raw === "yellow" || raw === "green" ? raw : undefined;
+}
+
+function parseClaimIds(raw: string | null): string[] {
+  if (!raw) return [];
+  const seen = new Set<string>();
+  return raw
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => /^[a-z]+_\d{3}$/.test(id))
+    .filter((id) => {
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    })
+    .slice(0, 32);
+}
+
+function medicalContextFromQuery(rawQuery: string): MedicalChatContext | undefined {
+  const params = new URLSearchParams(rawQuery);
+  const handoff = loadTriageHandoff(params.get("handoff"));
+  const symptom = params.get("symptom")?.trim() || handoff?.symptom;
+  const tier = parseTier(params.get("tier")) ?? handoff?.tier;
+  const claimIdsFromUrl = parseClaimIds(params.get("claims"));
+  const claimIds = claimIdsFromUrl.length > 0 ? claimIdsFromUrl : (handoff?.claimIds ?? []);
+  const report = handoff?.report?.trim().slice(0, 600) || undefined;
+  const qa = handoff?.qa?.trim().slice(0, 800) || undefined;
+  if (!symptom && !tier && claimIds.length === 0 && !report && !qa)
+    return undefined;
+  return { symptom, tier, claimIds, report, qa };
+}
+
+function openingText(ctx: MedicalChatContext): string {
+  const label = (ctx.symptom && SYMPTOM_LABELS[ctx.symptom]) || "这次情况";
+  if (ctx.tier === "red") {
+    return `我已经接上刚才「${label}」的红档分诊了。这个档位先别靠聊天拖时间,优先联系最近动物医院/急诊;你可以补充它现在呼吸、意识、出血或排尿的最新变化,我帮你整理路上要注意什么。`;
+  }
+  if (ctx.tier === "yellow") {
+    return `我已经接上刚才「${label}」的黄档分诊了。你可以继续补充最新变化,我会尽量不重复刚才问过的内容;最关键的是现在精神、吃喝、呼吸和排尿有没有变差。`;
+  }
+  return `我已经接上刚才「${label}」的分诊了。你可以继续补充最新变化,我会按刚才的回答接着判断;最关键的是现在精神、呼吸、吃喝和排尿是不是还正常。`;
+}
+
+function BehaviorContent() {
   const router = useRouter();
-  const [cat, setCat] = useState<Cat | null>(null);
+  const searchParams = useSearchParams();
+  const store = useSyncExternalStore(
+    subscribeStore,
+    getStoreSnapshot,
+    getServerStoreSnapshot,
+  );
+  const query = searchParams.toString();
+  const medicalContext = useMemo(() => medicalContextFromQuery(query), [query]);
+  const cat = useMemo<Cat | null>(() => {
+    if (!store || store.cats.length === 0) return null;
+    return store.cats.find((c) => c.id === store.activeCatId) ?? store.cats[0];
+  }, [store]);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -178,16 +294,11 @@ export default function BehaviorPage() {
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const store = loadStore();
     // 无档案:回首页(首页会显示欢迎页让用户选建档 / 默认模版)
-    if (!store || store.cats.length === 0) {
+    if (store === null || (store && store.cats.length === 0)) {
       router.replace("/");
-      return;
     }
-    const active =
-      store.cats.find((c) => c.id === store.activeCatId) ?? store.cats[0];
-    setCat(active ?? null);
-  }, [router]);
+  }, [router, store]);
 
   useEffect(() => {
     // 流式输出会频繁更新,用瞬时滚动,避免 smooth 抖动。
@@ -238,6 +349,7 @@ export default function BehaviorPage() {
                 neutered: cat.neutered,
               }
             : undefined,
+          medical: medicalContext,
         }),
       });
 
@@ -298,6 +410,9 @@ export default function BehaviorPage() {
 
   const empty = messages.length === 0;
 
+  if (store === undefined) return <main className="min-h-dvh" aria-hidden="true" />;
+  if (!cat) return <main className="min-h-dvh" aria-hidden="true" />;
+
   return (
     <main className="mx-auto flex h-dvh max-w-[430px] flex-col bg-paper">
       {/* 顶栏 */}
@@ -326,13 +441,26 @@ export default function BehaviorPage() {
       {/* 对话区 —— 独立滚动 */}
       <div className="flex-1 overflow-y-auto px-7">
         {empty ? (
-          <EmptyState
-            catName={cat?.name}
-            disabled={loading}
-            onPick={send}
-          />
+          medicalContext ? (
+            <div className="flex flex-col gap-5 pb-2 pt-4">
+              <ContextChip
+                symptom={medicalContext.symptom}
+                tier={medicalContext.tier}
+              />
+              <AssistantCard text={openingText(medicalContext)} />
+              <div ref={endRef} />
+            </div>
+          ) : (
+            <EmptyState catName={cat?.name} disabled={loading} onPick={send} />
+          )
         ) : (
           <div className="flex flex-col gap-5 pb-2 pt-4">
+            {medicalContext && (
+              <ContextChip
+                symptom={medicalContext.symptom}
+                tier={medicalContext.tier}
+              />
+            )}
             {messages.map((m, i) => (
               <Fragment key={i}>
                 {memoCount > 0 && i === memoCount && <MemoDivider />}
@@ -406,5 +534,13 @@ export default function BehaviorPage() {
         <Disclaimer />
       </div>
     </main>
+  );
+}
+
+export default function BehaviorPage() {
+  return (
+    <Suspense fallback={<main className="min-h-dvh" aria-hidden="true" />}>
+      <BehaviorContent />
+    </Suspense>
   );
 }
