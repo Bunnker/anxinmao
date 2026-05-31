@@ -80,8 +80,17 @@ docs/medical/
 - `selectedClaimIds()` 会把用户本次选择映射为去重后的 claim 列表,写入报告 URL 和本地 `CatRecord.claimIds`。
 - 分诊问答原文和报告摘要不放进 URL;用 `src/lib/triage-handoff.ts` 暂存在 `sessionStorage`,URL 只带短 `handoff` id。
 - 服务端 `src/lib/medical-knowledge.ts` 负责把 `symptom + claimIds` 映射回相关 `ai-cards/*.ai-card.md`,生成给 LLM 的资料库上下文。
+- 服务端 `src/lib/agent-retrieval.ts` 是受控 Agent 工具层:先用 `local_medical_recall` 从 `docs/medical` 召回本地资料;本地资料不足时,`authority_web_search` 只允许搜索白名单权威域名作为临时补充。
 - `/api/triage` 会直接读取这份上下文做追问 / 分级解释。
 - `/api/behavior` 支持可选 `medical: { symptom, tier, claimIds }`,用于从报告页或未来问诊入口带入同一份证据上下文。
+
+## 验证
+
+- `npm run triage:check`:静态检查分诊选项里的 `claim` / `claims` 是否都能映射到医学资料。
+- `npm run medical:validate`:校验 source 与 AI card 的 `claim_id` 引用一致性。
+- `npm run harness:agent-retrieval`:在本地 `npm run dev` 跑起来后,验证直接问 AI 时会主动召回本地资料,并暴露权威网页搜索白名单;不会调用大模型,不实际联网。
+- `npm run harness:triage`:在本地 `npm run dev` 跑起来后,用 `/api/triage` 的 dev-only `dryRun` 验证 `symptom + tier + claimIds` 是否正确注入 AI 上下文;不会调用大模型,不消耗额度。
+- `npm run harness:cat-context`:在本地 `npm run dev` 跑起来后,验证 `/api/triage` 与 `/api/behavior` 都能接收到完整猫档案上下文;不会调用大模型,不消耗额度。
 
 ## 当前批次
 

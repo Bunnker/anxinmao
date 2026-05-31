@@ -11,6 +11,7 @@ import {
 } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { catProfilePayload } from "@/lib/cat-profile-context";
 import { loadStore, STORAGE_KEY } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
 import { loadTriageHandoff } from "@/lib/triage-handoff";
@@ -341,14 +342,7 @@ function BehaviorContent() {
           // 只发未摘要的部分;更早的对话靠 memo 摘要带上下文。
           messages: msgs.slice(memoCount),
           memo,
-          cat: cat
-            ? {
-                name: cat.name,
-                ageMonths: cat.ageMonths,
-                sex: cat.sex,
-                neutered: cat.neutered,
-              }
-            : undefined,
+          cat: catProfilePayload(cat),
           medical: medicalContext,
         }),
       });

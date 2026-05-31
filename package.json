@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "harness": "node scripts/harness-behavior.mjs",
+    "harness:agent-retrieval": "node scripts/harness-agent-retrieval.mjs",
+    "harness:cat-context": "node scripts/harness-cat-profile-context.mjs",
+    "harness:triage": "node scripts/harness-triage-context.mjs",
     "medical:fetch": "node scripts/fetch-medical-sources.mjs",
     "medical:validate": "node scripts/validate-medical-docs.mjs",
     "triage:check": "node scripts/check-triage-cards.mjs"
