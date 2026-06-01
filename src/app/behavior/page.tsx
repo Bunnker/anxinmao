@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
 } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -19,8 +20,8 @@ import { Disclaimer } from "@/components/Disclaimer";
 import type { Cat, RiskTier, Store } from "@/types/cat";
 
 // 问诊 / 养育问答 —— 对话式,接服务端 /api/behavior 调大模型。
-// 产品红线:可以聊健康,但绝不诊断 / 开药;红旗症状急停送医;每条健康回答带
-// 「不能替代兽医」。系统提示词强约束;页面留「去分诊」入口给结构化分诊兜底。
+// 产品红线:可以聊健康,但绝不诊断 / 开药;红旗症状急停送医;健康边界按场景
+// 自然提醒。系统提示词强约束;页面留「去分诊」入口给结构化分诊兜底。
 
 type Msg = { role: "user" | "assistant"; content: string };
 type MedicalChatContext = {
@@ -53,12 +54,205 @@ const STARTERS = [
 const COMPRESS_AT = 20;
 const KEEP_VERBATIM = 8;
 
-// 回答按换行拆段渲染(系统提示词已要求不用 markdown)。
-function paragraphs(text: string): string[] {
-  return text
-    .split(/\n+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+type MarkdownBlock =
+  | { type: "heading"; level: 1 | 2 | 3; text: string }
+  | { type: "paragraph"; text: string }
+  | { type: "ul" | "ol"; items: string[] };
+
+function parseMarkdownBlocks(text: string): MarkdownBlock[] {
+  const blocks: MarkdownBlock[] = [];
+  const paragraph: string[] = [];
+  let list: { type: "ul" | "ol"; items: string[] } | null = null;
+
+  function flushParagraph() {
+    if (paragraph.length === 0) return;
+    blocks.push({ type: "paragraph", text: paragraph.join(" ") });
+    paragraph.length = 0;
+  }
+
+  function flushList() {
+    if (!list) return;
+    blocks.push({ type: list.type, items: list.items });
+    list = null;
+  }
+
+  function addListItem(type: "ul" | "ol", item: string) {
+    flushParagraph();
+    if (!list || list.type !== type) flushList();
+    if (!list) list = { type, items: [] };
+    list.items.push(item);
+  }
+
+  for (const rawLine of text.replace(/\r\n/g, "\n").split("\n")) {
+    const line = rawLine.trim();
+    if (!line) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    const heading = /^(#{1,3})\s+(.+)$/.exec(line);
+    if (heading) {
+      flushParagraph();
+      flushList();
+      blocks.push({
+        type: "heading",
+        level: Math.min(heading[1].length, 3) as 1 | 2 | 3,
+        text: heading[2].trim(),
+      });
+      continue;
+    }
+
+    const unordered = /^[-*]\s+(.+)$/.exec(line);
+    if (unordered) {
+      addListItem("ul", unordered[1].trim());
+      continue;
+    }
+
+    const ordered = /^\d+[.)]\s+(.+)$/.exec(line);
+    if (ordered) {
+      addListItem("ol", ordered[1].trim());
+      continue;
+    }
+
+    flushList();
+    paragraph.push(line);
+  }
+
+  flushParagraph();
+  flushList();
+  return blocks;
+}
+
+function renderInline(text: string, keyPrefix: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const token = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g;
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+  let index = 0;
+
+  while ((match = token.exec(text)) !== null) {
+    if (match.index > cursor) nodes.push(text.slice(cursor, match.index));
+
+    const value = match[0];
+    const key = `${keyPrefix}-${index}`;
+    if (value.startsWith("**") && value.endsWith("**")) {
+      nodes.push(
+        <strong key={key} className="font-semibold text-ink">
+          {renderInline(value.slice(2, -2), key)}
+        </strong>,
+      );
+    } else if (value.startsWith("`") && value.endsWith("`")) {
+      nodes.push(
+        <code
+          key={key}
+          className="rounded bg-[var(--surface-2)] px-1 py-0.5 text-[0.92em] text-ink"
+        >
+          {value.slice(1, -1)}
+        </code>,
+      );
+    } else {
+      const link = /^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/.exec(value);
+      if (link) {
+        nodes.push(
+          <a
+            key={key}
+            href={link[2]}
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-accent underline underline-offset-2"
+          >
+            {link[1]}
+          </a>,
+        );
+      } else {
+        nodes.push(value);
+      }
+    }
+
+    cursor = match.index + value.length;
+    index += 1;
+  }
+
+  if (cursor < text.length) nodes.push(text.slice(cursor));
+  return nodes;
+}
+
+function MarkdownMessage({
+  text,
+  streaming,
+}: {
+  text: string;
+  streaming?: boolean;
+}) {
+  const blocks = parseMarkdownBlocks(text);
+  if (blocks.length === 0) return streaming ? <Caret /> : null;
+
+  return (
+    <div className="space-y-2.5">
+      {blocks.map((block, blockIndex) => {
+        const isLastBlock = blockIndex === blocks.length - 1;
+        if (block.type === "heading") {
+          const Tag = block.level === 1 ? "h3" : block.level === 2 ? "h4" : "h5";
+          return (
+            <Tag
+              key={blockIndex}
+              className="text-[15px] font-semibold leading-snug text-ink"
+            >
+              {renderInline(block.text, `h-${blockIndex}`)}
+              {streaming && isLastBlock && <Caret />}
+            </Tag>
+          );
+        }
+
+        if (block.type === "paragraph") {
+          return (
+            <p
+              key={blockIndex}
+              className="text-[14.5px] leading-relaxed text-ink"
+            >
+              {renderInline(block.text, `p-${blockIndex}`)}
+              {streaming && isLastBlock && <Caret />}
+            </p>
+          );
+        }
+
+        if (block.type === "ul") {
+          return (
+            <ul
+              key={blockIndex}
+              className="list-disc space-y-1.5 pl-5 text-[14.5px] leading-relaxed text-ink"
+            >
+              {block.items.map((item, itemIndex) => (
+                <li key={itemIndex}>
+                  {renderInline(item, `ul-${blockIndex}-${itemIndex}`)}
+                  {streaming &&
+                    isLastBlock &&
+                    itemIndex === block.items.length - 1 && <Caret />}
+                </li>
+              ))}
+            </ul>
+          );
+        }
+
+        return (
+          <ol
+            key={blockIndex}
+            className="list-decimal space-y-1.5 pl-5 text-[14.5px] leading-relaxed text-ink"
+          >
+            {block.items.map((item, itemIndex) => (
+              <li key={itemIndex}>
+                {renderInline(item, `ol-${blockIndex}-${itemIndex}`)}
+                {streaming &&
+                  isLastBlock &&
+                  itemIndex === block.items.length - 1 && <Caret />}
+              </li>
+            ))}
+          </ol>
+        );
+      })}
+    </div>
+  );
 }
 
 function CatTag() {
@@ -96,21 +290,11 @@ function AssistantCard({
   text: string;
   streaming?: boolean;
 }) {
-  const paras = paragraphs(text);
   return (
     <div className="max-w-[96%] self-start">
       <CatTag />
       <div className="rounded-2xl rounded-tl-md border border-[var(--line)] bg-surface px-5 py-4">
-        {paras.length === 0 && streaming && <Caret />}
-        {paras.map((p, i) => (
-          <p
-            key={i}
-            className="text-[14.5px] leading-relaxed text-ink [&:not(:first-child)]:mt-2.5"
-          >
-            {p}
-            {streaming && i === paras.length - 1 && <Caret />}
-          </p>
-        ))}
+        <MarkdownMessage text={text} streaming={streaming} />
       </div>
     </div>
   );
@@ -270,13 +454,6 @@ function medicalContextFromQuery(rawQuery: string): MedicalChatContext | undefin
   return { symptom, tier, claimIds, report, qa };
 }
 
-type CaseNoteCardState = {
-  note: string;
-  copyState: "idle" | "copied" | "manual";
-  loading: boolean;
-  error: string;
-} | null;
-
 function openingText(ctx: MedicalChatContext): string {
   const label = (ctx.symptom && SYMPTOM_LABELS[ctx.symptom]) || "这次情况";
   if (ctx.tier === "red") {
@@ -309,7 +486,6 @@ function BehaviorContent() {
   // 对话摘要:memo 是较早对话压成的摘要,memoCount 是已折进 memo 的消息条数。
   const [memo, setMemo] = useState("");
   const [memoCount, setMemoCount] = useState(0);
-  const [caseNoteCard, setCaseNoteCard] = useState<CaseNoteCardState>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -422,132 +598,6 @@ function BehaviorContent() {
   }
 
   const empty = messages.length === 0;
-  const canCreateCaseNote =
-    medicalContext?.tier === "red" || medicalContext?.tier === "yellow";
-  async function fetchCaseNote() {
-    if (!medicalContext || !canCreateCaseNote) return;
-    setCaseNoteCard({ note: "", copyState: "idle", loading: true, error: "" });
-    try {
-      const res = await fetch("/api/case-note", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          symptom: medicalContext.symptom,
-          tier: medicalContext.tier,
-          claimIds: medicalContext.claimIds,
-          handoff: {
-            report: medicalContext.report,
-            qa: medicalContext.qa,
-          },
-          chatHistory: messages.slice(-12),
-          memo,
-          cat: catProfilePayload(cat),
-          finalizeNow: true,
-        }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        mode?: string;
-        note?: string;
-        error?: string;
-      };
-      if (!res.ok || data.error) {
-        setCaseNoteCard({
-          note: "",
-          copyState: "idle",
-          loading: false,
-          error: data.error || "整理给医生看的话失败,稍后再试。",
-        });
-        return;
-      }
-      if (data.note) {
-        setCaseNoteCard({
-          note: data.note,
-          copyState: "idle",
-          loading: false,
-          error: "",
-        });
-      } else {
-        setCaseNoteCard({
-          note: "",
-          copyState: "idle",
-          loading: false,
-          error: "没收到有效的说明,可以重新整理。",
-        });
-      }
-    } catch {
-      setCaseNoteCard({
-        note: "",
-        copyState: "idle",
-        loading: false,
-        error: "网络中断,等下再试。",
-      });
-    }
-  }
-
-  async function copyCaseNote() {
-    if (!caseNoteCard?.note) return;
-    try {
-      if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
-      await navigator.clipboard.writeText(caseNoteCard.note);
-      setCaseNoteCard((prev) => (prev ? { ...prev, copyState: "copied" } : prev));
-    } catch {
-      setCaseNoteCard((prev) => (prev ? { ...prev, copyState: "manual" } : prev));
-    }
-  }
-
-  const caseNoteCardElement = caseNoteCard ? (
-    <div className="rounded-2xl border border-[var(--line)] bg-surface px-5 py-4">
-      <p className="mb-2 text-[11px] font-semibold tracking-[0.2em] text-accent">
-        给医生看的
-      </p>
-      {caseNoteCard.loading ? (
-        <p className="text-[14px] leading-relaxed text-ink-soft">
-          正在整理,等我把重点捋顺一点点…
-        </p>
-      ) : caseNoteCard.error ? (
-        <p className="text-[14px] leading-relaxed text-ink">{caseNoteCard.error}</p>
-      ) : (
-        <>
-          <textarea
-            value={caseNoteCard.note}
-            readOnly
-            rows={12}
-            className="w-full resize-none rounded-2xl border border-[var(--line)] bg-paper px-4 py-3 text-[14px] leading-relaxed text-ink outline-none"
-          />
-          {caseNoteCard.copyState === "copied" && (
-            <p className="mt-2 text-center text-[13px] text-green">
-              已复制,可以发给医生啦。
-            </p>
-          )}
-          {caseNoteCard.copyState === "manual" && (
-            <p className="mt-2 text-center text-[13px] leading-relaxed text-ink-soft">
-              自动复制没成功,可以长按上面的文字手动复制。
-            </p>
-          )}
-        </>
-      )}
-      {!caseNoteCard.loading && (
-        <div className="mt-3 flex gap-2">
-          {caseNoteCard.note && (
-            <button
-              type="button"
-              onClick={copyCaseNote}
-              className="flex-1 rounded-2xl bg-accent px-4 py-2.5 text-[13px] font-medium text-accent-fg"
-            >
-              复制文字
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={fetchCaseNote}
-            className="flex-1 rounded-2xl border border-[var(--line)] px-4 py-2.5 text-[13px] font-medium text-ink"
-          >
-            重新整理
-          </button>
-        </div>
-      )}
-    </div>
-  ) : null;
 
   if (store === undefined) return <main className="min-h-dvh" aria-hidden="true" />;
   if (!cat) return <main className="min-h-dvh" aria-hidden="true" />;
@@ -587,7 +637,6 @@ function BehaviorContent() {
                 tier={medicalContext.tier}
               />
               <AssistantCard text={openingText(medicalContext)} />
-              {caseNoteCardElement}
               <div ref={endRef} />
             </div>
           ) : (
@@ -618,7 +667,6 @@ function BehaviorContent() {
               <Thinking />
             )}
             {error && <ErrorRow text={error} onRetry={retry} />}
-            {caseNoteCardElement}
             <div ref={endRef} />
           </div>
         )}
@@ -626,20 +674,6 @@ function BehaviorContent() {
 
       {/* 底部:去分诊兜底入口 + 输入栏 + 免责 */}
       <div className="shrink-0 px-7 pb-5 pt-2">
-        {canCreateCaseNote && (
-          <button
-            type="button"
-            onClick={fetchCaseNote}
-            disabled={caseNoteCard?.loading === true}
-            className="mb-2.5 flex w-full items-center justify-between rounded-xl bg-ink px-3.5 py-2.5 text-[12.5px] font-medium text-paper disabled:opacity-60"
-          >
-            <span>整理给兽医看的病情说明</span>
-            <span className="text-paper/65" aria-hidden="true">
-              →
-            </span>
-          </button>
-        )}
-
         <Link
           href="/symptoms"
           className="flex items-center justify-between rounded-xl border border-dashed border-[var(--line)] px-3.5 py-2.5"
