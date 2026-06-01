@@ -1,8 +1,8 @@
 "use client";
 
 // 新手使用教程 —— 首次进入自动弹一次(localStorage 记标记),首页可随时重开。
-// 文案走「小白 / 朋友口吻」,每屏配一张 gpt-image-2 出的超可爱橘猫插画(透明 PNG)。
-// 4 屏:这是啥 → 能干三件事 → 靠不靠谱 → 走起。
+// 文案走「第一次养猫也能懂」的朋友口吻,避免产品黑话。
+// 4 屏:先分急不急 → 怎么用 → 依据边界 → 建档开始。
 import { useState } from "react";
 
 const TIERS = ["var(--red)", "var(--amber)", "var(--green)"];
@@ -99,21 +99,21 @@ export function Guide({ onClose }: { onClose: () => void }) {
         {/* 内容 */}
         <div className="flex flex-1 flex-col justify-center">
           {step === 0 && (
-            <Card variant={0} badge="嘿,新手铲屎官" title="猫猫不舒服?先别慌">
-              刚养猫,看它哪儿不对就心慌 —— 太正常了。
+            <Card variant={0} badge="嗨,新手铲屎官" title="猫猫不舒服?先别慌">
+              第一次养猫,一点点不对劲都会心里咯噔一下,太正常啦。
               <br />
-              这个小工具陪你看:
-              <span className="font-medium text-ink">要不要去医院、现在先做点啥</span>。
+              安心猫陪你先看看:
+              <span className="font-medium text-ink">要不要马上找医生、能不能先在家守一守</span>。
             </Card>
           )}
 
           {step === 1 && (
-            <Card variant={1} badge="在这儿能干三件事" title="点一点,就会用">
+            <Card variant={1} badge="点一点就会用" title="先选一个最像的情况">
               <ul className="flex flex-col gap-3">
                 <li>
-                  <span className="font-medium text-ink">① 它好像生病了</span>
+                  <span className="font-medium text-ink">① 猫猫哪里不对劲?</span>
                   <br />
-                  点几下答几个小问题,告诉你严不严重:
+                  选一个最像的情况,再答几个小问题:
                   <span className="mx-1 inline-flex items-center gap-1 align-middle">
                     {TIERS.map((c) => (
                       <span
@@ -125,43 +125,41 @@ export function Guide({ onClose }: { onClose: () => void }) {
                   </span>
                   <br />
                   <span className="text-[13px]">
-                    (红=快去医院 · 黄=尽快看 · 绿=先在家盯着)
+                    红=快找医生 · 黄=尽快看看 · 绿=先守着观察
                   </span>
                 </li>
                 <li>
-                  <span className="font-medium text-ink">② 想问点啥</span>
+                  <span className="font-medium text-ink">② 还想问一句?</span>
                   <br />
-                  直接打字,像问个懂猫的朋友 —— 生病、喂养、调皮都能聊。
+                  直接打字告诉我,吃饭、喝水、尿尿、便便、小习惯都可以问。
                 </li>
                 <li>
-                  <span className="font-medium text-ink">③ 有点慌</span>
+                  <span className="font-medium text-ink">③ 只是有点慌?</span>
                   <br />
-                  翻翻「看着吓人、其实没事」那些情况,先安个心。
+                  可以翻翻安心知识,有些小状况看着吓人,其实先观察就好。
                 </li>
               </ul>
             </Card>
           )}
 
           {step === 2 && (
-            <Card variant={2} badge="它靠谱吗" title="照着医生的资料来的">
-              里面的判断,都照着几家
-              <span className="font-medium text-ink">权威猫医院的资料</span>整理,而且
-              <span className="font-medium text-ink">特意往严了说</span> —— 宁可让你白跑一趟,也不让你漏掉急事。
+            <Card variant={2} badge="安心一点点" title="该急的时候会认真提醒">
+              安心猫不是医生,但会照着医生会关心的小线索,陪你先把心放稳一点。
               <br />
               <br />
-              真碰上要命的(喘不上气、抽搐、大出血、尿不出、吃错东西),它会直接喊你
-              <span className="font-medium text-ink">「马上去医院」</span>。
+              如果猫猫喘不上气、抽搐、流好多血、尿不出来、吃到百合或人药,它会很认真地提醒你
+              <span className="font-medium text-ink">赶紧联系动物医院</span>。
               <br />
               <br />
-              不过它<span className="font-medium text-ink">不是医生</span>,拿不准还是得找大夫。
+              没那么急的时候,它会告诉你先盯吃喝、精神、尿尿这些小变化。
             </Card>
           )}
 
           {step === 3 && (
-            <Card variant={3} badge="走,开始吧" title="先让它认识下你的猫">
-              填一下猫几个月、公还是母,给的建议会更贴它。
+            <Card variant={3} badge="开始前" title="让它先认识你家猫猫">
+              猫猫几个月、几斤、公猫母猫、打过针没,都会影响提醒。
               <br />
-              懒得填也没关系 —— 直接选症状就能用。
+              先简单填一下就好,以后可以慢慢补。想马上开始,也可以直接选情况。
             </Card>
           )}
         </div>
@@ -182,7 +180,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
             onClick={() => (last ? onClose() : setStep(step + 1))}
             className="flex-1 rounded-2xl bg-accent px-6 py-4 text-center text-[15px] font-medium text-accent-fg shadow-[0_5px_18px_-9px_rgba(60,40,20,0.45)] transition-transform active:translate-y-px"
           >
-            {last ? "好啦,开始用 →" : "下一步"}
+            {last ? "好呀,开始用 →" : "下一步"}
           </button>
         </div>
       </div>

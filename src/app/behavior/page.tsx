@@ -270,6 +270,13 @@ function medicalContextFromQuery(rawQuery: string): MedicalChatContext | undefin
   return { symptom, tier, claimIds, report, qa };
 }
 
+type CaseNoteCardState = {
+  note: string;
+  copyState: "idle" | "copied" | "manual";
+  loading: boolean;
+  error: string;
+} | null;
+
 function openingText(ctx: MedicalChatContext): string {
   const label = (ctx.symptom && SYMPTOM_LABELS[ctx.symptom]) || "这次情况";
   if (ctx.tier === "red") {
@@ -302,6 +309,7 @@ function BehaviorContent() {
   // 对话摘要:memo 是较早对话压成的摘要,memoCount 是已折进 memo 的消息条数。
   const [memo, setMemo] = useState("");
   const [memoCount, setMemoCount] = useState(0);
+  const [caseNoteCard, setCaseNoteCard] = useState<CaseNoteCardState>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -414,6 +422,132 @@ function BehaviorContent() {
   }
 
   const empty = messages.length === 0;
+  const canCreateCaseNote =
+    medicalContext?.tier === "red" || medicalContext?.tier === "yellow";
+  async function fetchCaseNote() {
+    if (!medicalContext || !canCreateCaseNote) return;
+    setCaseNoteCard({ note: "", copyState: "idle", loading: true, error: "" });
+    try {
+      const res = await fetch("/api/case-note", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symptom: medicalContext.symptom,
+          tier: medicalContext.tier,
+          claimIds: medicalContext.claimIds,
+          handoff: {
+            report: medicalContext.report,
+            qa: medicalContext.qa,
+          },
+          chatHistory: messages.slice(-12),
+          memo,
+          cat: catProfilePayload(cat),
+          finalizeNow: true,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        mode?: string;
+        note?: string;
+        error?: string;
+      };
+      if (!res.ok || data.error) {
+        setCaseNoteCard({
+          note: "",
+          copyState: "idle",
+          loading: false,
+          error: data.error || "整理给医生看的话失败,稍后再试。",
+        });
+        return;
+      }
+      if (data.note) {
+        setCaseNoteCard({
+          note: data.note,
+          copyState: "idle",
+          loading: false,
+          error: "",
+        });
+      } else {
+        setCaseNoteCard({
+          note: "",
+          copyState: "idle",
+          loading: false,
+          error: "没收到有效的说明,可以重新整理。",
+        });
+      }
+    } catch {
+      setCaseNoteCard({
+        note: "",
+        copyState: "idle",
+        loading: false,
+        error: "网络中断,等下再试。",
+      });
+    }
+  }
+
+  async function copyCaseNote() {
+    if (!caseNoteCard?.note) return;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
+      await navigator.clipboard.writeText(caseNoteCard.note);
+      setCaseNoteCard((prev) => (prev ? { ...prev, copyState: "copied" } : prev));
+    } catch {
+      setCaseNoteCard((prev) => (prev ? { ...prev, copyState: "manual" } : prev));
+    }
+  }
+
+  const caseNoteCardElement = caseNoteCard ? (
+    <div className="rounded-2xl border border-[var(--line)] bg-surface px-5 py-4">
+      <p className="mb-2 text-[11px] font-semibold tracking-[0.2em] text-accent">
+        给医生看的
+      </p>
+      {caseNoteCard.loading ? (
+        <p className="text-[14px] leading-relaxed text-ink-soft">
+          正在整理,等我把重点捋顺一点点…
+        </p>
+      ) : caseNoteCard.error ? (
+        <p className="text-[14px] leading-relaxed text-ink">{caseNoteCard.error}</p>
+      ) : (
+        <>
+          <textarea
+            value={caseNoteCard.note}
+            readOnly
+            rows={12}
+            className="w-full resize-none rounded-2xl border border-[var(--line)] bg-paper px-4 py-3 text-[14px] leading-relaxed text-ink outline-none"
+          />
+          {caseNoteCard.copyState === "copied" && (
+            <p className="mt-2 text-center text-[13px] text-green">
+              已复制,可以发给医生啦。
+            </p>
+          )}
+          {caseNoteCard.copyState === "manual" && (
+            <p className="mt-2 text-center text-[13px] leading-relaxed text-ink-soft">
+              自动复制没成功,可以长按上面的文字手动复制。
+            </p>
+          )}
+        </>
+      )}
+      {!caseNoteCard.loading && (
+        <div className="mt-3 flex gap-2">
+          {caseNoteCard.note && (
+            <button
+              type="button"
+              onClick={copyCaseNote}
+              className="flex-1 rounded-2xl bg-accent px-4 py-2.5 text-[13px] font-medium text-accent-fg"
+            >
+              复制文字
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={fetchCaseNote}
+            className="flex-1 rounded-2xl border border-[var(--line)] px-4 py-2.5 text-[13px] font-medium text-ink"
+          >
+            重新整理
+          </button>
+        </div>
+      )}
+    </div>
+  ) : null;
 
   if (store === undefined) return <main className="min-h-dvh" aria-hidden="true" />;
   if (!cat) return <main className="min-h-dvh" aria-hidden="true" />;
@@ -453,6 +587,7 @@ function BehaviorContent() {
                 tier={medicalContext.tier}
               />
               <AssistantCard text={openingText(medicalContext)} />
+              {caseNoteCardElement}
               <div ref={endRef} />
             </div>
           ) : (
@@ -483,6 +618,7 @@ function BehaviorContent() {
               <Thinking />
             )}
             {error && <ErrorRow text={error} onRetry={retry} />}
+            {caseNoteCardElement}
             <div ref={endRef} />
           </div>
         )}
@@ -490,6 +626,20 @@ function BehaviorContent() {
 
       {/* 底部:去分诊兜底入口 + 输入栏 + 免责 */}
       <div className="shrink-0 px-7 pb-5 pt-2">
+        {canCreateCaseNote && (
+          <button
+            type="button"
+            onClick={fetchCaseNote}
+            disabled={caseNoteCard?.loading === true}
+            className="mb-2.5 flex w-full items-center justify-between rounded-xl bg-ink px-3.5 py-2.5 text-[12.5px] font-medium text-paper disabled:opacity-60"
+          >
+            <span>整理给兽医看的病情说明</span>
+            <span className="text-paper/65" aria-hidden="true">
+              →
+            </span>
+          </button>
+        )}
+
         <Link
           href="/symptoms"
           className="flex items-center justify-between rounded-xl border border-dashed border-[var(--line)] px-3.5 py-2.5"

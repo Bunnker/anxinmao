@@ -3,13 +3,10 @@
 import { Suspense, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { catProfilePayload } from "@/lib/cat-profile-context";
 import { loadStore, STORAGE_KEY } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
-import {
-  createTriageHandoffId,
-  loadTriageHandoff,
-  saveTriageHandoff,
-} from "@/lib/triage-handoff";
+import { loadTriageHandoff, saveTriageHandoff } from "@/lib/triage-handoff";
 import { Disclaimer } from "@/components/Disclaimer";
 import { UnreviewedNotice } from "@/components/UnreviewedNotice";
 import { CatAvatar } from "@/components/CatAvatar";
@@ -1269,6 +1266,12 @@ function parseClaimIds(raw: string | null): string[] {
     .slice(0, 32);
 }
 
+function stableHandoffId(prefix: string, tier: RiskTier, symptom: string, claimIds: string[]): string {
+  const symptomKey = symptom.replace(/[^a-z0-9_-]/gi, "").slice(0, 40) || "general";
+  const claimsKey = claimIds.length > 0 ? claimIds.join("-") : "none";
+  return `${prefix}-${tier}-${symptomKey}-${claimsKey}`;
+}
+
 function ReportContent() {
   const searchParams = useSearchParams();
   const store = useSyncExternalStore(
@@ -1285,7 +1288,10 @@ function ReportContent() {
   const claimsParam = searchParams.get("claims");
   const claimIds = useMemo(() => parseClaimIds(claimsParam), [claimsParam]);
   const queryHandoffId = searchParams.get("handoff") ?? "";
-  const generatedHandoffId = useMemo(() => createTriageHandoffId(), []);
+  const generatedHandoffId = useMemo(
+    () => stableHandoffId("report", tier, symptom, claimIds),
+    [claimIds, symptom, tier],
+  );
   const handoffId = queryHandoffId || generatedHandoffId;
   const cat = store?.cats.find((c) => c.id === store.activeCatId) ?? store?.cats[0];
   const catName = cat?.name || "它";
@@ -1314,7 +1320,6 @@ function ReportContent() {
   if (claimIds.length > 0) askParams.set("claims", claimIds.join(","));
   askParams.set("handoff", handoffId);
   const askHref = `/behavior?${askParams.toString()}`;
-
   function saveAskHandoff() {
     const existing = loadTriageHandoff(handoffId);
     saveTriageHandoff(handoffId, {
