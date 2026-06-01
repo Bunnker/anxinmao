@@ -63,6 +63,8 @@ export type AgentRetrievalInput = {
   dryRun?: boolean;
   maxChars?: number;
   region?: UserRegionContext;
+  allowLocalMedicalRecall?: boolean;
+  allowAuthorityWebSearch?: boolean;
 };
 
 export type AgentRetrievalContext = {
@@ -377,6 +379,16 @@ async function authorityWebSearch(
   const needsProfessionalProductSource =
     isProductQuery(input.query) && isOralCareProductQuery(input.query);
   const plan = authoritySearchPlan(input, needsProfessionalProductSource);
+  if (input.allowAuthorityWebSearch === false) {
+    return {
+      name: "authority_web_search",
+      status: "skipped",
+      reason: "web_search_not_allowed_for_intent",
+      allowedDomains: plan.domains,
+      query: plan.query,
+      results: [],
+    };
+  }
   const enabled = process.env.AUTHORITY_WEB_SEARCH !== "off";
   if (input.dryRun) {
     return {
@@ -491,7 +503,16 @@ export async function buildAgentRetrievalContext(
   const query = input.query.trim().slice(0, MAX_QUERY_CHARS);
   if (!query) return { prompt: "", tools: [] };
 
-  const localTrace = await localMedicalRecall({ ...input, query });
+  const localTrace =
+    input.allowLocalMedicalRecall === false
+      ? {
+          name: "local_medical_recall" as const,
+          status: "skipped" as const,
+          reason: "medical_recall_not_allowed_for_intent",
+          query,
+          results: [],
+        }
+      : await localMedicalRecall({ ...input, query });
   const webTrace = await authorityWebSearch({ ...input, query }, localTrace);
   const tools = [localTrace, webTrace];
   const useful = tools.filter((tool) => (tool.results?.length ?? 0) > 0);

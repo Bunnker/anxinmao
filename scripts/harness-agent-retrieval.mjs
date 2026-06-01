@@ -25,12 +25,16 @@ const CASES = [
   {
     name: "百合误食",
     content: "猫舔了百合花粉,现在还没吐,需要马上去医院吗?",
-    expect: ["cat-toxin-ingestion", "cat-emergency-red-flags"],
+    expect: [],
+    expectIntent: "emergency",
+    expectNoLocal: true,
   },
   {
     name: "张口喘",
     content: "它刚才张口喘,趴着不太动,我要观察还是急诊?",
-    expect: ["cat-dyspnea", "cat-emergency-red-flags"],
+    expect: [],
+    expectIntent: "emergency",
+    expectNoLocal: true,
   },
   {
     name: "耳朵甩头",
@@ -105,6 +109,9 @@ function assertCase(c, data) {
   const preview = data.agentRetrievalPreview ?? "";
 
   console.log(`  ${c.name}`);
+  if (c.expectIntent && data.intentPreview?.intent !== c.expectIntent) {
+    fail(`${c.name}: 意图应为 ${c.expectIntent}`, JSON.stringify(data.intentPreview, null, 2));
+  }
   const paths = (local?.results ?? []).map((r) => r.path ?? "");
   console.log(`    local: ${local?.status ?? "(missing)"} · ${paths.slice(0, 3).join(" | ") || "(none)"}`);
 
