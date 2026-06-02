@@ -30,6 +30,13 @@ export type BehaviorIntentDecision = {
 const EMERGENCY_RE =
   /张口喘|呼吸困难|喘不过气|舌头.*(紫|蓝)|牙龈.*(白|紫|蓝)|抽搐|尿不出|憋尿|大量出血|止不住血|百合|巧克力|葡萄|人药|鼠药|中毒|瘫软|叫不醒|昏迷|严重外伤/;
 
+// 用户明确请求「整理一段给医生 / 兽医看的说明」。命中后短路到 daily_care +
+// care_recall,LLM planner 会调 care_recall 召回 vet-summary 卡片并按卡输出。
+// 即使带 tier=red / yellow 也优先满足 —— 整理需求本就服务于就医动作,
+// 卡片内含红 / 黄档语气规则,不会软化判级。
+const VET_SUMMARY_RE =
+  /整理.*(给|发|送).*(医生|兽医)|帮.*整理.*(给|发|送).*(医生|兽医)|写.*给.*(医生|兽医)|给(医生|兽医).*(发|看|说)|给(医生|兽医)看的(话|说明|描述)|带去医院.*(说|描述|讲)|病情说明|准备.*(就医|去医院).*(说|描述)|出.*(就医|医院).*说明/;
+
 const PRODUCT_OR_MEDICINE_RE =
   /牌子|品牌|哪款|购买|哪里买|怎么买|推荐.*(牙膏|牙刷|猫砂|猫粮|罐头|益生菌|驱虫|用品|产品)|牙膏|牙刷|洁齿|漱口|喷剂|凝胶|药|消炎|止痛|抗生素|剂量|用量|处方/;
 
@@ -53,6 +60,29 @@ export function classifyBehaviorIntent(
   input: BehaviorIntentInput,
 ): BehaviorIntentDecision {
   const query = input.query.trim();
+
+  // 短路:用户明确请求整理给医生 / 兽医看的说明。即使在红 / 黄档分诊上下文
+  // 里,也优先满足整理需求(vet-summary 卡片内已含各档语气规则,不会软化)。
+  if (VET_SUMMARY_RE.test(query)) {
+    const tierHint =
+      input.tier === "red"
+        ? " 上游 tier=red,语气保持「立刻就医 / 急诊」级别。"
+        : input.tier === "yellow"
+          ? " 上游 tier=yellow,语气用「这几天内挂号 / 尽快就医」。"
+          : "";
+    return {
+      intent: "daily_care",
+      confidence: "high",
+      reason: "vet_summary_request_short_circuit",
+      useCareKnowledge: true,
+      useMedicalKnowledge: hasStructuredMedicalContext(input),
+      useMedicalRecall: false,
+      allowAuthorityWebSearch: false,
+      instruction:
+        "用户请求整理一段给医生 / 兽医看的中文说明。调用 care_recall 召回 vet-summary 卡片,严格按卡内 content_order / hard_rules 输出,不要再追问已知信息。" +
+        tierHint,
+    };
+  }
 
   if (input.tier === "red" || EMERGENCY_RE.test(query)) {
     return {
