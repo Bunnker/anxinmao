@@ -4,9 +4,8 @@
 // 急停送医;健康边界按场景自然提醒。养育 / 行为问题正常聊。
 // 限流:per-IP + 全局日额度,保护试用期 API 额度。
 import { chatStream, LLMError, parseHistory, type ChatMessage } from "@/lib/llm";
-import { buildAgentRetrievalContext } from "@/lib/agent-retrieval";
+import { runBehaviorAgentTools } from "@/lib/behavior-agent";
 import { classifyBehaviorIntent } from "@/lib/behavior-intent";
-import { buildCareKnowledgeContext } from "@/lib/care-knowledge";
 import { catProfileContext } from "@/lib/cat-profile-context";
 import { medicineProductPolicyContext } from "@/lib/medicine-products";
 import { productBoundaryContext } from "@/lib/product-boundary";
@@ -191,17 +190,15 @@ export async function POST(req: Request): Promise<Response> {
         maxChars: 12000,
       })
     : { prompt: "", claimIds: medicalInput.claimIds, cardIds: [] };
-  const care = intent.useCareKnowledge
-    ? await buildCareKnowledgeContext(query, 6000)
-    : { prompt: "", cardIds: [] };
-  const agent = await buildAgentRetrievalContext({
+  const agent = await runBehaviorAgentTools({
     query,
-    ...medicalInput,
-    allowLocalMedicalRecall: intent.useMedicalRecall,
-    allowAuthorityWebSearch: intent.allowAuthorityWebSearch,
-    maxChars: 12000,
+    intent,
+    medical: medicalInput,
     dryRun: b.dryRun === true,
     region,
+    recent,
+    memo,
+    maxChars: 12000,
   });
   const productBoundary = productBoundaryContext(query, region);
   const medicineProductPolicy = medicineProductPolicyContext(query, region);
@@ -224,7 +221,6 @@ export async function POST(req: Request): Promise<Response> {
     ...(tierSignal ? [tierSignal] : []),
     { role: "system", content: regionPrompt(region) },
     ...(ctx ? [{ role: "system" as const, content: ctx }] : []),
-    ...(care.prompt ? [{ role: "system" as const, content: care.prompt }] : []),
     ...(medical.prompt
       ? [{ role: "system" as const, content: medical.prompt }]
       : []),
@@ -269,16 +265,18 @@ export async function POST(req: Request): Promise<Response> {
       dryRun: true,
       systemPromptPreview: SYSTEM_PROMPT,
       intentPreview: intent,
+      agentPlanPreview: agent.plan,
       catProfilePreview: ctx ?? "",
-      careKnowledgePreview: care.prompt.slice(0, 4000),
-      careCardIds: care.cardIds,
+      careKnowledgePreview: agent.carePrompt.slice(0, 4000),
+      careCardIds: agent.careCardIds,
       evidence: {
         claimIds: medical.claimIds,
         cardIds: medical.cardIds,
       },
       medicalKnowledgePreview: medical.prompt.slice(0, 4000),
       agentTools: agent.tools,
-      agentRetrievalPreview: agent.prompt.slice(0, 4000),
+      agentExecutionPreview: agent.prompt.slice(0, 4000),
+      agentRetrievalPreview: agent.retrievalPrompt.slice(0, 4000),
       regionPreview: regionPrompt(region),
       productBoundaryPreview: productBoundary,
       medicinePolicyPreview: medicineProductPolicy,

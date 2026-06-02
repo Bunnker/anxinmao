@@ -13,6 +13,7 @@
     "harness:medicine-policy": "node scripts/harness-medicine-policy.mjs",
     "harness:behavior-style": "node scripts/harness-behavior-style.mjs",
     "harness:behavior-intent": "node scripts/harness-behavior-intent.mjs",
+    "harness:agent-loop": "node scripts/harness-agent-loop.mjs",
     "harness:triage": "node scripts/harness-triage-context.mjs",
     "medical:fetch": "node scripts/fetch-medical-sources.mjs",
     "medical:validate": "node scripts/validate-medical-docs.mjs",

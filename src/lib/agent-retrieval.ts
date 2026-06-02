@@ -65,6 +65,7 @@ export type AgentRetrievalInput = {
   region?: UserRegionContext;
   allowLocalMedicalRecall?: boolean;
   allowAuthorityWebSearch?: boolean;
+  forceAuthorityWebSearch?: boolean;
 };
 
 export type AgentRetrievalContext = {
@@ -410,7 +411,7 @@ async function authorityWebSearch(
       results: [],
     };
   }
-  if (topScore >= 18 && !needsProfessionalProductSource) {
+  if (topScore >= 18 && !needsProfessionalProductSource && !input.forceAuthorityWebSearch) {
     return {
       name: "authority_web_search",
       status: "skipped",
