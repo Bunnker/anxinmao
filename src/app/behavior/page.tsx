@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { catProfilePayload } from "@/lib/cat-profile-context";
-import { loadStore, STORAGE_KEY } from "@/lib/storage";
+import { loadStore, saveConversation, STORAGE_KEY } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
 import { loadTriageHandoff } from "@/lib/triage-handoff";
 import { Disclaimer } from "@/components/Disclaimer";
@@ -487,6 +487,9 @@ function BehaviorContent() {
   const [memo, setMemo] = useState("");
   const [memoCount, setMemoCount] = useState(0);
   const endRef = useRef<HTMLDivElement | null>(null);
+  // 会话 id —— 从「最近」点回来时是 ?c=<id>;新会话首次发送时再生成。
+  const convIdRef = useRef<string | null>(searchParams.get("c"));
+  const restoredRef = useRef(false);
 
   useEffect(() => {
     // 无档案:回首页(首页会显示欢迎页让用户选建档 / 默认模版)
@@ -495,10 +498,38 @@ function BehaviorContent() {
     }
   }, [router, store]);
 
+  // 从「最近」点回某次聊天(?c=<id>):store 就绪后把当时的对话还原出来(只做一次)。
+  useEffect(() => {
+    if (restoredRef.current) return;
+    const cid = convIdRef.current;
+    if (!cid || !store) return;
+    restoredRef.current = true;
+    const rec = store.records.find(
+      (r) => r.id === cid && r.kind === "behavior",
+    );
+    if (rec?.messages && rec.messages.length > 0) {
+      setMessages(rec.messages);
+      if (rec.memo) setMemo(rec.memo);
+      if (typeof rec.memoCount === "number") setMemoCount(rec.memoCount);
+    }
+  }, [store]);
+
   useEffect(() => {
     // 流式输出会频繁更新,用瞬时滚动,避免 smooth 抖动。
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages, loading, error]);
+
+  // 把当前会话存进「最近」(localStorage + 防抖云同步)。没 cat / 没会话 id 就跳过。
+  const persistConversation = (msgs: Msg[], m: string, mc: number) => {
+    if (!cat || !convIdRef.current) return;
+    saveConversation({
+      id: convIdRef.current,
+      catId: cat.id,
+      messages: msgs,
+      memo: m,
+      memoCount: mc,
+    });
+  };
 
   // 未摘要的对话过长时,把较早的部分压成摘要(后台进行,失败静默)。
   async function compressIfNeeded(all: Msg[]) {
@@ -516,6 +547,7 @@ function BehaviorContent() {
       if (res.ok && typeof data.memo === "string" && data.memo.trim()) {
         setMemo(data.memo.trim());
         setMemoCount(foldEnd);
+        persistConversation(all, data.memo.trim(), foldEnd);
       }
       // 失败不更新 memo —— 不影响对话,后端有兜底上限
     } catch {
@@ -567,6 +599,7 @@ function BehaviorContent() {
       } else {
         const finalMsgs: Msg[] = [...msgs, { role: "assistant", content: acc }];
         setMessages(finalMsgs);
+        persistConversation(finalMsgs, memo, memoCount); // 落「最近」+ 云同步
         void compressIfNeeded(finalMsgs); // 后台压缩,不阻塞当前回合
       }
     } catch {
@@ -574,7 +607,9 @@ function BehaviorContent() {
       if (acc.trim() === "") {
         setError("网络中断了 —— 检查下网络,重试一下。");
       } else {
-        setMessages([...msgs, { role: "assistant", content: acc }]);
+        const partial: Msg[] = [...msgs, { role: "assistant", content: acc }];
+        setMessages(partial);
+        persistConversation(partial, memo, memoCount);
       }
     } finally {
       setLoading(false);
@@ -584,6 +619,12 @@ function BehaviorContent() {
   function send(text: string) {
     const q = text.trim();
     if (!q || loading) return;
+    if (!convIdRef.current) {
+      convIdRef.current =
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : "c-" + Math.random().toString(36).slice(2, 10);
+    }
     setInput("");
     const next: Msg[] = [...messages, { role: "user", content: q }];
     setMessages(next);

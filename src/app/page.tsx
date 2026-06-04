@@ -65,18 +65,26 @@ const TIER_DOT: Record<string, string> = {
   green: "var(--green)",
 };
 
-// 分诊记录 → 重开当时那张报告卡(确定性,只靠 tier/symptom/claims 重建)。
-// 老记录没存 symptomKey,或非分诊记录 → 返回 null,行不可点。
-function reportHref(record: CatRecord): string | null {
-  if (record.kind !== "triage" || !record.symptomKey || !record.tier) return null;
-  const params = new URLSearchParams({
-    tier: record.tier,
-    symptom: record.symptomKey,
-  });
-  if (record.claimIds && record.claimIds.length > 0) {
-    params.set("claims", record.claimIds.join(","));
+// 记录 → 可点回的目标:
+// - 分诊 → 重开当时那张报告卡(确定性,只靠 tier/symptom/claims 重建)。
+//   老记录没存 symptomKey 则不可点(优雅降级)。
+// - 问答 → 回到那次聊天 /behavior?c=<id> 还原对话。
+function recordHref(record: CatRecord): string | null {
+  if (record.kind === "triage") {
+    if (!record.symptomKey || !record.tier) return null;
+    const params = new URLSearchParams({
+      tier: record.tier,
+      symptom: record.symptomKey,
+    });
+    if (record.claimIds && record.claimIds.length > 0) {
+      params.set("claims", record.claimIds.join(","));
+    }
+    return `/report?${params.toString()}`;
   }
-  return `/report?${params.toString()}`;
+  if (record.kind === "behavior") {
+    return `/behavior?c=${encodeURIComponent(record.id)}`;
+  }
+  return null;
 }
 
 function RecentRow({ record }: { record: CatRecord }) {
@@ -84,7 +92,7 @@ function RecentRow({ record }: { record: CatRecord }) {
     record.kind === "triage" && record.tier
       ? TIER_DOT[record.tier]
       : "var(--ink-ghost)";
-  const href = reportHref(record);
+  const href = recordHref(record);
   const rowCls =
     "flex items-center gap-3.5 border-b border-[var(--line-soft)] py-3.5 last:border-b-0";
 
@@ -128,7 +136,7 @@ function RecentRow({ record }: { record: CatRecord }) {
   return (
     <Link
       href={href}
-      aria-label={`查看「${record.summary}」的报告`}
+      aria-label={`查看「${record.summary}」`}
       className={`${rowCls} transition-colors active:bg-[var(--surface-2)]`}
     >
       {body}

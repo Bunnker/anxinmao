@@ -19,8 +19,8 @@ export const runtime = "nodejs";
 const HISTORY_DIR =
   process.env.HISTORY_DIR || path.join(process.cwd(), ".data", "history");
 
-// 单设备 store 上限(含 base64 头像也够)。防止被塞爆磁盘。
-const MAX_BYTES = 512 * 1024;
+// 单设备 store 上限(含头像 + 问答完整对话也够)。防止被塞爆磁盘。
+const MAX_BYTES = 1024 * 1024;
 
 function fileFor(deviceId: string): string {
   // deviceId 已校验为 UUID;basename 再兜一层,杜绝 ../ 之类。

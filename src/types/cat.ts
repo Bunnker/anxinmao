@@ -27,6 +27,12 @@ export interface Cat {
 // 风险三色 —— 分诊的核心输出。
 export type RiskTier = "red" | "yellow" | "green";
 
+// 一条问答对话消息。
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 // 一次分诊或问答的记录 —— 按时间累积,构成猫的"长期记忆"。
 export interface CatRecord {
   id: string;
@@ -38,6 +44,10 @@ export interface CatRecord {
   tier?: RiskTier; // 分诊:红/黄/绿结果
   claimIds?: string[]; // 分诊:命中的医学资料库 claim_id,给 AI 报告/追问做依据
   question?: string; // 问答:用户的问题
+  conversationId?: string; // 问答:会话 id(= 记录 id),用于从「最近」点回这次聊天
+  messages?: ChatMessage[]; // 问答:完整对话(localStorage / 云端存;Cookie 兜底会剔除)
+  memo?: string; // 问答:对话压缩摘要 —— 恢复时还原压缩状态
+  memoCount?: number; // 问答:已折叠进 memo 的消息条数
   summary: string; // 一句话摘要(用于"最近"列表 + 下次分诊的上下文)
   outcome?: "已就医" | "在家好转" | "未跟进";
 }
