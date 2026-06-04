@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { loadStore, seedTemplateStore } from "@/lib/storage";
+import { loadStore, saveStoreLocal, seedTemplateStore } from "@/lib/storage";
+import { pullHistory } from "@/lib/history-sync";
 import { readPersisted, writePersisted } from "@/lib/persist";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
 import { Welcome } from "@/components/Welcome";
 import { Guide } from "@/components/Guide";
-import type { Cat, CatRecord } from "@/types/cat";
+import type { Cat, CatRecord, Store } from "@/types/cat";
 
 // 新手教程「看过了」标记 —— 与猫档案分开,首次进入弹一次,首页可重开。
 const GUIDE_SEEN_KEY = "catTriage:guideSeen:v1";
@@ -142,17 +143,38 @@ export default function HomePage() {
   const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
-    const store = loadStore();
-    if (store && store.cats.length > 0) {
+    // 首次进入(没看过教程)自动弹一次。读 persist(Cookie 兜底)——
+    // 微信 webview 不保 localStorage,否则教程会每次都弹。
+    if (!readPersisted(GUIDE_SEEN_KEY)) setShowGuide(true);
+
+    const applyStore = (store: Store) => {
       const active =
         store.cats.find((c) => c.id === store.activeCatId) ?? store.cats[0];
       setCat(active);
       setRecords(store.records.filter((r) => r.catId === active.id));
+    };
+
+    const local = loadStore();
+    if (local && local.cats.length > 0) {
+      applyStore(local);
+      setLoaded(true);
+      return;
     }
-    // 首次进入(没看过教程)自动弹一次。读 persist(Cookie 兜底)——
-    // 微信 webview 不保 localStorage,否则教程会每次都弹。
-    if (!readPersisted(GUIDE_SEEN_KEY)) setShowGuide(true);
-    setLoaded(true);
+
+    // 本地空 —— 可能微信清了存储。按匿名 deviceId 从云端拉回历史(带超时);
+    // 拉到就回填本地(不再推回云端,避免回声)。失败就当新用户走欢迎页。
+    let cancelled = false;
+    pullHistory().then((cloud) => {
+      if (cancelled) return;
+      if (cloud && cloud.cats.length > 0) {
+        saveStoreLocal(cloud);
+        applyStore(cloud);
+      }
+      setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function closeGuide() {
