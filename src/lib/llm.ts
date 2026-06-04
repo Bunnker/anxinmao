@@ -1,8 +1,7 @@
 // 大模型客户端 —— 仅服务端使用(读取 API key,绝不可被前端代码 import)。
 //
-// 主力模型「待定」,故做成 provider 无关:DeepSeek 与 通义(DashScope)都走
-// OpenAI 兼容的 chat/completions 接口,一套代码;按 .env.local 里填了哪个 key
-// 自动选用。要强制指定可设 LLM_PROVIDER=deepseek | qwen。
+// 支持三个 provider(优先级:xfyun > deepseek > qwen),均走 OpenAI 兼容接口,
+// 全部使用标准 Bearer Token 鉴权。
 
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
@@ -21,7 +20,8 @@ type Provider = {
 
 function providers(): Record<ProviderId, Provider> {
   return {
-    // 讯飞 MaaS —— Qwen3.6-35B-A3B,OpenAI 兼容接口
+    // 讯飞 MaaS —— Qwen3.6-35B-A3B。2026-01-10 之后新建的服务走 /v2,
+    // Bearer Token = APIKey:APISecret 组合串(控制台「服务接口认证信息」里复制)。
     xfyun: {
       id: "xfyun",
       label: "讯飞 Qwen3.6",
