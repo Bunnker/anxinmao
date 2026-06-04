@@ -3,6 +3,7 @@
 // 避免「重新打开链接就丢档案 / 丢历史」。
 import type { Cat, Store } from "@/types/cat";
 import { readPersisted, writePersisted } from "@/lib/persist";
+import { pushHistory } from "@/lib/history-sync";
 
 export const STORAGE_KEY = "catTriage:v1";
 
@@ -49,13 +50,21 @@ function cookiePayload(store: Store): string {
   }
 }
 
-export function saveStore(store: Store): void {
+// 只写本地(localStorage + Cookie),不推云。
+// 从云端拉回回填时用这个 —— 避免「拉回 → 又推回」的回声请求。
+export function saveStoreLocal(store: Store): void {
   if (typeof window === "undefined") return;
   try {
     writePersisted(STORAGE_KEY, JSON.stringify(store), cookiePayload(store));
   } catch {
     // localStorage / Cookie 都不可用时静默降级,不影响主流程。
   }
+}
+
+export function saveStore(store: Store): void {
+  saveStoreLocal(store);
+  // 防抖推到云端(匿名 deviceId);失败静默,不影响本地。
+  pushHistory(store);
 }
 
 // 演示猫 —— 仅开发期 / 用户主动「先看看 demo」时使用,不再自动塞给新用户。
@@ -89,7 +98,7 @@ export function seedDemoStore(): Store {
 // 进入首页后点头像可随时进 onboarding 改成自己家猫的真实信息。
 export const TEMPLATE_CAT: Cat = {
   id: "my-cat",
-  name: "我的猫",
+  name: "哈基米",
   ageMonths: 6,
   sex: "雌",
   coat: "短毛",
