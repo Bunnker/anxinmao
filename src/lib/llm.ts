@@ -24,7 +24,8 @@ function providers(): Record<ProviderId, Provider> {
       id: "deepseek",
       label: "DeepSeek",
       baseURL: "https://api.deepseek.com",
-      model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+      // deepseek-chat / deepseek-reasoner 2026-07-24 起弃用,默认改用 v4-flash。
+      model: process.env.DEEPSEEK_MODEL || "deepseek-v4-flash",
       apiKey: process.env.DEEPSEEK_API_KEY,
     },
     qwen: {
