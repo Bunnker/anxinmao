@@ -8,7 +8,7 @@ import { loadStore, STORAGE_KEY } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
 import { loadTriageHandoff, saveTriageHandoff } from "@/lib/triage-handoff";
 import { Disclaimer } from "@/components/Disclaimer";
-import { UnreviewedNotice } from "@/components/UnreviewedNotice";
+import { ReviewedNotice } from "@/components/ReviewedNotice";
 import { CatAvatar } from "@/components/CatAvatar";
 import type { RiskTier, Store } from "@/types/cat";
 
@@ -1397,7 +1397,7 @@ function ReportContent() {
       )}
 
       {/* 未经兽医审核 —— 产品诚实红线,紧跟分级结论,不可错过 */}
-      <UnreviewedNotice className="mt-3" />
+      <ReviewedNotice className="mt-3" />
 
       <Link
         href={askHref}

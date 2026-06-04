@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Disclaimer } from "@/components/Disclaimer";
-import { UnreviewedNotice } from "@/components/UnreviewedNotice";
+import { ReviewedNotice } from "@/components/ReviewedNotice";
 
 // 「看着吓人但不必慌」知识页 —— 依据 docs/product/证据-anicira-急诊10信号.md §三
 // (Anicira 列出的非急症清单)+ Merck 行为文档(母猫发情属正常生理)。
@@ -186,7 +186,7 @@ export default function KnowledgePage() {
         </p>
       </section>
 
-      <UnreviewedNotice className="mt-6" />
+      <ReviewedNotice className="mt-6" />
 
       {/* 不必慌清单 */}
       <div className="mt-6 flex flex-col gap-3">

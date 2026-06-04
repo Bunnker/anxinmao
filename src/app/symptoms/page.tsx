@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Disclaimer } from "@/components/Disclaimer";
-import { UnreviewedNotice } from "@/components/UnreviewedNotice";
+import { ReviewedNotice } from "@/components/ReviewedNotice";
 
 type Symptom = {
   id: string;
@@ -113,7 +113,7 @@ export default function SymptomsPage() {
         </p>
       </section>
 
-      <UnreviewedNotice className="mt-6" />
+      <ReviewedNotice className="mt-6" />
 
       <Group eyebrow="可能要急的" urgent>
         {urgent.map((s) => (

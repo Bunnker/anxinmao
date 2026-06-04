@@ -93,6 +93,10 @@
 
 1. **用户家猫卡通头像** —— `/onboarding` 加一步(文字描述 + 可选拍照),codex/gpt-image-2
    出图,Vercel Blob 存储。边界严格按 [docs/product/AI生成形象-实施说明.md](docs/product/AI生成形象-实施说明.md) §二
-2. **行为问答 Q&A 持久化** —— 数据模型已留 `kind:"behavior"`,落 localStorage
+2. ~~**行为问答 Q&A 持久化**~~ —— 已完成:`saveConversation` 落 `kind:"behavior"`
+   记录(带完整对话),首页「最近」可点回 `/behavior?c=<id>` 还原,且搭上匿名云同步
 3. **Vercel 部署** —— 让产品真正 demo 起来
-4. **找执业兽医审 docs/product/证据-*.md** —— 所有页面 `UnreviewedNotice` 才能撤下
+4. **逐条经兽医审核 → 更强标签** —— 现已用 `ReviewedNotice`「经执业兽医审阅 ·
+   权威来源核对」(对应兽医审阅认可大方向 + 权威源逐条 claim;不声称逐条严审)。若要
+   升级到「逐条经执业兽医审核」标签,需走 per-condition 审核 pipeline 逐条过
+   `docs/product/证据-*.md`(design doc 见 `~/.gstack/projects/Bunnker-anxinmao/`)
