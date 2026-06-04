@@ -46,6 +46,7 @@ function recordTriage(symptom: string, tier: RiskTier, claimIds: string[]) {
     date: new Date().toISOString(),
     kind: "triage",
     symptom: label,
+    symptomKey: symptom, // 症状键 —— 让「最近」能点回这张报告卡
     tier,
     ...(claimIds.length > 0 ? { claimIds } : {}),
     summary: `${label} · ${tierShort}`,

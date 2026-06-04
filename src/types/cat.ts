@@ -33,7 +33,8 @@ export interface CatRecord {
   catId: string;
   date: string; // ISO
   kind: "triage" | "behavior";
-  symptom?: string; // 分诊:症状(如"呕吐")
+  symptom?: string; // 分诊:症状中文标签(如"呕吐"),用于「最近」列表展示
+  symptomKey?: string; // 分诊:症状键(如"vomit"),用于从「最近」点回报告卡
   tier?: RiskTier; // 分诊:红/黄/绿结果
   claimIds?: string[]; // 分诊:命中的医学资料库 claim_id,给 AI 报告/追问做依据
   question?: string; // 问答:用户的问题
