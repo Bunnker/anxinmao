@@ -19,7 +19,7 @@ export function Welcome({ onUseTemplate }: { onUseTemplate: () => void }) {
       <span className="overflow-hidden rounded-[28px] border border-[var(--line)] bg-surface shadow-[0_6px_20px_-10px_rgba(60,40,20,0.4)]">
         <Image
           src="/icons/icon-512.png"
-          alt="安心猫"
+          alt="小猫怎么了"
           width={104}
           height={104}
           priority
@@ -28,7 +28,7 @@ export function Welcome({ onUseTemplate }: { onUseTemplate: () => void }) {
 
       {/* 品牌 + 定位 */}
       <h1 className="mt-7 font-serif text-[2.6rem] font-medium leading-none tracking-tight text-ink">
-        安心猫
+        小猫怎么了
       </h1>
       <p className="mt-4 text-center text-[15px] leading-relaxed text-ink-soft">
         猫不对劲时,帮你做可信判断 —— 别慌

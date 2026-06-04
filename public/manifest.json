@@ -1,6 +1,6 @@
 {
-  "name": "安心猫 · 猫咪安心分诊器",
-  "short_name": "安心猫",
+  "name": "小猫怎么了 · 猫咪安心分诊器",
+  "short_name": "小猫怎么了",
   "description": "猫不对劲时,5 步分诊 + 红黄绿风险报告 + 带出处的多轮追问",
   "start_url": "/",
   "display": "standalone",

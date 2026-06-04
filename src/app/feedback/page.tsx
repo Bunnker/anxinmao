@@ -121,7 +121,7 @@ export default function FeedbackPage() {
           收到啦,谢谢你
         </h1>
         <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">
-          每一条都会认真看 —— 你的反馈会让安心猫更好用。
+          每一条都会认真看 —— 你的反馈会让小猫怎么了更好用。
         </p>
         <Link
           href="/"

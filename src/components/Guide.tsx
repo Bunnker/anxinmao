@@ -70,7 +70,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
       style={{ background: "#faf1e1" }}
       role="dialog"
       aria-modal="true"
-      aria-label="安心猫使用教程"
+      aria-label="小猫怎么了使用教程"
     >
       <div className="mx-auto flex h-dvh max-w-[430px] flex-col px-7 pb-8 pt-5">
         {/* 进度 + 跳过 */}
@@ -102,7 +102,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
             <Card variant={0} badge="嗨,新手铲屎官" title="猫猫不舒服?先别慌">
               第一次养猫,一点点不对劲都会心里咯噔一下,太正常啦。
               <br />
-              安心猫陪你先看看:
+              小猫怎么了陪你先看看:
               <span className="font-medium text-ink">要不要马上找医生、能不能先在家守一守</span>。
             </Card>
           )}
@@ -144,7 +144,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
 
           {step === 2 && (
             <Card variant={2} badge="安心一点点" title="该急的时候会认真提醒">
-              安心猫不是医生,但会照着医生会关心的小线索,陪你先把心放稳一点。
+              小猫怎么了不是医生,但会照着医生会关心的小线索,陪你先把心放稳一点。
               <br />
               <br />
               如果猫猫喘不上气、抽搐、流好多血、尿不出来、吃到百合或人药,它会很认真地提醒你

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "安心猫 · 猫咪安心分诊器",
+  title: "小猫怎么了 · 猫咪安心分诊器",
   description:
     "猫不对劲时,5 步分诊 + 红黄绿风险报告 + 带出处的多轮追问。AI 整理,不能替代兽医。",
   // PWA —— Web App Manifest 路径(public/manifest.json)
@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "安心猫",
+    title: "小猫怎么了",
   },
   // iOS 主屏图标(Safari 优先用 apple-touch-icon,Android 用 manifest 里的)
   icons: {
