@@ -1,14 +1,14 @@
 // 大模型客户端 —— 仅服务端使用(读取 API key,绝不可被前端代码 import)。
 //
-// 支持三个 provider(优先级:xfyun > deepseek > qwen),均走 OpenAI 兼容接口,
-// 全部使用标准 Bearer Token 鉴权。
+// 支持 deepseek / qwen 两个 provider,均走 OpenAI 兼容接口,Bearer Token 鉴权。
+// 按 .env.local 里填了哪个 key 自动选用;可设 LLM_PROVIDER=deepseek|qwen 强制指定。
 
 export type ChatMessage = {
   role: "system" | "user" | "assistant";
   content: string;
 };
 
-type ProviderId = "xfyun" | "deepseek" | "qwen";
+type ProviderId = "deepseek" | "qwen";
 
 type Provider = {
   id: ProviderId;
@@ -20,15 +20,6 @@ type Provider = {
 
 function providers(): Record<ProviderId, Provider> {
   return {
-    // 讯飞 MaaS —— Qwen3.6-35B-A3B。2026-01-10 之后新建的服务走 /v2,
-    // Bearer Token = APIKey:APISecret 组合串(控制台「服务接口认证信息」里复制)。
-    xfyun: {
-      id: "xfyun",
-      label: "讯飞 Qwen3.6",
-      baseURL: "https://maas-api.cn-huabei-1.xf-yun.com/v2",
-      model: process.env.XFYUN_MODEL || "xopqwen36v35b",
-      apiKey: process.env.XFYUN_API_KEY,
-    },
     deepseek: {
       id: "deepseek",
       label: "DeepSeek",
@@ -46,14 +37,13 @@ function providers(): Record<ProviderId, Provider> {
   };
 }
 
-// 选用哪个 provider:LLM_PROVIDER 显式指定优先;否则按 key 存在自动挑(xfyun > deepseek > qwen)。
+// 选用哪个 provider:LLM_PROVIDER 显式指定优先;否则按 key 存在自动挑(deepseek > qwen)。
 export function resolveProvider(): Provider | null {
   const all = providers();
   const forced = process.env.LLM_PROVIDER?.trim().toLowerCase() as ProviderId | undefined;
   if (forced && forced in all) {
     return all[forced].apiKey ? all[forced] : null;
   }
-  if (all.xfyun.apiKey) return all.xfyun;
   if (all.deepseek.apiKey) return all.deepseek;
   if (all.qwen.apiKey) return all.qwen;
   return null;
