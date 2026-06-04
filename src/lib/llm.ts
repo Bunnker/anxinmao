@@ -9,7 +9,7 @@ export type ChatMessage = {
   content: string;
 };
 
-type ProviderId = "deepseek" | "qwen";
+type ProviderId = "xfyun" | "deepseek" | "qwen";
 
 type Provider = {
   id: ProviderId;
@@ -21,6 +21,14 @@ type Provider = {
 
 function providers(): Record<ProviderId, Provider> {
   return {
+    // 讯飞 MaaS —— Qwen3.6-35B-A3B,OpenAI 兼容接口
+    xfyun: {
+      id: "xfyun",
+      label: "讯飞 Qwen3.6",
+      baseURL: "https://maas-api.cn-huabei-1.xf-yun.com/v2",
+      model: process.env.XFYUN_MODEL || "xopqwen36v35b",
+      apiKey: process.env.XFYUN_API_KEY,
+    },
     deepseek: {
       id: "deepseek",
       label: "DeepSeek",
@@ -38,13 +46,14 @@ function providers(): Record<ProviderId, Provider> {
   };
 }
 
-// 选用哪个 provider:LLM_PROVIDER 显式指定优先;否则按 key 是否存在自动挑。
+// 选用哪个 provider:LLM_PROVIDER 显式指定优先;否则按 key 存在自动挑(xfyun > deepseek > qwen)。
 export function resolveProvider(): Provider | null {
   const all = providers();
-  const forced = process.env.LLM_PROVIDER?.trim().toLowerCase();
-  if (forced === "deepseek" || forced === "qwen") {
+  const forced = process.env.LLM_PROVIDER?.trim().toLowerCase() as ProviderId | undefined;
+  if (forced && forced in all) {
     return all[forced].apiKey ? all[forced] : null;
   }
+  if (all.xfyun.apiKey) return all.xfyun;
   if (all.deepseek.apiKey) return all.deepseek;
   if (all.qwen.apiKey) return all.qwen;
   return null;
