@@ -50,6 +50,18 @@ export function resolveProvider(): Provider | null {
   return null;
 }
 
+// 各 provider 的额外请求体参数。
+// DeepSeek v4 是混合推理模型,默认开「思考」。本项目不需要思考:
+//   - 分诊判级是确定性引擎(triage.ts)算的,LLM 只写文案;
+//   - 问诊靠严格遵循系统提示词,不靠推理;
+// 关掉思考 → 响应更快、更省 token、正文不再被 reasoning 挤占额度。
+function providerExtraBody(provider: Provider): Record<string, unknown> {
+  if (provider.id === "deepseek") {
+    return { thinking: { type: "disabled" } };
+  }
+  return {};
+}
+
 export class LLMError extends Error {
   code: "no_provider" | "upstream" | "timeout" | "bad_response";
   constructor(code: LLMError["code"], message: string) {
@@ -89,6 +101,7 @@ export async function chat(
         temperature: opts.temperature ?? 0.6,
         max_tokens: opts.maxTokens ?? 900,
         stream: false,
+        ...providerExtraBody(provider),
       }),
       signal: controller.signal,
     });
@@ -187,6 +200,7 @@ export async function chatStream(
         temperature: opts.temperature ?? 0.6,
         max_tokens: opts.maxTokens ?? 900,
         stream: true,
+        ...providerExtraBody(provider),
       }),
       signal: ctrl.signal,
     });
