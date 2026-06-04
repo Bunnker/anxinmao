@@ -84,20 +84,24 @@ export function seedDemoStore(): Store {
   return seeded;
 }
 
-// 默认模版猫 —— 中性空白起点「我的猫」,不是豆豆那种「别人填好的猫」。
-// 用户在欢迎页选「先用默认模版逛逛」时 seed;之后可随时点头像进 onboarding 编辑成真实信息。
-// 关键:无疫苗 / 驱虫 / notes / avatar —— 让用户感觉「这是我的猫,还没填」而不是「这是谁的猫」。
+// 默认模版猫 —— 填好的示例起点,让用户一眼看懂每个字段该填什么。
+// 用户在欢迎页选「使用系统默认模版」时 seed;
+// 进入首页后点头像可随时进 onboarding 改成自己家猫的真实信息。
 export const TEMPLATE_CAT: Cat = {
   id: "my-cat",
   name: "我的猫",
   ageMonths: 6,
-  sex: "不确定",
-  coat: "",
-  weight: 3,
+  sex: "雌",
+  coat: "短毛",
+  weight: 3.5,
   neutered: "暂未",
-  homeDate: "",
-  vaccines: [],
-  deworm: "",
+  homeDate: "2026-02-01",
+  vaccines: [
+    { name: "猫三联第1针", date: "2026-02-10" },
+    { name: "猫三联第2针", date: "2026-03-10" },
+    { name: "猫三联第3针", date: "2026-04-10" },
+  ],
+  deworm: "2026-05-01",
   notes: "",
 };
 
