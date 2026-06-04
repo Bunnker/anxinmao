@@ -510,6 +510,10 @@ export default function OnboardingPage() {
           hint={draft.vaccines.length ? `${draft.vaccines.length} 针` : "未记录"}
         >
           <div className="flex flex-col gap-2">
+            {/* 常见疫苗名称参考提示 */}
+            <p className="text-[11.5px] leading-relaxed text-ink-faint">
+              常见:猫三联（第1/2/3针）· 猫白血病疫苗 · 狂犬疫苗
+            </p>
             {draft.vaccines.map((v, i) => (
               <div
                 key={i}
@@ -518,7 +522,11 @@ export default function OnboardingPage() {
                 <input
                   value={v.name}
                   onChange={(e) => setVaccine(i, { name: e.target.value })}
-                  placeholder="疫苗名"
+                  placeholder={
+                    i === 0 ? "如:猫三联第1针" :
+                    i === 1 ? "如:猫三联第2针" :
+                    i === 2 ? "如:猫三联第3针" : "疫苗名称"
+                  }
                   className="min-w-0 flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-faint"
                 />
                 <input
@@ -550,23 +558,40 @@ export default function OnboardingPage() {
                 </button>
               </div>
             ))}
-            <button
-              type="button"
-              onClick={() =>
-                set("vaccines", [...draft.vaccines, { name: "", date: "" }])
-              }
-              className="flex items-center gap-2 rounded-lg border border-dashed border-[var(--line)] px-3 py-2.5 text-[13px] text-ink-soft"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M12 5v14M5 12h14"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                />
-              </svg>
-              加一针
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  set("vaccines", [...draft.vaccines, { name: "", date: "" }])
+                }
+                className="flex flex-1 items-center gap-2 rounded-lg border border-dashed border-[var(--line)] px-3 py-2.5 text-[13px] text-ink-soft"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M12 5v14M5 12h14"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                加一针
+              </button>
+              {draft.vaccines.length === 0 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    set("vaccines", [
+                      { name: "猫三联第1针", date: "" },
+                      { name: "猫三联第2针", date: "" },
+                      { name: "猫三联第3针", date: "" },
+                    ])
+                  }
+                  className="rounded-lg border border-[var(--line)] bg-surface px-3 py-2.5 text-[12px] text-ink-soft"
+                >
+                  填入参考模版
+                </button>
+              )}
+            </div>
           </div>
         </Field>
 
@@ -578,6 +603,9 @@ export default function OnboardingPage() {
             className={inputCls + " text-[15px]"}
             style={{ colorScheme: "light" }}
           />
+          <p className="text-[11.5px] leading-relaxed text-ink-faint">
+            常见药:体外驱虫用福来恩/赛诺菲 · 体内驱虫用拜宠清/倍脉心 · 每1-3个月一次
+          </p>
         </Field>
 
         <Field label="过敏 / 慢性病 · 可选">
