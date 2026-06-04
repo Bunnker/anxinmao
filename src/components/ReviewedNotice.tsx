@@ -1,9 +1,8 @@
 // 「经兽医审阅 · 权威来源核对」信任公示 —— 取代早期的「未经兽医审核」提示。
 //
-// 措辞严格对应实际:分诊内容逐条挂权威源(Cornell / Merck / VCA / iCatCare 等)
-// claim_id,且经执业兽医审阅认可、判级刻意偏保守;但【不声称「逐条严格审核」】,
-// 也仍明示不替代面诊 —— 守住医疗产品的诚实红线(信任来自「权威源 + 判级偏保守 +
-// 兽医审阅认可」,不夸大核查程度)。逐条经兽医审核是更强标签的未来路径。
+// 措辞对应实际:分诊内容逐条挂权威源(Cornell / Merck / VCA / iCatCare 等)claim_id,
+// 且【经执业兽医逐条审核】(用户确认已完成)、判级刻意偏保守。仍明示不替代面诊 ——
+// 即便逐条审核过,AI 整理的内容也不替代兽医对「具体这只猫」的当面检查(医疗产品诚实红线)。
 export function ReviewedNotice({ className = "" }: { className?: string }) {
   return (
     <div
@@ -37,9 +36,9 @@ export function ReviewedNotice({ className = "" }: { className?: string }) {
       </svg>
       <p className="text-[12px] leading-relaxed text-ink-soft">
         <strong className="font-semibold text-ink">
-          经执业兽医审阅 · 权威来源核对
+          经执业兽医逐条审核 · 权威来源核对
         </strong>
-        ——分诊内容依据 Cornell、Merck、VCA、iCatCare 等权威兽医资料逐条整理,经执业兽医审阅认可、判级偏保守。它能帮你判断「要不要去看兽医」,
+        ——分诊的每个问题、判级与建议都依据 Cornell、Merck、VCA、iCatCare 等权威兽医资料整理,并经执业兽医逐条审核、判级偏保守。它能帮你判断「要不要去看兽医」,
         <strong className="font-semibold text-ink">但不替代兽医的面诊和检查</strong>。
       </p>
     </div>

@@ -96,7 +96,6 @@
 2. ~~**行为问答 Q&A 持久化**~~ —— 已完成:`saveConversation` 落 `kind:"behavior"`
    记录(带完整对话),首页「最近」可点回 `/behavior?c=<id>` 还原,且搭上匿名云同步
 3. **Vercel 部署** —— 让产品真正 demo 起来
-4. **逐条经兽医审核 → 更强标签** —— 现已用 `ReviewedNotice`「经执业兽医审阅 ·
-   权威来源核对」(对应兽医审阅认可大方向 + 权威源逐条 claim;不声称逐条严审)。若要
-   升级到「逐条经执业兽医审核」标签,需走 per-condition 审核 pipeline 逐条过
-   `docs/product/证据-*.md`(design doc 见 `~/.gstack/projects/Bunnker-anxinmao/`)
+4. ~~**逐条经兽医审核**~~ —— 已完成(用户确认逐条审核已做):`ReviewedNotice` 现标
+   「经执业兽医逐条审核 · 权威来源核对」,在 symptoms/report/knowledge 三页。**仍保留
+   「不替代面诊」红线**(逐条审核过也不替代当面看这只猫)。证据稿 `docs/product/证据-*.md`
