@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { loadStore, seedTemplateStore } from "@/lib/storage";
+import { readPersisted, writePersisted } from "@/lib/persist";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
 import { Welcome } from "@/components/Welcome";
@@ -100,22 +101,16 @@ export default function HomePage() {
       setCat(active);
       setRecords(store.records.filter((r) => r.catId === active.id));
     }
-    // 首次进入(没看过教程)自动弹一次。
-    try {
-      if (!window.localStorage.getItem(GUIDE_SEEN_KEY)) setShowGuide(true);
-    } catch {
-      // localStorage 不可用就不弹,不影响主流程
-    }
+    // 首次进入(没看过教程)自动弹一次。读 persist(Cookie 兜底)——
+    // 微信 webview 不保 localStorage,否则教程会每次都弹。
+    if (!readPersisted(GUIDE_SEEN_KEY)) setShowGuide(true);
     setLoaded(true);
   }, []);
 
   function closeGuide() {
     setShowGuide(false);
-    try {
-      window.localStorage.setItem(GUIDE_SEEN_KEY, "1");
-    } catch {
-      // 忽略
-    }
+    // 写 persist(localStorage + Cookie),保证微信里也记得「看过了」。
+    writePersisted(GUIDE_SEEN_KEY, "1");
   }
 
   // 用户在欢迎页选「先用默认模版逛逛」—— seed 中性「我的猫」,首页就地重渲染。

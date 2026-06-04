@@ -1,12 +1,20 @@
 // localStorage 持久化 —— MVP 不做数据库、不做登录,猫档案与历史存本地。
+// 微信 / QQ 内置浏览器不保 localStorage,故经 persist 层加 Cookie 兜底,
+// 避免「重新打开链接就丢档案 / 丢历史」。
 import type { Cat, Store } from "@/types/cat";
+import { readPersisted, writePersisted } from "@/lib/persist";
 
 export const STORAGE_KEY = "catTriage:v1";
+
+// Cookie 兜底版最多保留多少条历史(localStorage 仍存全量)。实际还会按字节再收。
+const COOKIE_MAX_RECORDS = 12;
+// 给 cookiePayload 的编码字节目标,留在 persist 的 Cookie 限额之内。
+const COOKIE_PAYLOAD_BUDGET = 3600;
 
 export function loadStore(): Store | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = readPersisted(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Store;
     if (!Array.isArray(parsed.cats) || parsed.cats.length === 0) return null;
@@ -17,12 +25,36 @@ export function loadStore(): Store | null {
   }
 }
 
+// Cookie 兜底版:去掉可能很大的 avatar(base64 照片会撑爆 Cookie),
+// 记录只留最近若干条,并按编码字节逐步收到限额内 —— 保证 Cookie 一定塞得下。
+function cookiePayload(store: Store): string {
+  const slimCats = store.cats.map((c) => {
+    const copy = { ...c };
+    delete copy.avatar;
+    return copy;
+  });
+  let n = Math.min(store.records.length, COOKIE_MAX_RECORDS);
+  // 逐步减少记录条数,直到编码后塞得进 Cookie(最坏只剩档案、不带历史)。
+  for (;;) {
+    const slim: Store = {
+      cats: slimCats,
+      activeCatId: store.activeCatId,
+      records: store.records.slice(0, n),
+    };
+    const json = JSON.stringify(slim);
+    if (n === 0 || encodeURIComponent(json).length <= COOKIE_PAYLOAD_BUDGET) {
+      return json;
+    }
+    n = Math.max(0, n - 2);
+  }
+}
+
 export function saveStore(store: Store): void {
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    writePersisted(STORAGE_KEY, JSON.stringify(store), cookiePayload(store));
   } catch {
-    // localStorage 不可用(隐私模式 / 配额满)时静默降级。
+    // localStorage / Cookie 都不可用时静默降级,不影响主流程。
   }
 }
 
