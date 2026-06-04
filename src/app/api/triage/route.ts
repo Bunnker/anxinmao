@@ -184,7 +184,8 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const reply = await chat(fullMessages, {
       temperature: 0.25,
-      maxTokens: 700,
+      // v4-flash 等推理模型:reasoning token 额外占用,留足余量避免正文被截断/吐空。
+      maxTokens: 1200,
       timeoutMs: 30000,
     });
     return Response.json({
