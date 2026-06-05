@@ -278,8 +278,8 @@ export async function POST(req: Request): Promise<Response> {
   try {
     const stream = await chatStream(fullMessages, {
       temperature: 0.6,
-      // v4-flash 等推理模型:reasoning token 额外占用,留足余量。
-      maxTokens: 1200,
+      // v4-flash 等推理模型:reasoning token 额外占用,留足余量(防正文被挤空)。
+      maxTokens: 3000,
     });
     return new Response(stream, {
       headers: {

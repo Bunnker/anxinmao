@@ -38,7 +38,7 @@ export async function POST(req: Request): Promise<Response> {
         { role: "system", content: SUMMARY_SYSTEM },
         { role: "user", content: userContent },
       ],
-      { temperature: 0.3, maxTokens: 700 }, // 推理模型留余量:reasoning 会占额度
+      { temperature: 0.3, maxTokens: 1500 }, // 推理模型留余量:reasoning 会占额度
     );
     return Response.json({ memo });
   } catch (e) {
