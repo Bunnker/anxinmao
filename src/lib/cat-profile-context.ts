@@ -9,6 +9,9 @@ export type CatProfilePayload = Partial<
     | "coat"
     | "weight"
     | "neutered"
+    | "breed"
+    | "chronicConditions"
+    | "allergies"
     | "homeDate"
     | "deworm"
     | "notes"
@@ -60,6 +63,9 @@ export function catProfilePayload(cat: Cat | null | undefined): CatProfilePayloa
     coat: cat.coat,
     weight: cat.weight,
     neutered: cat.neutered,
+    breed: cat.breed,
+    chronicConditions: cat.chronicConditions,
+    allergies: cat.allergies,
     homeDate: cat.homeDate,
     vaccines: cat.vaccines.slice(0, 8).map((v) => ({
       name: v.name,
@@ -81,6 +87,9 @@ export function catProfileContext(cat: unknown): string | null {
   const coat = cleanText(c.coat, 12);
   const weight = cleanNumber(c.weight);
   const neutered = cleanText(c.neutered, 12);
+  const breed = cleanText(c.breed, 40);
+  const chronic = cleanText(c.chronicConditions, 200);
+  const allergies = cleanText(c.allergies, 200);
   const homeDate = dateText(c.homeDate);
   const deworm = dateText(c.deworm);
   const notes = cleanText(c.notes, 260);
@@ -88,9 +97,12 @@ export function catProfileContext(cat: unknown): string | null {
   if (name) bits.push(`名字「${name}」`);
   if (ageMonths !== undefined) bits.push(`约 ${ageMonths} 月龄`);
   if (sex) bits.push(`性别${sex}`);
+  if (breed) bits.push(`品种${breed}`);
   if (coat) bits.push(`毛发${coat}`);
   if (weight !== undefined) bits.push(`体重 ${Number(weight.toFixed(2))} kg`);
   if (neutered) bits.push(`绝育情况:${neutered}`);
+  if (chronic) bits.push(`慢性病史:${chronic}`);
+  if (allergies) bits.push(`过敏史:${allergies}`);
   if (homeDate) bits.push(`到家日期 ${homeDate}`);
   bits.push(`疫苗记录:${vaccineText(c.vaccines)}`);
   bits.push(`最近驱虫日期 ${deworm ?? "未填写/未知"}`);
@@ -99,5 +111,5 @@ export function catProfileContext(cat: unknown): string | null {
   if (bits.length === 0) return null;
   const body = bits.join("、");
   const end = /[。！？.!?]$/.test(body) ? "" : "。";
-  return `(供参考的用户猫咪档案,涉及月龄、体重、疫苗/驱虫、绝育和既往备注时要用于风险判断:${body}${end})`;
+  return `(供参考的用户猫咪档案,涉及月龄、体重、品种、疫苗/驱虫、绝育、慢性病/过敏和既往备注时要用于风险判断:${body}${end})`;
 }
