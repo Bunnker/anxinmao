@@ -358,7 +358,6 @@ export default function OnboardingPage() {
                   <input
                     type="file"
                     accept="image/*"
-                    capture="environment"
                     onChange={onPhotoPick}
                     className="hidden"
                   />
@@ -377,7 +376,7 @@ export default function OnboardingPage() {
                     />
                     <circle cx="12" cy="13" r="3.2" stroke="currentColor" strokeWidth="1.5" />
                   </svg>
-                  <span className="text-[11px]">拍照</span>
+                  <span className="text-[11px]">传照片</span>
                 </label>
               )}
               <textarea
