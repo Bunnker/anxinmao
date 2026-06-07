@@ -176,6 +176,7 @@ const GROUP_OF: Record<string, Group> = {
   diarrhea: "digest",
   breath: "breath",
   pee: "urethra",
+  urine: "urethra",
   blood: "blood",
   noeat: "noeat",
   sneeze: "sneeze",

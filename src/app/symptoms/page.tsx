@@ -23,6 +23,7 @@ const SYMPTOMS: Symptom[] = [
   { id: "mouth", label: "口腔问题", sub: "流口水 / 口臭 / 单边吃", tier: "common" },
   { id: "behavior", label: "行为突变", sub: "躲 / 凶 / 乱尿 / 不玩", tier: "common" },
   { id: "limp", label: "跛行 / 走路异常", sub: "一瘸一拐 / 跳不动", tier: "common" },
+  { id: "urine", label: "小便不对劲", sub: "尿频 / 尿血 / 乱尿 / 尿痛", tier: "common" },
   { id: "eat", label: "可能误食", sub: "线 / 植物 / 不该吃的", tier: "urgent" },
   { id: "breath", label: "呼吸怪", sub: "急促 / 张嘴喘", tier: "urgent" },
   { id: "blood", label: "看到血", sub: "便 / 尿 / 口鼻", tier: "urgent" },

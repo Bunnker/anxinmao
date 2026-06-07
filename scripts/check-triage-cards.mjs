@@ -24,6 +24,7 @@ const SYMPTOM_PREFIX = {
   breath: "bre",
   blood: "bld",
   pee: "uo",
+  urine: "uo",
   noeat: "ano",
   sneeze: "uri",
   ear: "ear",
@@ -43,6 +44,7 @@ const BLOCK_SYMPTOM = {
   breathFlow: "breath",
   bloodFlow: "blood",
   peeFlow: "pee",
+  urineFlow: "urine",
   noeatFlow: "noeat",
   sneezeFlow: "sneeze",
   earFlow: "ear",
@@ -57,7 +59,7 @@ const BLOCK_SYMPTOM = {
 
 // 有专属 flow 的症状(必须有对应病情卡才算覆盖)。
 const DEDICATED_SYMPTOMS = [
-  "vomit", "diarrhea", "eat", "breath", "blood", "pee", "noeat",
+  "vomit", "diarrhea", "eat", "breath", "blood", "pee", "urine", "noeat",
   "sneeze", "ear", "skin", "eye", "mouth", "behavior", "limp",
 ];
 
@@ -114,6 +116,7 @@ async function main() {
   const SYMPTOM_CARD = {
     vomit: "cat-vomiting", diarrhea: "cat-diarrhea", eat: "cat-toxin-ingestion",
     breath: "cat-dyspnea", blood: "cat-bleeding", pee: "cat-urethral-obstruction",
+    urine: "cat-urethral-obstruction",
     noeat: "cat-anorexia", sneeze: "cat-uri", ear: "cat-ear-problem",
     skin: "cat-skin-problem", eye: "cat-eye-problem", mouth: "cat-oral-problem",
     behavior: "cat-behavior-change", limp: "cat-limping", lethargy: "cat-lethargy",

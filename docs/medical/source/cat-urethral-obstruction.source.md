@@ -5,7 +5,7 @@
 - `condition_id`: `cat_urethral_obstruction`
 - 中文名:猫尿道阻塞 / 尿不出
 - 英文名:Feline urethral obstruction
-- 对应 triage symptom:`pee`
+- 对应 triage symptom:`pee`(尿不出/尿闭),`urine`(小便不对劲 —— FLUTD 入口卡复用本底稿:黄档 `uo_006`/`uo_007`,撞尿闭信号升红 `uo_001`~`uo_005`)
 - 适用物种:猫
 - 资料状态:draft
 - 生成日期:2026-05-30
