@@ -253,15 +253,6 @@ export default function HomePage() {
     setCat(nextCat);
   }
 
-  async function onAvatarPick(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file || !cat) return;
-    if (file.size > 5 * 1024 * 1024) return;
-    const dataUrl = await fileToDataUrl(file);
-    persistCat({ ...cat, avatar: dataUrl });
-  }
-
   async function onAlbumPick(e: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
     e.target.value = "";
@@ -334,22 +325,13 @@ export default function HomePage() {
         <div className="relative overflow-hidden rounded-[34px] bg-surface p-5 shadow-[var(--shadow-card)]">
           <div className="absolute -right-10 -top-12 size-36 rounded-full bg-[var(--accent-soft)]" />
           <div className="relative flex items-start gap-4">
-            <div className="relative shrink-0">
+            <div className="shrink-0">
               <CatAvatar
                 avatar={cat.avatar}
                 name={cat.name}
                 size={92}
                 className="shadow-[var(--shadow-control)]"
               />
-              <label className="absolute -bottom-1 -right-1 grid size-9 cursor-pointer place-items-center rounded-full bg-accent text-accent-fg shadow-[var(--shadow-accent)]">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={onAvatarPick}
-                  className="hidden"
-                />
-                <CameraIcon />
-              </label>
             </div>
             <div className="min-w-0 flex-1 pt-1">
               <p className="text-[12px] font-semibold tracking-[0.16em] text-accent">
