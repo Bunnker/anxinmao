@@ -131,7 +131,7 @@ function TriageSession({ symptom }: { symptom: string }) {
   const nextLabel = redNow ? "立刻看处理 →" : isLast ? "看结果 →" : "下一题 →";
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col bg-paper px-7 pb-7 pt-3">
+    <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col px-7 pb-7 pt-3" style={{ background: "var(--gradient-page)" }}>
       {/* 顶栏 + 进度 */}
       <header className="flex items-center">
         <button
@@ -164,7 +164,7 @@ function TriageSession({ symptom }: { symptom: string }) {
 
       {/* 症状锚点 */}
       <div className="mt-6">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--line)] bg-surface px-3 py-1.5 text-[12px] text-ink-soft">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[12px] text-ink-soft shadow-[var(--shadow-control)]">
           <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
           症状 · {SYMPTOM_LABELS[flow.symptom]}
         </span>
@@ -195,7 +195,7 @@ function TriageSession({ symptom }: { symptom: string }) {
               type="button"
               onClick={() => choose(i)}
               className={
-                "flex items-center gap-3 rounded-2xl border px-5 py-4 text-left transition-colors " +
+                "flex items-center gap-3 rounded-[28px] border px-5 py-4 text-left shadow-[var(--shadow-card)] transition-all duration-500 " +
                 (on
                   ? "border-[var(--accent)] bg-[var(--accent-soft)]"
                   : "border-[var(--line)] bg-surface")
@@ -228,7 +228,7 @@ function TriageSession({ symptom }: { symptom: string }) {
         onClick={next}
         disabled={!answered}
         className={
-          "mt-7 w-full rounded-2xl py-4 text-[16px] font-medium tracking-wide transition-colors " +
+          "mt-7 w-full rounded-[28px] py-4 text-[16px] font-medium tracking-wide transition-colors duration-500 " +
           (answered
             ? "bg-accent text-accent-fg"
             : "bg-[var(--surface-2)] text-ink-faint")

@@ -34,6 +34,7 @@ function cookiePayload(store: Store): string {
   const slimCats = store.cats.map((c) => {
     const copy = { ...c };
     delete copy.avatar;
+    delete copy.photos;
     return copy;
   });
   // 问答记录的完整对话(messages/memo)太大,Cookie 版剔除 —— 只留摘要行能显示,
@@ -67,6 +68,8 @@ export function saveStoreLocal(store: Store): void {
   if (typeof window === "undefined") return;
   try {
     writePersisted(STORAGE_KEY, JSON.stringify(store), cookiePayload(store));
+    // 同窗口的 storage 事件不会自动触发,手动派发让订阅者(TabBar 等)感知变化。
+    window.dispatchEvent(new CustomEvent("catstore:updated"));
   } catch {
     // localStorage / Cookie 都不可用时静默降级,不影响主流程。
   }

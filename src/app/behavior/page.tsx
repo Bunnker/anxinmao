@@ -270,7 +270,7 @@ function CatTag() {
 
 function UserBubble({ text }: { text: string }) {
   return (
-    <div className="max-w-[82%] self-end whitespace-pre-wrap rounded-2xl rounded-br-md bg-ink px-4 py-3 text-[14.5px] leading-relaxed text-paper">
+    <div className="max-w-[82%] self-end whitespace-pre-wrap rounded-[26px] rounded-br-lg bg-ink px-4 py-3 text-[14.5px] leading-relaxed text-paper shadow-[var(--shadow-control)]">
       {text}
     </div>
   );
@@ -293,7 +293,7 @@ function AssistantCard({
   return (
     <div className="max-w-[96%] self-start">
       <CatTag />
-      <div className="rounded-2xl rounded-tl-md border border-[var(--line)] bg-surface px-5 py-4">
+      <div className="rounded-[28px] rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
         <MarkdownMessage text={text} streaming={streaming} />
       </div>
     </div>
@@ -304,7 +304,7 @@ function Thinking() {
   return (
     <div className="max-w-[96%] self-start">
       <CatTag />
-      <div className="inline-flex items-center gap-1.5 rounded-2xl rounded-tl-md border border-[var(--line)] bg-surface px-5 py-4">
+      <div className="inline-flex items-center gap-1.5 rounded-[28px] rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
         <span className="size-1.5 animate-bounce rounded-full bg-ink-faint [animation-delay:-0.3s]" />
         <span className="size-1.5 animate-bounce rounded-full bg-ink-faint [animation-delay:-0.15s]" />
         <span className="size-1.5 animate-bounce rounded-full bg-ink-faint" />
@@ -315,7 +315,7 @@ function Thinking() {
 
 function ErrorRow({ text, onRetry }: { text: string; onRetry: () => void }) {
   return (
-    <div className="max-w-[96%] self-start rounded-2xl border border-[var(--line)] bg-[var(--surface-2)] px-4 py-3">
+    <div className="max-w-[96%] self-start rounded-[28px] bg-[var(--surface-2)] px-4 py-3 shadow-[var(--shadow-control)]">
       <p className="text-[13px] leading-relaxed text-ink-soft">{text}</p>
       <button
         type="button"
@@ -351,27 +351,34 @@ function EmptyState({
   onPick: (t: string) => void;
 }) {
   return (
-    <div className="pt-8">
-      <CatTag />
-      <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
-        {catName ? `关于${catName},想问点什么?` : "养猫的事,想问点什么?"}
-      </h1>
-      <p className="mt-2.5 text-[13.5px] leading-relaxed text-ink-soft">
-        生病拿不准、喂养、训练、行为都能问 —— 像问朋友一样。我会多问几句再帮你判断要不要就医;急症会直接让你去医院。不能替代兽医。
-      </p>
-      <div className="mt-6 flex flex-col gap-2.5">
-        {STARTERS.map((s) => (
-          <button
-            key={s}
-            type="button"
-            disabled={disabled}
-            onClick={() => onPick(s)}
-            className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--line)] bg-surface px-4 py-3.5 text-left text-[14px] text-ink transition-transform active:translate-y-px disabled:opacity-50"
-          >
-            <span>{s}</span>
-            <span className="shrink-0 text-ink-faint">→</span>
-          </button>
-        ))}
+    <div className="pt-7">
+      <div className="rounded-[28px] bg-surface p-5 shadow-[var(--shadow-card)]">
+        <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
+          {catName ? `关于${catName},想问点什么?` : "养猫的事,想问点什么?"}
+        </h1>
+        <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
+          生病拿不准、喂养、训练、行为都能问 —— 急症会直接让你去医院。不能替代兽医。
+        </p>
+        <div className="mt-4 border-t border-[var(--line-soft)] pt-4">
+          <p className="mb-2.5 text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+            试试这些问题
+          </p>
+          <div className="flex flex-col gap-1.5">
+            {STARTERS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                disabled={disabled}
+                onClick={() => onPick(s)}
+                className="flex w-full items-center justify-between gap-3 rounded-[16px] px-4 py-3 text-left text-[13.5px] text-ink-soft transition-colors duration-150 hover:bg-[var(--surface-2)] active:bg-[var(--surface-2)] disabled:opacity-50"
+                style={{ background: "var(--surface-2)" }}
+              >
+                <span>{s}</span>
+                <span className="shrink-0 text-[12px] text-ink-faint">→</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -644,32 +651,37 @@ function BehaviorContent() {
   if (!cat) return <main className="min-h-dvh" aria-hidden="true" />;
 
   return (
-    <main className="mx-auto flex h-dvh max-w-[430px] flex-col bg-paper">
+    <main
+      className="relative mx-auto flex max-w-[430px] flex-col"
+      style={{
+        background: "var(--gradient-page)",
+        height: "100dvh",
+        paddingTop: "calc(1.25rem + env(safe-area-inset-top, 0px))",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-56"
+        style={{
+          background:
+            "radial-gradient(ellipse 85% 60% at 50% 0%, rgba(176,90,80,0.11) 0%, transparent 100%)",
+        }}
+        aria-hidden="true"
+      />
       {/* 顶栏 */}
-      <header className="flex shrink-0 items-center px-7 pt-3">
-        <Link
-          href="/"
-          aria-label="返回"
-          className="grid size-9 place-items-center rounded-full text-ink"
+      <header className="flex shrink-0 items-center px-6 py-2">
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-medium tracking-[0.06em]"
+          style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M15 18l-6-6 6-6"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
           </svg>
-        </Link>
-        <span className="flex-1 text-center text-[12px] font-medium uppercase tracking-[0.18em] text-ink-soft">
           问点什么
         </span>
-        <span className="size-9" />
       </header>
 
       {/* 对话区 —— 独立滚动 */}
-      <div className="flex-1 overflow-y-auto px-7">
+      <div className="flex-1 overflow-y-auto px-6">
         {empty ? (
           medicalContext ? (
             <div className="flex flex-col gap-5 pb-2 pt-4">
@@ -714,10 +726,10 @@ function BehaviorContent() {
       </div>
 
       {/* 底部:去分诊兜底入口 + 输入栏 + 免责 */}
-      <div className="shrink-0 px-7 pb-5 pt-2">
+      <div className="shrink-0 px-6 pt-2" style={{ paddingBottom: "calc(1.25rem + 56px + env(safe-area-inset-bottom, 0px))" }}>
         <Link
           href="/symptoms"
-          className="flex items-center justify-between rounded-xl border border-dashed border-[var(--line)] px-3.5 py-2.5"
+          className="flex items-center justify-between rounded-[24px] border border-dashed border-[var(--line)] bg-white/55 px-3.5 py-2.5 shadow-[var(--shadow-control)]"
         >
           <span className="text-[12.5px] text-ink-soft">
             想要红黄绿分诊报告?
@@ -732,7 +744,7 @@ function BehaviorContent() {
             e.preventDefault();
             send(input);
           }}
-          className="mt-2.5 flex items-center gap-2.5 rounded-full border border-[var(--line)] bg-surface py-2 pl-4 pr-2"
+          className="mt-2.5 flex items-center gap-2.5 rounded-full bg-surface py-2 pl-4 pr-2 shadow-[var(--shadow-control)]"
         >
           <input
             value={input}

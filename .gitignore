@@ -54,5 +54,13 @@ next-env.d.ts
 /public/fallback-*.js
 .gstack/
 
+# Claude Code / FleetView skill 系统(本地工具,不入仓)
+.agents/
+.claude/skills/
+skills-lock.json
+
+# Playwright MCP 临时记录
+.playwright-mcp/
+
 # 医学资料抓取的原始网页/PDF缓存,只在本地用于证据核对,不入仓或随产品发布
 /docs/medical/raw/

@@ -94,12 +94,12 @@ function CheckIcon() {
 
 function ItemCard({ item }: { item: Item }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-surface">
+    <div className="overflow-hidden rounded-[28px] bg-surface shadow-[var(--shadow-card)]">
       {/* 顶部场景配图 + 「不必慌」信号 chips 叠在图底部 ——
           图传达「放松」氛围,chips 拎出 why 里的「这几项都正常 = 通常不必慌」标准,
           文字承担「升级条件」。三层递进,严格不画症状细节。
           边界:docs/product/AI生成形象-实施说明.md §二 + §四 */}
-      <div className="relative aspect-[3/2] w-full bg-[#f5e6cf]">
+      <div className="relative aspect-[3/2] w-full bg-[var(--accent-soft)]">
         {/* unoptimized:静态资产直接发原图,不走 Next/Image 优化器缓存。
             否则换图后浏览器会一直拿 cached webp 版本(dev / 生产都遇到过)。
             代价:不做 webp 转换;1.5MB PNG × 6 在移动端可接受,知识页非首屏关键路径。 */}
@@ -146,7 +146,21 @@ function ItemCard({ item }: { item: Item }) {
 
 export default function KnowledgePage() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col bg-paper px-7 pb-8 pt-3">
+    <main
+      className="relative mx-auto flex min-h-dvh max-w-[430px] flex-col px-6 pb-24"
+      style={{
+        background: "var(--gradient-page)",
+        paddingTop: "calc(0.75rem + env(safe-area-inset-top, 0px))",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-56"
+        style={{
+          background:
+            "radial-gradient(ellipse 85% 60% at 50% 0%, rgba(176,90,80,0.11) 0%, transparent 100%)",
+        }}
+        aria-hidden="true"
+      />
       {/* 顶栏 */}
       <header className="flex items-center">
         <Link
@@ -198,7 +212,7 @@ export default function KnowledgePage() {
       {/* 兜底:还是不放心 → 走分诊 */}
       <Link
         href="/symptoms"
-        className="mt-7 flex items-center justify-between rounded-2xl border border-dashed border-[var(--line)] px-5 py-4 transition-transform active:translate-y-px"
+        className="mt-7 flex items-center justify-between rounded-[28px] border border-dashed border-[var(--line)] bg-white/55 px-5 py-4 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
       >
         <span>
           <span className="block text-[15px] text-ink">还是不放心?</span>

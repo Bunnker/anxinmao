@@ -113,7 +113,7 @@ export default function FeedbackPage() {
   // 提交成功:致谢页
   if (status === "done") {
     return (
-      <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col items-center justify-center bg-paper px-7 text-center">
+      <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col items-center justify-center px-7 text-center" style={{ background: "var(--gradient-page)" }}>
         <span className="grid size-16 place-items-center rounded-full bg-[var(--accent-soft)] text-[1.8rem]">
           🐱
         </span>
@@ -125,7 +125,7 @@ export default function FeedbackPage() {
         </p>
         <Link
           href="/"
-          className="mt-8 rounded-2xl bg-accent px-8 py-3.5 text-[15px] font-medium tracking-wide text-accent-fg transition-transform active:translate-y-px"
+          className="mt-8 rounded-[28px] bg-accent px-8 py-3.5 text-[15px] font-medium tracking-wide text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.985]"
         >
           回首页
         </Link>
@@ -137,7 +137,7 @@ export default function FeedbackPage() {
   const canSend = text.trim().length > 0 && !sending;
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col bg-paper pb-7">
+    <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col pb-7" style={{ background: "var(--gradient-page)" }}>
       <BackBar />
 
       <div className="px-7 pt-6">
@@ -155,7 +155,7 @@ export default function FeedbackPage() {
           disabled={sending}
           rows={6}
           placeholder="比如:多选那一题我以为是单选…… / 希望能加个 XX 功能"
-          className="mt-5 w-full resize-none rounded-2xl border border-[var(--line)] bg-surface px-4 py-3.5 text-[14.5px] leading-relaxed text-ink outline-none placeholder:text-ink-faint focus:border-[var(--accent)] disabled:opacity-60"
+          className="mt-5 w-full resize-none rounded-[28px] border border-[var(--line)] bg-surface px-4 py-3.5 text-[14.5px] leading-relaxed text-ink shadow-[var(--shadow-control)] outline-none placeholder:text-ink-faint focus:border-[var(--accent)] disabled:opacity-60"
         />
         <div className="mt-1 text-right text-[11px] text-ink-faint">
           {text.length} / {MAX_TEXT}
@@ -170,7 +170,7 @@ export default function FeedbackPage() {
               <img
                 src={image}
                 alt="反馈配图预览"
-                className="max-h-44 rounded-xl border border-[var(--line)] object-cover"
+                className="max-h-44 rounded-[24px] border border-[var(--line)] object-cover shadow-[var(--shadow-control)]"
               />
               <button
                 type="button"
@@ -186,7 +186,7 @@ export default function FeedbackPage() {
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={sending}
-              className="flex items-center gap-2 rounded-xl border border-dashed border-[var(--line)] bg-surface px-4 py-3 text-[13.5px] text-ink-soft disabled:opacity-60"
+              className="flex items-center gap-2 rounded-[24px] border border-dashed border-[var(--line)] bg-surface px-4 py-3 text-[13.5px] text-ink-soft shadow-[var(--shadow-control)] disabled:opacity-60"
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path
@@ -217,7 +217,7 @@ export default function FeedbackPage() {
           onChange={(e) => setContact(e.target.value.slice(0, 120))}
           disabled={sending}
           placeholder="留个联系方式?想回复你时能找到(可选)"
-          className="mt-3 w-full rounded-2xl border border-[var(--line)] bg-surface px-4 py-3 text-[14px] text-ink outline-none placeholder:text-ink-faint focus:border-[var(--accent)] disabled:opacity-60"
+          className="mt-3 w-full rounded-[28px] border border-[var(--line)] bg-surface px-4 py-3 text-[14px] text-ink shadow-[var(--shadow-control)] outline-none placeholder:text-ink-faint focus:border-[var(--accent)] disabled:opacity-60"
         />
 
         {error && (
@@ -231,7 +231,7 @@ export default function FeedbackPage() {
           onClick={submit}
           disabled={!canSend}
           className={
-            "mt-6 w-full rounded-2xl py-4 text-[16px] font-medium tracking-wide transition-colors " +
+            "mt-6 w-full rounded-[28px] py-4 text-[16px] font-medium tracking-wide transition-colors duration-500 " +
             (canSend
               ? "bg-accent text-accent-fg"
               : "bg-[var(--surface-2)] text-ink-faint")

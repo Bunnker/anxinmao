@@ -35,7 +35,7 @@ function SymptomCard({ s }: { s: Symptom }) {
   return (
     <Link
       href={`/triage?symptom=${s.id}`}
-      className="relative flex min-h-[88px] flex-col gap-1.5 rounded-2xl border border-[var(--line)] bg-surface px-4 py-4 transition-transform active:translate-y-px"
+      className="relative flex flex-col gap-1 rounded-[22px] bg-surface px-4 py-3.5 shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.985]"
     >
       {urgent && (
         <span
@@ -43,8 +43,8 @@ function SymptomCard({ s }: { s: Symptom }) {
           aria-hidden="true"
         />
       )}
-      <span className="text-[16px] font-medium text-ink">{s.label}</span>
-      <span className="text-[12px] leading-snug text-ink-soft">{s.sub}</span>
+      <span className="text-[15px] font-medium leading-snug text-ink">{s.label}</span>
+      <span className="text-[11.5px] leading-snug text-ink-faint">{s.sub}</span>
     </Link>
   );
 }
@@ -79,41 +79,47 @@ export default function SymptomsPage() {
   const soft = SYMPTOMS.find((s) => s.tier === "soft")!;
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col bg-paper px-7 pb-8 pt-3">
+    <main
+      className="relative mx-auto flex min-h-dvh max-w-[430px] flex-col px-6 pb-24"
+      style={{
+        background: "var(--gradient-page)",
+        paddingTop: "calc(1.25rem + env(safe-area-inset-top, 0px))",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-56"
+        style={{
+          background:
+            "radial-gradient(ellipse 85% 60% at 50% 0%, rgba(176,90,80,0.11) 0%, transparent 100%)",
+        }}
+        aria-hidden="true"
+      />
       {/* 顶栏 */}
-      <header className="flex items-center">
-        <Link
-          href="/"
-          aria-label="返回"
-          className="grid size-9 place-items-center rounded-full text-ink"
+      <header className="flex items-center py-2">
+        <span
+          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-medium tracking-[0.06em]"
+          style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M15 18l-6-6 6-6"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+            <path d="M18 18l3.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           </svg>
-        </Link>
-        <span className="flex-1 text-center text-[12px] font-medium uppercase tracking-[0.18em] text-ink-soft">
           选一个最贴近的
         </span>
-        <span className="size-9" />
       </header>
 
-      {/* 标题 */}
-      <section className="pt-6">
-        <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
-          它现在最让你担心的是?
-        </h1>
-        <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
-          挑最像的一项 —— 后面我会再追问几个问题。
-        </p>
+      {/* 顶部主卡 */}
+      <section className="pt-7">
+        <div className="rounded-[28px] bg-surface p-5 shadow-[var(--shadow-card)]">
+          <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
+            它现在最让你担心的是?
+          </h1>
+          <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
+            挑最像的一项 —— 后面我会再追问几个问题。
+          </p>
+          <ReviewedNotice className="mt-4" />
+        </div>
       </section>
-
-      <ReviewedNotice className="mt-6" />
 
       <Group eyebrow="可能要急的" urgent>
         {urgent.map((s) => (
@@ -130,7 +136,7 @@ export default function SymptomsPage() {
       {/* 其它 */}
       <Link
         href={`/triage?symptom=${soft.id}`}
-        className="mt-7 flex items-center justify-between rounded-2xl border border-dashed border-[var(--line)] px-5 py-4 transition-transform active:translate-y-px"
+        className="mt-7 flex items-center justify-between rounded-[28px] border border-dashed border-[var(--line)] bg-white/55 px-5 py-4 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
       >
         <span>
           <span className="text-[15px] text-ink">{soft.label}</span>

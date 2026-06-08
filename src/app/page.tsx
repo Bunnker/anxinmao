@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import Link from "next/link";
-import { loadStore, saveStoreLocal, seedTemplateStore } from "@/lib/storage";
+import { loadStore, saveStore, saveStoreLocal, seedTemplateStore } from "@/lib/storage";
 import { pullHistory } from "@/lib/history-sync";
 import { readPersisted, writePersisted } from "@/lib/persist";
 import { Disclaimer } from "@/components/Disclaimer";
@@ -13,6 +13,7 @@ import type { Cat, CatRecord, Store } from "@/types/cat";
 
 // 新手教程「看过了」标记 —— 与猫档案分开,首次进入弹一次,首页可重开。
 const GUIDE_SEEN_KEY = "catTriage:guideSeen:v1";
+const MAX_HOME_PHOTOS = 6;
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -59,6 +60,46 @@ function Arrow({ className = "" }: { className?: string }) {
   );
 }
 
+function CameraIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M4 8.2A2.2 2.2 0 0 1 6.2 6h2.1l1.4-1.8h4.6L15.7 6h2.1A2.2 2.2 0 0 1 20 8.2v8.1a2.2 2.2 0 0 1-2.2 2.2H6.2A2.2 2.2 0 0 1 4 16.3V8.2Z"
+        stroke="currentColor"
+        strokeLinejoin="round"
+        strokeWidth="1.6"
+      />
+      <circle cx="12" cy="12.7" r="3.1" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () =>
+      typeof reader.result === "string"
+        ? resolve(reader.result)
+        : reject(new Error("图片读取失败。"));
+    reader.onerror = () => reject(new Error("图片读取失败。"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function ageLabel(months: number): string {
+  if (months < 12) return `${months} 个月`;
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  return m ? `${y} 岁 ${m} 个月` : `${y} 岁`;
+}
+
 const TIER_DOT: Record<string, string> = {
   red: "var(--red)",
   yellow: "var(--amber)",
@@ -94,7 +135,7 @@ function RecentRow({ record }: { record: CatRecord }) {
       : "var(--ink-ghost)";
   const href = recordHref(record);
   const rowCls =
-    "flex items-center gap-3.5 border-b border-[var(--line-soft)] py-3.5 last:border-b-0";
+    "flex items-center gap-3.5 border-b border-[var(--line-soft)] py-4 last:border-b-0";
 
   const body = (
     <>
@@ -145,6 +186,7 @@ function RecentRow({ record }: { record: CatRecord }) {
 }
 
 export default function HomePage() {
+  const [store, setStore] = useState<Store | null>(null);
   const [cat, setCat] = useState<Cat | null>(null);
   const [records, setRecords] = useState<CatRecord[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -158,6 +200,7 @@ export default function HomePage() {
     const applyStore = (store: Store) => {
       const active =
         store.cats.find((c) => c.id === store.activeCatId) ?? store.cats[0];
+      setStore(store);
       setCat(active);
       setRecords(store.records.filter((r) => r.catId === active.id));
     };
@@ -194,8 +237,43 @@ export default function HomePage() {
   // 用户在欢迎页选「先用默认模版逛逛」—— seed 中性「我的猫」,首页就地重渲染。
   function useTemplate() {
     const store = seedTemplateStore();
+    setStore(store);
     setCat(store.cats[0]);
     setRecords([]);
+  }
+
+  function persistCat(nextCat: Cat) {
+    if (!store) return;
+    const nextStore: Store = {
+      ...store,
+      cats: store.cats.map((c) => (c.id === nextCat.id ? nextCat : c)),
+    };
+    saveStore(nextStore);
+    setStore(nextStore);
+    setCat(nextCat);
+  }
+
+  async function onAvatarPick(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !cat) return;
+    if (file.size > 5 * 1024 * 1024) return;
+    const dataUrl = await fileToDataUrl(file);
+    persistCat({ ...cat, avatar: dataUrl });
+  }
+
+  async function onAlbumPick(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (files.length === 0 || !cat) return;
+    const usable = files
+      .filter((file) => file.size <= 5 * 1024 * 1024)
+      .slice(0, MAX_HOME_PHOTOS);
+    const dataUrls = await Promise.all(usable.map(fileToDataUrl));
+    persistCat({
+      ...cat,
+      photos: [...(cat.photos ?? []), ...dataUrls].slice(0, MAX_HOME_PHOTOS),
+    });
   }
 
   // localStorage 仅客户端可读:首帧渲染空壳避免水合不一致。
@@ -212,58 +290,126 @@ export default function HomePage() {
       </>
     );
 
-  const meta = [`${cat.ageMonths} 个月`, cat.sex, cat.coat, `${cat.weight} kg`]
+  const meta = [ageLabel(cat.ageMonths), cat.sex, cat.coat, `${cat.weight} kg`]
     .filter(Boolean)
     .join(" · ");
+  const vaccines = cat.vaccines?.length ?? 0;
+  const photos = cat.photos ?? [];
 
   return (
     <>
       {guide}
       <main
-        className="mx-auto flex min-h-dvh max-w-[430px] flex-col px-7 pb-7 pt-5"
+        className="relative mx-auto flex min-h-dvh max-w-[430px] flex-col px-6 pb-24"
         style={{
-          background:
-            "linear-gradient(180deg, var(--surface) 0%, var(--paper) 58%)",
+          background: "var(--gradient-page)",
+          paddingTop: "calc(1.25rem + env(safe-area-inset-top, 0px))",
         }}
       >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-56"
+        style={{
+          background:
+            "radial-gradient(ellipse 85% 60% at 50% 0%, rgba(176,90,80,0.11) 0%, transparent 100%)",
+        }}
+        aria-hidden="true"
+      />
       {/* 顶栏 */}
-      <header className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <span className="text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
-            {greeting()}
-          </span>
-          <button
-            type="button"
-            onClick={() => setShowGuide(true)}
-            className="text-[11px] tracking-wide text-accent"
-          >
-            使用说明
-          </button>
-        </div>
-        <Link href="/onboarding" aria-label={`${cat.name}的档案`}>
-          <CatAvatar avatar={cat.avatar} name={cat.name} size={36} />
-        </Link>
+      <header className="flex items-center gap-2.5 py-2">
+        <span className="text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+          {greeting()}
+        </span>
+        <button
+          type="button"
+          onClick={() => setShowGuide(true)}
+          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium tracking-[0.06em]"
+          style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+        >
+          使用说明
+        </button>
       </header>
 
-      {/* hero */}
-      <section className="pt-10">
-        <p className="mb-3 text-[13px] leading-relaxed text-ink-soft">
-          ——别担心,先告诉我,
-        </p>
-        <h1 className="font-serif text-[2.7rem] font-medium leading-[1.1] tracking-tight text-ink">
-          {cat.name}
-          <span className="ml-2 text-[0.62em] font-normal text-ink-soft">
-            怎么了?
-          </span>
-        </h1>
-        <p className="mt-3 text-[13px] tracking-wide text-ink-soft">{meta}</p>
+      {/* 宠物画像 */}
+      <section className="pt-7">
+        <div className="relative overflow-hidden rounded-[34px] bg-surface p-5 shadow-[var(--shadow-card)]">
+          <div className="absolute -right-10 -top-12 size-36 rounded-full bg-[var(--accent-soft)]" />
+          <div className="relative flex items-start gap-4">
+            <div className="relative shrink-0">
+              <CatAvatar
+                avatar={cat.avatar}
+                name={cat.name}
+                size={92}
+                className="shadow-[var(--shadow-control)]"
+              />
+              <label className="absolute -bottom-1 -right-1 grid size-9 cursor-pointer place-items-center rounded-full bg-accent text-accent-fg shadow-[var(--shadow-accent)]">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={onAvatarPick}
+                  className="hidden"
+                />
+                <CameraIcon />
+              </label>
+            </div>
+            <div className="min-w-0 flex-1 pt-1">
+              <p className="text-[12px] font-semibold tracking-[0.16em] text-accent">
+                {greeting()}
+              </p>
+              <h1 className="mt-2 text-[2.25rem] font-semibold leading-none tracking-tight text-ink">
+                {cat.name}
+              </h1>
+              <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{meta}</p>
+              <div className="mt-4 grid grid-cols-3 gap-2">
+                <span className="rounded-[22px] bg-[var(--surface-2)] px-3 py-2.5">
+                  <span className="block text-[11px] text-ink-faint">疫苗</span>
+                  <span className="mt-0.5 block text-[14px] font-semibold tabular-nums text-ink">
+                    {vaccines ? `${vaccines} 针` : "未记"}
+                  </span>
+                </span>
+                <span className="rounded-[22px] bg-[var(--surface-2)] px-3 py-2.5">
+                  <span className="block text-[11px] text-ink-faint">绝育</span>
+                  <span className="mt-0.5 block text-[14px] font-semibold text-ink">
+                    {cat.neutered}
+                  </span>
+                </span>
+                <span className="rounded-[22px] bg-[var(--surface-2)] px-3 py-2.5">
+                  <span className="block text-[11px] text-ink-faint">相册</span>
+                  <span className="mt-0.5 block text-[14px] font-semibold tabular-nums text-ink">
+                    {photos.length}/6
+                  </span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative mt-5 flex items-center justify-between rounded-[24px] bg-white/65 px-4 py-3 shadow-[var(--shadow-control)]">
+            <span className="min-w-0">
+              <span className="block text-[13px] font-medium text-ink">
+                {photos.length ? `已保存 ${photos.length} 张生活照` : "还没有生活照"}
+              </span>
+              <span className="mt-0.5 block text-[12px] text-ink-faint">
+                详细相册在「我的」档案里管理
+              </span>
+            </span>
+            <label className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-[var(--surface-2)] text-accent shadow-[var(--shadow-control)]">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={onAlbumPick}
+                className="hidden"
+              />
+              <CameraIcon />
+            </label>
+          </div>
+        </div>
       </section>
 
       {/* 主次入口 */}
-      <section className="mt-8 flex flex-col gap-3">
+      <section className="mt-5 flex flex-col gap-3">
         <Link
           href="/symptoms"
-          className="flex items-center gap-4 rounded-2xl bg-accent px-6 py-5 text-accent-fg shadow-[0_5px_18px_-9px_rgba(60,40,20,0.45)] transition-transform active:translate-y-px"
+          className="group flex items-center gap-4 rounded-[28px] bg-accent px-6 py-5 text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.985]"
         >
           <span className="flex-1">
             <span className="block text-[1.35rem] font-medium leading-tight tracking-tight">
@@ -273,12 +419,14 @@ export default function HomePage() {
               选症状 → 答几个问题 → 红黄绿就医建议
             </span>
           </span>
-          <Arrow />
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0.5">
+            <Arrow />
+          </span>
         </Link>
 
         <Link
           href="/behavior"
-          className="flex items-center gap-4 rounded-2xl border border-[var(--line)] bg-surface px-6 py-5 text-ink transition-transform active:translate-y-px"
+          className="group flex items-center gap-4 rounded-[28px] bg-surface px-6 py-5 text-ink shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.985]"
         >
           <span className="flex-1">
             <span className="block text-[1.15rem] font-medium leading-tight tracking-tight">
@@ -288,20 +436,37 @@ export default function HomePage() {
               直接打字问,生病 / 喂养 / 行为都能聊
             </span>
           </span>
-          <Arrow className="text-ink-soft" />
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--surface-2)] text-ink-soft transition-transform duration-500 group-hover:translate-x-0.5">
+            <Arrow />
+          </span>
         </Link>
       </section>
 
-      {/* 安心知识入口 —— 「看着吓人但不必慌」 */}
+      {/* 安心知识卡片 */}
       <Link
         href="/knowledge"
-        className="mt-5 self-center text-[13px] tracking-wide text-ink-soft"
+        className="mt-3 flex items-center gap-3 rounded-[20px] bg-surface px-4 py-3.5 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
       >
-        看着吓人但不必慌的几种情况 →
+        <span
+          className="grid size-8 shrink-0 place-items-center rounded-full"
+          style={{ background: "var(--accent-soft)" }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" stroke="var(--accent)" strokeWidth="1.7" />
+            <path d="M12 8v5M12 16.5h.01" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[14px] font-medium text-ink">看着吓人但不必慌</span>
+          <span className="mt-0.5 block text-[12px] text-ink-soft">6 种情况 · 权威兽医来源</span>
+        </span>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0 text-ink-ghost" aria-hidden="true">
+          <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </Link>
 
       {/* 最近 */}
-      <section className="mt-9 flex-1">
+      <section className="mt-6 flex-1">
         <p className="text-[11px] font-semibold tracking-[0.22em] text-ink-faint">
           最近
         </p>
@@ -320,7 +485,7 @@ export default function HomePage() {
 
       <Link
         href="/feedback"
-        className="mt-7 inline-flex items-center justify-center gap-2 self-center rounded-full border border-[var(--line)] bg-surface px-5 py-2.5 text-[13px] font-medium tracking-wide text-ink-soft shadow-[0_4px_14px_-9px_rgba(60,40,20,0.5)] transition-transform active:translate-y-px"
+        className="mt-7 inline-flex items-center justify-center gap-2 self-center rounded-full bg-surface px-5 py-2.5 text-[13px] font-medium tracking-wide text-ink-soft shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
       >
         <svg
           width="15"

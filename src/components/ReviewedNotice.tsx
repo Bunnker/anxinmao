@@ -7,11 +7,11 @@ export function ReviewedNotice({ className = "" }: { className?: string }) {
   return (
     <div
       className={
-        "flex gap-2.5 rounded-xl border border-[var(--hairline)] bg-[var(--surface-2)] px-3.5 py-3 " +
+        "flex gap-2.5 rounded-[22px] border border-[var(--line)] bg-white/70 px-3.5 py-3 shadow-[var(--shadow-control)] " +
         className
       }
     >
-      {/* 盾 + 勾 —— 陶土红(accent),不用绿色(绿是风险信号层专用) */}
+      {/* 盾 + 勾 —— 主色(accent),不用绿色(绿是风险信号层专用) */}
       <svg
         width="17"
         height="17"

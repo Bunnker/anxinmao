@@ -1333,7 +1333,8 @@ function ReportContent() {
 
   return (
     <main
-      className="mx-auto flex min-h-dvh max-w-[430px] flex-col bg-paper px-7 pb-9 pt-3"
+      className="mx-auto flex min-h-dvh max-w-[430px] flex-col px-7 pb-9 pt-3"
+      style={{ background: "var(--gradient-page)" }}
       data-medical-claim-count={claimIds.length}
       data-medical-claim-ids={claimIds.length > 0 ? claimIds.join(",") : undefined}
     >
@@ -1353,7 +1354,10 @@ function ReportContent() {
       </header>
 
       {/* 分级卡 */}
-      <div className="mt-3 rounded-2xl p-5" style={{ background: vis.bg }}>
+      <div
+        className="mt-3 rounded-[32px] p-5 shadow-[var(--shadow-card)]"
+        style={{ background: vis.bg }}
+      >
         <div className="mb-3 flex items-center gap-2.5">
           <span
             className="grid size-7 shrink-0 place-items-center rounded-full"
@@ -1380,7 +1384,7 @@ function ReportContent() {
           href="https://uri.amap.com/search?keyword=宠物医院"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 flex items-center justify-center gap-2 rounded-2xl py-4 text-[16px] font-medium text-white"
+          className="mt-3 flex items-center justify-center gap-2 rounded-[28px] py-4 text-[16px] font-medium text-white shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
           style={{ background: "var(--red)" }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1402,7 +1406,7 @@ function ReportContent() {
       <Link
         href={askHref}
         onClick={saveAskHandoff}
-        className="mt-3 flex items-center justify-between rounded-2xl border border-[var(--line)] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink"
+        className="mt-3 flex items-center justify-between rounded-[28px] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)]"
       >
         <span>继续补充问问</span>
         <span className="text-ink-faint" aria-hidden="true">
@@ -1438,7 +1442,7 @@ function ReportContent() {
 
       {/* 升级清单 —— 黄/红档是红线,绿档是温和提醒 */}
       <div
-        className="mt-7 rounded-2xl border p-4"
+        className="mt-7 rounded-[28px] border p-4 shadow-[var(--shadow-control)]"
         style={
           alarm
             ? { background: "var(--red-bg)", borderColor: "var(--red)" }

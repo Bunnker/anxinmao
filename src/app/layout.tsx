@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { TabBar } from "@/components/TabBar";
 
 export const metadata: Metadata = {
   title: "小猫怎么了 · 猫咪安心分诊器",
@@ -23,7 +24,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#a64a2f",
+  viewportFit: "cover",
+  themeColor: "#f7f6f3",
 };
 
 export default function RootLayout({
@@ -31,7 +33,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-CN" className="h-full antialiased">
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        <TabBar />
+      </body>
     </html>
   );
 }

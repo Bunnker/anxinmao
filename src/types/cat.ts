@@ -22,6 +22,8 @@ export interface Cat {
   // 分诊页 / 报告主体内容,仅 greeting / 报告卡角落等位置。
   // 空字符串 / undefined = 用默认 icon 兜底。
   avatar?: string;
+  // 用户上传的生活照相册 base64 dataURL。仅用于本地画像展示,不参与分诊判断。
+  photos?: string[];
 }
 
 // 风险三色 —— 分诊的核心输出。

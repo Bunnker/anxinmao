@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { loadStore, saveStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
@@ -74,7 +74,7 @@ function SegRow({
             className={
               "flex-1 rounded-lg py-2.5 text-[14px] font-medium transition-colors " +
               (active
-                ? "bg-paper text-ink shadow-[0_1px_2px_rgba(60,40,20,0.09)]"
+                ? "bg-white text-ink shadow-[var(--shadow-control)]"
                 : "text-ink-soft")
             }
           >
@@ -88,6 +88,31 @@ function SegRow({
 
 const inputCls =
   "w-full border-b border-[var(--hairline)] bg-transparent py-2.5 text-ink outline-none placeholder:text-ink-faint";
+const MAX_PROFILE_PHOTOS = 6;
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () =>
+      typeof reader.result === "string"
+        ? resolve(reader.result)
+        : reject(new Error("图片读取失败。"));
+    reader.onerror = () => reject(new Error("图片读取失败。"));
+    reader.readAsDataURL(file);
+  });
+}
+
+function ageLabel(months: number): string {
+  if (months < 12) return `${months} 个月`;
+  const y = Math.floor(months / 12);
+  const m = months % 12;
+  return m ? `${y} 岁 ${m} 个月` : `${y} 岁`;
+}
+
+function displayValue(value: string | number | undefined, fallback = "未记录") {
+  if (value === undefined || value === "") return fallback;
+  return String(value);
+}
 
 /* ---------- 页面 ---------- */
 
@@ -96,6 +121,7 @@ export default function OnboardingPage() {
   const [draft, setDraft] = useState<Cat | null>(null);
   const [store, setStore] = useState<Store | null>(null);
   const [isEdit, setIsEdit] = useState(false);
+  const [editing, setEditing] = useState(true);
   // 头像生成 —— 仅 UI 状态,生成结果落到 draft.avatar
   const [avatarDesc, setAvatarDesc] = useState("");
   const [avatarPhoto, setAvatarPhoto] = useState<string | null>(null); // dataURL
@@ -111,9 +137,11 @@ export default function OnboardingPage() {
       setStore(s);
       setDraft({ ...active });
       setIsEdit(true);
+      setEditing(false);
     } else {
       setDraft(newCat());
       setIsEdit(false);
+      setEditing(true);
     }
   }, []);
 
@@ -185,7 +213,7 @@ export default function OnboardingPage() {
   }
 
   // 选照片 → 转 dataURL → 存到 avatarPhoto(用户预览 + 提交时发给后端)
-  function onPhotoPick(e: React.ChangeEvent<HTMLInputElement>) {
+  function onPhotoPick(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = ""; // 重置 input 允许选同一张文件重传
     if (!file) return;
@@ -202,6 +230,42 @@ export default function OnboardingPage() {
     };
     reader.onerror = () => setAvatarError("照片读取失败。");
     reader.readAsDataURL(file);
+  }
+
+  async function onAvatarUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError("照片不能超过 5MB。压缩一下再试。");
+      return;
+    }
+    try {
+      set("avatar", await fileToDataUrl(file));
+      setAvatarError(null);
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : "图片读取失败。");
+    }
+  }
+
+  async function onAlbumUpload(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (files.length === 0 || !draft) return;
+    const usable = files
+      .filter((file) => file.size <= 5 * 1024 * 1024)
+      .slice(0, MAX_PROFILE_PHOTOS);
+    try {
+      const dataUrls = await Promise.all(usable.map(fileToDataUrl));
+      set("photos", [...(draft.photos ?? []), ...dataUrls].slice(0, MAX_PROFILE_PHOTOS));
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : "图片读取失败。");
+    }
+  }
+
+  function removeAlbumPhoto(index: number) {
+    if (!draft) return;
+    set("photos", (draft.photos ?? []).filter((_, i) => i !== index));
   }
 
   function commit() {
@@ -223,28 +287,180 @@ export default function OnboardingPage() {
     router.push("/");
   }
 
-  return (
-    <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col bg-paper px-7 pb-10 pt-3">
-      {/* 顶栏 */}
-      <header className="flex items-center">
+  if (isEdit && !editing) {
+    const meta = [
+      ageLabel(draft.ageMonths),
+      draft.sex,
+      draft.coat,
+      `${draft.weight} kg`,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    const photos = draft.photos ?? [];
+
+    return (
+      <main
+        className="relative mx-auto flex min-h-dvh max-w-[430px] flex-col px-6 pb-24"
+        style={{
+          background: "var(--gradient-page)",
+          paddingTop: "calc(1.25rem + env(safe-area-inset-top, 0px))",
+        }}
+      >
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-56"
+          style={{
+            background:
+              "radial-gradient(ellipse 85% 60% at 50% 0%, rgba(176,90,80,0.11) 0%, transparent 100%)",
+          }}
+          aria-hidden="true"
+        />
+        <header className="flex items-center py-2">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-medium tracking-[0.06em]"
+            style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="2" />
+              <path d="M5 20c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            我的档案
+          </span>
+        </header>
+
+        <section className="pt-7">
+          <div className="relative overflow-hidden rounded-[34px] bg-surface p-5 shadow-[var(--shadow-card)]">
+            <div className="absolute -right-10 -top-12 size-36 rounded-full bg-[var(--accent-soft)]" />
+            <div className="relative flex items-start gap-4">
+              <CatAvatar
+                avatar={draft.avatar}
+                name={draft.name}
+                size={92}
+                className="shadow-[var(--shadow-control)]"
+              />
+              <div className="min-w-0 flex-1 pt-1">
+                <p className="text-[12px] font-semibold tracking-[0.16em] text-accent">
+                  猫咪档案
+                </p>
+                <h1 className="mt-2 text-[2.25rem] font-semibold leading-none tracking-tight text-ink">
+                  {draft.name}
+                </h1>
+                <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{meta}</p>
+              </div>
+            </div>
+
+            <div className="relative mt-5 grid grid-cols-2 gap-2.5">
+              {[
+                ["绝育", draft.neutered],
+                ["到家", displayValue(draft.homeDate)],
+                ["驱虫", displayValue(draft.deworm)],
+                ["疫苗", draft.vaccines.length ? `${draft.vaccines.length} 针` : "未记录"],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-[22px] bg-[var(--surface-2)] px-4 py-3">
+                  <span className="block text-[11px] text-ink-faint">{label}</span>
+                  <span className="mt-1 block text-[14px] font-semibold text-ink">
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {draft.notes && (
+              <div className="relative mt-3 rounded-[22px] bg-[var(--accent-soft)] px-4 py-3">
+                <span className="block text-[11px] text-ink-faint">备注</span>
+                <p className="mt-1 text-[13px] leading-relaxed text-ink">{draft.notes}</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-[28px] bg-surface p-4 shadow-[var(--shadow-card)]">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[14px] font-medium text-ink">生活照</p>
+              <p className="mt-1 text-[12px] text-ink-faint">
+                {photos.length ? `${photos.length}/${MAX_PROFILE_PHOTOS} 张` : "还没有上传"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-[12.5px] font-medium text-accent shadow-[var(--shadow-control)]"
+            >
+              管理
+            </button>
+          </div>
+          {photos.length > 0 && (
+            <div className="mt-4 grid grid-cols-4 gap-2.5">
+              {photos.slice(0, 4).map((photo, index) => (
+                <div
+                  key={`${photo.slice(0, 32)}-${index}`}
+                  className="aspect-square overflow-hidden rounded-[22px] bg-[var(--surface-2)] shadow-[var(--shadow-control)]"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo}
+                    alt={`${draft.name}的生活照 ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
         <button
           type="button"
-          onClick={leaveOnboarding}
-          aria-label="返回"
-          className="grid size-9 place-items-center rounded-full text-ink"
+          onClick={() => setEditing(true)}
+          className="mt-6 w-full rounded-[28px] bg-accent py-4 text-[16px] font-medium tracking-wide text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.985]"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M15 18l-6-6 6-6"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          修改档案
         </button>
+
+        <Disclaimer />
+      </main>
+    );
+  }
+
+  return (
+    <main
+      className="relative mx-auto flex min-h-dvh max-w-[430px] flex-col px-6 pb-24"
+      style={{
+        background: "var(--gradient-page)",
+        paddingTop: "calc(1.25rem + env(safe-area-inset-top, 0px))",
+      }}
+    >
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-56"
+        style={{
+          background:
+            "radial-gradient(ellipse 85% 60% at 50% 0%, rgba(176,90,80,0.11) 0%, transparent 100%)",
+        }}
+        aria-hidden="true"
+      />
+      {/* 顶栏：isEdit 时是 Tab 入口不需要返回按钮；首次建档 Tab Bar 隐藏需要保留 */}
+      <header className="flex items-center py-2">
+        {!isEdit ? (
+          <button
+            type="button"
+            onClick={leaveOnboarding}
+            aria-label="返回"
+            className="grid size-9 place-items-center rounded-full text-ink"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M15 18l-6-6 6-6"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        ) : (
+          <span className="size-9" />
+        )}
         <span className="flex-1 text-center text-[12px] font-medium uppercase tracking-[0.18em] text-ink-soft">
-          {isEdit ? "档案" : "新建档案"}
+          {isEdit ? "我的档案" : "新建档案"}
         </span>
         <span className="size-9" />
       </header>
@@ -326,6 +542,85 @@ export default function OnboardingPage() {
           />
         </Field>
 
+        <Field
+          label="头像与相册 · 可选"
+          hint={`${draft.photos?.length ?? 0}/${MAX_PROFILE_PHOTOS} 张`}
+        >
+          <div className="rounded-[28px] bg-surface p-4 shadow-[var(--shadow-card)]">
+            <div className="flex items-center gap-4">
+              <CatAvatar
+                avatar={draft.avatar}
+                name={draft.name}
+                size={76}
+                className="shadow-[var(--shadow-control)]"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-medium text-ink">
+                  {draft.name || "这只猫"}的头像
+                </p>
+                <p className="mt-1 text-[12px] leading-relaxed text-ink-faint">
+                  可以直接上传真实头像;下面的卡通形象也会更新同一个头像位。
+                </p>
+                <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-[12.5px] font-medium text-ink shadow-[var(--shadow-control)]">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={onAvatarUpload}
+                    className="hidden"
+                  />
+                  上传头像
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-4 gap-2.5">
+              {(draft.photos ?? []).map((photo, index) => (
+                <button
+                  key={`${photo.slice(0, 32)}-${index}`}
+                  type="button"
+                  onClick={() => removeAlbumPhoto(index)}
+                  aria-label="移除这张相册照片"
+                  className="relative aspect-square overflow-hidden rounded-[22px] bg-[var(--surface-2)] shadow-[var(--shadow-control)]"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo}
+                    alt={`${draft.name || "猫咪"}的生活照 ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                  <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-black/55 text-[11px] text-white">
+                    ×
+                  </span>
+                </button>
+              ))}
+              <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-[22px] border border-dashed border-[var(--line)] bg-white/60 text-ink-soft shadow-[var(--shadow-control)]">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={onAlbumUpload}
+                  className="hidden"
+                />
+                <svg
+                  width="19"
+                  height="19"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 5v14M5 12h14"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeWidth="1.7"
+                  />
+                </svg>
+                <span className="text-[11px]">相册</span>
+              </label>
+            </div>
+          </div>
+        </Field>
+
         {/* 卡通形象 —— 一次性生成,作为身份/伴侣角色出现在 greeting / 报告卡角落
             生成时机:用户主动点击。边界:docs/product/AI生成形象-实施说明.md §二
             两个 provider:有照片走即梦 i2i(贴近自家猫);无照片走 wanx t2i(纯文字)*/}
@@ -341,7 +636,7 @@ export default function OnboardingPage() {
                   type="button"
                   onClick={() => setAvatarPhoto(null)}
                   aria-label="换一张照片"
-                  className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-[var(--line)]"
+                  className="relative size-20 shrink-0 overflow-hidden rounded-[24px] border border-[var(--line)] shadow-[var(--shadow-control)]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -354,7 +649,7 @@ export default function OnboardingPage() {
                   </span>
                 </button>
               ) : (
-                <label className="flex size-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--line)] text-ink-soft transition-colors hover:bg-[var(--surface-2)]">
+                <label className="flex size-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-[24px] border border-dashed border-[var(--line)] bg-white/55 text-ink-soft shadow-[var(--shadow-control)] transition-colors hover:bg-white">
                   <input
                     type="file"
                     accept="image/*"
@@ -408,7 +703,7 @@ export default function OnboardingPage() {
                     disabled={
                       (!avatarDesc.trim() && !avatarPhoto) || avatarLoading
                     }
-                    className="self-start rounded-full border border-[var(--line)] bg-surface px-3 py-1.5 text-[12.5px] text-ink disabled:opacity-50"
+                    className="self-start rounded-full bg-surface px-3 py-1.5 text-[12.5px] text-ink shadow-[var(--shadow-control)] disabled:opacity-50"
                   >
                     {avatarLoading ? "重新生成中…" : "重新生成"}
                   </button>
@@ -432,7 +727,7 @@ export default function OnboardingPage() {
                   (!avatarDesc.trim() && !avatarPhoto) || avatarLoading
                 }
                 className={
-                  "rounded-xl py-3 text-[14px] font-medium tracking-wide transition-colors " +
+                  "rounded-[22px] py-3 text-[14px] font-medium tracking-wide transition-colors " +
                   ((avatarDesc.trim() || avatarPhoto) && !avatarLoading
                     ? "bg-[var(--surface-2)] text-ink"
                     : "bg-[var(--surface-2)] text-ink-faint")
@@ -447,7 +742,7 @@ export default function OnboardingPage() {
             )}
 
             {avatarError && (
-              <div className="rounded-xl border border-[var(--red)]/30 bg-[var(--red)]/5 p-3">
+              <div className="rounded-[22px] border border-[var(--red)]/20 bg-[var(--red-bg)] p-3 shadow-[var(--shadow-control)]">
                 <p className="text-[12.5px] leading-relaxed text-[var(--red-ink)]">
                   {avatarError}
                 </p>
@@ -517,7 +812,7 @@ export default function OnboardingPage() {
             {draft.vaccines.map((v, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 rounded-lg border border-[var(--line)] bg-surface px-3 py-2"
+                className="flex items-center gap-2 rounded-[22px] border border-[var(--line)] bg-surface px-3 py-2 shadow-[var(--shadow-control)]"
               >
                 <input
                   value={v.name}
@@ -564,7 +859,7 @@ export default function OnboardingPage() {
                 onClick={() =>
                   set("vaccines", [...draft.vaccines, { name: "", date: "" }])
                 }
-                className="flex flex-1 items-center gap-2 rounded-lg border border-dashed border-[var(--line)] px-3 py-2.5 text-[13px] text-ink-soft"
+                className="flex flex-1 items-center gap-2 rounded-[22px] border border-dashed border-[var(--line)] bg-white/50 px-3 py-2.5 text-[13px] text-ink-soft shadow-[var(--shadow-control)]"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path
@@ -586,7 +881,7 @@ export default function OnboardingPage() {
                       { name: "猫三联第3针", date: "" },
                     ])
                   }
-                  className="rounded-lg border border-[var(--line)] bg-surface px-3 py-2.5 text-[12px] text-ink-soft"
+                  className="rounded-[22px] bg-surface px-3 py-2.5 text-[12px] text-ink-soft shadow-[var(--shadow-control)]"
                 >
                   填入参考模版
                 </button>
@@ -626,7 +921,7 @@ export default function OnboardingPage() {
           onClick={commit}
           disabled={!ready}
           className={
-            "w-full rounded-2xl py-4 text-[16px] font-medium tracking-wide transition-colors " +
+            "w-full rounded-[28px] py-4 text-[16px] font-medium tracking-wide transition-colors duration-500 " +
             (ready
               ? "bg-accent text-accent-fg"
               : "bg-[var(--surface-2)] text-ink-faint")

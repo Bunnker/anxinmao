@@ -9,14 +9,15 @@ import { Disclaimer } from "@/components/Disclaimer";
 export function Welcome({ onUseTemplate }: { onUseTemplate: () => void }) {
   return (
     <main
-      className="mx-auto flex min-h-dvh max-w-[430px] flex-col items-center px-7 pb-9 pt-16"
+      className="mx-auto flex min-h-dvh max-w-[430px] flex-col items-center px-7"
       style={{
-        background:
-          "linear-gradient(180deg, var(--surface) 0%, var(--paper) 60%)",
+        background: "var(--gradient-page)",
+        paddingTop: "calc(4rem + env(safe-area-inset-top, 0px))",
+        paddingBottom: "calc(2.25rem + env(safe-area-inset-bottom, 0px))",
       }}
     >
       {/* logo */}
-      <span className="overflow-hidden rounded-[28px] border border-[var(--line)] bg-surface shadow-[0_6px_20px_-10px_rgba(60,40,20,0.4)]">
+      <span className="overflow-hidden rounded-[34px] border border-[var(--line)] bg-surface shadow-[var(--shadow-card)]">
         <Image
           src="/icons/icon-512.png"
           alt="小猫怎么了"
@@ -42,14 +43,14 @@ export function Welcome({ onUseTemplate }: { onUseTemplate: () => void }) {
       {/* 两个选择 */}
       <Link
         href="/onboarding"
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent py-4 text-[16px] font-medium tracking-wide text-accent-fg shadow-[0_5px_18px_-9px_rgba(60,40,20,0.45)] transition-transform active:translate-y-px"
+        className="flex w-full items-center justify-center gap-2 rounded-[28px] bg-accent py-4 text-[16px] font-medium tracking-wide text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.985]"
       >
         建立我家猫的档案 →
       </Link>
       <button
         type="button"
         onClick={onUseTemplate}
-        className="mt-3 w-full rounded-2xl border border-[var(--line)] bg-surface py-4 text-[15px] font-medium tracking-wide text-ink-soft transition-transform active:translate-y-px"
+        className="mt-3 w-full rounded-[28px] bg-surface py-4 text-[15px] font-medium tracking-wide text-ink-soft shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
       >
         使用系统默认模版
       </button>

@@ -66,13 +66,20 @@ export function Guide({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50"
-      style={{ background: "#faf1e1" }}
+      className="fixed inset-0 z-[60]"
+      style={{ background: "var(--gradient-page)" }}
       role="dialog"
       aria-modal="true"
       aria-label="小猫怎么了使用教程"
     >
-      <div className="mx-auto flex h-dvh max-w-[430px] flex-col px-7 pb-8 pt-5">
+      <div
+        className="mx-auto flex max-w-[430px] flex-col px-7"
+        style={{
+          height: "100dvh",
+          paddingTop: "calc(1.25rem + env(safe-area-inset-top, 0px))",
+          paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))",
+        }}
+      >
         {/* 进度 + 跳过 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
@@ -178,7 +185,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={() => (last ? onClose() : setStep(step + 1))}
-            className="flex-1 rounded-2xl bg-accent px-6 py-4 text-center text-[15px] font-medium text-accent-fg shadow-[0_5px_18px_-9px_rgba(60,40,20,0.45)] transition-transform active:translate-y-px"
+            className="flex-1 rounded-[28px] bg-accent px-6 py-4 text-center text-[15px] font-medium text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.985]"
           >
             {last ? "好呀,开始用 →" : "下一步"}
           </button>
