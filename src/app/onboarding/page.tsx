@@ -928,8 +928,8 @@ export default function OnboardingPage() {
                   onChange={(e) => setAvatarDesc(e.target.value)}
                   placeholder={
                     avatarPhoto
-                      ? "(可选)风格补充,如「画得圆润一点」"
-                      : "没照片就描述一下:橘虎斑,白肚皮…"
+                      ? "(可选)比如:圆脸一点,露出小爪子,画得软萌"
+                      : "没照片就描述一下:橘虎斑,白肚皮,圆脸…"
                   }
                   rows={3}
                   maxLength={200}
