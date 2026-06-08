@@ -3,7 +3,6 @@
 import { Suspense, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { catProfilePayload } from "@/lib/cat-profile-context";
 import { loadStore, STORAGE_KEY } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
 import { loadTriageHandoff, saveTriageHandoff } from "@/lib/triage-handoff";

@@ -136,6 +136,15 @@ async function main() {
   }
 
   {
+    const data = await dryRun("普通猫砂购买", "新手猫砂怎么买,膨润土和豆腐砂怎么选?");
+    expectIntent(data, "daily_care", "普通猫砂购买");
+    expectNoMedicalRecall(data, "普通猫砂购买");
+    assert(!(data.productBoundaryPreview ?? ""), "普通猫砂购买:不应触发药品/用品边界", data.productBoundaryPreview);
+    assert(!(data.medicinePolicyPreview ?? ""), "普通猫砂购买:不应触发药品资料库", data.medicinePolicyPreview);
+    console.log("  ✓ 普通猫砂购买:daily_care + 不进入药品流程");
+  }
+
+  {
     const data = await dryRun("梳毛毛球", "长毛猫掉毛多,怎么梳毛减少毛球?");
     expectIntent(data, "daily_care", "梳毛毛球");
     expectNoMedicalRecall(data, "梳毛毛球");
@@ -162,6 +171,14 @@ async function main() {
     const web = tool(data, "authority_web_search");
     assert(web?.allowedDomains?.includes("vohc.org"), "口腔品牌:应暴露 VOHC 白名单搜索计划", JSON.stringify(web, null, 2));
     console.log("  ✓ 口腔品牌:product_or_medicine + 商品/药品边界");
+  }
+
+  {
+    const data = await dryRun("化毛膏购买", "猫吐毛球,可以买化毛膏或者猫草吗?国内怎么选?");
+    expectIntent(data, "product_or_medicine", "化毛膏购买");
+    assert((data.medicinePolicyPreview ?? "").includes("猫用化毛产品"), "化毛膏购买:缺少化毛用品边界", data.medicinePolicyPreview);
+    assert((data.productBoundaryPreview ?? "").includes("detected_country: CN"), "化毛膏购买:缺少地区化商品边界", data.productBoundaryPreview);
+    console.log("  ✓ 化毛膏购买:product_or_medicine + 本地用品边界");
   }
 
   {

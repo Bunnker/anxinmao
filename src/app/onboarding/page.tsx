@@ -133,18 +133,25 @@ export default function OnboardingPage() {
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
 
   useEffect(() => {
-    const s = loadStore();
-    if (s && s.cats.length > 0) {
-      const active = s.cats.find((c) => c.id === s.activeCatId) ?? s.cats[0];
-      setStore(s);
-      setDraft({ ...active });
-      setIsEdit(true);
-      setEditing(false);
-    } else {
-      setDraft(newCat());
-      setIsEdit(false);
-      setEditing(true);
-    }
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const s = loadStore();
+      if (s && s.cats.length > 0) {
+        const active = s.cats.find((c) => c.id === s.activeCatId) ?? s.cats[0];
+        setStore(s);
+        setDraft({ ...active });
+        setIsEdit(true);
+        setEditing(false);
+      } else {
+        setDraft(newCat());
+        setIsEdit(false);
+        setEditing(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (!draft) return <main className="min-h-dvh" aria-hidden="true" />;

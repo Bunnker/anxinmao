@@ -37,8 +37,14 @@ const EMERGENCY_RE =
 const VET_SUMMARY_RE =
   /整理.*(给|发|送).*(医生|兽医)|帮.*整理.*(给|发|送).*(医生|兽医)|写.*给.*(医生|兽医)|给(医生|兽医).*(发|看|说)|给(医生|兽医)看的(话|说明|描述)|带去医院.*(说|描述|讲)|病情说明|准备.*(就医|去医院).*(说|描述)|出.*(就医|医院).*说明/;
 
-const PRODUCT_OR_MEDICINE_RE =
-  /牌子|品牌|哪款|购买|哪里买|怎么买|推荐.*(牙膏|牙刷|猫砂|猫粮|罐头|益生菌|驱虫|用品|产品)|牙膏|牙刷|洁齿|漱口|喷剂|凝胶|药|消炎|止痛|抗生素|剂量|用量|处方/;
+const PRODUCT_BUYING_RE =
+  /牌子|品牌|哪款|购买|买|哪里买|怎么买|怎么选|推荐|能不能用|可以用|能用|能不能刷|可以刷/;
+
+const CARE_PRODUCT_RE =
+  /牙膏|牙刷|刷牙|洁齿|漱口|喷剂|凝胶|生理盐水|海盐水|益生菌|驱虫|化毛膏|猫草|营养膏|外驱|滴剂|洗耳|耳药|猫用化毛|洁耳|眼部清洁|伤口清洁/;
+
+const DRUG_PRODUCT_RE =
+  /止吐|胃药|尿路药|皮炎平|红霉素|软膏|药|消炎|止痛|抗生素|剂量|用量|处方|食欲刺激剂|布洛芬|对乙酰氨基酚|多西|阿奇|氧氟沙星|氯霉素|妥布霉素/;
 
 const CLEAR_DAILY_CARE_RE =
   /半夜|夜里|凌晨|扒门|跑酷|咬手|扑腿|抱脚|咬人玩|新猫|到家|躲床底|不亲人|怕人|挑食|换粮|不埋屎|带砂|猫砂盆|梳毛|毛球|毛结|陪玩|玩耍|无聊|剪指甲|刷牙训练/;
@@ -112,11 +118,16 @@ export function classifyBehaviorIntent(
     };
   }
 
-  if (PRODUCT_OR_MEDICINE_RE.test(query)) {
+  if (
+    DRUG_PRODUCT_RE.test(query) ||
+    (CARE_PRODUCT_RE.test(query) && PRODUCT_BUYING_RE.test(query))
+  ) {
     return {
       intent: "product_or_medicine",
       confidence: "high",
-      reason: "product_or_medicine_terms",
+      reason: DRUG_PRODUCT_RE.test(query)
+        ? "drug_or_high_risk_product_terms"
+        : "care_product_terms_with_purchase_intent",
       useCareKnowledge: false,
       useMedicalKnowledge: false,
       useMedicalRecall: true,
