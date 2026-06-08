@@ -1,9 +1,11 @@
 import type { UserRegionContext } from "@/lib/request-region";
 
 function isProductQuery(query: string): boolean {
-  return /牌子|品牌|哪款|买|购买|哪里|牙膏|牙刷|洁齿|漱口|喷剂|凝胶|药|消炎|止痛|抗生素|用品|产品/.test(
-    query,
-  );
+  const productTerms =
+    /牙膏|牙刷|刷牙|洁齿|漱口|喷剂|凝胶|化毛膏|猫草|营养膏|益生菌|外驱|滴剂|洗耳|耳药|止吐|胃药|尿路药|皮炎平|红霉素|软膏|药|消炎|止痛|抗生素|生理盐水|海盐水|伤口清洁|眼部清洁/;
+  const purchaseTerms =
+    /牌子|品牌|哪款|买|购买|哪里买|怎么买|怎么选|推荐|能不能用|可以用|能用|能不能刷|可以刷/;
+  return productTerms.test(query) && purchaseTerms.test(query);
 }
 
 function isOralCareQuery(query: string): boolean {
@@ -11,7 +13,7 @@ function isOralCareQuery(query: string): boolean {
 }
 
 function isDrugProductQuery(query: string): boolean {
-  return /药|消炎|止痛|抗生素|剂量|用量|处方/.test(query);
+  return /药|消炎|止痛|抗生素|剂量|用量|处方|止吐|胃药|尿路药|皮炎平|红霉素|软膏/.test(query);
 }
 
 function countryLabel(region: UserRegionContext): string {

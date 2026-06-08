@@ -151,9 +151,7 @@ export default function HomePage() {
   const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
-    // 首次进入(没看过教程)自动弹一次。读 persist(Cookie 兜底)——
-    // 微信 webview 不保 localStorage,否则教程会每次都弹。
-    if (!readPersisted(GUIDE_SEEN_KEY)) setShowGuide(true);
+    let cancelled = false;
 
     const applyStore = (store: Store) => {
       const active =
@@ -162,24 +160,32 @@ export default function HomePage() {
       setRecords(store.records.filter((r) => r.catId === active.id));
     };
 
-    const local = loadStore();
-    if (local && local.cats.length > 0) {
-      applyStore(local);
-      setLoaded(true);
-      return;
-    }
-
-    // 本地空 —— 可能微信清了存储。按匿名 deviceId 从云端拉回历史(带超时);
-    // 拉到就回填本地(不再推回云端,避免回声)。失败就当新用户走欢迎页。
-    let cancelled = false;
-    pullHistory().then((cloud) => {
+    queueMicrotask(() => {
       if (cancelled) return;
-      if (cloud && cloud.cats.length > 0) {
-        saveStoreLocal(cloud);
-        applyStore(cloud);
+
+      // 首次进入(没看过教程)自动弹一次。读 persist(Cookie 兜底)——
+      // 微信 webview 不保 localStorage,否则教程会每次都弹。
+      if (!readPersisted(GUIDE_SEEN_KEY)) setShowGuide(true);
+
+      const local = loadStore();
+      if (local && local.cats.length > 0) {
+        applyStore(local);
+        setLoaded(true);
+        return;
       }
-      setLoaded(true);
+
+      // 本地空 —— 可能微信清了存储。按匿名 deviceId 从云端拉回历史(带超时);
+      // 拉到就回填本地(不再推回云端,避免回声)。失败就当新用户走欢迎页。
+      pullHistory().then((cloud) => {
+        if (cancelled) return;
+        if (cloud && cloud.cats.length > 0) {
+          saveStoreLocal(cloud);
+          applyStore(cloud);
+        }
+        setLoaded(true);
+      });
     });
+
     return () => {
       cancelled = true;
     };

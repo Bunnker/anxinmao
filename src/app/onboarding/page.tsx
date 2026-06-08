@@ -105,16 +105,23 @@ export default function OnboardingPage() {
   const [avatarNotCat, setAvatarNotCat] = useState(false);
 
   useEffect(() => {
-    const s = loadStore();
-    if (s && s.cats.length > 0) {
-      const active = s.cats.find((c) => c.id === s.activeCatId) ?? s.cats[0];
-      setStore(s);
-      setDraft({ ...active });
-      setIsEdit(true);
-    } else {
-      setDraft(newCat());
-      setIsEdit(false);
-    }
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      const s = loadStore();
+      if (s && s.cats.length > 0) {
+        const active = s.cats.find((c) => c.id === s.activeCatId) ?? s.cats[0];
+        setStore(s);
+        setDraft({ ...active });
+        setIsEdit(true);
+      } else {
+        setDraft(newCat());
+        setIsEdit(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (!draft) return <main className="min-h-dvh" aria-hidden="true" />;

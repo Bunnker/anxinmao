@@ -3,7 +3,17 @@
 // 产品红线(CLAUDE.md):可以聊健康,但【绝不诊断】、【绝不开药】;红旗症状立即
 // 急停送医;健康边界按场景自然提醒。养育 / 行为问题正常聊。
 // 限流:per-IP + 全局日额度,保护试用期 API 额度。
-import { chatStream, LLMError, parseHistory, type ChatMessage } from "@/lib/llm";
+import {
+  chat,
+  chatStream,
+  LLMError,
+  parseHistory,
+  type ChatMessage,
+} from "@/lib/llm";
+import {
+  behaviorReplySafetyPolicyPreview,
+  checkBehaviorReplySafety,
+} from "@/lib/behavior-response-safety";
 import { runBehaviorAgentTools } from "@/lib/behavior-agent";
 import { classifyBehaviorIntent } from "@/lib/behavior-intent";
 import { catProfileContext } from "@/lib/cat-profile-context";
@@ -139,6 +149,7 @@ export async function POST(req: Request): Promise<Response> {
     country?: unknown;
     locale?: unknown;
     timeZone?: unknown;
+    safetyProbeReply?: unknown;
   };
   const parsed = parseHistory(b.messages);
   if (!parsed || parsed.length === 0) {
@@ -252,6 +263,17 @@ export async function POST(req: Request): Promise<Response> {
   ];
 
   if (b.dryRun === true && process.env.NODE_ENV !== "production") {
+    const responseSafetyProbe =
+      typeof b.safetyProbeReply === "string"
+        ? checkBehaviorReplySafety(b.safetyProbeReply, {
+            intent: intent.intent,
+            query,
+            hasProductBoundary: Boolean(productBoundary),
+            hasMedicineProductPolicy: Boolean(medicineProductPolicy),
+            tier: upstreamTier,
+          })
+        : null;
+
     return Response.json({
       dryRun: true,
       systemPromptPreview: SYSTEM_PROMPT,
@@ -271,23 +293,46 @@ export async function POST(req: Request): Promise<Response> {
       regionPreview: regionPrompt(region),
       productBoundaryPreview: productBoundary,
       medicinePolicyPreview: medicineProductPolicy,
+      responseSafetyPreview: behaviorReplySafetyPolicyPreview(),
+      responseSafetyProbe,
       messageRoles: fullMessages.map((m) => m.role),
     });
   }
 
   try {
+    const guardedResponse =
+      Boolean(productBoundary) ||
+      Boolean(medicineProductPolicy) ||
+      intent.intent === "product_or_medicine" ||
+      upstreamTier === "red";
+    const headers = {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Accel-Buffering": "no",
+    };
+
+    if (guardedResponse) {
+      const reply = await chat(fullMessages, {
+        temperature: 0.6,
+        maxTokens: 3000,
+        timeoutMs: 60000,
+      });
+      const checked = checkBehaviorReplySafety(reply, {
+        intent: intent.intent,
+        query,
+        hasProductBoundary: Boolean(productBoundary),
+        hasMedicineProductPolicy: Boolean(medicineProductPolicy),
+        tier: upstreamTier,
+      });
+      return new Response(checked.safeText, { headers });
+    }
+
     const stream = await chatStream(fullMessages, {
       temperature: 0.6,
       // v4-flash 等推理模型:reasoning token 额外占用,留足余量(防正文被挤空)。
       maxTokens: 3000,
     });
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-store",
-        "X-Accel-Buffering": "no",
-      },
-    });
+    return new Response(stream, { headers });
   } catch (e) {
     if (e instanceof LLMError) {
       const status = e.code === "no_provider" ? 503 : 502;
