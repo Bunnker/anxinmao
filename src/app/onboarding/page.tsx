@@ -19,7 +19,7 @@ function newCat(): Cat {
     sex: "不确定",
     coat: "",
     weight: 3,
-    neutered: "暂未",
+    neutered: "否",
     homeDate: "",
     vaccines: [],
     deworm: "",
@@ -129,6 +129,8 @@ export default function OnboardingPage() {
   const [avatarError, setAvatarError] = useState<string | null>(null);
   // 视觉守门:照片被判非猫 → 显示「用默认头像 / 换一张」 inline 选项
   const [avatarNotCat, setAvatarNotCat] = useState(false);
+  // 头像设置弹窗 —— 上传真实头像 / AI 生成卡通,二合一
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
 
   useEffect(() => {
     const s = loadStore();
@@ -490,6 +492,18 @@ export default function OnboardingPage() {
           />
         </Field>
 
+        <Field label="品种 · 可选">
+          <input
+            value={draft.breed ?? ""}
+            onChange={(e) => set("breed", e.target.value)}
+            placeholder="中华田园 / 英短 / 布偶 / 加菲…"
+            className={inputCls + " text-[15px]"}
+          />
+          <p className="text-[11.5px] leading-relaxed text-ink-faint">
+            有些情况跟品种相关(如扁脸猫易呼吸 / 泪痕),填了判断更准。
+          </p>
+        </Field>
+
         <Field label="多大了" hint={`${draft.ageMonths} 个月`}>
           <input
             type="range"
@@ -537,62 +551,68 @@ export default function OnboardingPage() {
         <Field label="是否绝育">
           <SegRow
             value={draft.neutered}
-            options={["是", "否", "暂未"]}
+            options={["是", "否"]}
             onChange={(v) => set("neutered", v as Cat["neutered"])}
           />
         </Field>
 
+        {/* 头像 —— 上传真实照片 或 AI 生成卡通,二合一,点开走弹窗 */}
+        <Field label="头像 · 可选">
+          <div className="flex items-center gap-4 rounded-[28px] bg-surface p-4 shadow-[var(--shadow-card)]">
+            <CatAvatar
+              avatar={draft.avatar}
+              name={draft.name}
+              size={76}
+              className="shadow-[var(--shadow-control)]"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="text-[14px] font-medium text-ink">
+                {draft.name || "这只猫"}的头像
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-ink-faint">
+                上传自家猫的照片,或让 AI 生成一只卡通形象。
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setAvatarError(null);
+                  setAvatarNotCat(false);
+                  setAvatarModalOpen(true);
+                }}
+                className="mt-3 inline-flex items-center gap-2 rounded-full bg-[var(--surface-2)] px-3.5 py-1.5 text-[12.5px] font-medium text-ink shadow-[var(--shadow-control)]"
+              >
+                {draft.avatar ? "更换头像" : "设置头像"}
+              </button>
+            </div>
+          </div>
+        </Field>
+
+        {/* 生活照相册 —— 独立于头像;仅「我的」橱窗展示,不参与分诊 */}
         <Field
-          label="头像与相册 · 可选"
+          label="生活照相册 · 可选"
           hint={`${draft.photos?.length ?? 0}/${MAX_PROFILE_PHOTOS} 张`}
         >
-          <div className="rounded-[28px] bg-surface p-4 shadow-[var(--shadow-card)]">
-            <div className="flex items-center gap-4">
-              <CatAvatar
-                avatar={draft.avatar}
-                name={draft.name}
-                size={76}
-                className="shadow-[var(--shadow-control)]"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="text-[14px] font-medium text-ink">
-                  {draft.name || "这只猫"}的头像
-                </p>
-                <p className="mt-1 text-[12px] leading-relaxed text-ink-faint">
-                  可以直接上传真实头像;下面的卡通形象也会更新同一个头像位。
-                </p>
-                <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-[12.5px] font-medium text-ink shadow-[var(--shadow-control)]">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={onAvatarUpload}
-                    className="hidden"
-                  />
-                  上传头像
-                </label>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-4 gap-2.5">
-              {(draft.photos ?? []).map((photo, index) => (
-                <button
-                  key={`${photo.slice(0, 32)}-${index}`}
-                  type="button"
-                  onClick={() => removeAlbumPhoto(index)}
-                  aria-label="移除这张相册照片"
-                  className="relative aspect-square overflow-hidden rounded-[22px] bg-[var(--surface-2)] shadow-[var(--shadow-control)]"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={photo}
-                    alt={`${draft.name || "猫咪"}的生活照 ${index + 1}`}
-                    className="h-full w-full object-cover"
-                  />
-                  <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-black/55 text-[11px] text-white">
-                    ×
-                  </span>
-                </button>
-              ))}
+          <div className="grid grid-cols-4 gap-2.5">
+            {(draft.photos ?? []).map((photo, index) => (
+              <button
+                key={`${photo.slice(0, 32)}-${index}`}
+                type="button"
+                onClick={() => removeAlbumPhoto(index)}
+                aria-label="移除这张相册照片"
+                className="relative aspect-square overflow-hidden rounded-[22px] bg-[var(--surface-2)] shadow-[var(--shadow-control)]"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={photo}
+                  alt={`${draft.name || "猫咪"}的生活照 ${index + 1}`}
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-black/55 text-[11px] text-white">
+                  ×
+                </span>
+              </button>
+            ))}
+            {(draft.photos?.length ?? 0) < MAX_PROFILE_PHOTOS && (
               <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-[22px] border border-dashed border-[var(--line)] bg-white/60 text-ink-soft shadow-[var(--shadow-control)]">
                 <input
                   type="file"
@@ -601,180 +621,16 @@ export default function OnboardingPage() {
                   onChange={onAlbumUpload}
                   className="hidden"
                 />
-                <svg
-                  width="19"
-                  height="19"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M12 5v14M5 12h14"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeWidth="1.7"
-                  />
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
                 </svg>
-                <span className="text-[11px]">相册</span>
+                <span className="text-[11px]">添加</span>
               </label>
-            </div>
-          </div>
-        </Field>
-
-        {/* 卡通形象 —— 一次性生成,作为身份/伴侣角色出现在 greeting / 报告卡角落
-            生成时机:用户主动点击。边界:docs/product/AI生成形象-实施说明.md §二
-            两个 provider:有照片走即梦 i2i(贴近自家猫);无照片走 wanx t2i(纯文字)*/}
-        <Field
-          label="卡通形象 · 可选"
-          hint={draft.avatar ? "已生成" : avatarPhoto ? "已选照片" : ""}
-        >
-          <div className="flex flex-col gap-3.5">
-            {/* 照片 + 描述并列输入 —— 照片是图生图的主输入,描述是风格补充 */}
-            <div className="flex items-start gap-3">
-              {avatarPhoto ? (
-                <button
-                  type="button"
-                  onClick={() => setAvatarPhoto(null)}
-                  aria-label="换一张照片"
-                  className="relative size-20 shrink-0 overflow-hidden rounded-[24px] border border-[var(--line)] shadow-[var(--shadow-control)]"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={avatarPhoto}
-                    alt="选中的照片"
-                    className="h-full w-full object-cover"
-                  />
-                  <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-black/60 text-[10px] text-white">
-                    ×
-                  </span>
-                </button>
-              ) : (
-                <label className="flex size-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-[24px] border border-dashed border-[var(--line)] bg-white/55 text-ink-soft shadow-[var(--shadow-control)] transition-colors hover:bg-white">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={onPhotoPick}
-                    className="hidden"
-                  />
-                  <svg
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinejoin="round"
-                    />
-                    <circle cx="12" cy="13" r="3.2" stroke="currentColor" strokeWidth="1.5" />
-                  </svg>
-                  <span className="text-[11px]">传照片</span>
-                </label>
-              )}
-              <textarea
-                value={avatarDesc}
-                onChange={(e) => setAvatarDesc(e.target.value)}
-                placeholder={
-                  avatarPhoto
-                    ? "(可选)风格补充,如「画得圆润一点」"
-                    : `没照片就描述一下:橘虎斑,白肚皮…`
-                }
-                rows={3}
-                maxLength={200}
-                className="min-w-0 flex-1 resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
-              />
-            </div>
-
-            {draft.avatar ? (
-              <div className="flex items-center gap-4">
-                <CatAvatar
-                  avatar={draft.avatar}
-                  name={draft.name}
-                  size={88}
-                />
-                <div className="flex min-w-0 flex-1 flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={generateAvatar}
-                    disabled={
-                      (!avatarDesc.trim() && !avatarPhoto) || avatarLoading
-                    }
-                    className="self-start rounded-full bg-surface px-3 py-1.5 text-[12.5px] text-ink shadow-[var(--shadow-control)] disabled:opacity-50"
-                  >
-                    {avatarLoading ? "重新生成中…" : "重新生成"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      set("avatar", undefined);
-                      setAvatarError(null);
-                    }}
-                    className="self-start text-[12px] text-ink-faint underline underline-offset-2"
-                  >
-                    清除头像
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={generateAvatar}
-                disabled={
-                  (!avatarDesc.trim() && !avatarPhoto) || avatarLoading
-                }
-                className={
-                  "rounded-[22px] py-3 text-[14px] font-medium tracking-wide transition-colors " +
-                  ((avatarDesc.trim() || avatarPhoto) && !avatarLoading
-                    ? "bg-[var(--surface-2)] text-ink"
-                    : "bg-[var(--surface-2)] text-ink-faint")
-                }
-              >
-                {avatarLoading
-                  ? "生成中…(约 10-30 秒)"
-                  : avatarPhoto
-                    ? "从照片生成卡通形象 →"
-                    : "从描述生成卡通形象 →"}
-              </button>
             )}
-
-            {avatarError && (
-              <div className="rounded-[22px] border border-[var(--red)]/20 bg-[var(--red-bg)] p-3 shadow-[var(--shadow-control)]">
-                <p className="text-[12.5px] leading-relaxed text-[var(--red-ink)]">
-                  {avatarError}
-                </p>
-                {avatarNotCat && (
-                  <div className="mt-2.5 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={useDefaultAvatar}
-                      className="rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-[12px] text-ink"
-                    >
-                      用默认头像
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAvatarPhoto(null);
-                        setAvatarError(null);
-                        setAvatarNotCat(false);
-                      }}
-                      className="rounded-full border border-[var(--line)] px-3 py-1.5 text-[12px] text-ink-soft"
-                    >
-                      换一张照片
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-            <p className="text-[11.5px] leading-relaxed text-ink-faint">
-              AI 出图,仅做头像 / 角色装饰用,不做症状示意。
-              传猫照片效果最好(系统会先检测是不是猫,不是猫不出图);
-              纯文字描述也行(走文生图回退)。
-            </p>
           </div>
+          <p className="text-[11.5px] leading-relaxed text-ink-faint">
+            生活照只在「我的」橱窗展示,不参与分诊判断。
+          </p>
         </Field>
       </div>
 
@@ -902,18 +758,6 @@ export default function OnboardingPage() {
           </p>
         </Field>
 
-        <Field label="品种 · 可选">
-          <input
-            value={draft.breed ?? ""}
-            onChange={(e) => set("breed", e.target.value)}
-            placeholder="中华田园 / 英短 / 布偶 / 加菲…"
-            className={inputCls + " text-[15px]"}
-          />
-          <p className="text-[11.5px] leading-relaxed text-ink-faint">
-            有些情况跟品种相关(如扁脸猫易呼吸 / 泪痕),填了判断更准。
-          </p>
-        </Field>
-
         <Field label="慢性病史 · 可选">
           <textarea
             value={draft.chronicConditions ?? ""}
@@ -966,6 +810,177 @@ export default function OnboardingPage() {
           </p>
         )}
       </div>
+
+      {/* 头像设置弹窗 —— 上传真实照片 / AI 生成卡通,二合一 */}
+      {avatarModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <button
+            type="button"
+            aria-label="关闭"
+            onClick={() => setAvatarModalOpen(false)}
+            className="absolute inset-0 bg-black/40"
+          />
+          <div
+            className="relative w-full max-w-[430px] overflow-y-auto rounded-t-[28px] bg-paper px-6 pt-4 shadow-[var(--shadow-card)]"
+            style={{
+              maxHeight: "88dvh",
+              paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))",
+            }}
+          >
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--line)]" />
+            <div className="flex items-center justify-between">
+              <h2 className="text-[17px] font-semibold text-ink">设置头像</h2>
+              <button
+                type="button"
+                onClick={() => setAvatarModalOpen(false)}
+                className="text-[13px] font-medium text-accent"
+              >
+                完成
+              </button>
+            </div>
+
+            {/* 1) 上传真实照片当头像 */}
+            <div className="mt-4 flex items-center gap-4 rounded-[24px] bg-surface p-4 shadow-[var(--shadow-control)]">
+              <CatAvatar
+                avatar={draft.avatar}
+                name={draft.name}
+                size={68}
+                className="shadow-[var(--shadow-control)]"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-[13.5px] font-medium text-ink">用真实照片当头像</p>
+                <p className="mt-0.5 text-[12px] text-ink-faint">直接用你拍的猫照片</p>
+                <label className="mt-2.5 inline-flex cursor-pointer items-center gap-2 rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-medium text-accent-fg">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={onAvatarUpload}
+                    className="hidden"
+                  />
+                  上传照片
+                </label>
+              </div>
+              {draft.avatar && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    set("avatar", undefined);
+                    setAvatarError(null);
+                  }}
+                  className="self-start text-[12px] text-ink-faint underline underline-offset-2"
+                >
+                  清除
+                </button>
+              )}
+            </div>
+
+            <div className="my-5 flex items-center gap-3">
+              <span className="h-px flex-1 bg-[var(--line)]" />
+              <span className="shrink-0 text-[11px] tracking-[0.06em] text-ink-faint">
+                或 让 AI 生成卡通形象
+              </span>
+              <span className="h-px flex-1 bg-[var(--line)]" />
+            </div>
+
+            {/* 2) AI 生成:照片 / 描述 → 生成 */}
+            <div className="flex flex-col gap-3.5">
+              <div className="flex items-start gap-3">
+                {avatarPhoto ? (
+                  <button
+                    type="button"
+                    onClick={() => setAvatarPhoto(null)}
+                    aria-label="换一张照片"
+                    className="relative size-20 shrink-0 overflow-hidden rounded-[24px] border border-[var(--line)] shadow-[var(--shadow-control)]"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={avatarPhoto} alt="选中的照片" className="h-full w-full object-cover" />
+                    <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-black/60 text-[10px] text-white">
+                      ×
+                    </span>
+                  </button>
+                ) : (
+                  <label className="flex size-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-[24px] border border-dashed border-[var(--line)] bg-white/55 text-ink-soft shadow-[var(--shadow-control)] transition-colors hover:bg-white">
+                    <input type="file" accept="image/*" onChange={onPhotoPick} className="hidden" />
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="12" cy="13" r="3.2" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
+                    <span className="text-[11px]">传照片</span>
+                  </label>
+                )}
+                <textarea
+                  value={avatarDesc}
+                  onChange={(e) => setAvatarDesc(e.target.value)}
+                  placeholder={
+                    avatarPhoto
+                      ? "(可选)风格补充,如「画得圆润一点」"
+                      : "没照片就描述一下:橘虎斑,白肚皮…"
+                  }
+                  rows={3}
+                  maxLength={200}
+                  className="min-w-0 flex-1 resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={generateAvatar}
+                disabled={(!avatarDesc.trim() && !avatarPhoto) || avatarLoading}
+                className={
+                  "rounded-[22px] py-3 text-[14px] font-medium tracking-wide transition-colors " +
+                  ((avatarDesc.trim() || avatarPhoto) && !avatarLoading
+                    ? "bg-accent text-accent-fg"
+                    : "bg-[var(--surface-2)] text-ink-faint")
+                }
+              >
+                {avatarLoading
+                  ? "生成中…(约 10-30 秒)"
+                  : avatarPhoto
+                    ? "从照片生成卡通形象 →"
+                    : "从描述生成卡通形象 →"}
+              </button>
+
+              {avatarError && (
+                <div className="rounded-[22px] border border-[var(--red)]/20 bg-[var(--red-bg)] p-3">
+                  <p className="text-[12.5px] leading-relaxed text-[var(--red-ink)]">
+                    {avatarError}
+                  </p>
+                  {avatarNotCat && (
+                    <div className="mt-2.5 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={useDefaultAvatar}
+                        className="rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-[12px] text-ink"
+                      >
+                        用默认头像
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAvatarPhoto(null);
+                          setAvatarError(null);
+                          setAvatarNotCat(false);
+                        }}
+                        className="rounded-full border border-[var(--line)] px-3 py-1.5 text-[12px] text-ink-soft"
+                      >
+                        换一张照片
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+              <p className="text-[11.5px] leading-relaxed text-ink-faint">
+                AI 出图仅作头像 / 角色装饰,不做症状示意。传猫照效果最好(会先检测是不是猫,不是猫不出图);纯文字描述也行。
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Disclaimer />
     </main>

@@ -12,7 +12,7 @@ export interface Cat {
   sex: "雌" | "雄" | "不确定";
   coat: "短毛" | "长毛" | "无毛" | "";
   weight: number; // kg
-  neutered: "是" | "否" | "暂未";
+  neutered: "是" | "否";
   breed?: string; // 品种(如 英短 / 布偶 / 中华田园)—— 用于品种特异风险(扁脸呼吸、波斯泪痕等)
   chronicConditions?: string; // 慢性病史(如 心脏病 / 糖尿病 / 慢性肾病)
   allergies?: string; // 过敏史(如 对鸡肉过敏 / 某药物过敏)

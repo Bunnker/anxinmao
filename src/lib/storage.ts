@@ -120,7 +120,7 @@ export const DEMO_CAT: Cat = {
   sex: "雌",
   coat: "短毛",
   weight: 2.1,
-  neutered: "暂未",
+  neutered: "否",
   homeDate: "2026-04-18",
   vaccines: [{ name: "三联第 1 针", date: "2026-04-30" }],
   deworm: "2026-05-05",
@@ -148,7 +148,7 @@ export const TEMPLATE_CAT: Cat = {
   sex: "雌",
   coat: "短毛",
   weight: 3.5,
-  neutered: "暂未",
+  neutered: "否",
   homeDate: "2026-02-01",
   vaccines: [
     { name: "猫三联第1针", date: "2026-02-10" },
