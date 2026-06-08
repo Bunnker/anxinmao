@@ -28,20 +28,24 @@ const ARK_BASE = "https://ark.cn-beijing.volces.com/api/v3";
 const ARK_IMAGE_MODEL = "doubao-seedream-5-0-260128";
 const ARK_IMAGE_SIZE = "2K";
 
-// Q 版萌系 + 强保留原猫特征 —— 这一句的关键 token:
-//   - 超可爱 Q 版 / 大眼睛 / 圆润萌系 / 治愈 —— 萌系强度
-//   - 严格保留原猫的毛色花纹和五官特征 —— 让 model 不要太自由发挥
-//   - 胸像构图 + 暖米色 —— 与 app 设计调一致
+// 头像 prompt 的目标:
+//   - 可爱度靠具体视觉 token 拉动:圆脸、脸颊、小鼻梁、湿润大眼、爪子、轻微歪头
+//   - 识别度靠视觉特征放在 prompt 最前面:毛色、花纹、眼睛、耳朵、脸型
+//   - 成品像 app 头像贴纸,不是写实宠物照或普通儿童插画
 const STYLE_SUFFIX_CN =
-  "把这只猫画成超可爱 Q 版卡通头像,大眼睛,圆润萌系," +
-  "严格保留原猫的毛色花纹和五官特征,胸像构图," +
-  "暖米色背景,治愈系绘本风格,柔和光线,无文字无水印";
+  "把这只猫画成治愈系超可爱猫咪头像贴纸,幼态 Q 版比例但保留原猫身份特征," +
+  "圆脸、饱满脸颊、短小鼻梁、小三角耳、亮晶晶湿润大眼睛、微微笑的嘴角、软软绒毛," +
+  "头大身体小,前爪轻轻露出,姿势乖巧,轻微歪头,像让人想摸摸的小猫。" +
+  "严格保留原猫的毛色、花纹、眼睛颜色、耳朵形状和明显五官特征。" +
+  "构图为居中头像,完整头部和上半身,轮廓干净,暖奶油色纯背景,柔和自然光,细腻绘本质感。" +
+  "不要写实凶脸、不要瘦长脸、不要尖锐线条、不要冷漠表情、不要夸张怪异表情、不要文字、不要水印";
 
 const STYLE_SUFFIX_EN =
-  "Cute kawaii chibi cat avatar portrait, big eyes, round and soft, " +
-  "head and shoulders close-up centered, warm beige background, " +
-  "flat illustration style, children's picture book quality, " +
-  "gentle peaceful expression, soft warm lighting, no text, no watermark.";
+  "Healing kawaii cat avatar sticker, irresistibly cute kitten-like chibi proportions while preserving the cat identity, " +
+  "round face, soft chubby cheeks, tiny nose bridge, small triangular ears, glossy sparkling big eyes, subtle smiling mouth, fluffy fur, " +
+  "big head and small body, tiny front paws visible, gentle slight head tilt, cozy and affectionate expression. " +
+  "Centered app avatar composition with full head and upper body, clean silhouette, warm cream plain background, soft natural light, delicate picture-book illustration. " +
+  "No realistic angry face, no long narrow face, no sharp harsh lines, no cold expression, no weird exaggerated expression, no text, no watermark.";
 
 // ----- 类型 ----- //
 
@@ -49,6 +53,8 @@ type ReqBody = {
   description?: string;
   photoDataUrl?: string;
   name?: string;
+  dryRun?: boolean;
+  debugVisionFeatures?: string;
 };
 
 type VisionResult = {
@@ -75,6 +81,24 @@ export async function POST(req: NextRequest): Promise<Response> {
       { error: "需要照片或文字描述至少一项。" },
       { status: 400 },
     );
+  }
+
+  if (body.dryRun === true && process.env.NODE_ENV !== "production") {
+    const visionFeatures = photo
+      ? (body.debugVisionFeatures ?? "橘白短毛猫,圆脸小耳朵,金色眼睛,表情放松")
+          .trim()
+          .slice(0, 200)
+      : "";
+    const prompt = buildAvatarPrompt({
+      visionFeatures,
+      userDescription: description,
+      stylePrompt: photo ? STYLE_SUFFIX_CN : STYLE_SUFFIX_EN,
+    });
+    return Response.json({
+      providerPath: photo ? "ark-seedream-i2i" : "wanx-t2i",
+      promptPreview: prompt,
+      stylePromptPreview: photo ? STYLE_SUFFIX_CN : STYLE_SUFFIX_EN,
+    });
   }
 
   // 限流:生图是主要花费(~¥0.3/张),扣 image 额度。放在输入校验后、
@@ -128,7 +152,7 @@ async function visionCheckCat(photoDataUrl: string): Promise<VisionResult> {
   const sysPrompt =
     "你是图像内容判别助手。看用户传的图,严格判断是不是「猫」(必须以家猫为主体,真实照片或卡通画都算;狗、其它动物、人、风景、物品都不算)。" +
     "只返 JSON,字段:\n" +
-    `{\n  "is_cat": true/false,\n  "confidence": 0-1 之间的小数,\n  "features": "如果 is_cat 为 true,用一句中文精确描述毛色 + 花纹 + 眼睛颜色 + 表情;否则空字符串"\n}\n` +
+    `{\n  "is_cat": true/false,\n  "confidence": 0-1 之间的小数,\n  "features": "如果 is_cat 为 true,用一句中文精确描述毛色、花纹、毛长、脸型、耳朵形状、眼睛颜色、表情和最明显识别特征;不要编不存在的配饰;否则空字符串"\n}\n` +
     "不要任何其它文字。";
 
   const res = await fetch(`${DASHSCOPE_OPENAI_BASE}/chat/completions`, {
@@ -189,10 +213,11 @@ async function arkSeedreamI2I(
   // Prompt 拼接顺序(从前往后,model attention 递减):
   //   vision 提取的特征 → 用户手写描述 → style 收尾
   // vision features 放最前,model 最重视 → 最大化「保留原猫特征」
-  const segments = [visionFeatures, userDescription, STYLE_SUFFIX_CN].filter(
-    (s) => s && s.trim(),
-  );
-  const prompt = segments.join("。");
+  const prompt = buildAvatarPrompt({
+    visionFeatures,
+    userDescription,
+    stylePrompt: STYLE_SUFFIX_CN,
+  });
 
   const res = await fetch(`${ARK_BASE}/images/generations`, {
     method: "POST",
@@ -234,10 +259,29 @@ async function wanxT2I(description: string): Promise<string> {
   const apiKey = process.env.DASHSCOPE_API_KEY;
   if (!apiKey) throw new Error("DASHSCOPE_API_KEY 未配置");
 
-  const prompt = `${description}。${STYLE_SUFFIX_EN}`;
+  const prompt = buildAvatarPrompt({
+    visionFeatures: "",
+    userDescription: description,
+    stylePrompt: STYLE_SUFFIX_EN,
+  });
   const taskId = await wanxSubmit(apiKey, prompt);
   const url = await wanxPoll(apiKey, taskId);
   return await downloadAsDataUrl(url);
+}
+
+function buildAvatarPrompt({
+  visionFeatures,
+  userDescription,
+  stylePrompt,
+}: {
+  visionFeatures: string;
+  userDescription: string;
+  stylePrompt: string;
+}): string {
+  return [visionFeatures, userDescription, stylePrompt]
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join("。");
 }
 
 async function wanxSubmit(apiKey: string, prompt: string): Promise<string> {
