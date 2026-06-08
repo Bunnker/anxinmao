@@ -9,7 +9,7 @@ const TABS = [
   { href: "/", label: "首页", icon: "home" },
   { href: "/symptoms", label: "分诊", icon: "triage" },
   { href: "/behavior", label: "问答", icon: "chat" },
-  { href: "/onboarding", label: "我的", icon: "profile" },
+  { href: "/onboarding", label: "毛孩子", icon: "profile" },
 ] as const;
 
 const SHOW_PATHS = ["/", "/symptoms", "/behavior", "/onboarding", "/knowledge"];
@@ -71,22 +71,18 @@ function ChatIcon({ active }: { active: boolean }) {
   );
 }
 
+// 猫爪 —— 「毛孩子」tab(猫咪档案)
 function ProfileIcon({ active }: { active: boolean }) {
+  const fill = active ? "currentColor" : "none";
+  const fo = active ? "0.18" : "0";
+  const sw = active ? "1.9" : "1.6";
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle
-        cx="12" cy="8" r="3.5"
-        stroke="currentColor"
-        strokeWidth={active ? "1.9" : "1.6"}
-        fill={active ? "currentColor" : "none"}
-        fillOpacity={active ? "0.18" : "0"}
-      />
-      <path
-        d="M5 20a7 7 0 0 1 14 0"
-        stroke="currentColor"
-        strokeWidth={active ? "1.9" : "1.6"}
-        strokeLinecap="round"
-      />
+      <ellipse cx="12" cy="15.5" rx="4.6" ry="3.7" stroke="currentColor" strokeWidth={sw} fill={fill} fillOpacity={fo} />
+      <circle cx="6" cy="10" r="1.85" stroke="currentColor" strokeWidth={sw} fill={fill} fillOpacity={fo} />
+      <circle cx="9.7" cy="6.7" r="1.85" stroke="currentColor" strokeWidth={sw} fill={fill} fillOpacity={fo} />
+      <circle cx="14.3" cy="6.7" r="1.85" stroke="currentColor" strokeWidth={sw} fill={fill} fillOpacity={fo} />
+      <circle cx="18" cy="10" r="1.85" stroke="currentColor" strokeWidth={sw} fill={fill} fillOpacity={fo} />
     </svg>
   );
 }

@@ -328,11 +328,14 @@ export default function OnboardingPage() {
             className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-medium tracking-[0.06em]"
             style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="2" />
-              <path d="M5 20c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <ellipse cx="12" cy="16" rx="4.2" ry="3.4" />
+              <circle cx="6.4" cy="11" r="1.9" />
+              <circle cx="10" cy="7.8" r="1.9" />
+              <circle cx="14" cy="7.8" r="1.9" />
+              <circle cx="17.6" cy="11" r="1.9" />
             </svg>
-            我的档案
+            {draft.name ? `${draft.name}的档案` : "我的档案"}
           </span>
         </header>
 
@@ -469,7 +472,7 @@ export default function OnboardingPage() {
           <span className="size-9" />
         )}
         <span className="flex-1 text-center text-[12px] font-medium uppercase tracking-[0.18em] text-ink-soft">
-          {isEdit ? "我的档案" : "新建档案"}
+          {isEdit ? `${draft.name || "我的"}的档案` : "新建档案"}
         </span>
         <span className="size-9" />
       </header>
