@@ -45,6 +45,7 @@ export const SYMPTOM_LABELS: Record<string, string> = {
   breath: "呼吸怪",
   blood: "看到血",
   pee: "尿不出",
+  urine: "小便不对劲",
   other: "其它情况",
 };
 
@@ -307,6 +308,45 @@ const peeFlow: TriageQuestion[] = [
     multi: true,
     options: [
       { label: "在猫砂盆里嚎叫,或因疼痛大叫", weight: 2, redFlag: true, claim: "uo_003" },
+      { label: "没精神、不吃东西,或在呕吐", weight: 2, redFlag: true, claim: "uo_004" },
+      { label: "肚子绷得紧、一碰就疼,或不停舔屁股", weight: 2, redFlag: true, claims: ["uo_003", "uo_004"] },
+      { label: "它是公猫,而且这次尿费劲、尿量明显变少", weight: 2, redFlag: true, claim: "uo_005" },
+      { label: "都没有", weight: 0, exclusive: true },
+    ],
+  },
+];
+
+// 小便不对劲专属流 —— 入口给「尿得出但不正常」的猫(尿频 / 尿血 / 尿痛 / 乱尿,多为
+// FLUTD / 特发性膀胱炎 / 结石),与「尿不出」尿闭卡互补:撞到尿不出 / 嚎叫 / 系统症状 /
+// 公猫尿少 → 自动升红。复用尿闭(uo)证据底稿:FLUTD 黄档 uo_006/uo_007,尿闭红旗 uo_001~005。
+const urineFlow: TriageQuestion[] = [
+  {
+    id: "what",
+    text: "它的小便,最近哪里不对劲?",
+    hint: "可多选;勾到要紧的会直接提示就医,都没有就选最后一项。",
+    multi: true,
+    options: [
+      {
+        label: "频繁进猫砂盆使劲,却几乎尿不出 / 只有几滴",
+        weight: 2,
+        redFlag: true,
+        claims: ["uo_001", "uo_002"],
+      },
+      { label: "尿里有血,或尿色发红 / 发褐", weight: 2, claim: "uo_007" },
+      { label: "尿次数变多、每次只尿一点点", weight: 2, claims: ["uo_006", "uo_007"] },
+      { label: "排尿时用力、姿势别扭、好像疼", weight: 2, claim: "uo_007" },
+      { label: "突然在猫砂盆外乱尿", weight: 2, claim: "uo_007" },
+      { label: "频繁舔舐下体 / 尿道口", weight: 1, claim: "uo_007" },
+      { label: "都没有 / 说不清", weight: 0, exclusive: true },
+    ],
+  },
+  {
+    id: "with",
+    text: "除了小便,还有这些吗?",
+    hint: "可多选 —— 这些都建议立刻就医;都没有就选最后一项。",
+    multi: true,
+    options: [
+      { label: "在猫砂盆里嚎叫,或排尿时痛得大叫", weight: 2, redFlag: true, claim: "uo_003" },
       { label: "没精神、不吃东西,或在呕吐", weight: 2, redFlag: true, claim: "uo_004" },
       { label: "肚子绷得紧、一碰就疼,或不停舔屁股", weight: 2, redFlag: true, claims: ["uo_003", "uo_004"] },
       { label: "它是公猫,而且这次尿费劲、尿量明显变少", weight: 2, redFlag: true, claim: "uo_005" },
@@ -888,6 +928,7 @@ const FLOWS: Record<string, TriageQuestion[]> = {
   breath: breathFlow,
   blood: bloodFlow,
   pee: peeFlow,
+  urine: urineFlow,
   noeat: noeatFlow,
   sneeze: sneezeFlow,
   ear: earFlow,
@@ -954,6 +995,7 @@ export function triageTranscript(flow: TriageFlow, answers: number[][]): string 
 const NO_GREEN_SYMPTOMS: ReadonlySet<string> = new Set([
   "breath",
   "pee",
+  "urine",
   "blood",
   "noeat",
 ]);

@@ -5,9 +5,9 @@
 - `condition_id`: `cat_urethral_obstruction`
 - 中文名:猫尿道阻塞 / 尿不出
 - 英文名:Feline urethral obstruction
-- 对应 triage symptom:`pee`
+- 对应 triage symptom:`pee`(尿不出/尿闭),`urine`(小便不对劲 —— FLUTD 入口卡复用本底稿:黄档 `uo_006`/`uo_007`,撞尿闭信号升红 `uo_001`~`uo_005`)
 - 适用物种:猫
-- 资料状态:draft
+- 资料状态:FLUTD 泌尿征象已对源逐条核实(见 §13,2026-06-05)
 - 生成日期:2026-05-30
 - 上次人工核对:2026-05-30
 - 关联 AI card:`docs/medical/ai-cards/cat-urethral-obstruction.ai-card.md`
@@ -121,3 +121,22 @@
 - 是否应该在分诊问题里先问性别,还是先问有没有尿。
 - “几滴”这个表述是否足够清楚,是否要加“猫砂里没有正常尿团”。
 - 是否给用户解释 FIC/应激,还是报告页保持短。
+
+## 13. 源核实记录 —— `urine`「小便不对劲」卡(2026-06-05)
+
+新增 `urine` 卡(triage `urineFlow`)前,对权威源逐条核实,确认非"复用 draft"而是有原文支撑:
+
+| urineFlow 内容 | 权威源原文(核实命中) | source_id |
+|---|---|---|
+| 尿里有血 / 尿色发红褐 | "Blood in the urine" | cornell_flutd |
+| 尿次数变多、每次只一点点 | "Increased frequency of urination" + "repeated attempts…without being able to pass anything" | cornell_flutd / icatcare_urethral_obstruction |
+| 排尿用力 / 姿势别扭 / 疼 | "Difficult or painful urination" | cornell_flutd |
+| 猫砂盆外乱尿 | "Inappropriate urination (outside of the litter box)" | cornell_flutd |
+| 频繁舔下体 / 尿道口 | "Frequent licking of the genital region" | cornell_flutd |
+| 排尿痛得大叫 | "Crying out while urinating" | cornell_flutd |
+| 几乎尿不出 / 几滴 → 红 | "little or no urine…increasingly distressed" / "without being able to pass anything" | cornell_flutd / icatcare |
+| 公猫尿少 → 红 | "Male and neutered male cats are at greater risk…urethra is longer and narrower" | cornell_flutd |
+| FIC(应激)/ 结石(报告) | "Feline idiopathic cystitis—most common diagnosis" + uroliths | cornell_flutd |
+| 多喝水 / 减少应激(报告) | "increasing your cat's water intake…minimising stress" / "Provide clean, fresh water…Minimize major changes in routine" | icatcare / cornell_flutd |
+
+核实方式:2026-06-05 直抓 Cornell FLUTD 页面(WebFetch 200)+ iCatCare urethral-obstruction(curl 浏览器 UA 200)。Q1 六个征象与 Cornell 列出的临床症状逐字一致。`uo_001` `uo_002` `uo_005` `uo_006` `uo_007` 由 draft 升为「对源核实✓」。

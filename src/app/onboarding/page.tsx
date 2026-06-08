@@ -653,7 +653,6 @@ export default function OnboardingPage() {
                   <input
                     type="file"
                     accept="image/*"
-                    capture="environment"
                     onChange={onPhotoPick}
                     className="hidden"
                   />
@@ -672,7 +671,7 @@ export default function OnboardingPage() {
                     />
                     <circle cx="12" cy="13" r="3.2" stroke="currentColor" strokeWidth="1.5" />
                   </svg>
-                  <span className="text-[11px]">拍照</span>
+                  <span className="text-[11px]">传照片</span>
                 </label>
               )}
               <textarea
@@ -903,12 +902,44 @@ export default function OnboardingPage() {
           </p>
         </Field>
 
-        <Field label="过敏 / 慢性病 · 可选">
+        <Field label="品种 · 可选">
+          <input
+            value={draft.breed ?? ""}
+            onChange={(e) => set("breed", e.target.value)}
+            placeholder="中华田园 / 英短 / 布偶 / 加菲…"
+            className={inputCls + " text-[15px]"}
+          />
+          <p className="text-[11.5px] leading-relaxed text-ink-faint">
+            有些情况跟品种相关(如扁脸猫易呼吸 / 泪痕),填了判断更准。
+          </p>
+        </Field>
+
+        <Field label="慢性病史 · 可选">
+          <textarea
+            value={draft.chronicConditions ?? ""}
+            onChange={(e) => set("chronicConditions", e.target.value)}
+            placeholder="比如:心脏病 / 糖尿病 / 慢性肾病 / 长期在吃某种药"
+            rows={2}
+            className="w-full resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
+          />
+        </Field>
+
+        <Field label="过敏史 · 可选">
+          <textarea
+            value={draft.allergies ?? ""}
+            onChange={(e) => set("allergies", e.target.value)}
+            placeholder="比如:对鸡肉过敏 / 对某种药物过敏"
+            rows={2}
+            className="w-full resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
+          />
+        </Field>
+
+        <Field label="其它备注 · 可选">
           <textarea
             value={draft.notes}
             onChange={(e) => set("notes", e.target.value)}
-            placeholder="比如:对鸡肉过敏 / 有先天性心脏病 / 在吃 XX 药"
-            rows={3}
+            placeholder="比如:挑食 / 怕生 / 最近换了猫粮…"
+            rows={2}
             className="w-full resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
           />
         </Field>

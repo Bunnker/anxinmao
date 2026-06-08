@@ -23,6 +23,7 @@ const CARD_BY_SYMPTOM: Record<string, string> = {
   breath: "cat-dyspnea",
   blood: "cat-bleeding",
   pee: "cat-urethral-obstruction",
+  urine: "cat-urethral-obstruction",
   other: "cat-lethargy",
 };
 

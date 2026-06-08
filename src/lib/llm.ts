@@ -72,7 +72,26 @@ export class LLMError extends Error {
 }
 
 // 一次性(非流式)对话补全。返回模型回答文本;失败抛 LLMError。
+// v4-flash 等推理模型偶发把 token 全花在推理上、正文为空 → 自动重试一次。
 export async function chat(
+  messages: ChatMessage[],
+  opts: { temperature?: number; maxTokens?: number; timeoutMs?: number } = {},
+): Promise<string> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return await chatOnce(messages, opts);
+    } catch (e) {
+      lastErr = e;
+      // 仅对「空回复 / 解析失败」重试;超时、连不上、HTTP 错误直接抛(重试无益)。
+      if (e instanceof LLMError && e.code === "bad_response") continue;
+      throw e;
+    }
+  }
+  throw lastErr;
+}
+
+async function chatOnce(
   messages: ChatMessage[],
   opts: { temperature?: number; maxTokens?: number; timeoutMs?: number } = {},
 ): Promise<string> {
@@ -85,7 +104,7 @@ export async function chat(
   }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 30000);
+  const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? 60000);
 
   let res: Response;
   try {
@@ -184,7 +203,7 @@ export async function chatStream(
 
   // 超时只守「拿到响应头」这一段;正文开始流式后不再设硬超时。
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 30000);
+  const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 60000);
 
   let res: Response;
   try {
