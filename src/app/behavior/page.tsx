@@ -54,6 +54,9 @@ const STARTERS = [
 const COMPRESS_AT = 20;
 const KEEP_VERBATIM = 8;
 
+// 只在前几轮回答后给追问 —— 新手最需要引导;聊深了就不给,省一次调用。
+const MAX_FOLLOWUP_TURNS = 3;
+
 type MarkdownBlock =
   | { type: "heading"; level: 1 | 2 | 3; text: string }
   | { type: "paragraph"; text: string }
@@ -406,6 +409,41 @@ function ContextChip({ symptom, tier }: { symptom?: string; tier?: RiskTier }) {
   );
 }
 
+// 追问建议 —— 答完后挂在最后一条回答下面,点一下就当成新问题发出去。
+function FollowupChips({
+  items,
+  disabled,
+  onPick,
+}: {
+  items: string[];
+  disabled: boolean;
+  onPick: (t: string) => void;
+}) {
+  if (items.length === 0) return null;
+  return (
+    <div className="flex max-w-[96%] flex-col gap-2 self-start">
+      <span className="ml-1 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+        <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
+        接着可以问
+      </span>
+      {items.map((q) => (
+        <button
+          key={q}
+          type="button"
+          disabled={disabled}
+          onClick={() => onPick(q)}
+          className="group flex items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-surface px-4 py-2.5 text-left text-[13.5px] leading-snug text-ink-soft shadow-[var(--shadow-control)] transition-colors duration-150 active:bg-[var(--surface-2)] disabled:opacity-50"
+        >
+          <span className="min-w-0">{q}</span>
+          <span className="shrink-0 text-[12.5px] font-medium text-accent transition-transform duration-200 group-active:translate-x-0.5">
+            →
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 let cachedStoreRaw: string | null | undefined;
 let cachedStore: Store | null | undefined;
 
@@ -490,6 +528,8 @@ function BehaviorContent() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 追问建议 —— 每轮回答完后台拉取,点一下当成新问题发出。
+  const [followups, setFollowups] = useState<string[]>([]);
   // 对话摘要:memo 是较早对话压成的摘要,memoCount 是已折进 memo 的消息条数。
   const [memo, setMemo] = useState("");
   const [memoCount, setMemoCount] = useState(0);
@@ -497,6 +537,8 @@ function BehaviorContent() {
   // 会话 id —— 从「最近」点回来时是 ?c=<id>;新会话首次发送时再生成。
   const convIdRef = useRef<string | null>(searchParams.get("c"));
   const restoredRef = useRef(false);
+  // 每次发起问答自增;拉追问建议时带上,回来对不上就丢弃(防竞态串台)。
+  const reqSeqRef = useRef(0);
 
   useEffect(() => {
     // 无档案:回首页(首页会显示欢迎页让用户选建档 / 默认模版)
@@ -523,8 +565,9 @@ function BehaviorContent() {
 
   useEffect(() => {
     // 流式输出会频繁更新,用瞬时滚动,避免 smooth 抖动。
+    // followups 是答完后异步出现的,也加进来,让追问浮现时自动滚入视野。
     endRef.current?.scrollIntoView({ block: "end" });
-  }, [messages, loading, error]);
+  }, [messages, loading, error, followups]);
 
   // 把当前会话存进「最近」(localStorage + 防抖云同步)。没 cat / 没会话 id 就跳过。
   const persistConversation = (msgs: Msg[], m: string, mc: number) => {
@@ -566,6 +609,13 @@ function BehaviorContent() {
   async function runChat(msgs: Msg[]) {
     setLoading(true);
     setError(null);
+    setFollowups([]); // 新一轮:先清掉上一条回答的追问
+    const seq = ++reqSeqRef.current;
+    // 并行:发问的同时就开跑追问生成(基于问题 + 上下文),与回答同时进行,
+    // 答完即有,不用等回答完再单独跑一轮。只前几轮给(末条是用户问题,用 < 判断)。
+    if (msgs.filter((m) => m.role === "assistant").length < MAX_FOLLOWUP_TURNS) {
+      void fetchFollowups(msgs, seq);
+    }
     let acc = "";
     try {
       const res = await fetch("/api/behavior", {
@@ -608,6 +658,7 @@ function BehaviorContent() {
         setMessages(finalMsgs);
         persistConversation(finalMsgs, memo, memoCount); // 落「最近」+ 云同步
         void compressIfNeeded(finalMsgs); // 后台压缩,不阻塞当前回合
+        // 追问已在本轮开头并行发起,这里不再重复调用。
       }
     } catch {
       // 已收到部分回答就保留它;一个字都没收到才报错。
@@ -620,6 +671,31 @@ function BehaviorContent() {
       }
     } finally {
       setLoading(false);
+    }
+  }
+
+  // 答完后台拉「追问建议」。失败静默;只有仍是最新一轮(seq 对得上)才采用。
+  async function fetchFollowups(msgs: Msg[], seq: number) {
+    try {
+      const res = await fetch("/api/followups", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // 省 token:只发最近一两轮(后端也只取最后 4 条),不带猫档案 / 摘要
+        body: JSON.stringify({ messages: msgs.slice(-4) }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        followups?: unknown;
+      };
+      if (seq !== reqSeqRef.current) return; // 用户已开新一轮,丢弃旧建议
+      if (res.ok && Array.isArray(data.followups)) {
+        setFollowups(
+          data.followups
+            .filter((x): x is string => typeof x === "string")
+            .slice(0, 3),
+        );
+      }
+    } catch {
+      // 静默:不显示追问,不影响主流程
     }
   }
 
@@ -719,6 +795,16 @@ function BehaviorContent() {
             {loading && messages[messages.length - 1]?.role === "user" && (
               <Thinking />
             )}
+            {!loading &&
+              !error &&
+              followups.length > 0 &&
+              messages[messages.length - 1]?.role === "assistant" && (
+                <FollowupChips
+                  items={followups}
+                  disabled={loading}
+                  onPick={send}
+                />
+              )}
             {error && <ErrorRow text={error} onRetry={retry} />}
             <div ref={endRef} />
           </div>
