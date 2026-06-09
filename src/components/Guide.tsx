@@ -41,14 +41,14 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <div className="mb-4 flex justify-center">
+    <div className="rounded-[34px] bg-surface px-6 py-7 shadow-[var(--shadow-card)]">
+      <div className="mb-3 flex justify-center">
         <GuideCat variant={variant} />
       </div>
       <span className="text-[11px] font-semibold tracking-[0.2em] text-accent">
         {badge}
       </span>
-      <h2 className="mt-2.5 font-serif text-[1.95rem] font-medium leading-[1.2] tracking-tight text-ink">
+      <h2 className="mt-2.5 font-serif text-[1.85rem] font-medium leading-[1.2] tracking-tight text-ink">
         {title}
       </h2>
       <div className="mt-3.5 text-[14.5px] leading-relaxed text-ink-soft">
@@ -103,72 +103,80 @@ export function Guide({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {/* 内容 */}
-        <div className="flex flex-1 flex-col justify-center">
-          {step === 0 && (
-            <Card variant={0} badge="嗨,新手铲屎官" title="猫猫不舒服?先别慌">
-              第一次养猫,一点点不对劲都会心里咯噔一下,太正常啦。
-              <br />
-              小猫怎么了陪你先看看:
-              <span className="font-medium text-ink">要不要马上找医生、能不能先在家守一守</span>。
-            </Card>
-          )}
+        {/* 内容 —— 包进白卡;内容超高时可滚动,正常时垂直居中 */}
+        <div className="flex flex-1 flex-col overflow-y-auto">
+          <div className="my-auto w-full py-2">
+            {step === 0 && (
+              <Card variant={0} badge="嗨,新手铲屎官" title="猫猫不舒服?先别慌">
+                第一次养猫,有点风吹草动就心慌,太正常了。
+                <br />
+                <br />
+                我陪你先分清:
+                <span className="font-medium text-ink">
+                  要不要马上看医生,还是能在家先守着
+                </span>
+                。
+              </Card>
+            )}
 
-          {step === 1 && (
-            <Card variant={1} badge="点一点就会用" title="先选一个最像的情况">
-              <ul className="flex flex-col gap-3">
-                <li>
-                  <span className="font-medium text-ink">① 猫猫哪里不对劲?</span>
-                  <br />
-                  选一个最像的情况,再答几个小问题:
-                  <span className="mx-1 inline-flex items-center gap-1 align-middle">
-                    {TIERS.map((c) => (
-                      <span
-                        key={c}
-                        className="size-2 rounded-full"
-                        style={{ background: c }}
-                      />
-                    ))}
-                  </span>
-                  <br />
-                  <span className="text-[13px]">
-                    红=快找医生 · 黄=尽快看看 · 绿=先守着观察
-                  </span>
-                </li>
-                <li>
-                  <span className="font-medium text-ink">② 还想问一句?</span>
-                  <br />
-                  直接打字告诉我,吃饭、喝水、尿尿、便便、小习惯都可以问。
-                </li>
-                <li>
-                  <span className="font-medium text-ink">③ 只是有点慌?</span>
-                  <br />
-                  可以翻翻安心知识,有些小状况看着吓人,其实先观察就好。
-                </li>
-              </ul>
-            </Card>
-          )}
+            {step === 1 && (
+              <Card variant={1} badge="点一点就会用" title="先选一个最像的情况">
+                <ul className="flex flex-col gap-3">
+                  <li>
+                    <span className="font-medium text-ink">① 选情况</span>
+                    <br />
+                    挑一个最像的,答几个小问题,给出
+                    <span className="mx-1 inline-flex items-center gap-1 align-middle">
+                      {TIERS.map((c) => (
+                        <span
+                          key={c}
+                          className="size-2 rounded-full"
+                          style={{ background: c }}
+                        />
+                      ))}
+                    </span>
+                    <br />
+                    <span className="text-[13px]">
+                      红=快就医 · 黄=尽快看 · 绿=先观察
+                    </span>
+                  </li>
+                  <li>
+                    <span className="font-medium text-ink">② 想多问</span>
+                    <br />
+                    直接打字,吃喝、尿便、小习惯都能聊。
+                  </li>
+                  <li>
+                    <span className="font-medium text-ink">③ 只是慌</span>
+                    <br />
+                    翻翻安心知识,有些状况看着吓人,其实先观察就好。
+                  </li>
+                </ul>
+              </Card>
+            )}
 
-          {step === 2 && (
-            <Card variant={2} badge="安心一点点" title="该急的时候会认真提醒">
-              小猫怎么了不是医生,但会照着医生会关心的小线索,陪你先把心放稳一点。
-              <br />
-              <br />
-              如果猫猫喘不上气、抽搐、流好多血、尿不出来、吃到百合或人药,它会很认真地提醒你
-              <span className="font-medium text-ink">赶紧联系动物医院</span>。
-              <br />
-              <br />
-              没那么急的时候,它会告诉你先盯吃喝、精神、尿尿这些小变化。
-            </Card>
-          )}
+            {step === 2 && (
+              <Card variant={2} badge="安心一点点" title="该急的时候会认真提醒">
+                我不是医生,但会照着医生在意的线索,陪你先把心放稳。
+                <br />
+                <br />
+                遇到
+                <span className="font-medium text-ink">
+                  喘不上气、抽搐、大出血、尿不出、误食
+                </span>
+                ,会很认真地让你
+                <span className="font-medium text-ink">赶紧去动物医院</span>;
+                没那么急时,就教你盯紧吃喝、精神和尿尿。
+              </Card>
+            )}
 
-          {step === 3 && (
-            <Card variant={3} badge="开始前" title="让它先认识你家猫猫">
-              猫猫几个月、几斤、公猫母猫、打过针没,都会影响提醒。
-              <br />
-              先简单填一下就好,以后可以慢慢补。想马上开始,也可以直接选情况。
-            </Card>
-          )}
+            {step === 3 && (
+              <Card variant={3} badge="开始前" title="让它先认识你家猫">
+                几个月、几斤、公猫母猫、打没打针,都会影响判断。
+                <br />
+                先简单填一下就好,以后慢慢补;想马上开始,直接选情况也行。
+              </Card>
+            )}
+          </div>
         </div>
 
         {/* 底部按钮 */}

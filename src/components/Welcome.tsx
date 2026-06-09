@@ -34,9 +34,16 @@ export function Welcome({ onUseTemplate }: { onUseTemplate: () => void }) {
       <p className="mt-4 text-center text-[15px] leading-relaxed text-ink-soft">
         猫不对劲时,帮你做可信判断 —— 别慌
       </p>
-      <p className="mt-2 text-center text-[12.5px] leading-relaxed tracking-wide text-ink-faint">
-        5 步分诊 · 红黄绿风险报告 · 带出处的护理建议
-      </p>
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        {["5 步分诊", "红黄绿报告", "带出处护理"].map((t) => (
+          <span
+            key={t}
+            className="rounded-full bg-surface px-3 py-1.5 text-[12px] font-medium tracking-wide text-ink-soft shadow-[var(--shadow-control)]"
+          >
+            {t}
+          </span>
+        ))}
+      </div>
 
       <div className="flex-1" />
 
@@ -52,10 +59,10 @@ export function Welcome({ onUseTemplate }: { onUseTemplate: () => void }) {
         onClick={onUseTemplate}
         className="mt-3 w-full rounded-[28px] bg-surface py-4 text-[15px] font-medium tracking-wide text-ink-soft shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
       >
-        使用系统默认模版
+        先用示例猫逛逛
       </button>
       <p className="mt-3 text-center text-[12px] leading-relaxed text-ink-faint">
-        会先给你一只空白小猫,随时能改成自己家猫的信息。
+        先放一只填好的示例猫「哈基米」,随时改成你家猫的信息。
       </p>
 
       <div className="mt-6">
