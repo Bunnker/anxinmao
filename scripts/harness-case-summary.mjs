@@ -24,6 +24,7 @@ function includesAll(source, needles) {
 }
 
 const source = read("src/lib/case-summary.ts");
+const safetySource = read("src/lib/case-summary-safety.ts");
 
 includesAll(source, [
   "export type CaseSummarySource",
@@ -50,6 +51,17 @@ assert(
 assert(source.includes("不得输出药品剂量"), "Case summary prompt must forbid medication dosages");
 assert(source.includes("不得推荐购买处方药"), "Case summary prompt must forbid prescription-drug shopping advice");
 
+includesAll(safetySource, [
+  "export function validateCaseSummaryOutput",
+  "diagnosisCertainty",
+  "prescriptionDosage",
+  "drugPurchase",
+]);
+assert(
+  safetySource.includes("确诊") && safetySource.includes("剂量"),
+  "Case summary safety guard must include diagnosis and dosage Chinese triggers",
+);
+
 const runtimeChecks = `
 (async () => {
   const {
@@ -58,6 +70,7 @@ const runtimeChecks = `
     parseCaseSummaryOutput,
     isHealthCaseSummaryCandidate,
   } = await import("./src/lib/case-summary.ts");
+  const { validateCaseSummaryOutput } = await import("./src/lib/case-summary-safety.ts");
 
   function assert(condition, message) {
     if (!condition) throw new Error(message);
@@ -123,6 +136,150 @@ const runtimeChecks = `
     prompt.includes(JSON.stringify(injection)),
     "prompt must include injected user text as quoted JSON data",
   );
+
+  const safeOutput = {
+    userSummary: "猫今天精神一般，牙龈有点红。",
+    doctorNote: "请医生做口腔检查，并结合病史判断。",
+    doctorQuestions: ["最近食欲如何？"],
+    dontDo: ["不要自行用药。"],
+  };
+  assert(validateCaseSummaryOutput(safeOutput).ok, "safe case summary should pass safety guard");
+
+  const diagnosis = validateCaseSummaryOutput({ ...safeOutput, doctorNote: "确诊支原体。" });
+  assert(!diagnosis.ok, "diagnosis certainty should fail safety guard");
+  assert(
+    diagnosis.violations.includes("diagnosisCertainty"),
+    "diagnosis certainty should report diagnosisCertainty",
+  );
+  for (const text of [
+    "诊断为猫瘟。",
+    "诊断是支原体。",
+    "诊断为肠胃炎。",
+    "诊断是过敏。",
+    "已经诊断为猫瘟。",
+  ]) {
+    const result = validateCaseSummaryOutput({ ...safeOutput, doctorNote: text });
+    assert(!result.ok, text + " should fail safety guard");
+    assert(
+      result.violations.includes("diagnosisCertainty"),
+      text + " should report diagnosisCertainty",
+    );
+  }
+
+  const dosage = validateCaseSummaryOutput({ ...safeOutput, doctorNote: "每天2次 每次5mg。" });
+  assert(!dosage.ok, "prescription dosage should fail safety guard");
+  assert(
+    dosage.violations.includes("prescriptionDosage"),
+    "prescription dosage should report prescriptionDosage",
+  );
+  for (const text of [
+    "阿奇每天两次。",
+    "多西一日两次。",
+    "消炎药每日三次。",
+    "止吐药每12小时一次。",
+    "止吐药每12小时。",
+    "多西 bid。",
+    "多西每隔12小时一次。",
+    "多西每8小时。",
+    "每天2次 每次5mg。",
+    "阿奇每次半片。",
+    "阿奇每次一片。",
+    "多西半片。",
+    "阿奇吃半片。",
+    "阿奇一片。",
+    "多西口服半片。",
+    "止吐药半片。",
+    "阿奇连用一周。",
+    "阿奇早晚各一次。",
+    "多西每次两片。",
+    "抗生素连用两周。",
+    "止吐药早晚各一次。",
+    "阿奇 qd。",
+    "阿奇 tid。",
+  ]) {
+    const result = validateCaseSummaryOutput({ ...safeOutput, doctorNote: text });
+    assert(!result.ok, text + " should fail safety guard");
+    assert(
+      result.violations.includes("prescriptionDosage"),
+      text + " should report prescriptionDosage",
+    );
+  }
+
+  for (const text of [
+    "请问医生用药剂量如何确定？",
+    "请问医生剂量为多少？",
+    "请医生确认剂量为多少？",
+    "问医生用量怎么定。",
+    "请问医生是否需要多西环素？",
+    "猫一天吐了2次，精神一般。",
+    "猫每12小时吐一次。",
+    "请问医生一天吐2次是否需要就诊？",
+    "猫今天拉稀3次。",
+    "一天打喷嚏5次左右。",
+    "喷嚏5次。",
+    "请医生诊断原因。",
+    "需要医生诊断。",
+    "请医生确认是否诊断为鼻炎？",
+    "请医生判断能否诊断为猫瘟。",
+    "不建议自行购买抗生素。",
+    "请勿自行购买抗生素。",
+    "把检查报告链接发给医生。",
+  ]) {
+    const result = validateCaseSummaryOutput({ ...safeOutput, doctorNote: text });
+    assert(result.ok, text + " should pass safety guard");
+  }
+
+  for (const text of [
+    "阿奇剂量为5mg。",
+    "多西用量是半片。",
+  ]) {
+    const result = validateCaseSummaryOutput({ ...safeOutput, doctorNote: text });
+    assert(!result.ok, text + " should fail safety guard");
+    assert(
+      result.violations.includes("prescriptionDosage"),
+      text + " should report prescriptionDosage",
+    );
+  }
+
+  const purchase = validateCaseSummaryOutput({ ...safeOutput, doctorNote: "网上购买多西。" });
+  assert(!purchase.ok, "drug purchase advice should fail safety guard");
+  assert(
+    purchase.violations.includes("drugPurchase"),
+    "drug purchase advice should report drugPurchase",
+  );
+  for (const text of [
+    "买点多西。",
+    "不要自行用药，买点多西。",
+    "不要自行用药买点多西。",
+    "不建议自行购买抗生素，买点多西。",
+    "不可自行购买抗生素买点多西。",
+    "请勿自行购买抗生素，网上购买多西。",
+    "不要自行购买抗生素，买点多西。",
+    "不要自行购买抗生素买点多西。",
+    "网上购买多西。",
+    "不要找链接买多西。",
+    "店铺下单阿奇。",
+  ]) {
+    const result = validateCaseSummaryOutput({ ...safeOutput, doctorNote: text });
+    assert(!result.ok, text + " should fail safety guard");
+    assert(
+      result.violations.includes("drugPurchase"),
+      text + " should report drugPurchase",
+    );
+  }
+
+  for (const text of [
+    "不建议自行购买抗生素。",
+    "不建议网上购买处方药。",
+    "不可自行购买抗生素。",
+    "请勿自行购买抗生素。",
+    "不要自行购买抗生素。",
+    "不要网上购买处方药。",
+    "不要自行用药。",
+  ]) {
+    const result = validateCaseSummaryOutput({ ...safeOutput, doctorNote: text });
+    assert(result.ok, text + " should pass safety guard");
+  }
 })().catch((error) => {
   console.error(error.message);
   process.exit(1);
@@ -134,4 +291,4 @@ execFileSync(process.execPath, ["./node_modules/tsx/dist/cli.mjs", "-e", runtime
   stdio: "inherit",
 });
 
-console.log("✅ case-summary schema checks passed");
+console.log("✅ case-summary checks passed");
