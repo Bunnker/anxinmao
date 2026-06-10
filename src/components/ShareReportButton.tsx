@@ -159,56 +159,105 @@ function drawCard(props: Props): HTMLCanvasElement {
 
 export function ShareReportButton(props: Props) {
   const [busy, setBusy] = useState(false);
+  // 兜底预览层:微信 / 部分手机浏览器既不支持系统分享也不支持下载,
+  // 把图渲染在页面里让用户长按保存 —— 任何 WebView 都走得通。
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   async function share() {
     if (busy) return;
     setBusy(true);
     try {
       const canvas = drawCard(props);
+      const dataUrl = canvas.toDataURL("image/png");
       const blob = await new Promise<Blob | null>((resolve) =>
         canvas.toBlob(resolve, "image/png"),
       );
-      if (!blob) return;
-      const file = new File([blob], "小猫怎么了-安心报告.png", {
-        type: "image/png",
-      });
-      // 1) 系统分享(手机:存图 / 发微信都在这一步)
-      if (
-        typeof navigator.canShare === "function" &&
-        navigator.canShare({ files: [file] })
-      ) {
-        try {
-          await navigator.share({ files: [file] });
-          return;
-        } catch (e) {
-          if ((e as Error)?.name === "AbortError") return; // 用户取消,不再弹下载
+
+      // 1) 系统分享(支持的手机上体验最好:存相册 / 发微信都在这一步)
+      if (blob) {
+        const file = new File([blob], "小猫怎么了-安心报告.png", {
+          type: "image/png",
+        });
+        if (
+          typeof navigator.canShare === "function" &&
+          navigator.canShare({ files: [file] })
+        ) {
+          try {
+            await navigator.share({ files: [file] });
+            return;
+          } catch (e) {
+            if ((e as Error)?.name === "AbortError") return; // 用户取消
+            // 其它失败(微信内核常见)→ 继续走兜底
+          }
         }
       }
-      // 2) 直接下载
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+      // 2) 触屏设备(微信 / 手机浏览器):下载不可靠,直接弹长按保存层
+      const isTouch =
+        typeof window !== "undefined" &&
+        ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+      if (isTouch) {
+        setPreviewUrl(dataUrl);
+        return;
+      }
+
+      // 3) 桌面:直接下载
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "小猫怎么了-安心报告.png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      } else {
+        setPreviewUrl(dataUrl); // toBlob 都失败时的最后兜底
+      }
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <button
-      type="button"
-      onClick={share}
-      disabled={busy}
-      className="mt-3 flex w-full items-center justify-between rounded-[28px] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)] disabled:opacity-60"
-    >
-      <span>{busy ? "正在生成图片…" : "保存报告图片 · 发给家人朋友"}</span>
-      <span className="text-ink-faint" aria-hidden="true">
-        ↓
-      </span>
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={share}
+        disabled={busy}
+        className="mt-3 flex w-full items-center justify-between rounded-[28px] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)] disabled:opacity-60"
+      >
+        <span>{busy ? "正在生成图片…" : "保存报告图片 · 发给家人朋友"}</span>
+        <span className="text-ink-faint" aria-hidden="true">
+          ↓
+        </span>
+      </button>
+
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-black/75 px-6"
+          role="dialog"
+          aria-modal="true"
+          aria-label="保存报告图片"
+        >
+          <p className="mb-3 text-[14px] font-medium text-white">
+            长按下面的图片,选「保存图片」
+          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={previewUrl}
+            alt="安心报告图片 —— 长按保存"
+            className="max-h-[70vh] w-auto max-w-full rounded-[16px] shadow-2xl"
+          />
+          <button
+            type="button"
+            onClick={() => setPreviewUrl(null)}
+            className="mt-4 rounded-full bg-white/15 px-6 py-2.5 text-[14px] font-medium text-white"
+          >
+            关闭
+          </button>
+        </div>
+      )}
+    </>
   );
 }

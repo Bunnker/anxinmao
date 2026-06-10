@@ -115,17 +115,17 @@ function displayValue(value: string | number | undefined, fallback = "未记录"
   return String(value);
 }
 
-// 保存档案时自动记一笔体重(同日覆盖;与上一条相同则不重复记;最多留 60 条)。
+// 保存档案时自动记一笔体重 —— 体重值有变化就追加(同一天改多次也各记一笔,
+// 当天就能看到曲线;之前的「同日覆盖」会让用户第一天永远凑不齐 2 条)。
+// 与上一条相同则不重复记;最多留 60 条。
 function withWeightLog(c: Cat): Cat {
   const today = new Date().toISOString().slice(0, 10);
   const prev = c.weightLog ?? [];
-  const rest = prev.filter((e) => e.date !== today);
-  const hadToday = rest.length !== prev.length;
-  const last = rest[rest.length - 1];
-  if (last?.kg === c.weight && !hadToday) return { ...c, weightLog: prev };
+  const last = prev[prev.length - 1];
+  if (last?.kg === c.weight) return { ...c, weightLog: prev };
   return {
     ...c,
-    weightLog: [...rest, { date: today, kg: c.weight }].slice(-60),
+    weightLog: [...prev, { date: today, kg: c.weight }].slice(-60),
   };
 }
 
@@ -288,36 +288,13 @@ function EditCard({
   );
 }
 
-// 相对时间 —— 足迹列表用。
-function daysAgoLabel(iso: string): string {
-  const t = new Date(iso).getTime();
-  if (Number.isNaN(t)) return "";
-  const d = Math.floor((Date.now() - t) / 86400000);
-  if (d <= 0) return "今天";
-  if (d === 1) return "昨天";
-  if (d < 30) return `${d} 天前`;
-  return `${Math.floor(d / 30)} 个月前`;
-}
-
 const TIER_VIS = {
   red: { color: "var(--red)", label: "红" },
   yellow: { color: "var(--amber)", label: "黄" },
   green: { color: "var(--green)", label: "绿" },
 } as const;
 
-// 记录 → 可点回的目标(与首页「最近」同规则):分诊回报告卡,问答回那次聊天。
-function recordHref(r: CatRecord): string | null {
-  if (r.kind === "triage") {
-    if (!r.symptomKey || !r.tier) return null;
-    const p = new URLSearchParams({ tier: r.tier, symptom: r.symptomKey });
-    if (r.claimIds && r.claimIds.length > 0) p.set("claims", r.claimIds.join(","));
-    return `/report?${p.toString()}`;
-  }
-  if (r.kind === "behavior") return `/behavior?c=${encodeURIComponent(r.id)}`;
-  return null;
-}
-
-// 健康足迹 —— 最近 30 天分诊/问答统计 + 红黄绿分布条 + 最近几条记录。
+// 健康足迹 —— 最近 30 天分诊/问答计数 + 红黄绿分布条。只统计,不列逐条记录。
 // 零记录时不消失,改为引导态 —— 55% 设备零记录,这里是把人引向分诊的关键位。
 function HealthFootprint({ records }: { records: CatRecord[] }) {
   if (records.length === 0) {
@@ -352,7 +329,6 @@ function HealthFootprint({ records }: { records: CatRecord[] }) {
   };
   for (const t of triage30) if (t.tier) tierN[t.tier] += 1;
   const totalTier = tierN.red + tierN.yellow + tierN.green;
-  const latest = records.slice(0, 3); // records 最近在前
 
   return (
     <section className="mt-4 rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
@@ -402,50 +378,6 @@ function HealthFootprint({ records }: { records: CatRecord[] }) {
         </>
       )}
 
-      <div className="mt-3 border-t border-[var(--line-soft)] pt-1">
-        {latest.map((r) => {
-          const href = recordHref(r);
-          const dot =
-            r.kind === "triage" && r.tier
-              ? TIER_VIS[r.tier].color
-              : "var(--ink-ghost)";
-          const cls =
-            "flex items-center gap-2.5 border-b border-[var(--line-soft)] py-2.5 last:border-b-0 last:pb-0";
-          const body = (
-            <>
-              <span
-                className="size-[7px] shrink-0 rounded-full"
-                style={{ background: dot }}
-              />
-              <span className="min-w-0 flex-1 truncate text-[13.5px] text-ink">
-                {r.summary}
-              </span>
-              {r.kind === "triage" &&
-                (r.outcome ? (
-                  <span className="shrink-0 rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[11px] text-ink-soft">
-                    {r.outcome}
-                  </span>
-                ) : (
-                  <span className="shrink-0 text-[11px] text-ink-faint">
-                    未跟进
-                  </span>
-                ))}
-              <span className="shrink-0 text-[11.5px] text-ink-faint">
-                {daysAgoLabel(r.date)}
-              </span>
-            </>
-          );
-          return href ? (
-            <Link key={r.id} href={href} className={cls}>
-              {body}
-            </Link>
-          ) : (
-            <div key={r.id} className={cls}>
-              {body}
-            </div>
-          );
-        })}
-      </div>
     </section>
   );
 }
@@ -727,10 +659,62 @@ export default function OnboardingPage() {
           </div>
         </section>
 
-        {/* 健康足迹 —— 病历优先:自动沉淀的内容排在手动档案之前 */}
-        <HealthFootprint
-          records={(store?.records ?? []).filter((r) => r.catId === draft.id)}
-        />
+        {/* 生活照 —— 紧跟身份卡,情感点缀前置 */}
+        <section
+          role="button"
+          tabIndex={0}
+          aria-label="管理生活照"
+          onClick={() => openEdit("edit-photos")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              openEdit("edit-photos");
+            }
+          }}
+          className="mt-4 cursor-pointer rounded-[28px] bg-surface p-4 shadow-[var(--shadow-card)] transition-transform duration-300 active:scale-[0.99]"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[14px] font-medium text-ink">生活照</p>
+              <p className="mt-1 text-[12px] text-ink-faint">
+                {photos.length ? `${photos.length}/${MAX_PROFILE_PHOTOS} 张` : "还没有上传"}
+              </p>
+            </div>
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="shrink-0 text-ink-ghost"
+              aria-hidden="true"
+            >
+              <path
+                d="M9 6l6 6-6 6"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+          {photos.length > 0 && (
+            <div className="mt-4 grid grid-cols-4 gap-2.5">
+              {photos.slice(0, 4).map((photo, index) => (
+                <div
+                  key={`${photo.slice(0, 32)}-${index}`}
+                  className="aspect-square overflow-hidden rounded-[22px] bg-[var(--surface-2)] shadow-[var(--shadow-control)]"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={photo}
+                    alt={`${draft.name}的生活照 ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* 基本信息 —— 品种 / 性别 / 毛发 / 绝育 / 到家 */}
         <GroupCard title="基本信息" onEdit={() => openEdit("edit-basic")}>
@@ -798,61 +782,10 @@ export default function OnboardingPage() {
           )}
         </GroupCard>
 
-        <section
-          role="button"
-          tabIndex={0}
-          aria-label="管理生活照"
-          onClick={() => openEdit("edit-photos")}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              openEdit("edit-photos");
-            }
-          }}
-          className="mt-5 cursor-pointer rounded-[28px] bg-surface p-4 shadow-[var(--shadow-card)] transition-transform duration-300 active:scale-[0.99]"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[14px] font-medium text-ink">生活照</p>
-              <p className="mt-1 text-[12px] text-ink-faint">
-                {photos.length ? `${photos.length}/${MAX_PROFILE_PHOTOS} 张` : "还没有上传"}
-              </p>
-            </div>
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="shrink-0 text-ink-ghost"
-              aria-hidden="true"
-            >
-              <path
-                d="M9 6l6 6-6 6"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          {photos.length > 0 && (
-            <div className="mt-4 grid grid-cols-4 gap-2.5">
-              {photos.slice(0, 4).map((photo, index) => (
-                <div
-                  key={`${photo.slice(0, 32)}-${index}`}
-                  className="aspect-square overflow-hidden rounded-[22px] bg-[var(--surface-2)] shadow-[var(--shadow-control)]"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={photo}
-                    alt={`${draft.name}的生活照 ${index + 1}`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        {/* 健康足迹 —— 红黄绿分布小结(只统计,不列逐条记录) */}
+        <HealthFootprint
+          records={(store?.records ?? []).filter((r) => r.catId === draft.id)}
+        />
 
         <Disclaimer />
       </main>
