@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import Link from "next/link";
-import { loadStore, saveStore, saveStoreLocal, seedTemplateStore } from "@/lib/storage";
+import {
+  loadStore,
+  saveStore,
+  saveStoreLocal,
+  seedTemplateStore,
+  updateRecordOutcome,
+} from "@/lib/storage";
 import { pullHistory } from "@/lib/history-sync";
 import { readPersisted, writePersisted } from "@/lib/persist";
 import { Disclaimer } from "@/components/Disclaimer";
@@ -105,6 +111,23 @@ const TIER_DOT: Record<string, string> = {
   yellow: "var(--amber)",
   green: "var(--green)",
 };
+
+// 分诊跟进 —— 找「最近一条 12 小时 ~ 7 天内、还没写跟进结果」的分诊记录。
+// 太快问没意义(刚分诊完),太久了不再追问。records 本身最近在前。
+const FOLLOWUP_MIN_AGE = 12 * 60 * 60 * 1000;
+const FOLLOWUP_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
+
+function findFollowupTarget(records: CatRecord[]): CatRecord | null {
+  const now = Date.now();
+  for (const r of records) {
+    if (r.kind !== "triage" || r.outcome || !r.tier) continue;
+    const t = new Date(r.date).getTime();
+    if (Number.isNaN(t)) continue;
+    const age = now - t;
+    if (age >= FOLLOWUP_MIN_AGE && age <= FOLLOWUP_MAX_AGE) return r;
+  }
+  return null;
+}
 
 // 记录 → 可点回的目标:
 // - 分诊 → 重开当时那张报告卡(确定性,只靠 tier/symptom/claims 重建)。
@@ -273,6 +296,43 @@ export default function HomePage() {
     });
   }
 
+  // 分诊跟进卡 —— 选中目标记录 + 点选后的回执文案(「还没好」带再分诊链接)。
+  const followupTarget = useMemo(() => findFollowupTarget(records), [records]);
+  const [followupNote, setFollowupNote] = useState<{
+    text: string;
+    href?: string;
+    label?: string;
+  } | null>(null);
+
+  function pickOutcome(
+    rec: CatRecord,
+    outcome: NonNullable<CatRecord["outcome"]>,
+  ) {
+    const next = updateRecordOutcome(rec.id, outcome);
+    if (next && cat) {
+      setStore(next);
+      setRecords(next.records.filter((r) => r.catId === cat.id));
+    }
+    if (outcome === "在家好转") {
+      setFollowupNote({ text: "太好了,记下啦 —— 有反复随时再来分诊。" });
+      setTimeout(() => setFollowupNote(null), 3200);
+    } else if (outcome === "已就医") {
+      setFollowupNote({ text: "记下啦。之后以医生的判断为准,祝早日康复。" });
+      setTimeout(() => setFollowupNote(null), 3200);
+    } else {
+      const urgent = rec.tier === "red" || rec.tier === "yellow";
+      setFollowupNote({
+        text: urgent
+          ? "还没好就别再等了 —— 建议尽快带它去医院,面诊为准。"
+          : "还没好的话,再走一次分诊,看看要不要升级处理。",
+        href: rec.symptomKey
+          ? `/triage?symptom=${rec.symptomKey}`
+          : "/symptoms",
+        label: "再分诊一次 →",
+      });
+    }
+  }
+
   // localStorage 仅客户端可读:首帧渲染空壳避免水合不一致。
   if (!loaded) return <main className="min-h-dvh" aria-hidden="true" />;
 
@@ -392,6 +452,70 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* 分诊跟进 —— 上次分诊 12h~7天内未跟进,问一句「后来怎么样了」 */}
+      {(followupNote || followupTarget) && (
+        <section className="mt-5 rounded-[24px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
+          {followupNote ? (
+            <>
+              <p className="text-[14px] leading-relaxed text-ink">
+                {followupNote.text}
+              </p>
+              {followupNote.href && (
+                <Link
+                  href={followupNote.href}
+                  className="mt-2 inline-block text-[13.5px] font-medium text-accent"
+                >
+                  {followupNote.label}
+                </Link>
+              )}
+            </>
+          ) : followupTarget ? (
+            <>
+              <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
+                跟进一下
+              </p>
+              <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink">
+                上次的「{followupTarget.summary}」,{cat.name}现在怎么样了?
+              </p>
+              <div className="mt-3 flex gap-2">
+                {(
+                  [
+                    ["好多了", "在家好转"],
+                    ["已就医", "已就医"],
+                    ["还没好", "未跟进"],
+                  ] as const
+                ).map(([label, oc]) => (
+                  <button
+                    key={oc}
+                    type="button"
+                    onClick={() => pickOutcome(followupTarget, oc)}
+                    className="flex-1 rounded-full bg-[var(--surface-2)] px-3 py-2.5 text-[13.5px] font-medium text-ink shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </section>
+      )}
+
+      {/* 第一步引导 —— 有档案但还没用过(0 条记录):落地后别让人不知道干嘛 */}
+      {records.length === 0 && (
+        <Link
+          href="/symptoms"
+          className="mt-5 block rounded-[24px] px-5 py-4 transition-transform active:scale-[0.985]"
+          style={{ background: "var(--accent-soft)" }}
+        >
+          <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
+            下一步 · 半分钟
+          </p>
+          <p className="mt-1.5 text-[14px] leading-relaxed text-ink">
+            拿{cat.name}试一次分诊:选个最像的情况、答几个小问题,看看红黄绿报告长什么样。现在没事,拿「打喷嚏」练手也行 →
+          </p>
+        </Link>
+      )}
 
       {/* 主次入口 */}
       <section className="mt-5 flex flex-col gap-3">

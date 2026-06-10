@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { TabBar } from "@/components/TabBar";
+import { SWRecovery } from "@/components/SWRecovery";
 
 export const metadata: Metadata = {
   title: "小猫怎么了 · 猫咪安心分诊器",
@@ -34,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className="h-full antialiased">
       <body className="min-h-full">
+        <SWRecovery />
         {children}
         <TabBar />
       </body>

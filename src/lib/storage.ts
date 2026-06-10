@@ -112,6 +112,25 @@ export function saveConversation(args: {
   saveStore({ ...store, records: [rec, ...others].slice(0, MAX_RECORDS) });
 }
 
+// 给一条记录写跟进结果(已就医 / 在家好转 / 未跟进)。
+// 返回更新后的 store(没找到记录则原样返回),方便调用方就地 setState。
+export function updateRecordOutcome(
+  recordId: string,
+  outcome: NonNullable<CatRecord["outcome"]>,
+): Store | null {
+  if (typeof window === "undefined") return null;
+  const store = loadStore();
+  if (!store) return null;
+  const next: Store = {
+    ...store,
+    records: store.records.map((r) =>
+      r.id === recordId ? { ...r, outcome } : r,
+    ),
+  };
+  saveStore(next);
+  return next;
+}
+
 // 演示猫 —— 仅开发期 / 用户主动「先看看 demo」时使用,不再自动塞给新用户。
 export const DEMO_CAT: Cat = {
   id: "demo-cat",
