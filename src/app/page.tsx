@@ -112,6 +112,39 @@ const TIER_DOT: Record<string, string> = {
   green: "var(--green)",
 };
 
+// 日常护理提醒 —— 只基于用户自己填的日期做保守提示,不替用户定周期。
+// 驱虫超 45 天 / 最后一针疫苗超 350 天才出现;没填就不打扰。
+function careReminders(cat: Cat): string[] {
+  const out: string[] = [];
+  const daysSince = (iso: string) => {
+    const t = new Date(iso).getTime();
+    if (Number.isNaN(t)) return -1;
+    return Math.floor((Date.now() - t) / 86400000);
+  };
+  if (cat.deworm) {
+    const d = daysSince(cat.deworm);
+    if (d > 45 && d < 3650) {
+      out.push(
+        `上次驱虫已 ${d} 天 —— 体内外驱虫一般 1-3 个月一次,可以安排啦`,
+      );
+    }
+  }
+  const lastVac = (cat.vaccines ?? [])
+    .map((v) => v.date)
+    .filter(Boolean)
+    .sort()
+    .at(-1);
+  if (lastVac) {
+    const d = daysSince(lastVac);
+    if (d > 350 && d < 3650) {
+      out.push(
+        `上次疫苗已满 ${Math.floor(d / 30)} 个月 —— 年度加强可以下次问问医生`,
+      );
+    }
+  }
+  return out;
+}
+
 // 分诊跟进 —— 找「最近一条 12 小时 ~ 7 天内、还没写跟进结果」的分诊记录。
 // 太快问没意义(刚分诊完),太久了不再追问。records 本身最近在前。
 const FOLLOWUP_MIN_AGE = 12 * 60 * 60 * 1000;
@@ -450,6 +483,21 @@ export default function HomePage() {
               <CameraIcon />
             </label>
           </div>
+
+          {/* 日常护理提醒 —— 基于用户自己填的驱虫/疫苗日期,保守提示 */}
+          {careReminders(cat).map((t) => (
+            <div
+              key={t}
+              className="relative mt-2.5 flex items-start gap-2 rounded-[18px] px-4 py-2.5"
+              style={{ background: "var(--accent-soft)" }}
+            >
+              <span
+                className="mt-[7px] size-1.5 shrink-0 rounded-full bg-accent"
+                aria-hidden="true"
+              />
+              <span className="text-[12.5px] leading-relaxed text-ink">{t}</span>
+            </div>
+          ))}
         </div>
       </section>
 

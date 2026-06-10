@@ -27,6 +27,9 @@ export interface Cat {
   avatar?: string;
   // 用户上传的生活照相册 base64 dataURL。仅用于本地画像展示,不参与分诊判断。
   photos?: string[];
+  // 体重记录 —— 在档案里保存体重时自动追加(同日覆盖,最多 60 条)。
+  // 体重变化是最普适的健康复访信号,曲线展示在「毛孩子」档案页。
+  weightLog?: { date: string; kg: number }[];
 }
 
 // 风险三色 —— 分诊的核心输出。

@@ -114,6 +114,73 @@ function displayValue(value: string | number | undefined, fallback = "未记录"
   return String(value);
 }
 
+// 保存档案时自动记一笔体重(同日覆盖;与上一条相同则不重复记;最多留 60 条)。
+function withWeightLog(c: Cat): Cat {
+  const today = new Date().toISOString().slice(0, 10);
+  const prev = c.weightLog ?? [];
+  const rest = prev.filter((e) => e.date !== today);
+  const hadToday = rest.length !== prev.length;
+  const last = rest[rest.length - 1];
+  if (last?.kg === c.weight && !hadToday) return { ...c, weightLog: prev };
+  return {
+    ...c,
+    weightLog: [...rest, { date: today, kg: c.weight }].slice(-60),
+  };
+}
+
+// 体重迷你折线 —— 无依赖手画 SVG,取最近 12 条。≥2 条才有曲线可言。
+function WeightSparkline({ log }: { log: { date: string; kg: number }[] }) {
+  const pts = log.slice(-12);
+  if (pts.length < 2) return null;
+  const w = 280;
+  const h = 56;
+  const pad = 8;
+  const kgs = pts.map((p) => p.kg);
+  const min = Math.min(...kgs);
+  const max = Math.max(...kgs);
+  const span = max - min || 1;
+  const x = (i: number) => pad + (i * (w - 2 * pad)) / (pts.length - 1);
+  const y = (kg: number) => h - pad - ((kg - min) * (h - 2 * pad)) / span;
+  const d = pts
+    .map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.kg).toFixed(1)}`)
+    .join(" ");
+  const lastPt = pts[pts.length - 1];
+  const delta = Number((lastPt.kg - pts[0].kg).toFixed(1));
+  return (
+    <div className="relative mt-3 rounded-[22px] bg-[var(--surface-2)] px-4 py-3">
+      <div className="flex items-baseline justify-between">
+        <span className="text-[11px] text-ink-faint">
+          体重记录 · {pts.length} 次
+        </span>
+        <span className="text-[12px] tabular-nums text-ink-soft">
+          {pts[0].kg} → {lastPt.kg} kg
+          {delta !== 0 && ` (${delta > 0 ? "+" : ""}${delta})`}
+        </span>
+      </div>
+      <svg
+        viewBox={`0 0 ${w} ${h}`}
+        className="mt-1 h-14 w-full"
+        aria-hidden="true"
+      >
+        <path
+          d={d}
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle
+          cx={x(pts.length - 1)}
+          cy={y(lastPt.kg)}
+          r="3.4"
+          fill="var(--accent)"
+        />
+      </svg>
+    </div>
+  );
+}
+
 /* ---------- 页面 ---------- */
 
 export default function OnboardingPage() {
@@ -279,13 +346,14 @@ export default function OnboardingPage() {
 
   function commit() {
     if (!ready || !draft) return;
+    const saved = withWeightLog(draft); // 顺手记一笔体重(同日覆盖,不重复)
     const next: Store =
       isEdit && store
         ? {
             ...store,
-            cats: store.cats.map((c) => (c.id === draft.id ? draft : c)),
+            cats: store.cats.map((c) => (c.id === saved.id ? saved : c)),
           }
-        : { cats: [draft], activeCatId: draft.id, records: [] };
+        : { cats: [saved], activeCatId: saved.id, records: [] };
     saveStore(next);
     router.push("/");
   }
@@ -375,6 +443,10 @@ export default function OnboardingPage() {
                 </div>
               ))}
             </div>
+
+            {(draft.weightLog?.length ?? 0) >= 2 && (
+              <WeightSparkline log={draft.weightLog!} />
+            )}
 
             {draft.notes && (
               <div className="relative mt-3 rounded-[22px] bg-[var(--accent-soft)] px-4 py-3">
