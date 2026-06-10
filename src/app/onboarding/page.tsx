@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { loadStore, saveStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
-import type { Cat, Store, Vaccine } from "@/types/cat";
+import type { Cat, CatRecord, Store, Vaccine } from "@/types/cat";
 
 function newCat(): Cat {
   const id =
@@ -181,6 +182,274 @@ function WeightSparkline({ log }: { log: { date: string; kg: number }[] }) {
   );
 }
 
+// 查看页的信息行 —— iOS 设置风格:左 label 右值。
+function InfoRow({
+  label,
+  value,
+  muted,
+}: {
+  label: string;
+  value: string;
+  muted?: boolean;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-[var(--line-soft)] py-2.5 last:border-b-0 last:pb-0">
+      <span className="shrink-0 text-[13px] text-ink-faint">{label}</span>
+      <span
+        className={
+          "min-w-0 text-right text-[14px] leading-relaxed " +
+          (muted ? "text-ink-faint" : "font-medium text-ink")
+        }
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
+
+// 查看页的分组卡 —— 标题 + 右上角「编辑」直达编辑表单对应分组。
+// 整卡即编辑入口(点卡直达编辑表单对应分组),行尾 › 提示可点 —— 不再放「编辑」按钮。
+function GroupCard({
+  title,
+  onEdit,
+  children,
+}: {
+  title: string;
+  onEdit: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      role="button"
+      tabIndex={0}
+      aria-label={`编辑${title}`}
+      onClick={onEdit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onEdit();
+        }
+      }}
+      className="mt-4 cursor-pointer rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)] transition-transform duration-300 active:scale-[0.99]"
+    >
+      <div className="mb-1.5 flex items-center justify-between">
+        <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
+          {title}
+        </p>
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          className="shrink-0 text-ink-ghost"
+          aria-hidden="true"
+        >
+          <path
+            d="M9 6l6 6-6 6"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+// 编辑表单的分组卡 —— 与查看页同组同名,scroll-mt 给直达滚动留出顶部空间。
+function EditCard({
+  id,
+  title,
+  hint,
+  children,
+}: {
+  id: string;
+  title: string;
+  hint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section
+      id={id}
+      className="scroll-mt-20 rounded-[28px] bg-surface px-5 py-5 shadow-[var(--shadow-card)]"
+    >
+      <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
+        {title}
+      </p>
+      {hint && (
+        <p className="mt-1 text-[11.5px] leading-relaxed text-ink-faint">
+          {hint}
+        </p>
+      )}
+      <div className="mt-4 flex flex-col gap-6">{children}</div>
+    </section>
+  );
+}
+
+// 相对时间 —— 足迹列表用。
+function daysAgoLabel(iso: string): string {
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return "";
+  const d = Math.floor((Date.now() - t) / 86400000);
+  if (d <= 0) return "今天";
+  if (d === 1) return "昨天";
+  if (d < 30) return `${d} 天前`;
+  return `${Math.floor(d / 30)} 个月前`;
+}
+
+const TIER_VIS = {
+  red: { color: "var(--red)", label: "红" },
+  yellow: { color: "var(--amber)", label: "黄" },
+  green: { color: "var(--green)", label: "绿" },
+} as const;
+
+// 记录 → 可点回的目标(与首页「最近」同规则):分诊回报告卡,问答回那次聊天。
+function recordHref(r: CatRecord): string | null {
+  if (r.kind === "triage") {
+    if (!r.symptomKey || !r.tier) return null;
+    const p = new URLSearchParams({ tier: r.tier, symptom: r.symptomKey });
+    if (r.claimIds && r.claimIds.length > 0) p.set("claims", r.claimIds.join(","));
+    return `/report?${p.toString()}`;
+  }
+  if (r.kind === "behavior") return `/behavior?c=${encodeURIComponent(r.id)}`;
+  return null;
+}
+
+// 健康足迹 —— 最近 30 天分诊/问答统计 + 红黄绿分布条 + 最近几条记录。
+// 零记录时不消失,改为引导态 —— 55% 设备零记录,这里是把人引向分诊的关键位。
+function HealthFootprint({ records }: { records: CatRecord[] }) {
+  if (records.length === 0) {
+    return (
+      <section className="mt-4 rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
+        <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
+          健康足迹
+        </p>
+        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft">
+          还没有分诊记录 —— 它不对劲时来分诊,这里会自动长出它的病历。
+        </p>
+        <Link
+          href="/symptoms"
+          className="mt-2 inline-block text-[13.5px] font-medium text-accent"
+        >
+          试试分诊 →
+        </Link>
+      </section>
+    );
+  }
+  const cutoff = Date.now() - 30 * 86400000;
+  const recent30 = records.filter((r) => {
+    const t = new Date(r.date).getTime();
+    return !Number.isNaN(t) && t >= cutoff;
+  });
+  const triage30 = recent30.filter((r) => r.kind === "triage");
+  const chat30 = recent30.filter((r) => r.kind === "behavior");
+  const tierN: Record<"red" | "yellow" | "green", number> = {
+    red: 0,
+    yellow: 0,
+    green: 0,
+  };
+  for (const t of triage30) if (t.tier) tierN[t.tier] += 1;
+  const totalTier = tierN.red + tierN.yellow + tierN.green;
+  const latest = records.slice(0, 3); // records 最近在前
+
+  return (
+    <section className="mt-4 rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
+      <div className="mb-1.5 flex items-center justify-between">
+        <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
+          健康足迹
+        </p>
+        <span className="text-[11px] text-ink-faint">最近 30 天</span>
+      </div>
+      <p className="text-[13px] text-ink-soft">
+        分诊 {triage30.length} 次 · 问答 {chat30.length} 次
+      </p>
+
+      {totalTier > 0 && (
+        <>
+          <div className="mt-2.5 flex h-2.5 overflow-hidden rounded-full bg-[var(--surface-2)]">
+            {(["red", "yellow", "green"] as const).map(
+              (k) =>
+                tierN[k] > 0 && (
+                  <span
+                    key={k}
+                    style={{
+                      width: `${(tierN[k] / totalTier) * 100}%`,
+                      background: TIER_VIS[k].color,
+                    }}
+                  />
+                ),
+            )}
+          </div>
+          <div className="mt-2 flex gap-4">
+            {(["red", "yellow", "green"] as const).map(
+              (k) =>
+                tierN[k] > 0 && (
+                  <span
+                    key={k}
+                    className="flex items-center gap-1.5 text-[12px] text-ink-soft"
+                  >
+                    <span
+                      className="size-2 rounded-full"
+                      style={{ background: TIER_VIS[k].color }}
+                    />
+                    {TIER_VIS[k].label} {tierN[k]}
+                  </span>
+                ),
+            )}
+          </div>
+        </>
+      )}
+
+      <div className="mt-3 border-t border-[var(--line-soft)] pt-1">
+        {latest.map((r) => {
+          const href = recordHref(r);
+          const dot =
+            r.kind === "triage" && r.tier
+              ? TIER_VIS[r.tier].color
+              : "var(--ink-ghost)";
+          const cls =
+            "flex items-center gap-2.5 border-b border-[var(--line-soft)] py-2.5 last:border-b-0 last:pb-0";
+          const body = (
+            <>
+              <span
+                className="size-[7px] shrink-0 rounded-full"
+                style={{ background: dot }}
+              />
+              <span className="min-w-0 flex-1 truncate text-[13.5px] text-ink">
+                {r.summary}
+              </span>
+              {r.kind === "triage" &&
+                (r.outcome ? (
+                  <span className="shrink-0 rounded-full bg-[var(--surface-2)] px-2 py-0.5 text-[11px] text-ink-soft">
+                    {r.outcome}
+                  </span>
+                ) : (
+                  <span className="shrink-0 text-[11px] text-ink-faint">
+                    未跟进
+                  </span>
+                ))}
+              <span className="shrink-0 text-[11.5px] text-ink-faint">
+                {daysAgoLabel(r.date)}
+              </span>
+            </>
+          );
+          return href ? (
+            <Link key={r.id} href={href} className={cls}>
+              {body}
+            </Link>
+          ) : (
+            <div key={r.id} className={cls}>
+              {body}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 /* ---------- 页面 ---------- */
 
 export default function OnboardingPage() {
@@ -198,6 +467,8 @@ export default function OnboardingPage() {
   const [avatarNotCat, setAvatarNotCat] = useState(false);
   // 头像设置弹窗 —— 上传真实头像 / AI 生成卡通,二合一
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  // 查看页各分组卡「编辑」直达 —— 记录要滚到的编辑表单分组 id。
+  const [editFocus, setEditFocus] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -221,7 +492,25 @@ export default function OnboardingPage() {
     };
   }, []);
 
+  // 进入编辑模式后,把指定分组滚进视野(查看页「编辑」直达)。
+  useEffect(() => {
+    if (!editing || !editFocus) return;
+    const t = setTimeout(() => {
+      document
+        .getElementById(editFocus)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      setEditFocus(null);
+    }, 80);
+    return () => clearTimeout(t);
+  }, [editing, editFocus]);
+
   if (!draft) return <main className="min-h-dvh" aria-hidden="true" />;
+
+  // 查看页分组卡的「编辑」入口:带锚进编辑模式;不带锚 = 从头改。
+  function openEdit(anchor?: string) {
+    setEditFocus(anchor ?? null);
+    setEditing(true);
+  }
 
   function set<K extends keyof Cat>(k: K, v: Cat[K]) {
     setDraft((d) => (d ? { ...d, [k]: v } : d));
@@ -410,6 +699,13 @@ export default function OnboardingPage() {
         <section className="pt-7">
           <div className="relative overflow-hidden rounded-[34px] bg-surface p-5 shadow-[var(--shadow-card)]">
             <div className="absolute -right-10 -top-12 size-36 rounded-full bg-[var(--accent-soft)]" />
+            <button
+              type="button"
+              onClick={() => openEdit()}
+              className="absolute right-4 top-4 z-10 rounded-full bg-[var(--surface-2)] px-3 py-1 text-[12px] font-medium text-accent shadow-[var(--shadow-control)]"
+            >
+              编辑
+            </button>
             <div className="relative flex items-start gap-4">
               <CatAvatar
                 avatar={draft.avatar}
@@ -428,36 +724,93 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="relative mt-5 grid grid-cols-2 gap-2.5">
-              {[
-                ["绝育", draft.neutered],
-                ["到家", displayValue(draft.homeDate)],
-                ["驱虫", displayValue(draft.deworm)],
-                ["疫苗", draft.vaccines.length ? `${draft.vaccines.length} 针` : "未记录"],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-[22px] bg-[var(--surface-2)] px-4 py-3">
-                  <span className="block text-[11px] text-ink-faint">{label}</span>
-                  <span className="mt-1 block text-[14px] font-semibold text-ink">
-                    {value}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {(draft.weightLog?.length ?? 0) >= 2 && (
-              <WeightSparkline log={draft.weightLog!} />
-            )}
-
-            {draft.notes && (
-              <div className="relative mt-3 rounded-[22px] bg-[var(--accent-soft)] px-4 py-3">
-                <span className="block text-[11px] text-ink-faint">备注</span>
-                <p className="mt-1 text-[13px] leading-relaxed text-ink">{draft.notes}</p>
-              </div>
-            )}
           </div>
         </section>
 
-        <section className="mt-5 rounded-[28px] bg-surface p-4 shadow-[var(--shadow-card)]">
+        {/* 健康足迹 —— 病历优先:自动沉淀的内容排在手动档案之前 */}
+        <HealthFootprint
+          records={(store?.records ?? []).filter((r) => r.catId === draft.id)}
+        />
+
+        {/* 基本信息 —— 品种 / 性别 / 毛发 / 绝育 / 到家 */}
+        <GroupCard title="基本信息" onEdit={() => openEdit("edit-basic")}>
+          <InfoRow
+            label="品种"
+            value={displayValue(draft.breed, "未填")}
+            muted={!draft.breed}
+          />
+          <InfoRow label="性别" value={draft.sex} />
+          <InfoRow
+            label="毛发"
+            value={displayValue(draft.coat, "未填")}
+            muted={!draft.coat}
+          />
+          <InfoRow label="绝育" value={draft.neutered} />
+          <InfoRow
+            label="到家日期"
+            value={displayValue(draft.homeDate)}
+            muted={!draft.homeDate}
+          />
+        </GroupCard>
+
+        {/* 健康记录 —— 疫苗 / 驱虫 / 体重曲线 */}
+        <GroupCard title="健康记录" onEdit={() => openEdit("edit-health")}>
+          <InfoRow
+            label="疫苗"
+            value={
+              draft.vaccines.length ? `${draft.vaccines.length} 针` : "未记录"
+            }
+            muted={draft.vaccines.length === 0}
+          />
+          <InfoRow
+            label="上次驱虫"
+            value={displayValue(draft.deworm)}
+            muted={!draft.deworm}
+          />
+          {(draft.weightLog?.length ?? 0) >= 2 ? (
+            <WeightSparkline log={draft.weightLog!} />
+          ) : (
+            <>
+              <InfoRow label="体重" value={`${draft.weight} kg`} />
+              <p className="pt-2 text-[11.5px] leading-relaxed text-ink-faint">
+                每次保存档案会自动记一笔体重 —— 记满 2 次,这里就会出现变化曲线。
+              </p>
+            </>
+          )}
+        </GroupCard>
+
+        {/* 健康背景 —— 慢性病 / 过敏 / 备注;全空时给一句引导 */}
+        <GroupCard title="健康背景" onEdit={() => openEdit("edit-background")}>
+          {draft.chronicConditions || draft.allergies || draft.notes ? (
+            <>
+              {draft.chronicConditions && (
+                <InfoRow label="慢性病史" value={draft.chronicConditions} />
+              )}
+              {draft.allergies && (
+                <InfoRow label="过敏史" value={draft.allergies} />
+              )}
+              {draft.notes && <InfoRow label="备注" value={draft.notes} />}
+            </>
+          ) : (
+            <p className="py-1 text-[13px] leading-relaxed text-ink-faint">
+              还没记录慢性病 / 过敏史 —— 填了之后,分诊和问答会替它考虑这些。
+            </p>
+          )}
+        </GroupCard>
+
+        <section
+          role="button"
+          tabIndex={0}
+          aria-label="管理生活照"
+          onClick={() => openEdit("edit-photos")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              openEdit("edit-photos");
+            }
+          }}
+          className="mt-5 cursor-pointer rounded-[28px] bg-surface p-4 shadow-[var(--shadow-card)] transition-transform duration-300 active:scale-[0.99]"
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[14px] font-medium text-ink">生活照</p>
@@ -465,13 +818,22 @@ export default function OnboardingPage() {
                 {photos.length ? `${photos.length}/${MAX_PROFILE_PHOTOS} 张` : "还没有上传"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-[12.5px] font-medium text-accent shadow-[var(--shadow-control)]"
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="shrink-0 text-ink-ghost"
+              aria-hidden="true"
             >
-              管理
-            </button>
+              <path
+                d="M9 6l6 6-6 6"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
           {photos.length > 0 && (
             <div className="mt-4 grid grid-cols-4 gap-2.5">
@@ -491,14 +853,6 @@ export default function OnboardingPage() {
             </div>
           )}
         </section>
-
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="mt-6 w-full rounded-[28px] bg-accent py-4 text-[16px] font-medium tracking-wide text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.985]"
-        >
-          修改档案
-        </button>
 
         <Disclaimer />
       </main>
@@ -563,8 +917,9 @@ export default function OnboardingPage() {
         </p>
       </section>
 
-      {/* 核心字段 */}
-      <div className="flex flex-col gap-7">
+      {/* 编辑表单 —— 三组卡片;查看页各卡「编辑」直达对应组(scroll 锚) */}
+      <div className="flex flex-col gap-4">
+        <EditCard id="edit-basic" title="基本信息">
         <Field label="叫它什么">
           <input
             value={draft.name}
@@ -637,6 +992,7 @@ export default function OnboardingPage() {
             onChange={(v) => set("neutered", v as Cat["neutered"])}
           />
         </Field>
+        </EditCard>
 
         {/* 头像 —— 上传真实照片 或 AI 生成卡通,二合一,点开走弹窗 */}
         <Field label="头像 · 可选">
@@ -670,6 +1026,7 @@ export default function OnboardingPage() {
         </Field>
 
         {/* 生活照相册 —— 独立于头像;仅「我的」橱窗展示,不参与分诊 */}
+        <div id="edit-photos" className="scroll-mt-20">
         <Field
           label="生活照相册 · 可选"
           hint={`${draft.photos?.length ?? 0}/${MAX_PROFILE_PHOTOS} 张`}
@@ -714,19 +1071,13 @@ export default function OnboardingPage() {
             生活照只在「我的」橱窗展示,不参与分诊判断。
           </p>
         </Field>
-      </div>
+        </div>
 
-      {/* 可后补分隔 */}
-      <div className="mb-5 mt-9 flex items-center gap-3">
-        <span className="h-px flex-1 bg-[var(--line)]" />
-        <span className="shrink-0 text-[11px] tracking-[0.08em] text-ink-faint">
-          下面这些 · 之后随时能补
-        </span>
-        <span className="h-px flex-1 bg-[var(--line)]" />
-      </div>
-
-      {/* 选填字段 */}
-      <div className="flex flex-col gap-7">
+        <EditCard
+          id="edit-health"
+          title="健康记录"
+          hint="之后随时能补 —— 记了之后,档案页会有体重曲线和驱虫提醒"
+        >
         <Field label="到家日期">
           <input
             type="date"
@@ -839,7 +1190,13 @@ export default function OnboardingPage() {
             常见药:体外驱虫用福来恩/赛诺菲 · 体内驱虫用拜宠清/倍脉心 · 每1-3个月一次
           </p>
         </Field>
+        </EditCard>
 
+        <EditCard
+          id="edit-background"
+          title="健康背景"
+          hint="慢性病 / 过敏填了之后,分诊和问答会替它考虑"
+        >
         <Field label="慢性病史 · 可选">
           <textarea
             value={draft.chronicConditions ?? ""}
@@ -869,6 +1226,7 @@ export default function OnboardingPage() {
             className="w-full resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
           />
         </Field>
+        </EditCard>
       </div>
 
       {/* CTA */}
