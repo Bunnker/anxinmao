@@ -3,18 +3,19 @@
 import { Suspense, useMemo, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { readPersisted } from "@/lib/persist";
 import { loadStore, STORAGE_KEY } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
 import { loadTriageHandoff, saveTriageHandoff } from "@/lib/triage-handoff";
 import { Disclaimer } from "@/components/Disclaimer";
 import { ReviewedNotice } from "@/components/ReviewedNotice";
 import { CatAvatar } from "@/components/CatAvatar";
+import { ShareReportButton } from "@/components/ShareReportButton";
 import type { RiskTier, Store } from "@/types/cat";
 
-// ⚠️ 未经兽医审核 ——
-//   报告文案、护理步骤、升级清单依据 docs/product/分诊证据-草稿-v0.2.md
-//   (经「检索 + 证据核查」的草稿),【尚未经执业兽医审核】,不可作为诊断依据。
-//   这里端口的是报告「机器」(分档结构、升级红线、地图深链),不是医学结论。
+// 报告文案、护理步骤、升级清单依据 docs/product/分诊证据-草稿-v0.2.md
+// 与 docs/medical 资料卡维护,并已按权威资料核对和执业兽医审阅。这里端口的是报告
+// 「机器」(分档结构、升级红线、地图深链),不是医学诊断。
 //
 // 文案按「症状组」分流(GROUP_OF)—— 每个有意义差异化的症状各成一组,
 // 共用文案只剩 general 一档,覆盖精神差 / 其它这两个真正泛化的入口:
@@ -1240,7 +1241,7 @@ function subscribeStore(onStoreChange: () => void): () => void {
 
 function getStoreSnapshot(): Store | null {
   if (typeof window === "undefined") return null;
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  const raw = readPersisted(STORAGE_KEY);
   if (raw === cachedStoreRaw) return cachedStore;
   cachedStoreRaw = raw;
   cachedStore = loadStore();
@@ -1400,7 +1401,7 @@ function ReportContent() {
         </a>
       )}
 
-      {/* 未经兽医审核 —— 产品诚实红线,紧跟分级结论,不可错过 */}
+      {/* 兽医审阅与不替代面诊提示,紧跟分级结论。 */}
       <ReviewedNotice className="mt-3" />
 
       <Link
@@ -1467,6 +1468,16 @@ function ReportContent() {
           ))}
         </ul>
       </div>
+
+      {/* 保存成图片 —— 发群里问朋友 / 给家人看;图上自带免责与域名 */}
+      <ShareReportButton
+        tier={shownTier}
+        badge={info.badge}
+        headline={info.headline}
+        lead={lead}
+        escalateTitle={info.escalateTitle}
+        escalateItems={info.escalateItems}
+      />
 
       <div className="flex-1" />
       <Disclaimer />
