@@ -8,6 +8,15 @@ node_modules
 .data
 npm-debug.log*
 *.md
+!docs/
+!docs/medical/
+!docs/medical/ai-cards/
+!docs/medical/ai-cards/*.md
+!docs/medical/source/
+!docs/medical/source/*.md
+!docs/care/
+!docs/care/ai-cards/
+!docs/care/ai-cards/*.md
 .DS_Store
 public/sw.js
 public/workbox-*.js

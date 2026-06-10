@@ -77,14 +77,6 @@ function userQuery(messages: ChatMessage[], fallback = ""): string {
 }
 
 export async function POST(req: Request): Promise<Response> {
-  const rl = checkAndConsume(getClientIp(req), "chat");
-  if (!rl.ok) {
-    return Response.json(
-      { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
-      { status: 429 },
-    );
-  }
-
   let body: unknown;
   try {
     body = await req.json();
@@ -105,6 +97,15 @@ export async function POST(req: Request): Promise<Response> {
     return Response.json(
       { error: "最后一条应该是用户补充的情况。" },
       { status: 400 },
+    );
+  }
+
+  // 限流放在请求格式校验后、资料召回/模型调用前,避免无效请求消耗额度。
+  const rl = checkAndConsume(getClientIp(req), "chat");
+  if (!rl.ok) {
+    return Response.json(
+      { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
+      { status: 429 },
     );
   }
 

@@ -1,8 +1,9 @@
 // 追问建议 API —— 根据当前问答,生成 2-3 个「用户可能想继续点的追问」。
 // 非流式、轻量;独立于主问答提示词(不污染医疗安全规则)。任何失败都安静降级:
-// 返回空数组,前端不显示追问,不影响主流程。也因此不单独限流(只在一次正常回答
-// 之后才会触发,主问答已经扣过 chat 额度)。
+// 返回空数组,前端不显示追问,不影响主流程。有效请求仍走 chat 限流,避免公开
+// LLM 接口被单独刷额度。
 import { chat, LLMError, parseHistory } from "@/lib/llm";
+import { checkAndConsume, getClientIp, rateLimitMessage } from "@/lib/ratelimit";
 
 const FOLLOWUP_SYSTEM = `你在给「养猫问答助手」生成「用户可能想继续点的追问」。
 下面是用户和助手的最近对话(有时助手还没开始回答用户的最新问题)。站在【用户(猫主人)】的角度,想出 2-3 个用户接下来最可能点的追问。
@@ -62,6 +63,18 @@ export async function POST(req: Request): Promise<Response> {
   const recent = messages.slice(-4);
   if (!recent.some((m) => m.role === "user")) {
     return Response.json({ followups: [] });
+  }
+
+  const rl = checkAndConsume(getClientIp(req), "chat");
+  if (!rl.ok) {
+    return Response.json(
+      {
+        followups: [],
+        error: rateLimitMessage(rl.kind, rl.scope),
+        code: "RATE_LIMITED",
+      },
+      { status: 429 },
+    );
   }
 
   const convo = recent

@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { catProfilePayload } from "@/lib/cat-profile-context";
+import { readPersisted } from "@/lib/persist";
 import { loadStore, saveConversation, STORAGE_KEY } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
 import { loadTriageHandoff } from "@/lib/triage-handoff";
@@ -455,7 +456,7 @@ function subscribeStore(onStoreChange: () => void): () => void {
 
 function getStoreSnapshot(): Store | null | undefined {
   if (typeof window === "undefined") return undefined;
-  const raw = window.localStorage.getItem(STORAGE_KEY);
+  const raw = readPersisted(STORAGE_KEY);
   if (raw === cachedStoreRaw) return cachedStore;
   cachedStoreRaw = raw;
   cachedStore = loadStore();

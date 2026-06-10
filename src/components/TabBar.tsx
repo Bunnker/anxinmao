@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { loadStore, STORAGE_KEY } from "@/lib/storage";
+import { loadStore } from "@/lib/storage";
 
 const TABS = [
   { href: "/", label: "首页", icon: "home" },
