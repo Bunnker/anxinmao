@@ -151,15 +151,14 @@ const FOLLOWUP_MIN_AGE = 12 * 60 * 60 * 1000;
 const FOLLOWUP_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
 function findFollowupTarget(records: CatRecord[]): CatRecord | null {
-  const now = Date.now();
-  for (const r of records) {
-    if (r.kind !== "triage" || r.outcome || !r.tier) continue;
-    const t = new Date(r.date).getTime();
-    if (Number.isNaN(t)) continue;
-    const age = now - t;
-    if (age >= FOLLOWUP_MIN_AGE && age <= FOLLOWUP_MAX_AGE) return r;
-  }
-  return null;
+  // 只看「最近一次」分诊 —— 答完一条就收,不连环追问更早的记录
+  // (用户反馈:有多条未跟进时,答一条、切页回来又问下一条,烦)。
+  const latest = records.find((r) => r.kind === "triage");
+  if (!latest || latest.outcome || !latest.tier) return null;
+  const t = new Date(latest.date).getTime();
+  if (Number.isNaN(t)) return null;
+  const age = Date.now() - t;
+  return age >= FOLLOWUP_MIN_AGE && age <= FOLLOWUP_MAX_AGE ? latest : null;
 }
 
 // 记录 → 可点回的目标:
