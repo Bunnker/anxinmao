@@ -371,12 +371,22 @@ const componentSource = read("src/components/CaseSummaryPanel.tsx");
 
 includesAll(componentSource, [
   "export function CaseSummaryPanel",
+  "caseSummaryErrorMessage",
   'fetch("/api/case-summary"',
   "navigator.clipboard.writeText",
   "copyText",
   "case_summary_opened",
   "case_summary_generated",
   "case_summary_copied",
+  "上面还是上一版内容",
 ]);
+assert(
+  !componentSource.includes("setError(message);"),
+  "CaseSummaryPanel must not set user-visible errors from an intermediate backend message",
+);
+assert(
+  !componentSource.includes("setError(body.error"),
+  "CaseSummaryPanel must not render backend raw error text",
+);
 
 console.log("✅ case-summary checks passed");

@@ -57,6 +57,32 @@ function isCaseSummaryOutput(value: unknown): value is CaseSummaryOutput {
   );
 }
 
+function caseSummaryErrorMessage(
+  status: number,
+  code: unknown,
+  hasPreviousSummary: boolean,
+) {
+  let message: string;
+
+  if (status === 400) {
+    message = "这段内容还不像健康/分诊问题，先从问诊或分诊里整理会更准。";
+  } else if (status === 429) {
+    message = "今天整理次数有点多，晚点再试。";
+  } else if (status === 503 || code === "no_provider") {
+    message = "病情说明服务暂时不可用，稍后再试。";
+  } else if (
+    status === 502 ||
+    code === "BAD_SUMMARY_JSON" ||
+    code === "SUMMARY_SAFETY_BLOCKED"
+  ) {
+    message = "这版整理不够稳，重新点一次试试。";
+  } else {
+    message = "病情说明生成失败，请稍后再试。";
+  }
+
+  return hasPreviousSummary ? `${message}上面还是上一版内容。` : message;
+}
+
 export function CaseSummaryPanel({
   source,
   label,
@@ -109,20 +135,19 @@ export function CaseSummaryPanel({
       });
       const body = (await response.json().catch(() => null)) as {
         summary?: unknown;
-        error?: unknown;
+        code?: unknown;
       } | null;
+      const hasPreviousSummary = regenerate && summary !== null;
 
       if (!response.ok) {
-        const message =
-          typeof body?.error === "string"
-            ? body.error
-            : "病情说明生成失败,请稍后再试。";
-        setError(message);
+        setError(
+          caseSummaryErrorMessage(response.status, body?.code, hasPreviousSummary),
+        );
         return;
       }
 
       if (!isCaseSummaryOutput(body?.summary)) {
-        setError("病情说明生成失败,请稍后再试。");
+        setError(caseSummaryErrorMessage(500, undefined, hasPreviousSummary));
         return;
       }
 
@@ -135,7 +160,12 @@ export function CaseSummaryPanel({
           body.summary.copyText.includes("不详"),
       });
     } catch {
-      setError("网络有点不稳定,请稍后再试。");
+      const hasPreviousSummary = regenerate && summary !== null;
+      setError(
+        hasPreviousSummary
+          ? "网络有点不稳定，请稍后再试。上面还是上一版内容。"
+          : "网络有点不稳定，请稍后再试。",
+      );
     } finally {
       setLoading(false);
     }
