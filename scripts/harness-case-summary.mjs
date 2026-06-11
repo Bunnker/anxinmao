@@ -110,6 +110,30 @@ const runtimeChecks = `
     );
     assert(isHealthCaseSummaryCandidate(input), question + " should be health candidate");
   }
+  const emptyReport = normalizeCaseSummaryBody(
+    { source: "report", cat: { name: "小橘" } },
+    region,
+  );
+  assert(
+    !isHealthCaseSummaryCandidate(emptyReport),
+    "empty report without health evidence should not be health candidate",
+  );
+  const dailyCareReport = normalizeCaseSummaryBody(
+    { source: "report", conversation: { question: "猫半夜跑酷怎么办" } },
+    region,
+  );
+  assert(
+    !isHealthCaseSummaryCandidate(dailyCareReport),
+    "daily-care report should not be health candidate",
+  );
+  const triageReport = normalizeCaseSummaryBody(
+    { source: "report", medical: { tier: "yellow", report: "黄档 · 打喷嚏" } },
+    region,
+  );
+  assert(
+    isHealthCaseSummaryCandidate(triageReport),
+    "triage report should be health candidate",
+  );
 
   const parsed = parseCaseSummaryOutput(JSON.stringify({
     userSummary: "猫今天牙龈红肿。",

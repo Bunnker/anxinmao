@@ -214,7 +214,6 @@ export function normalizeCaseSummaryBody(
 }
 
 export function isHealthCaseSummaryCandidate(input: CaseSummaryInput): boolean {
-  if (input.source === "report") return true;
   if (
     input.medical.symptom ||
     input.medical.symptomLabel ||
