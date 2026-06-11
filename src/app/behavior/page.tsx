@@ -17,6 +17,7 @@ import { readPersisted } from "@/lib/persist";
 import { loadStore, saveConversation, STORAGE_KEY } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
 import { loadTriageHandoff } from "@/lib/triage-handoff";
+import { CaseSummaryPanel } from "@/components/CaseSummaryPanel";
 import { Disclaimer } from "@/components/Disclaimer";
 import type { Cat, RiskTier, Store } from "@/types/cat";
 
@@ -486,6 +487,16 @@ function parseClaimIds(raw: string | null): string[] {
     .slice(0, 32);
 }
 
+function hasMedicalConversation(
+  messages: Msg[],
+  memo: string,
+  medicalContext: MedicalChatContext | null,
+): boolean {
+  if (medicalContext) return true;
+  const text = [memo, ...messages.map((m) => m.content)].join("\n");
+  return /打喷嚏|鼻涕|眼屎|流泪|咳嗽|呕吐|腹泻|拉稀|软便|便血|不吃|食欲|精神差|尿频|尿血|乱尿|排尿|耳朵|甩头|眼睛|皮肤|掉毛|牙龈|牙齿|口臭|流口水|跛|瘸|出血|误食|发烧|疼|痛|支原体|PCR|医院|医生|兽医/.test(text);
+}
+
 function medicalContextFromQuery(rawQuery: string): MedicalChatContext | undefined {
   const params = new URLSearchParams(rawQuery);
   const handoff = loadTriageHandoff(params.get("handoff"));
@@ -723,6 +734,30 @@ function BehaviorContent() {
   }
 
   const empty = messages.length === 0;
+  const showCaseSummary =
+    !empty &&
+    !loading &&
+    messages[messages.length - 1]?.role === "assistant" &&
+    hasMedicalConversation(messages, memo, medicalContext ?? null);
+  const caseSummaryPayload = {
+    cat: catProfilePayload(cat),
+    medical: medicalContext
+      ? {
+          symptom: medicalContext.symptom,
+          symptomLabel: medicalContext.symptom
+            ? SYMPTOM_LABELS[medicalContext.symptom] ?? medicalContext.symptom
+            : undefined,
+          tier: medicalContext.tier,
+          claimIds: medicalContext.claimIds,
+          report: medicalContext.report,
+          qa: medicalContext.qa,
+        }
+      : { claimIds: [] },
+    conversation: {
+      memo,
+      messages,
+    },
+  };
 
   if (store === undefined) return <main className="min-h-dvh" aria-hidden="true" />;
   if (!cat) return <main className="min-h-dvh" aria-hidden="true" />;
@@ -806,6 +841,17 @@ function BehaviorContent() {
                   onPick={send}
                 />
               )}
+            {showCaseSummary && (
+              <CaseSummaryPanel
+                source="chat"
+                label="总结现在情况"
+                payload={caseSummaryPayload}
+                tier={medicalContext?.tier}
+                symptom={medicalContext?.symptom}
+                hasCatProfile={Boolean(cat)}
+                hasTriageContext={Boolean(medicalContext)}
+              />
+            )}
             {error && <ErrorRow text={error} onRetry={retry} />}
             <div ref={endRef} />
           </div>

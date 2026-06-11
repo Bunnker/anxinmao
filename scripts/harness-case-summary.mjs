@@ -416,4 +416,15 @@ assert(
   "caseSummaryPayload must use the slim caseSummaryCat, not direct cat shorthand",
 );
 
+const behaviorPageSource = read("src/app/behavior/page.tsx");
+
+includesAll(behaviorPageSource, [
+  'import { CaseSummaryPanel } from "@/components/CaseSummaryPanel";',
+  "function hasMedicalConversation",
+  "showCaseSummary",
+  "总结现在情况",
+  "<CaseSummaryPanel",
+  "hasTriageContext={Boolean(medicalContext)}",
+]);
+
 console.log("✅ case-summary checks passed");
