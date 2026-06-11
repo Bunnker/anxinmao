@@ -312,6 +312,65 @@ const runtimeChecks = `
     const result = validateCaseSummaryOutput({ ...safeOutput, doctorNote: text });
     assert(result.ok, text + " should pass safety guard");
   }
+
+  const { mkdtempSync, readFileSync, rmSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+
+  const eventDir = mkdtempSync(join(tmpdir(), "case-summary-events-"));
+  process.env.CASE_SUMMARY_EVENT_DIR = eventDir;
+  try {
+    const { POST } = await import("./src/app/api/case-summary/events/route.ts");
+    const invalidResponse = await POST(
+      new Request("http://localhost/api/case-summary/events", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.10" },
+        body: JSON.stringify({
+          name: "case_summary_generated",
+          meta: {
+            source: "report: 用户原文",
+            tier: "red: 呼吸困难",
+            symptom: "猫两天不吃不喝，原始病情文本不应落盘",
+            hasCatProfile: true,
+            hasTriageContext: true,
+            contentLength: 123,
+            includesUnknown: false,
+          },
+        }),
+      }),
+    );
+    assert(invalidResponse.status === 200, "invalid metadata event should still save safely");
+
+    const validResponse = await POST(
+      new Request("http://localhost/api/case-summary/events", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.11" },
+        body: JSON.stringify({
+          name: "case_summary_from_report",
+          meta: {
+            source: "report",
+            tier: "yellow",
+            symptom: "vomit",
+          },
+        }),
+      }),
+    );
+    assert(validResponse.status === 200, "valid metadata event should save");
+
+    const lines = readFileSync(join(eventDir, "case-summary-events.jsonl"), "utf8")
+      .trim()
+      .split("\\n")
+      .map((line) => JSON.parse(line));
+    assert(lines.length === 2, "events route should append two log entries");
+    assert(lines[0].source === null, "invalid source must be saved as null");
+    assert(lines[0].tier === null, "invalid tier must be saved as null");
+    assert(lines[0].symptom === null, "free-text symptom must be saved as null");
+    assert(lines[1].source === "report", "allowed source must be preserved");
+    assert(lines[1].tier === "yellow", "allowed tier must be preserved");
+    assert(lines[1].symptom === "vomit", "allowed symptom key must be preserved");
+  } finally {
+    rmSync(eventDir, { recursive: true, force: true });
+  }
 })().catch((error) => {
   console.error(error.message);
   process.exit(1);
@@ -481,17 +540,45 @@ includesAll(eventsRouteSource, [
   "case_summary_opened",
   "case_summary_generated",
   "case_summary_copied",
+  "SYMPTOM_LABELS",
   "contentLength",
   "includesUnknown",
   "appendFile",
 ]);
+for (const forbiddenKey of [
+  "doctorNote",
+  "copyText",
+  "userSummary",
+  "messages",
+  "memo",
+  "report",
+  "qa",
+]) {
+  assert(
+    !new RegExp(`\\b${forbiddenKey}\\s*:`).test(eventsRouteSource),
+    `case-summary events route must not persist ${forbiddenKey}`,
+  );
+}
 assert(
-  !eventsRouteSource.includes("doctorNote"),
-  "case-summary events route must not persist doctorNote",
+  eventsRouteSource.includes("ALLOWED_SOURCES") &&
+    eventsRouteSource.includes('"report"') &&
+    eventsRouteSource.includes('"chat"'),
+  "case-summary events route must whitelist source values",
 );
 assert(
-  !eventsRouteSource.includes("copyText"),
-  "case-summary events route must not persist copyText",
+  eventsRouteSource.includes("ALLOWED_TIERS") &&
+    eventsRouteSource.includes('"red"') &&
+    eventsRouteSource.includes('"yellow"') &&
+    eventsRouteSource.includes('"green"'),
+  "case-summary events route must whitelist tier values",
+);
+assert(
+  eventsRouteSource.includes("Object.prototype.hasOwnProperty.call(SYMPTOM_LABELS"),
+  "case-summary events route must whitelist symptom keys with SYMPTOM_LABELS",
+);
+assert(
+  !/error:\s*`保存失败/.test(eventsRouteSource),
+  "case-summary events route must not return raw filesystem errors",
 );
 
 console.log("✅ case-summary checks passed");

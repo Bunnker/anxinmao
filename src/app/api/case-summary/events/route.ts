@@ -1,6 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { checkAndConsume, getClientIp, rateLimitMessage } from "@/lib/ratelimit";
+import { SYMPTOM_LABELS } from "@/lib/triage";
 
 export const runtime = "nodejs";
 
@@ -15,6 +16,8 @@ const ALLOWED_EVENTS = new Set([
   "case_summary_from_report",
   "case_summary_from_chat",
 ]);
+const ALLOWED_SOURCES = new Set(["report", "chat"]);
+const ALLOWED_TIERS = new Set(["red", "yellow", "green"]);
 
 type JsonRecord = Record<string, unknown>;
 
@@ -28,6 +31,19 @@ function text(raw: unknown, max = 80): string | null {
   if (typeof raw !== "string") return null;
   const value = raw.trim().slice(0, max);
   return value || null;
+}
+
+function oneOf(raw: unknown, allowed: Set<string>, max = 80): string | null {
+  const value = text(raw, max);
+  return value && allowed.has(value) ? value : null;
+}
+
+function symptomKey(raw: unknown): string | null {
+  const value = text(raw, 60);
+  return value &&
+    Object.prototype.hasOwnProperty.call(SYMPTOM_LABELS, value)
+    ? value
+    : null;
 }
 
 function bool(raw: unknown): boolean | null {
@@ -68,9 +84,9 @@ export async function POST(req: Request): Promise<Response> {
   const entry = {
     at: new Date().toISOString(),
     name,
-    source: text(meta.source, 20),
-    symptom: text(meta.symptom, 60),
-    tier: text(meta.tier, 20),
+    source: oneOf(meta.source, ALLOWED_SOURCES, 20),
+    symptom: symptomKey(meta.symptom),
+    tier: oneOf(meta.tier, ALLOWED_TIERS, 20),
     hasCatProfile: bool(meta.hasCatProfile),
     hasTriageContext: bool(meta.hasTriageContext),
     contentLength: num(meta.contentLength),
@@ -81,8 +97,8 @@ export async function POST(req: Request): Promise<Response> {
     await fs.mkdir(DATA_DIR, { recursive: true });
     await fs.appendFile(LOG_FILE, JSON.stringify(entry) + "\n", "utf8");
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return Response.json({ error: `保存失败 —— ${msg}` }, { status: 500 });
+    console.error("Failed to save case summary event", e);
+    return Response.json({ error: "保存失败。" }, { status: 500 });
   }
 
   return Response.json({ ok: true });
