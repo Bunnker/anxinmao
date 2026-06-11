@@ -12,6 +12,7 @@ import { ReviewedNotice } from "@/components/ReviewedNotice";
 import { CaseSummaryPanel } from "@/components/CaseSummaryPanel";
 import { CatAvatar } from "@/components/CatAvatar";
 import { ShareReportButton } from "@/components/ShareReportButton";
+import type { CaseSummaryCat } from "@/lib/case-summary";
 import type { RiskTier, Store } from "@/types/cat";
 
 // 报告文案、护理步骤、升级清单依据 docs/product/分诊证据-草稿-v0.2.md
@@ -1318,8 +1319,23 @@ function ReportContent() {
     .filter(Boolean)
     .join(" ")
     .slice(0, 300);
+  const caseSummaryCat = (cat
+    ? {
+        name: cat.name,
+        ageMonths: cat.ageMonths,
+        sex: cat.sex,
+        breed: cat.breed,
+        weight: cat.weight,
+        neutered: cat.neutered,
+        vaccines: cat.vaccines,
+        deworm: cat.deworm,
+        chronicConditions: cat.chronicConditions,
+        allergies: cat.allergies,
+        notes: cat.notes,
+      }
+    : { name: catName }) satisfies CaseSummaryCat;
   const caseSummaryPayload = {
-    cat,
+    cat: caseSummaryCat,
     medical: {
       symptom,
       symptomLabel,

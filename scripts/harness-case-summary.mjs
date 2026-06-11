@@ -394,10 +394,26 @@ const reportPageSource = read("src/app/report/page.tsx");
 includesAll(reportPageSource, [
   'import { CaseSummaryPanel } from "@/components/CaseSummaryPanel";',
   "const triageHandoff = useMemo",
+  "const caseSummaryCat =",
+  "cat: caseSummaryCat",
   "整理病情说明",
   "整理观察要点",
   "<CaseSummaryPanel",
   "hasTriageContext={true}",
 ]);
+assert(
+  !reportPageSource.includes("cat,\n    medical:"),
+  "report page must not send the whole cat object in the case-summary payload",
+);
+
+const reportPayloadStart = reportPageSource.indexOf("const caseSummaryPayload =");
+const reportPayloadEnd = reportPageSource.indexOf("const caseSummaryLabel =", reportPayloadStart);
+assert(reportPayloadStart !== -1, "Missing report page caseSummaryPayload");
+assert(reportPayloadEnd !== -1, "Missing report page caseSummaryLabel marker");
+const reportPayloadSource = reportPageSource.slice(reportPayloadStart, reportPayloadEnd);
+assert(
+  !/\{\s*cat,\s*medical:/s.test(reportPayloadSource),
+  "caseSummaryPayload must use the slim caseSummaryCat, not direct cat shorthand",
+);
 
 console.log("✅ case-summary checks passed");
