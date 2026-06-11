@@ -163,7 +163,25 @@ function findFollowupTarget(records: CatRecord[]): CatRecord | null {
 
 // 小猫陪伴提醒 —— 把分诊跟进 / 驱虫疫苗 / 新手引导统一成「猫在跟你说话」的气泡。
 // 一次只说一件事,优先级:跟进回执 > 分诊跟进 > 护理提醒 > 零记录引导;没事不出现。
-// 红线:头像/卡通形象在此仅作伴侣角色(允许位),不进任何医学示意。
+// 形象用产品吉祥物橘猫(public/guide/ 四表情),按场景换表情;点它会蹦一下说猫语。
+// 红线:卡通形象在此仅作伴侣角色(允许位),不进任何医学示意。
+type PetFace = "worry" | "curious" | "calm" | "happy";
+// -t 版:抠掉米色方底的透明小图(256px ~55KB),专供气泡场景贴在页面背景上。
+const PET_FACE_SRC: Record<PetFace, string> = {
+  worry: "/guide/cat-worry-t.png",
+  curious: "/guide/cat-curious-t.png",
+  calm: "/guide/cat-calm-t.png",
+  happy: "/guide/cat-happy-t.png",
+};
+const PET_TALK = [
+  "喵~",
+  "蹭蹭你!",
+  "摸到我啦,好痒!",
+  "我超乖的。",
+  "今天也要记得陪我玩呀。",
+  "呼噜呼噜……",
+];
+
 function PetNudge({
   cat,
   followupTarget,
@@ -174,11 +192,25 @@ function PetNudge({
 }: {
   cat: Cat;
   followupTarget: CatRecord | null;
-  followupNote: { text: string; href?: string; label?: string } | null;
+  followupNote: {
+    text: string;
+    href?: string;
+    label?: string;
+    face?: PetFace;
+  } | null;
   careList: string[];
   recordsEmpty: boolean;
   onPick: (rec: CatRecord, oc: NonNullable<CatRecord["outcome"]>) => void;
 }) {
+  // 摸猫彩蛋:蹦一下 + 临时说一句猫语(盖过当前气泡 2.6s)
+  const [talk, setTalk] = useState<string | null>(null);
+  const [bounceKey, setBounceKey] = useState(0);
+  function petTheCat() {
+    setTalk(PET_TALK[Math.floor(Math.random() * PET_TALK.length)]);
+    setBounceKey((k) => k + 1);
+    setTimeout(() => setTalk(null), 2600);
+  }
+
   const say = followupNote
     ? ({ kind: "note" } as const)
     : followupTarget
@@ -190,19 +222,64 @@ function PetNudge({
           : null;
   if (!say) return null;
 
+  // 表情随场景:询问跟进=好奇歪头 / 回执按结果 / 护理提醒=安心 / 引导=开心
+  const face: PetFace = talk
+    ? "happy"
+    : say.kind === "note"
+      ? (followupNote?.face ?? "happy")
+      : say.kind === "followup"
+        ? "curious"
+        : say.kind === "care"
+          ? "calm"
+          : "happy";
+
   const bubbleCls =
-    "min-w-0 flex-1 rounded-[22px] rounded-bl-md bg-surface px-4 py-3.5 shadow-[var(--shadow-card)]";
+    "pet-bubble min-w-0 flex-1 rounded-[22px] rounded-bl-md bg-surface px-4 py-3.5 shadow-[var(--shadow-card)]";
+
+  const catImg = (
+    <button
+      type="button"
+      onClick={petTheCat}
+      aria-label={`摸摸${cat.name}`}
+      className="pet-enter shrink-0 cursor-pointer select-none"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        key={bounceKey}
+        src={PET_FACE_SRC[face]}
+        alt=""
+        width={86}
+        height={86}
+        draggable={false}
+        className={
+          "h-[86px] w-[86px] object-contain drop-shadow-sm " +
+          (bounceKey > 0 ? "pet-bounce" : "")
+        }
+      />
+    </button>
+  );
+
+  // 摸猫时:猫语气泡盖过一切
+  if (talk) {
+    return (
+      <section
+        className="mt-5 flex items-end gap-2"
+        aria-label={`${cat.name}的提醒`}
+      >
+        {catImg}
+        <div className={bubbleCls}>
+          <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="mt-5 flex items-end gap-2.5" aria-label={`${cat.name}的提醒`}>
-      <div className="shrink-0 pb-0.5 motion-safe:animate-[pet-breath_4s_ease-in-out_infinite]">
-        <CatAvatar
-          avatar={cat.avatar}
-          name={cat.name}
-          size={54}
-          className="shadow-[var(--shadow-control)]"
-        />
-      </div>
+    <section
+      className="mt-5 flex items-end gap-2"
+      aria-label={`${cat.name}的提醒`}
+    >
+      {catImg}
 
       {say.kind === "starter" ? (
         <Link
@@ -446,6 +523,7 @@ export default function HomePage() {
     text: string;
     href?: string;
     label?: string;
+    face?: PetFace; // 回执时小猫的表情(开心 / 担心)
   } | null>(null);
 
   function pickOutcome(
@@ -458,10 +536,16 @@ export default function HomePage() {
       setRecords(next.records.filter((r) => r.catId === cat.id));
     }
     if (outcome === "在家好转") {
-      setFollowupNote({ text: "我好多啦!谢谢你记着 —— 有反复随时再带我来分诊。" });
+      setFollowupNote({
+        text: "我好多啦!谢谢你记着 —— 有反复随时再带我来分诊。",
+        face: "happy",
+      });
       setTimeout(() => setFollowupNote(null), 3200);
     } else if (outcome === "已就医") {
-      setFollowupNote({ text: "带我看过医生啦,记下了 —— 之后以医生的判断为准。" });
+      setFollowupNote({
+        text: "带我看过医生啦,记下了 —— 之后以医生的判断为准。",
+        face: "happy",
+      });
       setTimeout(() => setFollowupNote(null), 3200);
     } else {
       const urgent = rec.tier === "red" || rec.tier === "yellow";
@@ -473,6 +557,7 @@ export default function HomePage() {
           ? `/triage?symptom=${rec.symptomKey}`
           : "/symptoms",
         label: "再分诊一次 →",
+        face: urgent ? "worry" : "curious",
       });
     }
   }
