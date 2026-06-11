@@ -181,6 +181,15 @@ const PET_TALK = [
   "今天也要记得陪我玩呀。",
   "呼噜呼噜……",
 ];
+// 没事时的日常闲话 —— 猫常驻陪伴,每次进首页随机一句。
+const PET_IDLE = [
+  "我很好,放心~",
+  "今天也要记得给我换水哦。",
+  "天气不错,陪我晒晒太阳?",
+  "喵呜 —— 一切正常!",
+  "闲着也是闲着,摸摸我?",
+  "我蹲在这儿守着你。",
+];
 
 function PetNudge({
   cat,
@@ -205,12 +214,17 @@ function PetNudge({
   // 摸猫彩蛋:蹦一下 + 临时说一句猫语(盖过当前气泡 2.6s)
   const [talk, setTalk] = useState<string | null>(null);
   const [bounceKey, setBounceKey] = useState(0);
+  // 没事时的闲话 —— 惰性初始化,进页随机一句,渲染期间不闪变
+  const [idleLine] = useState(
+    () => PET_IDLE[Math.floor(Math.random() * PET_IDLE.length)],
+  );
   function petTheCat() {
     setTalk(PET_TALK[Math.floor(Math.random() * PET_TALK.length)]);
     setBounceKey((k) => k + 1);
     setTimeout(() => setTalk(null), 2600);
   }
 
+  // 猫常驻:有事说事,没事也蹲在这儿说句闲话(宠物不该有事才出现)
   const say = followupNote
     ? ({ kind: "note" } as const)
     : followupTarget
@@ -219,10 +233,9 @@ function PetNudge({
         ? ({ kind: "care" } as const)
         : recordsEmpty
           ? ({ kind: "starter" } as const)
-          : null;
-  if (!say) return null;
+          : ({ kind: "idle" } as const);
 
-  // 表情随场景:询问跟进=好奇歪头 / 回执按结果 / 护理提醒=安心 / 引导=开心
+  // 表情随场景:询问跟进=好奇歪头 / 回执按结果 / 护理提醒=安心 / 引导、闲着=开心
   const face: PetFace = talk
     ? "happy"
     : say.kind === "note"
@@ -343,6 +356,10 @@ function PetNudge({
                 </p>
               ))}
             </div>
+          )}
+
+          {say.kind === "idle" && (
+            <p className="text-[14px] leading-relaxed text-ink">{idleLine}</p>
           )}
         </div>
       )}
