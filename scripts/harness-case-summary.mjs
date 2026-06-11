@@ -299,4 +299,48 @@ execFileSync(process.execPath, ["./node_modules/tsx/dist/cli.mjs", "-e", runtime
   stdio: "inherit",
 });
 
+const routeSource = read("src/app/api/case-summary/route.ts");
+const routeHandlerSource = routeSource.slice(
+  routeSource.indexOf("export async function POST(req: Request)"),
+);
+
+includesAll(routeSource, [
+  "export async function POST(req: Request)",
+  "normalizeCaseSummaryBody",
+  "isHealthCaseSummaryCandidate",
+  "buildCaseSummaryPrompt",
+  "parseCaseSummaryOutput",
+  "renderCaseSummaryCopyText",
+  "validateCaseSummaryOutput",
+  'checkAndConsume(getClientIp(req), "chat")',
+  "dryRun === true",
+]);
+
+function assertBefore(source, first, second, message) {
+  const firstIndex = source.indexOf(first);
+  const secondIndex = source.indexOf(second);
+  assert(firstIndex !== -1, `Missing route marker: ${first}`);
+  assert(secondIndex !== -1, `Missing route marker: ${second}`);
+  assert(firstIndex < secondIndex, message);
+}
+
+assertBefore(
+  routeHandlerSource,
+  "normalizeCaseSummaryBody",
+  "isHealthCaseSummaryCandidate",
+  "normalizeCaseSummaryBody must run before isHealthCaseSummaryCandidate",
+);
+assertBefore(
+  routeHandlerSource,
+  "isHealthCaseSummaryCandidate",
+  'checkAndConsume(getClientIp(req), "chat")',
+  "case-summary rate limit must run after health gate",
+);
+assertBefore(
+  routeHandlerSource,
+  'checkAndConsume(getClientIp(req), "chat")',
+  "await chat(",
+  "case-summary model call must run after rate limit",
+);
+
 console.log("✅ case-summary checks passed");
