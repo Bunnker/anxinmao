@@ -125,7 +125,7 @@ function careReminders(cat: Cat): string[] {
     const d = daysSince(cat.deworm);
     if (d > 45 && d < 3650) {
       out.push(
-        `上次驱虫已 ${d} 天 —— 体内外驱虫一般 1-3 个月一次,可以安排啦`,
+        `我上次驱虫已经 ${d} 天啦 —— 体内外驱虫一般 1-3 个月一次,可以帮我安排了`,
       );
     }
   }
@@ -138,7 +138,7 @@ function careReminders(cat: Cat): string[] {
     const d = daysSince(lastVac);
     if (d > 350 && d < 3650) {
       out.push(
-        `上次疫苗已满 ${Math.floor(d / 30)} 个月 —— 年度加强可以下次问问医生`,
+        `我上次打疫苗满 ${Math.floor(d / 30)} 个月了 —— 年度加强可以下次问问医生`,
       );
     }
   }
@@ -159,6 +159,118 @@ function findFollowupTarget(records: CatRecord[]): CatRecord | null {
   if (Number.isNaN(t)) return null;
   const age = Date.now() - t;
   return age >= FOLLOWUP_MIN_AGE && age <= FOLLOWUP_MAX_AGE ? latest : null;
+}
+
+// 小猫陪伴提醒 —— 把分诊跟进 / 驱虫疫苗 / 新手引导统一成「猫在跟你说话」的气泡。
+// 一次只说一件事,优先级:跟进回执 > 分诊跟进 > 护理提醒 > 零记录引导;没事不出现。
+// 红线:头像/卡通形象在此仅作伴侣角色(允许位),不进任何医学示意。
+function PetNudge({
+  cat,
+  followupTarget,
+  followupNote,
+  careList,
+  recordsEmpty,
+  onPick,
+}: {
+  cat: Cat;
+  followupTarget: CatRecord | null;
+  followupNote: { text: string; href?: string; label?: string } | null;
+  careList: string[];
+  recordsEmpty: boolean;
+  onPick: (rec: CatRecord, oc: NonNullable<CatRecord["outcome"]>) => void;
+}) {
+  const say = followupNote
+    ? ({ kind: "note" } as const)
+    : followupTarget
+      ? ({ kind: "followup" } as const)
+      : careList.length > 0
+        ? ({ kind: "care" } as const)
+        : recordsEmpty
+          ? ({ kind: "starter" } as const)
+          : null;
+  if (!say) return null;
+
+  const bubbleCls =
+    "min-w-0 flex-1 rounded-[22px] rounded-bl-md bg-surface px-4 py-3.5 shadow-[var(--shadow-card)]";
+
+  return (
+    <section className="mt-5 flex items-end gap-2.5" aria-label={`${cat.name}的提醒`}>
+      <div className="shrink-0 pb-0.5 motion-safe:animate-[pet-breath_4s_ease-in-out_infinite]">
+        <CatAvatar
+          avatar={cat.avatar}
+          name={cat.name}
+          size={54}
+          className="shadow-[var(--shadow-control)]"
+        />
+      </div>
+
+      {say.kind === "starter" ? (
+        <Link
+          href="/symptoms"
+          className={bubbleCls + " block transition-transform active:scale-[0.985]"}
+        >
+          <p className="text-[14px] leading-relaxed text-ink">
+            带我去试一次分诊吧!选个最像的情况、答几个小问题,30
+            秒看到红黄绿报告。现在没事,拿「打喷嚏」练手也行 →
+          </p>
+        </Link>
+      ) : (
+        <div className={bubbleCls}>
+          {say.kind === "note" && followupNote && (
+            <>
+              <p className="text-[14px] leading-relaxed text-ink">
+                {followupNote.text}
+              </p>
+              {followupNote.href && (
+                <Link
+                  href={followupNote.href}
+                  className="mt-1.5 inline-block text-[13.5px] font-medium text-accent"
+                >
+                  {followupNote.label}
+                </Link>
+              )}
+            </>
+          )}
+
+          {say.kind === "followup" && followupTarget && (
+            <>
+              <p className="text-[14px] leading-relaxed text-ink">
+                上次「{followupTarget.summary}」之后,我看起来好点了吗?
+              </p>
+              <div className="mt-2.5 flex gap-2">
+                {(
+                  [
+                    ["好多了", "在家好转"],
+                    ["已就医", "已就医"],
+                    ["还没好", "未跟进"],
+                  ] as const
+                ).map(([label, oc]) => (
+                  <button
+                    key={oc}
+                    type="button"
+                    onClick={() => onPick(followupTarget, oc)}
+                    className="flex-1 rounded-full bg-[var(--surface-2)] px-2 py-2 text-[13px] font-medium text-ink shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {say.kind === "care" && (
+            <div className="flex flex-col gap-1.5">
+              {careList.slice(0, 2).map((t) => (
+                <p key={t} className="text-[13.5px] leading-relaxed text-ink">
+                  {t}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
 }
 
 // 记录 → 可点回的目标:
@@ -346,17 +458,17 @@ export default function HomePage() {
       setRecords(next.records.filter((r) => r.catId === cat.id));
     }
     if (outcome === "在家好转") {
-      setFollowupNote({ text: "太好了,记下啦 —— 有反复随时再来分诊。" });
+      setFollowupNote({ text: "我好多啦!谢谢你记着 —— 有反复随时再带我来分诊。" });
       setTimeout(() => setFollowupNote(null), 3200);
     } else if (outcome === "已就医") {
-      setFollowupNote({ text: "记下啦。之后以医生的判断为准,祝早日康复。" });
+      setFollowupNote({ text: "带我看过医生啦,记下了 —— 之后以医生的判断为准。" });
       setTimeout(() => setFollowupNote(null), 3200);
     } else {
       const urgent = rec.tier === "red" || rec.tier === "yellow";
       setFollowupNote({
         text: urgent
-          ? "还没好就别再等了 —— 建议尽快带它去医院,面诊为准。"
-          : "还没好的话,再走一次分诊,看看要不要升级处理。",
+          ? "我还没好就别再等了 —— 尽快带我去医院,面诊为准。"
+          : "还没好的话,再帮我分诊一次,看看要不要升级处理。",
         href: rec.symptomKey
           ? `/triage?symptom=${rec.symptomKey}`
           : "/symptoms",
@@ -483,86 +595,18 @@ export default function HomePage() {
             </label>
           </div>
 
-          {/* 日常护理提醒 —— 基于用户自己填的驱虫/疫苗日期,保守提示 */}
-          {careReminders(cat).map((t) => (
-            <div
-              key={t}
-              className="relative mt-2.5 flex items-start gap-2 rounded-[18px] px-4 py-2.5"
-              style={{ background: "var(--accent-soft)" }}
-            >
-              <span
-                className="mt-[7px] size-1.5 shrink-0 rounded-full bg-accent"
-                aria-hidden="true"
-              />
-              <span className="text-[12.5px] leading-relaxed text-ink">{t}</span>
-            </div>
-          ))}
         </div>
       </section>
 
-      {/* 分诊跟进 —— 上次分诊 12h~7天内未跟进,问一句「后来怎么样了」 */}
-      {(followupNote || followupTarget) && (
-        <section className="mt-5 rounded-[24px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
-          {followupNote ? (
-            <>
-              <p className="text-[14px] leading-relaxed text-ink">
-                {followupNote.text}
-              </p>
-              {followupNote.href && (
-                <Link
-                  href={followupNote.href}
-                  className="mt-2 inline-block text-[13.5px] font-medium text-accent"
-                >
-                  {followupNote.label}
-                </Link>
-              )}
-            </>
-          ) : followupTarget ? (
-            <>
-              <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
-                跟进一下
-              </p>
-              <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink">
-                上次的「{followupTarget.summary}」,{cat.name}现在怎么样了?
-              </p>
-              <div className="mt-3 flex gap-2">
-                {(
-                  [
-                    ["好多了", "在家好转"],
-                    ["已就医", "已就医"],
-                    ["还没好", "未跟进"],
-                  ] as const
-                ).map(([label, oc]) => (
-                  <button
-                    key={oc}
-                    type="button"
-                    onClick={() => pickOutcome(followupTarget, oc)}
-                    className="flex-1 rounded-full bg-[var(--surface-2)] px-3 py-2.5 text-[13.5px] font-medium text-ink shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : null}
-        </section>
-      )}
-
-      {/* 第一步引导 —— 有档案但还没用过(0 条记录):落地后别让人不知道干嘛 */}
-      {records.length === 0 && (
-        <Link
-          href="/symptoms"
-          className="mt-5 block rounded-[24px] px-5 py-4 transition-transform active:scale-[0.985]"
-          style={{ background: "var(--accent-soft)" }}
-        >
-          <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
-            下一步 · 半分钟
-          </p>
-          <p className="mt-1.5 text-[14px] leading-relaxed text-ink">
-            拿{cat.name}试一次分诊:选个最像的情况、答几个小问题,看看红黄绿报告长什么样。现在没事,拿「打喷嚏」练手也行 →
-          </p>
-        </Link>
-      )}
+      {/* 小猫陪伴提醒 —— 跟进 / 驱虫疫苗 / 新手引导,统一从它的气泡说出来 */}
+      <PetNudge
+        cat={cat}
+        followupTarget={followupTarget}
+        followupNote={followupNote}
+        careList={careReminders(cat)}
+        recordsEmpty={records.length === 0}
+        onPick={pickOutcome}
+      />
 
       {/* 主次入口 */}
       <section className="mt-5 flex flex-col gap-3">

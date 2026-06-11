@@ -139,3 +139,14 @@ button[class*="bg-surface"] {
   height: 0;
   display: none; /* WebKit:Chrome / Safari / 新 Edge */
 }
+
+/* 小猫陪伴提醒(PetNudge)—— 头像轻微呼吸感,克制的"它活着"信号 */
+@keyframes pet-breath {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
+}
