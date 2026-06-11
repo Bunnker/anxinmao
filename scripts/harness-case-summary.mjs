@@ -474,4 +474,24 @@ assert(
   "chat case summary payload must not send the full conversation messages array",
 );
 
+const eventsRouteSource = read("src/app/api/case-summary/events/route.ts");
+
+includesAll(eventsRouteSource, [
+  "case-summary-events.jsonl",
+  "case_summary_opened",
+  "case_summary_generated",
+  "case_summary_copied",
+  "contentLength",
+  "includesUnknown",
+  "appendFile",
+]);
+assert(
+  !eventsRouteSource.includes("doctorNote"),
+  "case-summary events route must not persist doctorNote",
+);
+assert(
+  !eventsRouteSource.includes("copyText"),
+  "case-summary events route must not persist copyText",
+);
+
 console.log("✅ case-summary checks passed");
