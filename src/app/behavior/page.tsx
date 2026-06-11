@@ -494,7 +494,7 @@ function hasMedicalConversation(
 ): boolean {
   if (medicalContext) return true;
   const text = [memo, ...messages.map((m) => m.content)].join("\n");
-  return /打喷嚏|鼻涕|眼屎|流泪|咳嗽|呕吐|腹泻|拉稀|软便|便血|不吃|食欲|精神差|尿频|尿血|乱尿|排尿|耳朵|甩头|眼睛|皮肤|掉毛|牙龈|牙齿|口臭|流口水|跛|瘸|出血|误食|发烧|疼|痛|支原体|PCR|医院|医生|兽医/.test(text);
+  return /呕吐|吐|腹泻|拉稀|软便|便血|黑便|不吃|食欲|精神差|嗜睡|尿频|尿血|尿少|尿不出|排尿|咳嗽|喷嚏|鼻涕|眼屎|流泪|眯眼|耳朵|甩头|挠耳|皮肤|掉毛|瘙痒|牙龈|牙齿|牙齿发黄|口臭|流口水|跛|瘸|出血|误食|中毒|百合|巧克力|葡萄|支原体|PCR|医生|兽医|医院|发烧|疼|痛|呼吸|喘|抽搐|昏迷/.test(text);
 }
 
 function medicalContextFromQuery(rawQuery: string): MedicalChatContext | undefined {
@@ -755,7 +755,7 @@ function BehaviorContent() {
       : { claimIds: [] },
     conversation: {
       memo,
-      messages,
+      messages: messages.slice(memoCount).slice(-12),
     },
   };
 

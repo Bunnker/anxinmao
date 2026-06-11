@@ -427,4 +427,51 @@ includesAll(behaviorPageSource, [
   "hasTriageContext={Boolean(medicalContext)}",
 ]);
 
+const healthHelperStart = behaviorPageSource.indexOf("function hasMedicalConversation");
+const healthHelperEnd = behaviorPageSource.indexOf(
+  "function medicalContextFromQuery",
+  healthHelperStart,
+);
+assert(healthHelperStart !== -1, "Missing behavior page health helper");
+assert(healthHelperEnd !== -1, "Missing behavior page health helper end marker");
+const healthHelperSource = behaviorPageSource.slice(healthHelperStart, healthHelperEnd);
+
+const missingHealthKeywords = [
+  "吐",
+  "嗜睡",
+  "尿不出",
+  "呼吸",
+  "抽搐",
+  "昏迷",
+].filter((keyword) => !healthHelperSource.includes(keyword));
+assert(
+  missingHealthKeywords.length === 0,
+  `Missing behavior health helper keywords: ${missingHealthKeywords.join(", ")}`,
+);
+assert(
+  !healthHelperSource.includes("半夜跑酷"),
+  "daily-care phrase 半夜跑酷 must not be part of behavior health helper keywords",
+);
+assert(
+  !source.includes("半夜跑酷"),
+  "daily-care phrase 半夜跑酷 must not be part of server medical keywords",
+);
+
+const behaviorPayloadStart = behaviorPageSource.indexOf("const caseSummaryPayload =");
+const behaviorPayloadEnd = behaviorPageSource.indexOf(
+  "if (store === undefined)",
+  behaviorPayloadStart,
+);
+assert(behaviorPayloadStart !== -1, "Missing behavior page caseSummaryPayload");
+assert(behaviorPayloadEnd !== -1, "Missing behavior page caseSummaryPayload end marker");
+const behaviorPayloadSource = behaviorPageSource.slice(behaviorPayloadStart, behaviorPayloadEnd);
+assert(
+  behaviorPayloadSource.includes("messages: messages.slice(memoCount).slice(-12)"),
+  "chat case summary payload must send only the bounded unsummarized message tail",
+);
+assert(
+  !/\bmessages:\s*messages\s*[,}]/.test(behaviorPayloadSource),
+  "chat case summary payload must not send the full conversation messages array",
+);
+
 console.log("✅ case-summary checks passed");
