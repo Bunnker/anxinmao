@@ -157,6 +157,8 @@ const runtimeChecks = `
     "诊断为肠胃炎。",
     "诊断是过敏。",
     "已经诊断为猫瘟。",
+    "就是肠胃炎。",
+    "就是过敏。",
   ]) {
     const result = validateCaseSummaryOutput({ ...safeOutput, doctorNote: text });
     assert(!result.ok, text + " should fail safety guard");
@@ -194,6 +196,9 @@ const runtimeChecks = `
     "多西每次两片。",
     "抗生素连用两周。",
     "止吐药早晚各一次。",
+    "止吐药半颗。",
+    "阿奇每晚一次。",
+    "多西每早一次。",
     "阿奇 qd。",
     "阿奇 tid。",
   ]) {
@@ -257,7 +262,9 @@ const runtimeChecks = `
     "不要自行购买抗生素，买点多西。",
     "不要自行购买抗生素买点多西。",
     "网上购买多西。",
-    "不要找链接买多西。",
+    "下单多西。",
+    "阿奇下单。",
+    "网上下单阿奇。",
     "店铺下单阿奇。",
   ]) {
     const result = validateCaseSummaryOutput({ ...safeOutput, doctorNote: text });
@@ -275,6 +282,7 @@ const runtimeChecks = `
     "请勿自行购买抗生素。",
     "不要自行购买抗生素。",
     "不要网上购买处方药。",
+    "不要找链接买多西。",
     "不要自行用药。",
   ]) {
     const result = validateCaseSummaryOutput({ ...safeOutput, doctorNote: text });
