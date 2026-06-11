@@ -389,4 +389,15 @@ assert(
   "CaseSummaryPanel must not render backend raw error text",
 );
 
+const reportPageSource = read("src/app/report/page.tsx");
+
+includesAll(reportPageSource, [
+  'import { CaseSummaryPanel } from "@/components/CaseSummaryPanel";',
+  "const triageHandoff = useMemo",
+  "整理病情说明",
+  "整理观察要点",
+  "<CaseSummaryPanel",
+  "hasTriageContext={true}",
+]);
+
 console.log("✅ case-summary checks passed");

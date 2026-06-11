@@ -9,6 +9,7 @@ import { SYMPTOM_LABELS } from "@/lib/triage";
 import { loadTriageHandoff, saveTriageHandoff } from "@/lib/triage-handoff";
 import { Disclaimer } from "@/components/Disclaimer";
 import { ReviewedNotice } from "@/components/ReviewedNotice";
+import { CaseSummaryPanel } from "@/components/CaseSummaryPanel";
 import { CatAvatar } from "@/components/CatAvatar";
 import { ShareReportButton } from "@/components/ShareReportButton";
 import type { RiskTier, Store } from "@/types/cat";
@@ -1294,6 +1295,7 @@ function ReportContent() {
     [claimIds, symptom, tier],
   );
   const handoffId = queryHandoffId || generatedHandoffId;
+  const triageHandoff = useMemo(() => loadTriageHandoff(handoffId), [handoffId]);
   const cat = store?.cats.find((c) => c.id === store.activeCatId) ?? store?.cats[0];
   const catName = cat?.name || "它";
   const catAvatar = cat?.avatar;
@@ -1316,6 +1318,22 @@ function ReportContent() {
     .filter(Boolean)
     .join(" ")
     .slice(0, 300);
+  const caseSummaryPayload = {
+    cat,
+    medical: {
+      symptom,
+      symptomLabel,
+      tier: shownTier,
+      claimIds,
+      report: reportSummary,
+      qa: triageHandoff?.qa,
+    },
+    conversation: {
+      messages: [],
+    },
+  };
+  const caseSummaryLabel =
+    shownTier === "green" ? "整理观察要点" : "整理病情说明";
   const askParams = new URLSearchParams({ tier: shownTier });
   if (symptom) askParams.set("symptom", symptom);
   if (claimIds.length > 0) askParams.set("claims", claimIds.join(","));
@@ -1403,6 +1421,16 @@ function ReportContent() {
 
       {/* 兽医审阅与不替代面诊提示,紧跟分级结论。 */}
       <ReviewedNotice className="mt-3" />
+
+      <CaseSummaryPanel
+        source="report"
+        label={caseSummaryLabel}
+        payload={caseSummaryPayload}
+        tier={shownTier}
+        symptom={symptom}
+        hasCatProfile={Boolean(cat)}
+        hasTriageContext={true}
+      />
 
       <Link
         href={askHref}
