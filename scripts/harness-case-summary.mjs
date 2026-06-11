@@ -367,4 +367,16 @@ assertBefore(
   "case-summary model call must run after rate limit",
 );
 
+const componentSource = read("src/components/CaseSummaryPanel.tsx");
+
+includesAll(componentSource, [
+  "export function CaseSummaryPanel",
+  'fetch("/api/case-summary"',
+  "navigator.clipboard.writeText",
+  "copyText",
+  "case_summary_opened",
+  "case_summary_generated",
+  "case_summary_copied",
+]);
+
 console.log("✅ case-summary checks passed");
