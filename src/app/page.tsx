@@ -235,14 +235,14 @@ function PetNudge({
           ? ({ kind: "starter" } as const)
           : ({ kind: "idle" } as const);
 
-  // 表情随场景:询问跟进=好奇歪头 / 回执按结果 / 护理提醒=安心 / 引导、闲着=开心
+  // 表情随场景:询问跟进=好奇歪头 / 回执按结果 / 护理提醒、闲着=安心(可眨眼)/ 引导=开心
   const face: PetFace = talk
     ? "happy"
     : say.kind === "note"
       ? (followupNote?.face ?? "happy")
       : say.kind === "followup"
         ? "curious"
-        : say.kind === "care"
+        : say.kind === "care" || say.kind === "idle"
           ? "calm"
           : "happy";
 
@@ -256,19 +256,36 @@ function PetNudge({
       aria-label={`摸摸${cat.name}`}
       className="pet-enter shrink-0 cursor-pointer select-none"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <span
         key={bounceKey}
-        src={PET_FACE_SRC[face]}
-        alt=""
-        width={86}
-        height={86}
-        draggable={false}
         className={
-          "h-[86px] w-[86px] object-contain drop-shadow-sm " +
+          "relative block h-[86px] w-[86px] " +
           (bounceKey > 0 ? "pet-bounce" : "")
         }
-      />
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={PET_FACE_SRC[face]}
+          alt=""
+          width={86}
+          height={86}
+          draggable={false}
+          className="h-[86px] w-[86px] object-contain drop-shadow-sm"
+        />
+        {/* 眨眼帧 —— 仅安心表情有闭眼素材,周期性闪现 0.15s */}
+        {face === "calm" && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            src="/guide/cat-calm-blink-t.png"
+            alt=""
+            width={86}
+            height={86}
+            draggable={false}
+            aria-hidden="true"
+            className="pet-blink-frame absolute inset-0 h-[86px] w-[86px] object-contain"
+          />
+        )}
+      </span>
     </button>
   );
 

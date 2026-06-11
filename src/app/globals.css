@@ -204,3 +204,25 @@ button[class*="bg-surface"] {
     animation: none;
   }
 }
+
+/* 眨眼:闭眼帧叠在睁眼图上,每 ~4.6s 闪现 0.15s;减弱动效时禁用 */
+@keyframes pet-blink {
+  0%,
+  94.9%,
+  100% {
+    opacity: 0;
+  }
+  95%,
+  98% {
+    opacity: 1;
+  }
+}
+.pet-blink-frame {
+  animation: pet-blink 4.6s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pet-blink-frame {
+    animation: none;
+    opacity: 0;
+  }
+}
