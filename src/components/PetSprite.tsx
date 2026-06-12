@@ -21,11 +21,14 @@ export type PetSpriteState =
   | "review"
   | "petted"
   | "groom"
-  | "nap";
+  | "nap"
+  | "stretch"
+  | "yawn"
+  | "arch";
 
 const SHEET_SRC = "/pet/spritesheet.webp";
 const SHEET_COLS = 8;
-const SHEET_ROWS = 12;
+const SHEET_ROWS = 15;
 const CELL_W = 192;
 const CELL_H = 208;
 // 格间透明间隙 —— 大图缩放时下/右边界会多采样邻格 1-2px,留出透明缝接住它,
@@ -78,6 +81,13 @@ const ROWS: Record<PetSpriteState, RowConfig> = {
   groom: { row: 10, durations: [400, 480, 520, 560, 520, 600], mode: "hold" },
   // 打盹:蜷成一团,只剩呼吸起伏的慢循环
   nap: { row: 11, durations: [550, 620, 680, 620, 660, 720], mode: "loop" },
+  // ── 起床动作(睡醒随机演一个,play once 后定格,页面再切回坐姿)──
+  // 伸懒腰(下犬式):前爪前伸、塌腰翘臀,慢悠悠舒展
+  stretch: { row: 12, durations: [320, 420, 540, 560, 460, 600], mode: "hold" },
+  // 打哈欠:困脸 → 大张嘴 → 闭嘴眨眼,峰值多停一拍
+  yawn: { row: 13, durations: [320, 360, 460, 540, 360, 460], mode: "hold" },
+  // 弓背:四脚站立拱背、尾巴翘起,再松回
+  arch: { row: 14, durations: [320, 400, 520, 540, 420, 520], mode: "hold" },
 };
 
 // idle 时偶发的自理小动作(下限/随机区间,毫秒)

@@ -242,10 +242,12 @@ function PetNudge({
   }
   const [yardW, setYardW] = useState(343);
   const [roam, setRoam] = useState<{
-    kind: "sit" | "stroll" | "groom" | "nap";
+    kind: "sit" | "stroll" | "groom" | "nap" | "wake";
     x: number;
     facing: "left" | "right";
     dur: number;
+    // wake 时演哪个起床动作(伸懒腰/打哈欠/弓背)
+    wake?: PetSpriteState;
   }>({ kind: "sit", x: 0, facing: "right", dur: 0 });
   // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
   const [calm, setCalm] = useState(false);
@@ -356,10 +358,19 @@ function PetNudge({
       );
     } else if (roam.kind === "groom") {
       t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "sit" })), 3600);
+    } else if (roam.kind === "wake") {
+      // 起床动作演一遍(~2.5-2.9s)后定格收尾,再坐回
+      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "sit" })), 3300);
     } else {
+      // 打盹 18-32s —— 睡够了随机演一个起床动作(伸懒腰/打哈欠/弓背)再坐起
       t = window.setTimeout(
-        () => setRoam((r) => ({ ...r, kind: "sit" })),
-        9000 + Math.random() * 6000,
+        () => {
+          const wake = (["stretch", "yawn", "arch"] as const)[
+            Math.floor(Math.random() * 3)
+          ];
+          setRoam((r) => ({ ...r, kind: "wake", wake, dur: 0 }));
+        },
+        18000 + Math.random() * 14000,
       );
     }
     return () => clearTimeout(t);
@@ -426,7 +437,9 @@ function PetNudge({
           ? "groom"
           : roam.kind === "nap"
             ? "nap"
-            : "idle";
+            : roam.kind === "wake"
+              ? (roam.wake ?? "stretch")
+              : "idle";
     // 说话时一定冒泡;闲话只在家位(左侧)说 —— 跑远了就安静过自己的小日子
     const showBubble =
       talk !== null || (roam.kind === "sit" && roam.x < 40);
