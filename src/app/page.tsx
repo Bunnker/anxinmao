@@ -184,20 +184,70 @@ const PET_TALK = [
 ];
 // 闲话已并入「思考泡」功能入口区;摸猫时才说猫语(PET_TALK)。
 
-// 院子地面层的小家具(z 在猫之下,猫走到前面自然遮挡)。
-// 物件 = 场景具象化第一批:窝(睡觉去处)/水碗/毛线球/纸箱。
-const YARD_ITEMS: Array<{
-  src: string;
-  alt: string;
-  style: { left?: number; right?: number; width: number; bottom: number };
-}> = [
-  { src: "/pet/items/bed.webp", alt: "猫窝", style: { left: 2, width: 98, bottom: 0 } },
-  { src: "/pet/items/bowl.webp", alt: "水碗", style: { left: 120, width: 44, bottom: 2 } },
-  { src: "/pet/items/yarn.webp", alt: "毛线球", style: { left: 202, width: 36, bottom: 2 } },
-  { src: "/pet/items/box.webp", alt: "纸箱", style: { right: 2, width: 82, bottom: 0 } },
-];
-// 猫(84px)蜷睡时与窝(left 2, w 98)对中的横位
-const BED_CAT_X = 9;
+// ── 2.5D 地板:院子有纵深(bottom 0~YARD_DEPTH 的深度带)──
+// 猫还用左右跑动画,走斜线时 y 同步变、越靠前越大(伪透视);
+// 猫与家具按 bottom 做画家算法排序,猫能绕到窝后面去。
+const YARD_DEPTH = 90;
+// 家具摆位:bottom = 深度(大=靠后);玩球/喝水动画自带道具,播放时隐藏地面同款
+const YARD_ITEMS = {
+  bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 2, bottom: 58, w: 88 },
+  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 262, bottom: 52, w: 74 },
+  bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 132, bottom: 26, w: 44 },
+  yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
+} as const;
+type ItemKey = keyof typeof YARD_ITEMS;
+type InteractKind = "nap" | "play" | "drink" | "box";
+// 猫去互动时的站位:猫(84px)中心对物件中心、同深度;
+// 钻箱往深处多坐 8px,让前壁遮住更多下半身(「在箱里」的关键)
+function itemAnchor(k: ItemKey): { x: number; y: number } {
+  const it = YARD_ITEMS[k];
+  return {
+    x: Math.round(it.left + it.w / 2 - 42),
+    y: it.bottom + (k === "box" ? 8 : 0),
+  };
+}
+const INTERACT_ITEM: Record<InteractKind, ItemKey> = {
+  nap: "bed",
+  play: "yarn",
+  drink: "bowl",
+  box: "box",
+};
+// 深度 → 层级 / 透视缩放(越靠前 z 越大、猫越大)
+const zOf = (bottom: number) => 100 - Math.round(bottom);
+const scaleOf = (y: number) => 0.92 + ((YARD_DEPTH - y) / YARD_DEPTH) * 0.14;
+// 走过去再做事:距离近直接做,远了先散步(then 接续)
+function walkTo(
+  r: { x: number; y: number; facing: "left" | "right" },
+  a: { x: number; y: number },
+  then: InteractKind,
+) {
+  const dx = a.x - r.x;
+  const dist = Math.hypot(dx, a.y - r.y);
+  if (dist <= 24)
+    return { kind: then, x: a.x, y: a.y, facing: r.facing, dur: 0 } as const;
+  return {
+    kind: "stroll" as const,
+    x: a.x,
+    y: a.y,
+    facing: dx >= 0 ? ("right" as const) : ("left" as const),
+    dur: Math.round(dist / 0.035),
+    then,
+  };
+}
+// 互动完成后的猫语正反馈(Finch 式:行为 → 可爱回报)
+const INTERACT_TALK: Record<InteractKind, string[]> = {
+  play: ["毛线球最好玩了!", "再来一回合!", "看我猫猫拳!"],
+  drink: ["咕咚咕咚……舒服~", "水很新鲜,谢谢铲屎官!"],
+  box: ["这个箱子,本喵承包了。", "箱子里好有安全感……"],
+  nap: [],
+};
+// 物件 → 点击它触发的互动
+const TARGET_OF: Record<ItemKey, InteractKind> = {
+  bed: "nap",
+  yarn: "play",
+  bowl: "drink",
+  box: "box",
+};
 
 function PetNudge({
   cat,
@@ -232,28 +282,44 @@ function PetNudge({
   // x 是猫在院子里的横向位置,散步用 CSS transition 匀速走过去。
   const yardRef = useRef<HTMLElement | null>(null);
   const catRef = useRef<HTMLDivElement | null>(null);
-  // 读猫当前实际横位(散步动画进行中是 transform 矩阵里的 tx)
-  function readCatX(fallback: number): number {
+  // 读猫当前实际位置(散步动画进行中从 transform 矩阵取;
+  // translate 后接 scale,平移分量不受 scale 影响:m41 = x, m42 = -y)
+  function readCatXY(fallback: { x: number; y: number }): {
+    x: number;
+    y: number;
+  } {
     const el = catRef.current;
     if (!el) return fallback;
     const t = getComputedStyle(el).transform;
     if (!t || t === "none") return fallback;
     const m = t.match(/matrix\(([^)]+)\)/);
     if (!m) return fallback;
-    const tx = parseFloat(m[1].split(",")[4]);
-    return Number.isFinite(tx) ? tx : fallback;
+    const p = m[1].split(",").map(parseFloat);
+    return Number.isFinite(p[4]) && Number.isFinite(p[5])
+      ? { x: p[4], y: -p[5] }
+      : fallback;
   }
   const [yardW, setYardW] = useState(343);
   const [roam, setRoam] = useState<{
-    kind: "sit" | "stroll" | "groom" | "nap" | "wake";
+    kind:
+      | "sit"
+      | "stroll"
+      | "groom"
+      | "nap"
+      | "wake"
+      | "play"
+      | "drink"
+      | "box";
     x: number;
+    // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
+    y: number;
     facing: "left" | "right";
     dur: number;
     // wake 时演哪个起床动作(伸懒腰/打哈欠/弓背)
     wake?: PetSpriteState;
-    // 散步到达后的下一步(如:走到窝边再蜷睡)
-    then?: "nap";
-  }>({ kind: "sit", x: 0, facing: "right", dur: 0 });
+    // 散步到达后的下一步(走到窝边再蜷睡 / 走到球边再玩……)
+    then?: InteractKind;
+  }>({ kind: "sit", x: 4, y: 58, facing: "right", dur: 0 });
   // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
   const [calm, setCalm] = useState(false);
 
@@ -269,16 +335,17 @@ function PetNudge({
     const apply = () => {
       setCalm(mq.matches || document.hidden);
       if (document.hidden) {
-        setRoam((r) =>
-          r.kind === "stroll"
-            ? {
-                kind: "sit",
-                x: Math.round(readCatX(r.x)),
-                facing: r.facing,
-                dur: 0,
-              }
-            : r,
-        );
+        setRoam((r) => {
+          if (r.kind !== "stroll") return r;
+          const cur = readCatXY({ x: r.x, y: r.y });
+          return {
+            kind: "sit",
+            x: Math.round(cur.x),
+            y: Math.round(cur.y),
+            facing: r.facing,
+            dur: 0,
+          };
+        });
       }
     };
     apply();
@@ -290,18 +357,47 @@ function PetNudge({
     };
   }, []);
 
+  // 互动完成后说一句猫语(复用 talk 泡;不触发摸猫动作重播)
+  function sayLine(k: InteractKind) {
+    const lines = INTERACT_TALK[k];
+    if (!lines.length) return;
+    setTalk(lines[Math.floor(Math.random() * lines.length)]);
+    if (talkTimer.current) clearTimeout(talkTimer.current);
+    talkTimer.current = window.setTimeout(() => {
+      setTalk(null);
+      setTouch(null);
+    }, 3800);
+  }
+
+  // 点家具:让猫走过去互动(说话/被摸中不接单)
+  function goInteract(target: InteractKind) {
+    if (talk) return;
+    setRoam((r) => {
+      const cur =
+        r.kind === "stroll"
+          ? readCatXY({ x: r.x, y: r.y })
+          : { x: r.x, y: r.y };
+      return walkTo(
+        { x: Math.round(cur.x), y: Math.round(cur.y), facing: r.facing },
+        itemAnchor(INTERACT_ITEM[target]),
+        target,
+      );
+    });
+  }
+
   function petTheCat() {
     // 散步途中被摸:就地停下再回应
-    setRoam((r) =>
-      r.kind === "stroll"
-        ? {
-            kind: "sit",
-            x: Math.round(readCatX(r.x)),
-            facing: r.facing,
-            dur: 0,
-          }
-        : { ...r, kind: "sit", dur: 0 },
-    );
+    setRoam((r) => {
+      if (r.kind !== "stroll") return { ...r, kind: "sit", dur: 0 };
+      const cur = readCatXY({ x: r.x, y: r.y });
+      return {
+        kind: "sit",
+        x: Math.round(cur.x),
+        y: Math.round(cur.y),
+        facing: r.facing,
+        dur: 0,
+      };
+    });
     setTalk(PET_TALK[Math.floor(Math.random() * PET_TALK.length)]);
     setTouch((t) => ({
       action: Math.random() < 0.6 ? "petted" : "groom",
@@ -339,36 +435,44 @@ function PetNudge({
           const w = yardRef.current?.offsetWidth ?? yardW;
           const maxX = Math.max(0, w - 84);
           const roll = Math.random();
-          if (roll < 0.5 && maxX > 120) {
-            const target = Math.round(Math.random() * maxX);
-            const dx = target - roam.x;
-            if (Math.abs(dx) >= 60) {
+          // 35% 散步 / 15% 洗脸 / 20% 回窝睡 / 10% 玩球 / 10% 喝水 / 10% 钻箱
+          if (roll < 0.35 && maxX > 120) {
+            const tx = Math.round(Math.random() * maxX);
+            const dxAbs = Math.abs(tx - roam.x);
+            // 斜率约束:横向分量必须主导 —— 侧面猫做纯纵向移动会穿帮
+            const maxDy = Math.max(8, Math.round(dxAbs / 2));
+            const ty = Math.max(
+              0,
+              Math.min(
+                YARD_DEPTH,
+                roam.y + Math.round((Math.random() * 2 - 1) * maxDy),
+              ),
+            );
+            const dist = Math.hypot(tx - roam.x, ty - roam.y);
+            if (dist >= 60) {
               setRoam({
                 kind: "stroll",
-                x: target,
-                facing: dx > 0 ? "right" : "left",
-                dur: Math.round(Math.abs(dx) / 0.035),
+                x: tx,
+                y: ty,
+                facing: tx - roam.x > 0 ? "right" : "left",
+                dur: Math.round(dist / 0.035),
               });
               return;
             }
           }
-          if (roll < 0.75) {
+          if (roll < 0.5) {
             setRoam((r) => ({ ...r, kind: "groom", dur: 0 }));
             return;
           }
-          // 睡觉回窝:不在窝边就先走过去,到了再蜷(蜷睡帧正好叠在窝上)
-          setRoam((r) => {
-            if (Math.abs(r.x - BED_CAT_X) <= 24)
-              return { ...r, kind: "nap", dur: 0 };
-            const dx = BED_CAT_X - r.x;
-            return {
-              kind: "stroll",
-              x: BED_CAT_X,
-              facing: dx > 0 ? "right" : "left",
-              dur: Math.round(Math.abs(dx) / 0.035),
-              then: "nap",
-            };
-          });
+          const target: InteractKind =
+            roll < 0.7
+              ? "nap"
+              : roll < 0.8
+                ? "play"
+                : roll < 0.9
+                  ? "drink"
+                  : "box";
+          setRoam((r) => walkTo(r, itemAnchor(INTERACT_ITEM[target]), target));
         },
         12000 + Math.random() * 14000,
       );
@@ -388,6 +492,22 @@ function PetNudge({
     } else if (roam.kind === "wake") {
       // 起床动作演一遍(~2.5-2.9s)后定格收尾,再坐回
       t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "sit" })), 3300);
+    } else if (roam.kind === "play" || roam.kind === "drink") {
+      // 玩球/喝水:动画播一遍定格回味,完了坐起说句猫语
+      const done = roam.kind;
+      t = window.setTimeout(() => {
+        setRoam((r) => ({ ...r, kind: "sit" }));
+        sayLine(done);
+      }, 4200);
+    } else if (roam.kind === "box") {
+      // 钻箱:在箱里蹲 10-15s(箱子前壁遮着,只露上半身)
+      t = window.setTimeout(
+        () => {
+          setRoam((r) => ({ ...r, kind: "sit" }));
+          sayLine("box");
+        },
+        10000 + Math.random() * 5000,
+      );
     } else {
       // 打盹 18-32s —— 睡够了随机演一个起床动作(伸懒腰/打哈欠/弓背)再坐起
       t = window.setTimeout(
@@ -455,7 +575,7 @@ function PetNudge({
   // ── 院子模式:没事时小猫在整行里生活,气泡跟着猫走 ──
   if (say.kind === "idle") {
     const yardSprite: PetSpriteState = talk
-      ? (touch?.action ?? "petted")
+      ? (touch?.action ?? "idle")
       : roam.kind === "stroll"
         ? roam.facing === "right"
           ? "running-right"
@@ -466,7 +586,13 @@ function PetNudge({
             ? "nap"
             : roam.kind === "wake"
               ? (roam.wake ?? "stretch")
-              : "idle";
+              : roam.kind === "play"
+                ? "play"
+                : roam.kind === "drink"
+                  ? "drink"
+                  : roam.kind === "box"
+                    ? "idle"
+                    : "idle";
     // 摸猫说话才冒对话泡;坐着思考时冒「心事泡」(功能入口,跟着猫选边)
     const showBubble = talk !== null;
     // 选剩余空间够的一侧,宽度跟着空间缩,避免压到猫身上
@@ -483,10 +609,11 @@ function PetNudge({
     const thinking = roam.kind === "sit" && !talk;
     const toRight = roam.x + 42 < yardW / 2;
     const dotBase = roam.x + (toRight ? 62 : 14);
+    // 点链从猫头(随深度抬升)斜向泡群
     const dots = [
-      { size: 6, bottom: 100, dx: toRight ? 0 : 0 },
-      { size: 9, bottom: 124, dx: toRight ? 26 : -28 },
-      { size: 12, bottom: 150, dx: toRight ? 54 : -58 },
+      { size: 6, bottom: roam.y + 88, dx: 0 },
+      { size: 9, bottom: roam.y + 112, dx: toRight ? 26 : -28 },
+      { size: 12, bottom: roam.y + 136, dx: toRight ? 54 : -58 },
     ];
     const THOUGHTS = [
       {
@@ -514,19 +641,42 @@ function PetNudge({
         className="relative mt-4 h-[264px]"
         aria-label={`${cat.name}的家`}
       >
-        {/* 地面层:小家具(DOM 在猫之前 = 绘制在猫之下,猫路过自然遮挡) */}
-        {YARD_ITEMS.map((it) => (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            key={it.alt}
-            src={it.src}
-            alt=""
-            aria-hidden="true"
-            draggable={false}
-            className="absolute select-none"
-            style={it.style}
-          />
-        ))}
+        {/* 地板家具:点了让猫走过去互动;按深度排层(画家算法),
+            钻箱时箱子临时提到猫前面 = 前壁遮住下半身;
+            玩球/喝水动画自带道具,进行时把地上同款隐掉防止出现两个 */}
+        {(Object.keys(YARD_ITEMS) as ItemKey[]).map((k) => {
+          const it = YARD_ITEMS[k];
+          const hideForAction =
+            (k === "yarn" && roam.kind === "play") ||
+            (k === "bowl" && roam.kind === "drink");
+          const z =
+            k === "box" && roam.kind === "box"
+              ? zOf(roam.y) + 1
+              : zOf(it.bottom);
+          return (
+            <button
+              key={k}
+              type="button"
+              onClick={() => goInteract(TARGET_OF[k])}
+              aria-label={`让${cat.name}去${it.alt}那儿`}
+              className="absolute cursor-pointer select-none p-0"
+              style={{
+                left: it.left,
+                bottom: it.bottom,
+                width: it.w,
+                zIndex: z,
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={it.src}
+                alt=""
+                draggable={false}
+                className={"w-full " + (hideForAction ? "opacity-0" : "")}
+              />
+            </button>
+          );
+        })}
 
         {/* 位移走合成器(transform 独立图层),避免 left+背景换帧+阴影联手留残影;
             呼吸 scale 动画在内层按钮上,跟位移不抢同一个 transform */}
@@ -534,12 +684,14 @@ function PetNudge({
           ref={catRef}
           className="absolute bottom-0 left-0"
           style={{
-            transform: `translateX(${roam.x}px)`,
+            transform: `translate(${roam.x}px, ${-roam.y}px) scale(${scaleOf(roam.y).toFixed(3)})`,
+            transformOrigin: "50% 100%",
             transition:
               roam.kind === "stroll"
                 ? `transform ${roam.dur}ms linear`
                 : "none",
             willChange: roam.kind === "stroll" ? "transform" : undefined,
+            zIndex: zOf(roam.y),
           }}
         >
           <button
@@ -608,10 +760,10 @@ function PetNudge({
         {showBubble && (
           <div
             className={
-              "pet-bubble absolute bottom-1.5 rounded-[22px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] " +
+              "pet-bubble absolute rounded-[22px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] " +
               (bubbleOnRight ? "rounded-bl-md" : "rounded-br-md")
             }
-            style={bubbleStyle}
+            style={{ ...bubbleStyle, bottom: roam.y + 4, zIndex: 200 }}
           >
             <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
           </div>

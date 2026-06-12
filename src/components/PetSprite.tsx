@@ -24,11 +24,13 @@ export type PetSpriteState =
   | "nap"
   | "stretch"
   | "yawn"
-  | "arch";
+  | "arch"
+  | "play"
+  | "drink";
 
 const SHEET_SRC = "/pet/spritesheet.webp";
 const SHEET_COLS = 8;
-const SHEET_ROWS = 15;
+const SHEET_ROWS = 17;
 const CELL_W = 192;
 const CELL_H = 208;
 // 格间透明间隙 —— 大图缩放时下/右边界会多采样邻格 1-2px,留出透明缝接住它,
@@ -88,6 +90,10 @@ const ROWS: Record<PetSpriteState, RowConfig> = {
   yawn: { row: 13, durations: [320, 360, 460, 540, 360, 460], mode: "hold" },
   // 弓背:四脚站立拱背、尾巴翘起,再松回
   arch: { row: 14, durations: [320, 400, 520, 540, 420, 520], mode: "hold" },
+  // 玩毛线球:蹲伏盯球 → 伸爪扒拉 → 追拍 → 抱住满足(行内自带球)
+  play: { row: 15, durations: [300, 260, 240, 260, 280, 420], mode: "hold" },
+  // 喝水:低头 → 舔×3 → 抬头舔嘴(行内自带碗)
+  drink: { row: 16, durations: [300, 280, 260, 260, 280, 380], mode: "hold" },
 };
 
 // idle 时偶发的自理小动作(下限/随机区间,毫秒)
