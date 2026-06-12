@@ -224,7 +224,62 @@ function PetNudge({
   const [idleLine] = useState(
     () => PET_IDLE[Math.floor(Math.random() * PET_IDLE.length)],
   );
+
+  // ── 院子漫游(仅无事可说的 idle 场景):坐着 → 随机散步/洗脸/打盹 ──
+  // x 是猫在院子里的横向位置,散步用 CSS transition 匀速走过去。
+  const yardRef = useRef<HTMLElement | null>(null);
+  const catRef = useRef<HTMLButtonElement | null>(null);
+  const [yardW, setYardW] = useState(343);
+  const [roam, setRoam] = useState<{
+    kind: "sit" | "stroll" | "groom" | "nap";
+    x: number;
+    facing: "left" | "right";
+    dur: number;
+  }>({ kind: "sit", x: 0, facing: "right", dur: 0 });
+  // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
+  const [calm, setCalm] = useState(false);
+
+  useEffect(() => {
+    const measure = () => setYardW(yardRef.current?.offsetWidth ?? 343);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => {
+      setCalm(mq.matches || document.hidden);
+      if (document.hidden) {
+        setRoam((r) => {
+          if (r.kind !== "stroll") return r;
+          const left = catRef.current
+            ? parseFloat(getComputedStyle(catRef.current).left) || r.x
+            : r.x;
+          return { kind: "sit", x: Math.round(left), facing: r.facing, dur: 0 };
+        });
+      }
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    document.addEventListener("visibilitychange", apply);
+    return () => {
+      mq.removeEventListener("change", apply);
+      document.removeEventListener("visibilitychange", apply);
+    };
+  }, []);
+
   function petTheCat() {
+    // 散步途中被摸:就地停下再回应
+    setRoam((r) => {
+      if (r.kind === "stroll") {
+        const left = catRef.current
+          ? parseFloat(getComputedStyle(catRef.current).left) || r.x
+          : r.x;
+        return { kind: "sit", x: Math.round(left), facing: r.facing, dur: 0 };
+      }
+      return { ...r, kind: "sit", dur: 0 };
+    });
     setTalk(PET_TALK[Math.floor(Math.random() * PET_TALK.length)]);
     setTouch((t) => ({
       action: Math.random() < 0.6 ? "petted" : "groom",
@@ -234,7 +289,7 @@ function PetNudge({
     talkTimer.current = window.setTimeout(() => {
       setTalk(null);
       setTouch(null);
-    }, 4200);
+    }, 3800);
   }
 
   // 猫常驻:有事说事,没事也蹲在这儿说句闲话(宠物不该有事才出现)
@@ -247,6 +302,53 @@ function PetNudge({
         : recordsEmpty
           ? ({ kind: "starter" } as const)
           : ({ kind: "idle" } as const);
+
+  // 院子行为调度:坐 12-26s 后掷骰子 —— 50% 散步(约 35px/s 匀速)/
+  // 25% 洗脸 / 25% 打盹(9-15s);摸猫说话时暂停,说完从坐姿重新计时
+  useEffect(() => {
+    if (say.kind !== "idle" || calm || talk) return;
+    let t: number;
+    // 院子真实宽度同步(场景切进 idle 后 ref 才挂上)
+    const live = yardRef.current?.offsetWidth;
+    if (live && live !== yardW) setYardW(live);
+    if (roam.kind === "sit") {
+      t = window.setTimeout(
+        () => {
+          const w = yardRef.current?.offsetWidth ?? yardW;
+          const maxX = Math.max(0, w - 86);
+          const roll = Math.random();
+          if (roll < 0.5 && maxX > 120) {
+            const target = Math.round(Math.random() * maxX);
+            const dx = target - roam.x;
+            if (Math.abs(dx) >= 60) {
+              setRoam({
+                kind: "stroll",
+                x: target,
+                facing: dx > 0 ? "right" : "left",
+                dur: Math.round(Math.abs(dx) / 0.035),
+              });
+              return;
+            }
+          }
+          setRoam((r) => ({ ...r, kind: roll < 0.75 ? "groom" : "nap", dur: 0 }));
+        },
+        12000 + Math.random() * 14000,
+      );
+    } else if (roam.kind === "stroll") {
+      t = window.setTimeout(
+        () => setRoam((r) => ({ ...r, kind: "sit", dur: 0 })),
+        roam.dur + 80,
+      );
+    } else if (roam.kind === "groom") {
+      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "sit" })), 3600);
+    } else {
+      t = window.setTimeout(
+        () => setRoam((r) => ({ ...r, kind: "sit" })),
+        9000 + Math.random() * 6000,
+      );
+    }
+    return () => clearTimeout(t);
+  }, [say.kind, calm, talk, roam, yardW]);
 
   // 动作随场景:摸猫=随机享受/洗脸 / 回执好转=蹦一次、没好转=耷耳 /
   // 待回答=双爪合十期待 / 新人引导=招手(抬爪定格)/ 护理提醒、闲着=idle(自带眨眼呼吸)。
@@ -296,6 +398,75 @@ function PetNudge({
       />
     </button>
   );
+
+  // ── 院子模式:没事时小猫在整行里生活,气泡跟着猫走 ──
+  if (say.kind === "idle") {
+    const yardSprite: PetSpriteState = talk
+      ? (touch?.action ?? "petted")
+      : roam.kind === "stroll"
+        ? roam.facing === "right"
+          ? "running-right"
+          : "running-left"
+        : roam.kind === "groom"
+          ? "groom"
+          : roam.kind === "nap"
+            ? "nap"
+            : "idle";
+    // 说话时一定冒泡;闲话只在家位(左侧)说 —— 跑远了就安静过自己的小日子
+    const showBubble =
+      talk !== null || (roam.kind === "sit" && roam.x < 40);
+    // 选剩余空间够的一侧,宽度跟着空间缩,避免压到猫身上
+    const rightRoom = yardW - roam.x - 100;
+    const bubbleOnRight = rightRoom >= 150;
+    const bubbleW = bubbleOnRight
+      ? Math.min(240, rightRoom)
+      : Math.min(240, Math.max(140, roam.x - 16));
+    const bubbleStyle = bubbleOnRight
+      ? { left: roam.x + 92, maxWidth: bubbleW }
+      : { left: Math.max(8, roam.x - 8 - bubbleW), maxWidth: bubbleW };
+    return (
+      <section
+        ref={yardRef}
+        className="relative mt-5 h-[104px]"
+        aria-label={`${cat.name}的提醒`}
+      >
+        <button
+          ref={catRef}
+          type="button"
+          onClick={petTheCat}
+          aria-label={`摸摸${cat.name}`}
+          className="pet-enter absolute bottom-0 cursor-pointer select-none"
+          style={{
+            left: roam.x,
+            transition:
+              roam.kind === "stroll" ? `left ${roam.dur}ms linear` : "none",
+          }}
+        >
+          <PetSprite
+            state={yardSprite}
+            width={86}
+            fallbackSrc={PET_FACE_SRC[talk ? "happy" : "calm"]}
+            className="drop-shadow-sm"
+            playKey={touch?.n}
+            idleFlourish={false}
+          />
+        </button>
+        {showBubble && (
+          <div
+            className={
+              "pet-bubble absolute bottom-1.5 rounded-[22px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] " +
+              (bubbleOnRight ? "rounded-bl-md" : "rounded-br-md")
+            }
+            style={bubbleStyle}
+          >
+            <p className="text-[14px] leading-relaxed text-ink">
+              {talk ?? idleLine}
+            </p>
+          </div>
+        )}
+      </section>
+    );
+  }
 
   // 摸猫时:猫语气泡盖过一切
   if (talk) {
@@ -381,10 +552,6 @@ function PetNudge({
                 </p>
               ))}
             </div>
-          )}
-
-          {say.kind === "idle" && (
-            <p className="text-[14px] leading-relaxed text-ink">{idleLine}</p>
           )}
         </div>
       )}

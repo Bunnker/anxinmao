@@ -20,11 +20,12 @@ export type PetSpriteState =
   | "working"
   | "review"
   | "petted"
-  | "groom";
+  | "groom"
+  | "nap";
 
 const SHEET_SRC = "/pet/spritesheet.webp";
 const SHEET_COLS = 8;
-const SHEET_ROWS = 11;
+const SHEET_ROWS = 12;
 const CELL_W = 192;
 const CELL_H = 208;
 
@@ -70,6 +71,8 @@ const ROWS: Record<PetSpriteState, RowConfig> = {
   },
   // 洗脸:舔爪 → 抹头 → 挠耳后 → 坐好 —— 慢悠悠的,像真猫洗脸不赶时间
   groom: { row: 10, durations: [400, 480, 520, 560, 520, 600], mode: "hold" },
+  // 打盹:蜷成一团,只剩呼吸起伏的慢循环
+  nap: { row: 11, durations: [550, 620, 680, 620, 660, 720], mode: "loop" },
 };
 
 // idle 时偶发的自理小动作(下限/随机区间,毫秒)
@@ -105,6 +108,7 @@ export default function PetSprite({
   fallbackSrc,
   className,
   playKey,
+  idleFlourish = true,
 }: {
   state: PetSpriteState;
   width?: number;
@@ -113,6 +117,8 @@ export default function PetSprite({
   className?: string;
   /** 变化时从头重播当前状态(连续摸猫每次都有反应) */
   playKey?: number | string;
+  /** idle 时是否自发洗脸(外层若自己调度行为则关掉,避免抢戏) */
+  idleFlourish?: boolean;
 }) {
   const height = (width * CELL_H) / CELL_W;
   const [frame, setFrame] = useState(0);
@@ -156,13 +162,14 @@ export default function PetSprite({
 
   // 闲着时随机安排一次洗脸
   useEffect(() => {
-    if (state !== "idle" || flourish || !ready || still || paused) return;
+    if (!idleFlourish || state !== "idle" || flourish || !ready || still || paused)
+      return;
     const t = window.setTimeout(
       () => setFlourish("groom"),
       FLOURISH_MIN_DELAY + Math.random() * FLOURISH_JITTER,
     );
     return () => clearTimeout(t);
-  }, [state, flourish, ready, still, paused]);
+  }, [idleFlourish, state, flourish, ready, still, paused]);
 
   // 逐帧步进:loop 循环 / hold 播到定格帧停;状态切换从第 0 帧重来
   useEffect(() => {
