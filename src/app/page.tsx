@@ -184,6 +184,21 @@ const PET_TALK = [
 ];
 // 闲话已并入「思考泡」功能入口区;摸猫时才说猫语(PET_TALK)。
 
+// 院子地面层的小家具(z 在猫之下,猫走到前面自然遮挡)。
+// 物件 = 场景具象化第一批:窝(睡觉去处)/水碗/毛线球/纸箱。
+const YARD_ITEMS: Array<{
+  src: string;
+  alt: string;
+  style: { left?: number; right?: number; width: number; bottom: number };
+}> = [
+  { src: "/pet/items/bed.webp", alt: "猫窝", style: { left: 2, width: 98, bottom: 0 } },
+  { src: "/pet/items/bowl.webp", alt: "水碗", style: { left: 120, width: 44, bottom: 2 } },
+  { src: "/pet/items/yarn.webp", alt: "毛线球", style: { left: 202, width: 36, bottom: 2 } },
+  { src: "/pet/items/box.webp", alt: "纸箱", style: { right: 2, width: 82, bottom: 0 } },
+];
+// 猫(84px)蜷睡时与窝(left 2, w 98)对中的横位
+const BED_CAT_X = 9;
+
 function PetNudge({
   cat,
   followupTarget,
@@ -236,6 +251,8 @@ function PetNudge({
     dur: number;
     // wake 时演哪个起床动作(伸懒腰/打哈欠/弓背)
     wake?: PetSpriteState;
+    // 散步到达后的下一步(如:走到窝边再蜷睡)
+    then?: "nap";
   }>({ kind: "sit", x: 0, facing: "right", dur: 0 });
   // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
   const [calm, setCalm] = useState(false);
@@ -335,13 +352,35 @@ function PetNudge({
               return;
             }
           }
-          setRoam((r) => ({ ...r, kind: roll < 0.75 ? "groom" : "nap", dur: 0 }));
+          if (roll < 0.75) {
+            setRoam((r) => ({ ...r, kind: "groom", dur: 0 }));
+            return;
+          }
+          // 睡觉回窝:不在窝边就先走过去,到了再蜷(蜷睡帧正好叠在窝上)
+          setRoam((r) => {
+            if (Math.abs(r.x - BED_CAT_X) <= 24)
+              return { ...r, kind: "nap", dur: 0 };
+            const dx = BED_CAT_X - r.x;
+            return {
+              kind: "stroll",
+              x: BED_CAT_X,
+              facing: dx > 0 ? "right" : "left",
+              dur: Math.round(Math.abs(dx) / 0.035),
+              then: "nap",
+            };
+          });
         },
         12000 + Math.random() * 14000,
       );
     } else if (roam.kind === "stroll") {
       t = window.setTimeout(
-        () => setRoam((r) => ({ ...r, kind: "sit", dur: 0 })),
+        () =>
+          setRoam((r) => ({
+            ...r,
+            kind: r.then ?? "sit",
+            then: undefined,
+            dur: 0,
+          })),
         roam.dur + 80,
       );
     } else if (roam.kind === "groom") {
@@ -475,6 +514,20 @@ function PetNudge({
         className="relative mt-4 h-[264px]"
         aria-label={`${cat.name}的家`}
       >
+        {/* 地面层:小家具(DOM 在猫之前 = 绘制在猫之下,猫路过自然遮挡) */}
+        {YARD_ITEMS.map((it) => (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img
+            key={it.alt}
+            src={it.src}
+            alt=""
+            aria-hidden="true"
+            draggable={false}
+            className="absolute select-none"
+            style={it.style}
+          />
+        ))}
+
         {/* 位移走合成器(transform 独立图层),避免 left+背景换帧+阴影联手留残影;
             呼吸 scale 动画在内层按钮上,跟位移不抢同一个 transform */}
         <div
