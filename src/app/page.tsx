@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import {
   loadStore,
@@ -15,6 +15,7 @@ import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
 import { Welcome } from "@/components/Welcome";
 import { Guide } from "@/components/Guide";
+import PetSprite, { type PetSpriteState } from "@/components/PetSprite";
 import type { Cat, CatRecord, Store } from "@/types/cat";
 
 // 新手教程「看过了」标记 —— 与猫档案分开,首次进入弹一次,首页可重开。
@@ -125,7 +126,7 @@ function careReminders(cat: Cat): string[] {
     const d = daysSince(cat.deworm);
     if (d > 45 && d < 3650) {
       out.push(
-        `上次驱虫已 ${d} 天 —— 体内外驱虫一般 1-3 个月一次,可以安排啦`,
+        `我上次驱虫已经 ${d} 天啦 —— 体内外驱虫一般 1-3 个月一次,可以帮我安排了`,
       );
     }
   }
@@ -138,7 +139,7 @@ function careReminders(cat: Cat): string[] {
     const d = daysSince(lastVac);
     if (d > 350 && d < 3650) {
       out.push(
-        `上次疫苗已满 ${Math.floor(d / 30)} 个月 —— 年度加强可以下次问问医生`,
+        `我上次打疫苗满 ${Math.floor(d / 30)} 个月了 —— 年度加强可以下次问问医生`,
       );
     }
   }
@@ -151,15 +152,448 @@ const FOLLOWUP_MIN_AGE = 12 * 60 * 60 * 1000;
 const FOLLOWUP_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
 
 function findFollowupTarget(records: CatRecord[]): CatRecord | null {
-  const now = Date.now();
-  for (const r of records) {
-    if (r.kind !== "triage" || r.outcome || !r.tier) continue;
-    const t = new Date(r.date).getTime();
-    if (Number.isNaN(t)) continue;
-    const age = now - t;
-    if (age >= FOLLOWUP_MIN_AGE && age <= FOLLOWUP_MAX_AGE) return r;
+  // 只看「最近一次」分诊 —— 答完一条就收,不连环追问更早的记录
+  // (用户反馈:有多条未跟进时,答一条、切页回来又问下一条,烦)。
+  const latest = records.find((r) => r.kind === "triage");
+  if (!latest || latest.outcome || !latest.tier) return null;
+  const t = new Date(latest.date).getTime();
+  if (Number.isNaN(t)) return null;
+  const age = Date.now() - t;
+  return age >= FOLLOWUP_MIN_AGE && age <= FOLLOWUP_MAX_AGE ? latest : null;
+}
+
+// 小猫陪伴提醒 —— 把分诊跟进 / 驱虫疫苗 / 新手引导统一成「猫在跟你说话」的气泡。
+// 一次只说一件事,优先级:跟进回执 > 分诊跟进 > 护理提醒 > 零记录引导;没事不出现。
+// 形象用产品吉祥物橘猫(public/guide/ 四表情),按场景换表情;点它会蹦一下说猫语。
+// 红线:卡通形象在此仅作伴侣角色(允许位),不进任何医学示意。
+type PetFace = "worry" | "curious" | "calm" | "happy";
+// -t 版:抠掉米色方底的透明小图(256px ~55KB),专供气泡场景贴在页面背景上。
+const PET_FACE_SRC: Record<PetFace, string> = {
+  worry: "/guide/cat-worry-t.png",
+  curious: "/guide/cat-curious-t.png",
+  calm: "/guide/cat-calm-t.png",
+  happy: "/guide/cat-happy-t.png",
+};
+const PET_TALK = [
+  "喵~",
+  "蹭蹭你!",
+  "好舒服,再摸一会儿嘛~",
+  "我超乖的。",
+  "今天也要记得陪我玩呀。",
+  "呼噜呼噜……",
+];
+// 没事时的日常闲话 —— 猫常驻陪伴,每次进首页随机一句。
+const PET_IDLE = [
+  "我很好,放心~",
+  "今天也要记得给我换水哦。",
+  "天气不错,陪我晒晒太阳?",
+  "喵呜 —— 一切正常!",
+  "闲着也是闲着,摸摸我?",
+  "我蹲在这儿守着你。",
+];
+
+function PetNudge({
+  cat,
+  followupTarget,
+  followupNote,
+  careList,
+  recordsEmpty,
+  onPick,
+}: {
+  cat: Cat;
+  followupTarget: CatRecord | null;
+  followupNote: {
+    text: string;
+    href?: string;
+    label?: string;
+    face?: PetFace;
+  } | null;
+  careList: string[];
+  recordsEmpty: boolean;
+  onPick: (rec: CatRecord, oc: NonNullable<CatRecord["outcome"]>) => void;
+}) {
+  // 摸猫彩蛋:随机「眯眼享受 / 洗脸」+ 临时说一句猫语(盖过当前气泡 4.2s,
+  // 给慢节奏动作留足播完+定格回味的时间);n 递增让连续摸每次都从头重播动作
+  const [talk, setTalk] = useState<string | null>(null);
+  const [touch, setTouch] = useState<{
+    action: "petted" | "groom";
+    n: number;
+  } | null>(null);
+  const talkTimer = useRef<number | null>(null);
+  // 没事时的闲话 —— 惰性初始化,进页随机一句,渲染期间不闪变
+  const [idleLine] = useState(
+    () => PET_IDLE[Math.floor(Math.random() * PET_IDLE.length)],
+  );
+
+  // ── 院子漫游(仅无事可说的 idle 场景):坐着 → 随机散步/洗脸/打盹 ──
+  // x 是猫在院子里的横向位置,散步用 CSS transition 匀速走过去。
+  const yardRef = useRef<HTMLElement | null>(null);
+  const catRef = useRef<HTMLDivElement | null>(null);
+  // 读猫当前实际横位(散步动画进行中是 transform 矩阵里的 tx)
+  function readCatX(fallback: number): number {
+    const el = catRef.current;
+    if (!el) return fallback;
+    const t = getComputedStyle(el).transform;
+    if (!t || t === "none") return fallback;
+    const m = t.match(/matrix\(([^)]+)\)/);
+    if (!m) return fallback;
+    const tx = parseFloat(m[1].split(",")[4]);
+    return Number.isFinite(tx) ? tx : fallback;
   }
-  return null;
+  const [yardW, setYardW] = useState(343);
+  const [roam, setRoam] = useState<{
+    kind: "sit" | "stroll" | "groom" | "nap" | "wake";
+    x: number;
+    facing: "left" | "right";
+    dur: number;
+    // wake 时演哪个起床动作(伸懒腰/打哈欠/弓背)
+    wake?: PetSpriteState;
+  }>({ kind: "sit", x: 0, facing: "right", dur: 0 });
+  // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
+  const [calm, setCalm] = useState(false);
+
+  useEffect(() => {
+    const measure = () => setYardW(yardRef.current?.offsetWidth ?? 343);
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => {
+      setCalm(mq.matches || document.hidden);
+      if (document.hidden) {
+        setRoam((r) =>
+          r.kind === "stroll"
+            ? {
+                kind: "sit",
+                x: Math.round(readCatX(r.x)),
+                facing: r.facing,
+                dur: 0,
+              }
+            : r,
+        );
+      }
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    document.addEventListener("visibilitychange", apply);
+    return () => {
+      mq.removeEventListener("change", apply);
+      document.removeEventListener("visibilitychange", apply);
+    };
+  }, []);
+
+  function petTheCat() {
+    // 散步途中被摸:就地停下再回应
+    setRoam((r) =>
+      r.kind === "stroll"
+        ? {
+            kind: "sit",
+            x: Math.round(readCatX(r.x)),
+            facing: r.facing,
+            dur: 0,
+          }
+        : { ...r, kind: "sit", dur: 0 },
+    );
+    setTalk(PET_TALK[Math.floor(Math.random() * PET_TALK.length)]);
+    setTouch((t) => ({
+      action: Math.random() < 0.6 ? "petted" : "groom",
+      n: (t?.n ?? 0) + 1,
+    }));
+    if (talkTimer.current) clearTimeout(talkTimer.current);
+    talkTimer.current = window.setTimeout(() => {
+      setTalk(null);
+      setTouch(null);
+    }, 3800);
+  }
+
+  // 猫常驻:有事说事,没事也蹲在这儿说句闲话(宠物不该有事才出现)
+  const say = followupNote
+    ? ({ kind: "note" } as const)
+    : followupTarget
+      ? ({ kind: "followup" } as const)
+      : careList.length > 0
+        ? ({ kind: "care" } as const)
+        : recordsEmpty
+          ? ({ kind: "starter" } as const)
+          : ({ kind: "idle" } as const);
+
+  // 院子行为调度:坐 12-26s 后掷骰子 —— 50% 散步(约 35px/s 匀速)/
+  // 25% 洗脸 / 25% 打盹(9-15s);摸猫说话时暂停,说完从坐姿重新计时
+  useEffect(() => {
+    if (say.kind !== "idle" || calm || talk) return;
+    let t: number;
+    // 院子真实宽度同步(场景切进 idle 后 ref 才挂上)
+    const live = yardRef.current?.offsetWidth;
+    if (live && live !== yardW) setYardW(live);
+    if (roam.kind === "sit") {
+      t = window.setTimeout(
+        () => {
+          const w = yardRef.current?.offsetWidth ?? yardW;
+          const maxX = Math.max(0, w - 84);
+          const roll = Math.random();
+          if (roll < 0.5 && maxX > 120) {
+            const target = Math.round(Math.random() * maxX);
+            const dx = target - roam.x;
+            if (Math.abs(dx) >= 60) {
+              setRoam({
+                kind: "stroll",
+                x: target,
+                facing: dx > 0 ? "right" : "left",
+                dur: Math.round(Math.abs(dx) / 0.035),
+              });
+              return;
+            }
+          }
+          setRoam((r) => ({ ...r, kind: roll < 0.75 ? "groom" : "nap", dur: 0 }));
+        },
+        12000 + Math.random() * 14000,
+      );
+    } else if (roam.kind === "stroll") {
+      t = window.setTimeout(
+        () => setRoam((r) => ({ ...r, kind: "sit", dur: 0 })),
+        roam.dur + 80,
+      );
+    } else if (roam.kind === "groom") {
+      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "sit" })), 3600);
+    } else if (roam.kind === "wake") {
+      // 起床动作演一遍(~2.5-2.9s)后定格收尾,再坐回
+      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "sit" })), 3300);
+    } else {
+      // 打盹 18-32s —— 睡够了随机演一个起床动作(伸懒腰/打哈欠/弓背)再坐起
+      t = window.setTimeout(
+        () => {
+          const wake = (["stretch", "yawn", "arch"] as const)[
+            Math.floor(Math.random() * 3)
+          ];
+          setRoam((r) => ({ ...r, kind: "wake", wake, dur: 0 }));
+        },
+        18000 + Math.random() * 14000,
+      );
+    }
+    return () => clearTimeout(t);
+  }, [say.kind, calm, talk, roam, yardW]);
+
+  // 动作随场景:摸猫=随机享受/洗脸 / 回执好转=蹦一次、没好转=耷耳 /
+  // 待回答=双爪合十期待 / 新人引导=招手(抬爪定格)/ 护理提醒、闲着=idle(自带眨眼呼吸)。
+  const spriteState: PetSpriteState = talk
+    ? (touch?.action ?? "petted")
+    : say.kind === "note"
+      ? followupNote?.face === "worry"
+        ? "failed"
+        : followupNote?.face === "curious"
+          ? "review"
+          : "jumping"
+      : say.kind === "followup"
+        ? "waiting"
+        : say.kind === "starter"
+          ? "waving"
+          : "idle";
+  // 雪碧图未就绪/加载失败时的静态占位(沿用旧四表情透明图)
+  const fallbackFace: PetFace =
+    spriteState === "jumping" ||
+    spriteState === "waving" ||
+    spriteState === "petted" ||
+    spriteState === "groom"
+      ? "happy"
+      : spriteState === "failed"
+        ? "worry"
+        : spriteState === "waiting" || spriteState === "review"
+          ? "curious"
+          : "calm";
+
+  const bubbleCls =
+    "pet-bubble min-w-0 flex-1 rounded-[22px] rounded-bl-md bg-surface px-4 py-3.5 shadow-[var(--shadow-card)]";
+
+  const catImg = (
+    <button
+      type="button"
+      onClick={petTheCat}
+      aria-label={`摸摸${cat.name}`}
+      className="pet-enter shrink-0 cursor-pointer select-none"
+    >
+      {/* 真·逐帧动画:摸猫随机享受/洗脸并每次重播,其余按场景行(雪碧图挂了就回静态图) */}
+      <PetSprite
+        state={spriteState}
+        width={84}
+        fallbackSrc={PET_FACE_SRC[fallbackFace]}
+        className="drop-shadow-sm"
+        playKey={touch?.n}
+      />
+    </button>
+  );
+
+  // ── 院子模式:没事时小猫在整行里生活,气泡跟着猫走 ──
+  if (say.kind === "idle") {
+    const yardSprite: PetSpriteState = talk
+      ? (touch?.action ?? "petted")
+      : roam.kind === "stroll"
+        ? roam.facing === "right"
+          ? "running-right"
+          : "running-left"
+        : roam.kind === "groom"
+          ? "groom"
+          : roam.kind === "nap"
+            ? "nap"
+            : roam.kind === "wake"
+              ? (roam.wake ?? "stretch")
+              : "idle";
+    // 说话时一定冒泡;闲话只在家位(左侧)说 —— 跑远了就安静过自己的小日子
+    const showBubble =
+      talk !== null || (roam.kind === "sit" && roam.x < 40);
+    // 选剩余空间够的一侧,宽度跟着空间缩,避免压到猫身上
+    const rightRoom = yardW - roam.x - 98;
+    const bubbleOnRight = rightRoom >= 150;
+    const bubbleW = bubbleOnRight
+      ? Math.min(240, rightRoom)
+      : Math.min(240, Math.max(140, roam.x - 16));
+    const bubbleStyle = bubbleOnRight
+      ? { left: roam.x + 90, maxWidth: bubbleW }
+      : { left: Math.max(8, roam.x - 8 - bubbleW), maxWidth: bubbleW };
+    return (
+      <section
+        ref={yardRef}
+        className="relative mt-5 h-[104px]"
+        aria-label={`${cat.name}的提醒`}
+      >
+        {/* 位移走合成器(transform 独立图层),避免 left+背景换帧+阴影联手留残影;
+            呼吸 scale 动画在内层按钮上,跟位移不抢同一个 transform */}
+        <div
+          ref={catRef}
+          className="absolute bottom-0 left-0"
+          style={{
+            transform: `translateX(${roam.x}px)`,
+            transition:
+              roam.kind === "stroll"
+                ? `transform ${roam.dur}ms linear`
+                : "none",
+            willChange: roam.kind === "stroll" ? "transform" : undefined,
+          }}
+        >
+          <button
+            type="button"
+            onClick={petTheCat}
+            aria-label={`摸摸${cat.name}`}
+            className="pet-enter block cursor-pointer select-none"
+          >
+            <PetSprite
+              state={yardSprite}
+              width={84}
+              fallbackSrc={PET_FACE_SRC[talk ? "happy" : "calm"]}
+              className="drop-shadow-sm"
+              playKey={touch?.n}
+              idleFlourish={false}
+            />
+          </button>
+        </div>
+        {showBubble && (
+          <div
+            className={
+              "pet-bubble absolute bottom-1.5 rounded-[22px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] " +
+              (bubbleOnRight ? "rounded-bl-md" : "rounded-br-md")
+            }
+            style={bubbleStyle}
+          >
+            <p className="text-[14px] leading-relaxed text-ink">
+              {talk ?? idleLine}
+            </p>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  // 摸猫时:猫语气泡盖过一切
+  if (talk) {
+    return (
+      <section
+        className="mt-5 flex items-end gap-2"
+        aria-label={`${cat.name}的提醒`}
+      >
+        {catImg}
+        <div className={bubbleCls}>
+          <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      className="mt-5 flex items-end gap-2"
+      aria-label={`${cat.name}的提醒`}
+    >
+      {catImg}
+
+      {say.kind === "starter" ? (
+        <Link
+          href="/symptoms"
+          className={bubbleCls + " block transition-transform active:scale-[0.985]"}
+        >
+          <p className="text-[14px] leading-relaxed text-ink">
+            带我去试一次分诊吧!选个最像的情况、答几个小问题,30
+            秒看到红黄绿报告。现在没事,拿「打喷嚏」练手也行 →
+          </p>
+        </Link>
+      ) : (
+        <div className={bubbleCls}>
+          {say.kind === "note" && followupNote && (
+            <>
+              <p className="text-[14px] leading-relaxed text-ink">
+                {followupNote.text}
+              </p>
+              {followupNote.href && (
+                <Link
+                  href={followupNote.href}
+                  className="mt-1.5 inline-block text-[13.5px] font-medium text-accent"
+                >
+                  {followupNote.label}
+                </Link>
+              )}
+            </>
+          )}
+
+          {say.kind === "followup" && followupTarget && (
+            <>
+              <p className="text-[14px] leading-relaxed text-ink">
+                上次「{followupTarget.summary}」之后,我看起来好点了吗?
+              </p>
+              <div className="mt-2.5 flex gap-2">
+                {(
+                  [
+                    ["好多了", "在家好转"],
+                    ["已就医", "已就医"],
+                    ["还没好", "未跟进"],
+                  ] as const
+                ).map(([label, oc]) => (
+                  <button
+                    key={oc}
+                    type="button"
+                    onClick={() => onPick(followupTarget, oc)}
+                    className="flex-1 rounded-full bg-[var(--surface-2)] px-2 py-2 text-[13px] font-medium text-ink shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {say.kind === "care" && (
+            <div className="flex flex-col gap-1.5">
+              {careList.slice(0, 2).map((t) => (
+                <p key={t} className="text-[13.5px] leading-relaxed text-ink">
+                  {t}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
 }
 
 // 记录 → 可点回的目标:
@@ -335,6 +769,7 @@ export default function HomePage() {
     text: string;
     href?: string;
     label?: string;
+    face?: PetFace; // 回执时小猫的表情(开心 / 担心)
   } | null>(null);
 
   function pickOutcome(
@@ -347,21 +782,28 @@ export default function HomePage() {
       setRecords(next.records.filter((r) => r.catId === cat.id));
     }
     if (outcome === "在家好转") {
-      setFollowupNote({ text: "太好了,记下啦 —— 有反复随时再来分诊。" });
+      setFollowupNote({
+        text: "我好多啦!谢谢你记着 —— 有反复随时再带我来分诊。",
+        face: "happy",
+      });
       setTimeout(() => setFollowupNote(null), 3200);
     } else if (outcome === "已就医") {
-      setFollowupNote({ text: "记下啦。之后以医生的判断为准,祝早日康复。" });
+      setFollowupNote({
+        text: "带我看过医生啦,记下了 —— 之后以医生的判断为准。",
+        face: "happy",
+      });
       setTimeout(() => setFollowupNote(null), 3200);
     } else {
       const urgent = rec.tier === "red" || rec.tier === "yellow";
       setFollowupNote({
         text: urgent
-          ? "还没好就别再等了 —— 建议尽快带它去医院,面诊为准。"
-          : "还没好的话,再走一次分诊,看看要不要升级处理。",
+          ? "我还没好就别再等了 —— 尽快带我去医院,面诊为准。"
+          : "还没好的话,再帮我分诊一次,看看要不要升级处理。",
         href: rec.symptomKey
           ? `/triage?symptom=${rec.symptomKey}`
           : "/symptoms",
         label: "再分诊一次 →",
+        face: urgent ? "worry" : "curious",
       });
     }
   }
@@ -484,86 +926,18 @@ export default function HomePage() {
             </label>
           </div>
 
-          {/* 日常护理提醒 —— 基于用户自己填的驱虫/疫苗日期,保守提示 */}
-          {careReminders(cat).map((t) => (
-            <div
-              key={t}
-              className="relative mt-2.5 flex items-start gap-2 rounded-[18px] px-4 py-2.5"
-              style={{ background: "var(--accent-soft)" }}
-            >
-              <span
-                className="mt-[7px] size-1.5 shrink-0 rounded-full bg-accent"
-                aria-hidden="true"
-              />
-              <span className="text-[12.5px] leading-relaxed text-ink">{t}</span>
-            </div>
-          ))}
         </div>
       </section>
 
-      {/* 分诊跟进 —— 上次分诊 12h~7天内未跟进,问一句「后来怎么样了」 */}
-      {(followupNote || followupTarget) && (
-        <section className="mt-5 rounded-[24px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
-          {followupNote ? (
-            <>
-              <p className="text-[14px] leading-relaxed text-ink">
-                {followupNote.text}
-              </p>
-              {followupNote.href && (
-                <Link
-                  href={followupNote.href}
-                  className="mt-2 inline-block text-[13.5px] font-medium text-accent"
-                >
-                  {followupNote.label}
-                </Link>
-              )}
-            </>
-          ) : followupTarget ? (
-            <>
-              <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
-                跟进一下
-              </p>
-              <p className="mt-1.5 text-[14.5px] leading-relaxed text-ink">
-                上次的「{followupTarget.summary}」,{cat.name}现在怎么样了?
-              </p>
-              <div className="mt-3 flex gap-2">
-                {(
-                  [
-                    ["好多了", "在家好转"],
-                    ["已就医", "已就医"],
-                    ["还没好", "未跟进"],
-                  ] as const
-                ).map(([label, oc]) => (
-                  <button
-                    key={oc}
-                    type="button"
-                    onClick={() => pickOutcome(followupTarget, oc)}
-                    className="flex-1 rounded-full bg-[var(--surface-2)] px-3 py-2.5 text-[13.5px] font-medium text-ink shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : null}
-        </section>
-      )}
-
-      {/* 第一步引导 —— 有档案但还没用过(0 条记录):落地后别让人不知道干嘛 */}
-      {records.length === 0 && (
-        <Link
-          href="/symptoms"
-          className="mt-5 block rounded-[24px] px-5 py-4 transition-transform active:scale-[0.985]"
-          style={{ background: "var(--accent-soft)" }}
-        >
-          <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
-            下一步 · 半分钟
-          </p>
-          <p className="mt-1.5 text-[14px] leading-relaxed text-ink">
-            拿{cat.name}试一次分诊:选个最像的情况、答几个小问题,看看红黄绿报告长什么样。现在没事,拿「打喷嚏」练手也行 →
-          </p>
-        </Link>
-      )}
+      {/* 小猫陪伴提醒 —— 跟进 / 驱虫疫苗 / 新手引导,统一从它的气泡说出来 */}
+      <PetNudge
+        cat={cat}
+        followupTarget={followupTarget}
+        followupNote={followupNote}
+        careList={careReminders(cat)}
+        recordsEmpty={records.length === 0}
+        onPick={pickOutcome}
+      />
 
       {/* 主次入口 */}
       <section className="mt-5 flex flex-col gap-3">

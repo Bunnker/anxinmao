@@ -139,3 +139,50 @@ button[class*="bg-surface"] {
   height: 0;
   display: none; /* WebKit:Chrome / Safari / 新 Edge */
 }
+
+/* 小猫陪伴提醒(PetNudge)—— 头像轻微呼吸感,克制的"它活着"信号 */
+@keyframes pet-breath {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
+}
+
+/* PetNudge 表情猫动效:入场探头 + 气泡弹入 + 点击蹦跳;尊重减弱动效 */
+@keyframes pet-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.pet-enter {
+  animation:
+    pet-pop-in 0.45s ease-out,
+    pet-breath 4s ease-in-out 0.6s infinite;
+}
+.pet-bubble {
+  animation: bubble-in 0.35s 0.12s ease-out backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pet-enter,
+  .pet-bubble {
+    animation: none;
+  }
+}
