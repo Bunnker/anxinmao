@@ -102,7 +102,7 @@ const CASES = [
   {
     name: "口腔护理:可推荐猫专用护理用品和选购标准",
     query: "小猫牙龈红肿牙齿发黄,能不能刷牙?推荐牙膏牙刷怎么选?",
-    must: ["medicine_product_policy", "猫专用牙膏", "猫专用牙刷", "护理用品", "不要用人牙膏", "Virbac C.E.T.", "Feline Greenies", "Royal Canin", "Purina DentaLife", "Healthymouth"],
+    must: ["medicine_product_policy", "猫专用牙膏", "猫专用牙刷", "护理用品", "不要用人牙膏", "Virbac C.E.T.", "C.E.T复合酶牙膏", "怡粒多", "益口清", "Royal Canin", "Feline Greenies", "Purina DentaLife", "Healthymouth"],
     mustNot: ["多西环素", "阿奇霉素", "品牌白名单", "brand_whitelist"],
   },
   {
@@ -194,7 +194,8 @@ async function main() {
       expectIncludes(preview, PRODUCT_CATALOG_MUST, `${c.name}:本地产品资料库字段`);
     }
     if (c.name.startsWith("口腔护理")) {
-      expectOrder(preview, "Royal Canin", "Virbac C.E.T.", `${c.name}:CN 优先国内官方可得产品`);
+      expectIncludes(preview, ["oral_virbac_cet_toothpaste_kit", "availability_cn: known_cn_official", "market_status: cn_official_source_active"], `${c.name}:维克中国官方来源`);
+      expectOrder(preview, "Virbac C.E.T.", "Feline Greenies", `${c.name}:CN 优先国内官方可得产品`);
       expectOrder(preview, "Royal Canin", "Healthymouth", `${c.name}:CN 优先国内官方可得产品`);
     }
     expectIncludes(preview, c.must, c.name);
