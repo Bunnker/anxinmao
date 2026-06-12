@@ -478,6 +478,13 @@ assert(
 const behaviorPageSource = read("src/app/behavior/page.tsx");
 
 includesAll(behaviorPageSource, [
+  "CASE_SUMMARY_COPY_START",
+  "CASE_SUMMARY_COPY_END",
+  "function extractCaseSummaryCopyText",
+  "function ChatCaseSummaryCard",
+  "navigator.clipboard.writeText(copyText)",
+  "已复制",
+  "复制失败,可以长按下方文字手动复制。",
   "function hasMedicalConversation",
   "showCaseSummary",
   "function generateChatCaseSummary",

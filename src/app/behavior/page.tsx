@@ -34,6 +34,12 @@ type MedicalChatContext = {
   qa?: string; // 分诊问答记录(问了什么、用户答了什么)
 };
 
+const CASE_SUMMARY_TITLE = "## 给医生看的病情说明";
+const CASE_SUMMARY_COPY_START = "<!--CASE_SUMMARY_COPY_START-->";
+const CASE_SUMMARY_COPY_END = "<!--CASE_SUMMARY_COPY_END-->";
+const CASE_SUMMARY_INTRO =
+  "我把上面的信息整理成一段可以直接给医生看的说明。继续补充新情况也没关系,这段会留在聊天里。";
+
 function isCaseSummaryOutput(value: unknown): value is CaseSummaryOutput {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const summary = value as Record<string, unknown>;
@@ -48,18 +54,46 @@ function isCaseSummaryOutput(value: unknown): value is CaseSummaryOutput {
 
 function renderChatCaseSummaryMessage(summary: CaseSummaryOutput): string {
   return [
-    "## 给医生看的病情说明",
-    "我把上面的信息整理成一段可以直接给医生看的说明。继续补充新情况也没关系,这段会留在聊天里。",
+    CASE_SUMMARY_TITLE,
+    CASE_SUMMARY_INTRO,
     "",
+    CASE_SUMMARY_COPY_START,
     summary.copyText,
+    CASE_SUMMARY_COPY_END,
   ]
     .filter(Boolean)
     .join("\n");
 }
 
+function stripCaseSummaryCopyMarkers(text: string): string {
+  return text
+    .replaceAll(CASE_SUMMARY_COPY_START, "")
+    .replaceAll(CASE_SUMMARY_COPY_END, "")
+    .trim();
+}
+
+function extractCaseSummaryCopyText(text: string): string | null {
+  const startIndex = text.indexOf(CASE_SUMMARY_COPY_START);
+  const endIndex = text.indexOf(CASE_SUMMARY_COPY_END);
+  if (startIndex !== -1 && endIndex > startIndex) {
+    const copyText = text
+      .slice(startIndex + CASE_SUMMARY_COPY_START.length, endIndex)
+      .trim();
+    return copyText || null;
+  }
+
+  if (!text.includes(CASE_SUMMARY_TITLE)) return null;
+
+  const legacyCopyText = text
+    .replace(CASE_SUMMARY_TITLE, "")
+    .replace(CASE_SUMMARY_INTRO, "")
+    .trim();
+  return legacyCopyText || null;
+}
+
 function isChatCaseSummaryMessage(message: Msg | undefined): boolean {
   return message?.role === "assistant" &&
-    message.content.includes("## 给医生看的病情说明");
+    message.content.includes(CASE_SUMMARY_TITLE);
 }
 
 function clientRegionPayload() {
@@ -76,7 +110,8 @@ async function trackCaseSummaryEvent(
   name:
     | "case_summary_opened"
     | "case_summary_generated"
-    | "case_summary_from_chat",
+    | "case_summary_from_chat"
+    | "case_summary_copied",
   meta: Record<string, unknown>,
 ) {
   try {
@@ -306,6 +341,99 @@ function MarkdownMessage({
   );
 }
 
+async function writeClipboardText(copyText: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(copyText);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = copyText;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try {
+    const copied = document.execCommand("copy");
+    if (!copied) throw new Error("copy failed");
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
+function ChatCaseSummaryCard({
+  text,
+  streaming,
+}: {
+  text: string;
+  streaming?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState("");
+  const copyText = extractCaseSummaryCopyText(text);
+  const visibleText = stripCaseSummaryCopyMarkers(text);
+
+  if (!copyText) {
+    return <MarkdownMessage text={visibleText} streaming={streaming} />;
+  }
+
+  const caseSummaryCopyText = copyText;
+
+  async function copy() {
+    setCopyError("");
+    try {
+      await writeClipboardText(caseSummaryCopyText);
+      setCopied(true);
+      void trackCaseSummaryEvent("case_summary_copied", {
+        source: "chat",
+        contentLength: caseSummaryCopyText.length,
+        includesUnknown: caseSummaryCopyText.includes("不详"),
+      });
+    } catch {
+      setCopyError("复制失败,可以长按下方文字手动复制。");
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[15px] font-semibold leading-snug text-ink">
+            给医生看的病情说明
+          </p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-ink-faint">
+            已整理成可直接发给医生的一段话,后续新消息也会留在聊天里。
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void copy()}
+          className="shrink-0 rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-medium text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-200 active:scale-[0.97]"
+        >
+          {copied ? "已复制" : "复制"}
+        </button>
+      </div>
+
+      <div className="select-text rounded-[22px] border border-[var(--line)] bg-white/70 px-4 py-3.5 shadow-[var(--shadow-control)]">
+        <MarkdownMessage text={caseSummaryCopyText} streaming={streaming} />
+      </div>
+
+      {copyError ? (
+        <p className="text-[12.5px] leading-relaxed text-[var(--red)]">
+          {copyError}
+        </p>
+      ) : (
+        <p className="text-[12px] leading-relaxed text-ink-faint">
+          复制后可以直接发给医生,也可以自己删改隐私信息。
+        </p>
+      )}
+    </div>
+  );
+}
+
 function CatTag() {
   return (
     <div className="mb-2.5 flex items-center gap-2">
@@ -345,7 +473,11 @@ function AssistantCard({
     <div className="max-w-[96%] self-start">
       <CatTag />
       <div className="rounded-[28px] rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
-        <MarkdownMessage text={text} streaming={streaming} />
+        {isChatCaseSummaryMessage({ role: "assistant", content: text }) ? (
+          <ChatCaseSummaryCard text={text} streaming={streaming} />
+        ) : (
+          <MarkdownMessage text={text} streaming={streaming} />
+        )}
       </div>
     </div>
   );
