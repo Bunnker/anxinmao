@@ -416,12 +416,14 @@ function FollowupChips({
   items,
   disabled,
   onPick,
+  children,
 }: {
   items: string[];
   disabled: boolean;
   onPick: (t: string) => void;
+  children?: ReactNode;
 }) {
-  if (items.length === 0) return null;
+  if (items.length === 0 && !children) return null;
   return (
     <div className="flex max-w-[96%] flex-col gap-2 self-start">
       <span className="ml-1 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
@@ -442,6 +444,7 @@ function FollowupChips({
           </span>
         </button>
       ))}
+      {children}
     </div>
   );
 }
@@ -838,25 +841,27 @@ function BehaviorContent() {
             )}
             {!loading &&
               !error &&
-              followups.length > 0 &&
               messages[messages.length - 1]?.role === "assistant" && (
                 <FollowupChips
                   items={followups}
                   disabled={loading}
                   onPick={send}
-                />
+                >
+                  {showCaseSummary && (
+                    <CaseSummaryPanel
+                      source="chat"
+                      label="整理成给医生看的病情说明"
+                      description="把上面的症状、猫咪档案和分诊结论整理成一段可复制给兽医的话"
+                      payload={caseSummaryPayload}
+                      tier={medicalContext?.tier}
+                      symptom={medicalContext?.symptom}
+                      hasCatProfile={Boolean(cat)}
+                      hasTriageContext={Boolean(medicalContext)}
+                      variant="followup"
+                    />
+                  )}
+                </FollowupChips>
               )}
-            {showCaseSummary && (
-              <CaseSummaryPanel
-                source="chat"
-                label="总结现在情况"
-                payload={caseSummaryPayload}
-                tier={medicalContext?.tier}
-                symptom={medicalContext?.symptom}
-                hasCatProfile={Boolean(cat)}
-                hasTriageContext={Boolean(medicalContext)}
-              />
-            )}
             {error && <ErrorRow text={error} onRetry={retry} />}
             <div ref={endRef} />
           </div>

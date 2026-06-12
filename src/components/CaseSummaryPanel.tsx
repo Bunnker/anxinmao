@@ -6,12 +6,13 @@ import type { CaseSummaryOutput } from "@/lib/case-summary";
 type Props = {
   source: "report" | "chat";
   label: string;
+  description?: string;
   payload: Record<string, unknown>;
   tier?: string;
   symptom?: string;
   hasCatProfile: boolean;
   hasTriageContext: boolean;
-  variant?: "panel" | "action";
+  variant?: "panel" | "action" | "followup";
 };
 
 type CaseSummaryEventName =
@@ -87,6 +88,7 @@ function caseSummaryErrorMessage(
 export function CaseSummaryPanel({
   source,
   label,
+  description,
   payload,
   tier,
   symptom,
@@ -191,13 +193,16 @@ export function CaseSummaryPanel({
   }
 
   const isAction = variant === "action";
-  const shellClass = isAction
+  const isFollowup = variant === "followup";
+  const shellClass = isAction || isFollowup
     ? summary
       ? "mt-3 rounded-[28px] bg-surface p-4 shadow-[var(--shadow-control)]"
       : "mt-3"
     : "mt-3 rounded-[28px] bg-surface p-4 shadow-[var(--shadow-control)]";
   const triggerClass = isAction
     ? "flex w-full items-center justify-between gap-3 rounded-[28px] bg-surface px-4 py-3.5 text-left text-[14px] font-medium text-ink shadow-[var(--shadow-control)] transition-transform duration-300 active:scale-[0.985] disabled:opacity-60"
+    : isFollowup
+      ? "group flex w-full items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-surface px-4 py-2.5 text-left shadow-[var(--shadow-control)] transition-colors duration-150 active:bg-[var(--surface-2)] disabled:opacity-60"
     : "flex w-full items-center justify-between gap-3 rounded-[22px] bg-accent px-4 py-3.5 text-left text-[14.5px] font-medium text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-300 active:scale-[0.985] disabled:opacity-60";
 
   return (
@@ -209,8 +214,32 @@ export function CaseSummaryPanel({
           disabled={loading}
           className={triggerClass}
         >
-          <span>{loading ? "正在整理病情说明..." : label}</span>
-          <span className={isAction ? "text-ink-faint" : undefined} aria-hidden="true">
+          <span className="min-w-0">
+            <span
+              className={
+                isFollowup
+                  ? "block text-[13.5px] font-medium leading-snug text-ink"
+                  : undefined
+              }
+            >
+              {loading ? "正在整理病情说明..." : label}
+            </span>
+            {description && !loading ? (
+              <span className="mt-1 block text-[12px] leading-snug text-ink-faint">
+                {description}
+              </span>
+            ) : null}
+          </span>
+          <span
+            className={
+              isFollowup
+                ? "shrink-0 text-[12.5px] font-medium text-accent transition-transform duration-200 group-active:translate-x-0.5"
+                : isAction
+                  ? "text-ink-faint"
+                  : undefined
+            }
+            aria-hidden="true"
+          >
             {loading ? "..." : "→"}
           </span>
         </button>
