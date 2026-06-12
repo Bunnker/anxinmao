@@ -228,7 +228,18 @@ function PetNudge({
   // ── 院子漫游(仅无事可说的 idle 场景):坐着 → 随机散步/洗脸/打盹 ──
   // x 是猫在院子里的横向位置,散步用 CSS transition 匀速走过去。
   const yardRef = useRef<HTMLElement | null>(null);
-  const catRef = useRef<HTMLButtonElement | null>(null);
+  const catRef = useRef<HTMLDivElement | null>(null);
+  // 读猫当前实际横位(散步动画进行中是 transform 矩阵里的 tx)
+  function readCatX(fallback: number): number {
+    const el = catRef.current;
+    if (!el) return fallback;
+    const t = getComputedStyle(el).transform;
+    if (!t || t === "none") return fallback;
+    const m = t.match(/matrix\(([^)]+)\)/);
+    if (!m) return fallback;
+    const tx = parseFloat(m[1].split(",")[4]);
+    return Number.isFinite(tx) ? tx : fallback;
+  }
   const [yardW, setYardW] = useState(343);
   const [roam, setRoam] = useState<{
     kind: "sit" | "stroll" | "groom" | "nap";
@@ -251,13 +262,16 @@ function PetNudge({
     const apply = () => {
       setCalm(mq.matches || document.hidden);
       if (document.hidden) {
-        setRoam((r) => {
-          if (r.kind !== "stroll") return r;
-          const left = catRef.current
-            ? parseFloat(getComputedStyle(catRef.current).left) || r.x
-            : r.x;
-          return { kind: "sit", x: Math.round(left), facing: r.facing, dur: 0 };
-        });
+        setRoam((r) =>
+          r.kind === "stroll"
+            ? {
+                kind: "sit",
+                x: Math.round(readCatX(r.x)),
+                facing: r.facing,
+                dur: 0,
+              }
+            : r,
+        );
       }
     };
     apply();
@@ -271,15 +285,16 @@ function PetNudge({
 
   function petTheCat() {
     // 散步途中被摸:就地停下再回应
-    setRoam((r) => {
-      if (r.kind === "stroll") {
-        const left = catRef.current
-          ? parseFloat(getComputedStyle(catRef.current).left) || r.x
-          : r.x;
-        return { kind: "sit", x: Math.round(left), facing: r.facing, dur: 0 };
-      }
-      return { ...r, kind: "sit", dur: 0 };
-    });
+    setRoam((r) =>
+      r.kind === "stroll"
+        ? {
+            kind: "sit",
+            x: Math.round(readCatX(r.x)),
+            facing: r.facing,
+            dur: 0,
+          }
+        : { ...r, kind: "sit", dur: 0 },
+    );
     setTalk(PET_TALK[Math.floor(Math.random() * PET_TALK.length)]);
     setTouch((t) => ({
       action: Math.random() < 0.6 ? "petted" : "groom",
@@ -315,7 +330,7 @@ function PetNudge({
       t = window.setTimeout(
         () => {
           const w = yardRef.current?.offsetWidth ?? yardW;
-          const maxX = Math.max(0, w - 86);
+          const maxX = Math.max(0, w - 84);
           const roll = Math.random();
           if (roll < 0.5 && maxX > 120) {
             const target = Math.round(Math.random() * maxX);
@@ -391,7 +406,7 @@ function PetNudge({
       {/* 真·逐帧动画:摸猫随机享受/洗脸并每次重播,其余按场景行(雪碧图挂了就回静态图) */}
       <PetSprite
         state={spriteState}
-        width={86}
+        width={84}
         fallbackSrc={PET_FACE_SRC[fallbackFace]}
         className="drop-shadow-sm"
         playKey={touch?.n}
@@ -416,13 +431,13 @@ function PetNudge({
     const showBubble =
       talk !== null || (roam.kind === "sit" && roam.x < 40);
     // 选剩余空间够的一侧,宽度跟着空间缩,避免压到猫身上
-    const rightRoom = yardW - roam.x - 100;
+    const rightRoom = yardW - roam.x - 98;
     const bubbleOnRight = rightRoom >= 150;
     const bubbleW = bubbleOnRight
       ? Math.min(240, rightRoom)
       : Math.min(240, Math.max(140, roam.x - 16));
     const bubbleStyle = bubbleOnRight
-      ? { left: roam.x + 92, maxWidth: bubbleW }
+      ? { left: roam.x + 90, maxWidth: bubbleW }
       : { left: Math.max(8, roam.x - 8 - bubbleW), maxWidth: bubbleW };
     return (
       <section
@@ -430,27 +445,36 @@ function PetNudge({
         className="relative mt-5 h-[104px]"
         aria-label={`${cat.name}的提醒`}
       >
-        <button
+        {/* 位移走合成器(transform 独立图层),避免 left+背景换帧+阴影联手留残影;
+            呼吸 scale 动画在内层按钮上,跟位移不抢同一个 transform */}
+        <div
           ref={catRef}
-          type="button"
-          onClick={petTheCat}
-          aria-label={`摸摸${cat.name}`}
-          className="pet-enter absolute bottom-0 cursor-pointer select-none"
+          className="absolute bottom-0 left-0"
           style={{
-            left: roam.x,
+            transform: `translateX(${roam.x}px)`,
             transition:
-              roam.kind === "stroll" ? `left ${roam.dur}ms linear` : "none",
+              roam.kind === "stroll"
+                ? `transform ${roam.dur}ms linear`
+                : "none",
+            willChange: roam.kind === "stroll" ? "transform" : undefined,
           }}
         >
-          <PetSprite
-            state={yardSprite}
-            width={86}
-            fallbackSrc={PET_FACE_SRC[talk ? "happy" : "calm"]}
-            className="drop-shadow-sm"
-            playKey={touch?.n}
-            idleFlourish={false}
-          />
-        </button>
+          <button
+            type="button"
+            onClick={petTheCat}
+            aria-label={`摸摸${cat.name}`}
+            className="pet-enter block cursor-pointer select-none"
+          >
+            <PetSprite
+              state={yardSprite}
+              width={84}
+              fallbackSrc={PET_FACE_SRC[talk ? "happy" : "calm"]}
+              className="drop-shadow-sm"
+              playKey={touch?.n}
+              idleFlourish={false}
+            />
+          </button>
+        </div>
         {showBubble && (
           <div
             className={

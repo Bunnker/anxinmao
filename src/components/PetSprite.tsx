@@ -104,7 +104,8 @@ function preloadSheet(cb: (ok: boolean) => void) {
 
 export default function PetSprite({
   state,
-  width = 86,
+  // 84 的格子数学全程整数(高恰 91、行列偏移无小数),避免缩放采样的边缘闪烁
+  width = 84,
   fallbackSrc,
   className,
   playKey,
