@@ -15,6 +15,7 @@ import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
 import { Welcome } from "@/components/Welcome";
 import { Guide } from "@/components/Guide";
+import PetSprite, { type PetSpriteState } from "@/components/PetSprite";
 import type { Cat, CatRecord, Store } from "@/types/cat";
 
 // 新手教程「看过了」标记 —— 与猫档案分开,首次进入弹一次,首页可重开。
@@ -213,14 +214,12 @@ function PetNudge({
 }) {
   // 摸猫彩蛋:蹦一下 + 临时说一句猫语(盖过当前气泡 2.6s)
   const [talk, setTalk] = useState<string | null>(null);
-  const [bounceKey, setBounceKey] = useState(0);
   // 没事时的闲话 —— 惰性初始化,进页随机一句,渲染期间不闪变
   const [idleLine] = useState(
     () => PET_IDLE[Math.floor(Math.random() * PET_IDLE.length)],
   );
   function petTheCat() {
     setTalk(PET_TALK[Math.floor(Math.random() * PET_TALK.length)]);
-    setBounceKey((k) => k + 1);
     setTimeout(() => setTalk(null), 2600);
   }
 
@@ -235,16 +234,30 @@ function PetNudge({
           ? ({ kind: "starter" } as const)
           : ({ kind: "idle" } as const);
 
-  // 表情随场景:询问跟进=好奇歪头 / 回执按结果 / 护理提醒、闲着=安心(可眨眼)/ 引导=开心
-  const face: PetFace = talk
-    ? "happy"
+  // 动作随场景(雪碧图九态):摸猫=蹦 / 回执好转=蹦、没好转=耷耳 / 待回答=双爪合十期待 /
+  // 新人引导=招手 / 护理提醒、闲着=idle(自带眨眼呼吸)。
+  const spriteState: PetSpriteState = talk
+    ? "jumping"
     : say.kind === "note"
-      ? (followupNote?.face ?? "happy")
+      ? followupNote?.face === "worry"
+        ? "failed"
+        : followupNote?.face === "curious"
+          ? "review"
+          : "jumping"
       : say.kind === "followup"
-        ? "curious"
-        : say.kind === "care" || say.kind === "idle"
-          ? "calm"
-          : "happy";
+        ? "waiting"
+        : say.kind === "starter"
+          ? "waving"
+          : "idle";
+  // 雪碧图未就绪/加载失败时的静态占位(沿用旧四表情透明图)
+  const fallbackFace: PetFace =
+    spriteState === "jumping" || spriteState === "waving"
+      ? "happy"
+      : spriteState === "failed"
+        ? "worry"
+        : spriteState === "waiting" || spriteState === "review"
+          ? "curious"
+          : "calm";
 
   const bubbleCls =
     "pet-bubble min-w-0 flex-1 rounded-[22px] rounded-bl-md bg-surface px-4 py-3.5 shadow-[var(--shadow-card)]";
@@ -256,36 +269,13 @@ function PetNudge({
       aria-label={`摸摸${cat.name}`}
       className="pet-enter shrink-0 cursor-pointer select-none"
     >
-      <span
-        key={bounceKey}
-        className={
-          "relative block h-[86px] w-[86px] " +
-          (bounceKey > 0 ? "pet-bounce" : "")
-        }
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={PET_FACE_SRC[face]}
-          alt=""
-          width={86}
-          height={86}
-          draggable={false}
-          className="h-[86px] w-[86px] object-contain drop-shadow-sm"
-        />
-        {/* 眨眼帧 —— 仅安心表情有闭眼素材,周期性闪现 0.15s */}
-        {face === "calm" && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src="/guide/cat-calm-blink-t.png"
-            alt=""
-            width={86}
-            height={86}
-            draggable={false}
-            aria-hidden="true"
-            className="pet-blink-frame absolute inset-0 h-[86px] w-[86px] object-contain"
-          />
-        )}
-      </span>
+      {/* 真·逐帧动画:摸猫切 jumping 行,其余按场景行循环(雪碧图挂了就回静态图) */}
+      <PetSprite
+        state={spriteState}
+        width={86}
+        fallbackSrc={PET_FACE_SRC[fallbackFace]}
+        className="drop-shadow-sm"
+      />
     </button>
   );
 

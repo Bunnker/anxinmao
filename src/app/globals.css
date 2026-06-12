@@ -172,20 +172,6 @@ button[class*="bg-surface"] {
     transform: scale(1);
   }
 }
-@keyframes pet-bounce {
-  0% {
-    transform: scale(1);
-  }
-  30% {
-    transform: scale(1.16) rotate(-5deg);
-  }
-  60% {
-    transform: scale(0.95);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
 .pet-enter {
   animation:
     pet-pop-in 0.45s ease-out,
@@ -194,35 +180,9 @@ button[class*="bg-surface"] {
 .pet-bubble {
   animation: bubble-in 0.35s 0.12s ease-out backwards;
 }
-.pet-bounce {
-  animation: pet-bounce 0.5s ease-out;
-}
 @media (prefers-reduced-motion: reduce) {
   .pet-enter,
-  .pet-bubble,
-  .pet-bounce {
+  .pet-bubble {
     animation: none;
-  }
-}
-
-/* 眨眼:闭眼帧叠在睁眼图上,每 ~4.6s 闪现 0.15s;减弱动效时禁用 */
-@keyframes pet-blink {
-  0%,
-  94.9%,
-  100% {
-    opacity: 0;
-  }
-  95%,
-  98% {
-    opacity: 1;
-  }
-}
-.pet-blink-frame {
-  animation: pet-blink 4.6s linear infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .pet-blink-frame {
-    animation: none;
-    opacity: 0;
   }
 }
