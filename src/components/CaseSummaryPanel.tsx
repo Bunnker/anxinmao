@@ -11,6 +11,7 @@ type Props = {
   symptom?: string;
   hasCatProfile: boolean;
   hasTriageContext: boolean;
+  variant?: "panel" | "action";
 };
 
 type CaseSummaryEventName =
@@ -91,6 +92,7 @@ export function CaseSummaryPanel({
   symptom,
   hasCatProfile,
   hasTriageContext,
+  variant = "panel",
 }: Props) {
   const [summary, setSummary] = useState<CaseSummaryOutput | null>(null);
   const [loading, setLoading] = useState(false);
@@ -188,17 +190,29 @@ export function CaseSummaryPanel({
     }
   }
 
+  const isAction = variant === "action";
+  const shellClass = isAction
+    ? summary
+      ? "mt-3 rounded-[28px] bg-surface p-4 shadow-[var(--shadow-control)]"
+      : "mt-3"
+    : "mt-3 rounded-[28px] bg-surface p-4 shadow-[var(--shadow-control)]";
+  const triggerClass = isAction
+    ? "flex w-full items-center justify-between gap-3 rounded-[28px] bg-surface px-4 py-3.5 text-left text-[14px] font-medium text-ink shadow-[var(--shadow-control)] transition-transform duration-300 active:scale-[0.985] disabled:opacity-60"
+    : "flex w-full items-center justify-between gap-3 rounded-[22px] bg-accent px-4 py-3.5 text-left text-[14.5px] font-medium text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-300 active:scale-[0.985] disabled:opacity-60";
+
   return (
-    <section className="mt-3 rounded-[28px] bg-surface p-4 shadow-[var(--shadow-control)]">
+    <section className={shellClass}>
       {!summary ? (
         <button
           type="button"
           onClick={() => void generate()}
           disabled={loading}
-          className="flex w-full items-center justify-between gap-3 rounded-[22px] bg-accent px-4 py-3.5 text-left text-[14.5px] font-medium text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-300 active:scale-[0.985] disabled:opacity-60"
+          className={triggerClass}
         >
           <span>{loading ? "正在整理病情说明..." : label}</span>
-          <span aria-hidden="true">{loading ? "..." : "→"}</span>
+          <span className={isAction ? "text-ink-faint" : undefined} aria-hidden="true">
+            {loading ? "..." : "→"}
+          </span>
         </button>
       ) : (
         <div>

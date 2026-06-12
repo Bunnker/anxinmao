@@ -1438,27 +1438,6 @@ function ReportContent() {
       {/* 兽医审阅与不替代面诊提示,紧跟分级结论。 */}
       <ReviewedNotice className="mt-3" />
 
-      <CaseSummaryPanel
-        source="report"
-        label={caseSummaryLabel}
-        payload={caseSummaryPayload}
-        tier={shownTier}
-        symptom={symptom}
-        hasCatProfile={Boolean(cat)}
-        hasTriageContext={true}
-      />
-
-      <Link
-        href={askHref}
-        onClick={saveAskHandoff}
-        className="mt-3 flex items-center justify-between rounded-[28px] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)]"
-      >
-        <span>继续补充问问</span>
-        <span className="text-ink-faint" aria-hidden="true">
-          →
-        </span>
-      </Link>
-
       {/* 现在做什么 */}
       <section className="mt-8">
         <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-faint">
@@ -1522,6 +1501,30 @@ function ReportContent() {
         escalateTitle={info.escalateTitle}
         escalateItems={info.escalateItems}
       />
+
+      <div className="mt-3">
+        <Link
+          href={askHref}
+          onClick={saveAskHandoff}
+          className="flex items-center justify-between rounded-[28px] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)]"
+        >
+          <span>继续补充问问</span>
+          <span className="text-ink-faint" aria-hidden="true">
+            →
+          </span>
+        </Link>
+
+        <CaseSummaryPanel
+          source="report"
+          label={caseSummaryLabel}
+          payload={caseSummaryPayload}
+          tier={shownTier}
+          symptom={symptom}
+          hasCatProfile={Boolean(cat)}
+          hasTriageContext={true}
+          variant="action"
+        />
+      </div>
 
       <div className="flex-1" />
       <Disclaimer />
