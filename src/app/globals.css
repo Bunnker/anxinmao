@@ -180,20 +180,22 @@ button[class*="bg-surface"] {
 .pet-bubble {
   animation: bubble-in 0.35s 0.12s ease-out backwards;
 }
-/* 思考泡(功能入口):错峰冒出来 + 缓慢上下漂浮;延迟由 inline animationDelay 给
-   (两个值分别对应 bubble-in 和 thought-drift) */
-.thought-pop {
+/* 心事泡(功能入口):猫坐下思考时点链和泡错峰「冒」出来,然后缓慢漂浮。
+   inline animationDelay 给两个值:冒出延迟, 漂浮起始相位 */
+.thought-in {
   animation:
-    bubble-in 0.4s ease-out backwards,
-    thought-drift 4.2s ease-in-out 0.4s infinite alternate;
+    thought-in 0.35s ease-out backwards,
+    thought-drift 4.2s ease-in-out 0.8s infinite alternate;
 }
-.thought-float {
-  animation: thought-drift 4.2s ease-in-out infinite alternate;
-}
-.thought-pop.thought-float {
-  animation:
-    bubble-in 0.4s ease-out backwards,
-    thought-drift 4.2s ease-in-out infinite alternate;
+@keyframes thought-in {
+  from {
+    opacity: 0;
+    transform: scale(0.78) translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 @keyframes thought-drift {
   from {
@@ -206,8 +208,7 @@ button[class*="bg-surface"] {
 @media (prefers-reduced-motion: reduce) {
   .pet-enter,
   .pet-bubble,
-  .thought-pop,
-  .thought-float {
+  .thought-in {
     animation: none;
   }
 }

@@ -428,7 +428,7 @@ function PetNudge({
             : roam.kind === "wake"
               ? (roam.wake ?? "stretch")
               : "idle";
-    // 摸猫说话才冒对话泡;平时的「心事」由下方思考泡(功能入口)承担
+    // 摸猫说话才冒对话泡;坐着思考时冒「心事泡」(功能入口,跟着猫选边)
     const showBubble = talk !== null;
     // 选剩余空间够的一侧,宽度跟着空间缩,避免压到猫身上
     const rightRoom = yardW - roam.x - 98;
@@ -439,11 +439,41 @@ function PetNudge({
     const bubbleStyle = bubbleOnRight
       ? { left: roam.x + 90, maxWidth: bubbleW }
       : { left: Math.max(8, roam.x - 8 - bubbleW), maxWidth: bubbleW };
+    // 心事泡:猫坐下(思考)才冒,散步/洗脸/打盹时收起 —— 入口是猫的行为产物。
+    // 猫在左半场泡往右上冒,右半场往左上冒;三个点链从猫头斜向泡群。
+    const thinking = roam.kind === "sit" && !talk;
+    const toRight = roam.x + 42 < yardW / 2;
+    const dotBase = roam.x + (toRight ? 62 : 14);
+    const dots = [
+      { size: 6, bottom: 100, dx: toRight ? 0 : 0 },
+      { size: 9, bottom: 124, dx: toRight ? 26 : -28 },
+      { size: 12, bottom: 150, dx: toRight ? 54 : -58 },
+    ];
+    const THOUGHTS = [
+      {
+        href: "/symptoms",
+        label: "看病",
+        aria: "它有点不对劲?选症状做分诊,30 秒红黄绿就医建议",
+        cls: "bg-accent text-accent-fg shadow-[var(--shadow-accent)]",
+      },
+      {
+        href: "/behavior",
+        label: "聊天",
+        aria: "想问点什么?生病、喂养、行为都能聊",
+        cls: "bg-surface text-ink shadow-[var(--shadow-card)]",
+      },
+      {
+        href: "/knowledge",
+        label: "小知识",
+        aria: "看着吓人但不必慌的 6 种情况,权威兽医来源",
+        cls: "bg-surface text-ink shadow-[var(--shadow-control)]",
+      },
+    ];
     return (
       <section
         ref={yardRef}
-        className="relative mt-5 h-[104px]"
-        aria-label={`${cat.name}的提醒`}
+        className="relative mt-4 h-[264px]"
+        aria-label={`${cat.name}的家`}
       >
         {/* 位移走合成器(transform 独立图层),避免 left+背景换帧+阴影联手留残影;
             呼吸 scale 动画在内层按钮上,跟位移不抢同一个 transform */}
@@ -475,6 +505,53 @@ function PetNudge({
             />
           </button>
         </div>
+
+        {thinking && (
+          <div key={`th-${Math.round(roam.x)}`}>
+            {dots.map((d, i) => (
+              <span
+                key={i}
+                aria-hidden="true"
+                className="thought-in absolute rounded-full bg-surface shadow-[var(--shadow-control)]"
+                style={{
+                  width: d.size,
+                  height: d.size,
+                  bottom: d.bottom,
+                  left: Math.max(4, Math.min(yardW - 16, dotBase + d.dx)),
+                  animationDelay: `${i * 0.09}s, ${0.7 + i * 0.35}s`,
+                }}
+              />
+            ))}
+            <nav
+              className={
+                "absolute top-0 flex flex-col gap-2 " +
+                (toRight ? "right-1 items-end" : "left-1 items-start")
+              }
+              aria-label="功能入口"
+            >
+              {THOUGHTS.map((t, i) => (
+                <Link
+                  key={t.href}
+                  href={t.href}
+                  aria-label={t.aria}
+                  className={
+                    "thought-in px-7 py-2.5 text-[15.5px] font-medium tracking-wide transition-transform duration-300 active:scale-[0.94] " +
+                    t.cls +
+                    (i === 1 ? (toRight ? " mr-5" : " ml-5") : "") +
+                    (i === 2 ? (toRight ? " mr-2" : " ml-2") : "")
+                  }
+                  style={{
+                    borderRadius: "50%",
+                    animationDelay: `${0.28 + i * 0.13}s, ${1 + i * 0.45}s`,
+                  }}
+                >
+                  {t.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        )}
+
         {showBubble && (
           <div
             className={
@@ -924,56 +1001,8 @@ export default function HomePage() {
         onPick={pickOutcome}
       />
 
-      {/* 小猫的思考泡 —— 真·漫画椭圆泡:不占满宽、右侧错落漂浮,从猫的方向
-          经两个引导点斜着冒上来;整泡可点,猫第一人称。分诊泡保持 accent 锚点。 */}
-      <section className="relative mt-1 flex flex-col gap-3 pb-1" aria-label="功能入口">
-        <div className="flex items-center gap-2.5 pl-10" aria-hidden="true">
-          <span className="thought-float size-[8px] rounded-full bg-surface shadow-[var(--shadow-control)]" />
-          <span
-            className="thought-float size-[14px] rounded-full bg-surface shadow-[var(--shadow-control)]"
-            style={{ animationDelay: "0.5s" }}
-          />
-        </div>
-
-        <Link
-          href="/symptoms"
-          className="thought-pop thought-float self-end px-9 py-4 text-center bg-accent text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.97]"
-          style={{ borderRadius: "50%", animationDelay: "0.05s, 0s" }}
-        >
-          <span className="block text-[1.08rem] font-medium leading-tight tracking-tight">
-            我有点不对劲,帮我看看?
-          </span>
-          <span className="mt-0.5 block text-[11.5px] tracking-wide opacity-80">
-            红黄绿就医建议 · 30 秒
-          </span>
-        </Link>
-
-        <Link
-          href="/behavior"
-          className="thought-pop thought-float self-end mr-10 px-9 py-3.5 text-center bg-surface text-ink shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.97]"
-          style={{ borderRadius: "50%", animationDelay: "0.18s, 0.9s" }}
-        >
-          <span className="block text-[1rem] font-medium leading-tight tracking-tight">
-            想问我点什么?
-          </span>
-          <span className="mt-0.5 block text-[11.5px] tracking-wide text-ink-soft">
-            生病 / 喂养 / 行为都能聊
-          </span>
-        </Link>
-
-        <Link
-          href="/knowledge"
-          className="thought-pop thought-float self-end mr-4 px-8 py-3 text-center bg-surface text-ink shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.97]"
-          style={{ borderRadius: "50%", animationDelay: "0.3s, 1.7s" }}
-        >
-          <span className="block text-[13.5px] font-medium leading-tight">
-            看着吓人的情况,其实不慌
-          </span>
-          <span className="mt-0.5 block text-[11px] text-ink-soft">
-            6 种 · 权威兽医来源
-          </span>
-        </Link>
-      </section>
+      {/* 功能入口已变成小猫的「心事泡」,长在上面的院子里(坐下思考时冒出);
+          底部 Tab 的分诊/问答仍是常驻兜底。 */}
 
       {/* 最近 */}
       <section className="mt-6 flex-1">
