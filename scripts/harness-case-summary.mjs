@@ -512,6 +512,14 @@ assert(
   "daily-care phrase 半夜跑酷 must not be part of behavior health helper keywords",
 );
 assert(
+  healthHelperSource.includes('.filter((m) => m.role === "user")'),
+  "behavior health helper must classify from user messages, not assistant safety caveats",
+);
+assert(
+  !healthHelperSource.includes("...messages.map((m) => m.content)"),
+  "assistant replies must not trigger behavior case summary visibility",
+);
+assert(
   !source.includes("半夜跑酷"),
   "daily-care phrase 半夜跑酷 must not be part of server medical keywords",
 );
