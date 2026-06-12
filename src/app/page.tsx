@@ -212,8 +212,8 @@ function PetNudge({
   recordsEmpty: boolean;
   onPick: (rec: CatRecord, oc: NonNullable<CatRecord["outcome"]>) => void;
 }) {
-  // 摸猫彩蛋:随机「眯眼享受 / 洗脸」+ 临时说一句猫语(盖过当前气泡 2.6s);
-  // n 递增让连续摸每次都从头重播动作
+  // 摸猫彩蛋:随机「眯眼享受 / 洗脸」+ 临时说一句猫语(盖过当前气泡 4.2s,
+  // 给慢节奏动作留足播完+定格回味的时间);n 递增让连续摸每次都从头重播动作
   const [talk, setTalk] = useState<string | null>(null);
   const [touch, setTouch] = useState<{
     action: "petted" | "groom";
@@ -234,7 +234,7 @@ function PetNudge({
     talkTimer.current = window.setTimeout(() => {
       setTalk(null);
       setTouch(null);
-    }, 2600);
+    }, 4200);
   }
 
   // 猫常驻:有事说事,没事也蹲在这儿说句闲话(宠物不该有事才出现)

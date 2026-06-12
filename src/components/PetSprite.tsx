@@ -50,7 +50,7 @@ const ROWS: Record<PetSpriteState, RowConfig> = {
     mode: "loop",
   },
   // 招手:抬到最高那帧就定格,不再放下(循环挥个不停反而忙乱)
-  waving: { row: 3, durations: [220, 220, 220, 280], mode: "hold", holdFrame: 2 },
+  waving: { row: 3, durations: [260, 260, 260, 280], mode: "hold", holdFrame: 2 },
   // 跳跃:庆祝跳一次,落定收尾
   jumping: { row: 4, durations: [140, 140, 140, 140, 280], mode: "hold" },
   // 低落:演一遍情绪后安静趴着,不反复垂头
@@ -62,14 +62,14 @@ const ROWS: Record<PetSpriteState, RowConfig> = {
   waiting: { row: 6, durations: [150, 150, 150, 150, 150, 260], mode: "loop" },
   working: { row: 7, durations: [120, 120, 120, 120, 120, 220], mode: "loop" },
   review: { row: 8, durations: [150, 150, 150, 150, 150, 280], mode: "loop" },
-  // 被摸享受:慢慢眯眼蹭过去,停在满足的表情上
+  // 被摸享受:慢慢眯眼蹭过去,停在满足的表情上 —— 真猫节奏,每个姿势细品
   petted: {
     row: 9,
-    durations: [240, 240, 260, 260, 300, 420],
+    durations: [380, 420, 480, 520, 560, 700],
     mode: "hold",
   },
-  // 洗脸:舔爪 → 抹头 → 挠耳后 → 坐好
-  groom: { row: 10, durations: [220, 220, 240, 240, 220, 320], mode: "hold" },
+  // 洗脸:舔爪 → 抹头 → 挠耳后 → 坐好 —— 慢悠悠的,像真猫洗脸不赶时间
+  groom: { row: 10, durations: [400, 480, 520, 560, 520, 600], mode: "hold" },
 };
 
 // idle 时偶发的自理小动作(下限/随机区间,毫秒)
