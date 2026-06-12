@@ -18,6 +18,7 @@ import { loadStore, saveConversation, STORAGE_KEY } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
 import { loadTriageHandoff } from "@/lib/triage-handoff";
 import { Disclaimer } from "@/components/Disclaimer";
+import type { CaseSummaryOutput } from "@/lib/case-summary";
 import type { Cat, RiskTier, Store } from "@/types/cat";
 
 // 问诊 / 养育问答 —— 对话式,接服务端 /api/behavior 调大模型。
@@ -33,6 +34,68 @@ type MedicalChatContext = {
   qa?: string; // 分诊问答记录(问了什么、用户答了什么)
 };
 
+const CASE_SUMMARY_TITLE = "## 给医生看的病情说明";
+const CASE_SUMMARY_COPY_START = "<!--CASE_SUMMARY_COPY_START-->";
+const CASE_SUMMARY_COPY_END = "<!--CASE_SUMMARY_COPY_END-->";
+const CASE_SUMMARY_INTRO =
+  "我把上面的信息整理成一段可以直接给医生看的说明。继续补充新情况也没关系,这段会留在聊天里。";
+
+function isCaseSummaryOutput(value: unknown): value is CaseSummaryOutput {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const summary = value as Record<string, unknown>;
+  return (
+    typeof summary.userSummary === "string" &&
+    typeof summary.doctorNote === "string" &&
+    Array.isArray(summary.doctorQuestions) &&
+    Array.isArray(summary.dontDo) &&
+    typeof summary.copyText === "string"
+  );
+}
+
+function renderChatCaseSummaryMessage(summary: CaseSummaryOutput): string {
+  return [
+    CASE_SUMMARY_TITLE,
+    CASE_SUMMARY_INTRO,
+    "",
+    CASE_SUMMARY_COPY_START,
+    summary.copyText,
+    CASE_SUMMARY_COPY_END,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function stripCaseSummaryCopyMarkers(text: string): string {
+  return text
+    .replaceAll(CASE_SUMMARY_COPY_START, "")
+    .replaceAll(CASE_SUMMARY_COPY_END, "")
+    .trim();
+}
+
+function extractCaseSummaryCopyText(text: string): string | null {
+  const startIndex = text.indexOf(CASE_SUMMARY_COPY_START);
+  const endIndex = text.indexOf(CASE_SUMMARY_COPY_END);
+  if (startIndex !== -1 && endIndex > startIndex) {
+    const copyText = text
+      .slice(startIndex + CASE_SUMMARY_COPY_START.length, endIndex)
+      .trim();
+    return copyText || null;
+  }
+
+  if (!text.includes(CASE_SUMMARY_TITLE)) return null;
+
+  const legacyCopyText = text
+    .replace(CASE_SUMMARY_TITLE, "")
+    .replace(CASE_SUMMARY_INTRO, "")
+    .trim();
+  return legacyCopyText || null;
+}
+
+function isChatCaseSummaryMessage(message: Msg | undefined): boolean {
+  return message?.role === "assistant" &&
+    message.content.includes(CASE_SUMMARY_TITLE);
+}
+
 function clientRegionPayload() {
   if (typeof navigator === "undefined") return undefined;
   const locale = navigator.language;
@@ -41,6 +104,25 @@ function clientRegionPayload() {
     locale,
     timeZone,
   };
+}
+
+async function trackCaseSummaryEvent(
+  name:
+    | "case_summary_opened"
+    | "case_summary_generated"
+    | "case_summary_from_chat"
+    | "case_summary_copied",
+  meta: Record<string, unknown>,
+) {
+  try {
+    await fetch("/api/case-summary/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, meta }),
+    });
+  } catch {
+    // 统计不能影响问答主流程。
+  }
 }
 
 const STARTERS = [
@@ -259,6 +341,99 @@ function MarkdownMessage({
   );
 }
 
+async function writeClipboardText(copyText: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(copyText);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = copyText;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try {
+    const copied = document.execCommand("copy");
+    if (!copied) throw new Error("copy failed");
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
+function ChatCaseSummaryCard({
+  text,
+  streaming,
+}: {
+  text: string;
+  streaming?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState("");
+  const copyText = extractCaseSummaryCopyText(text);
+  const visibleText = stripCaseSummaryCopyMarkers(text);
+
+  if (!copyText) {
+    return <MarkdownMessage text={visibleText} streaming={streaming} />;
+  }
+
+  const caseSummaryCopyText = copyText;
+
+  async function copy() {
+    setCopyError("");
+    try {
+      await writeClipboardText(caseSummaryCopyText);
+      setCopied(true);
+      void trackCaseSummaryEvent("case_summary_copied", {
+        source: "chat",
+        contentLength: caseSummaryCopyText.length,
+        includesUnknown: caseSummaryCopyText.includes("不详"),
+      });
+    } catch {
+      setCopyError("复制失败,可以长按下方文字手动复制。");
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[15px] font-semibold leading-snug text-ink">
+            给医生看的病情说明
+          </p>
+          <p className="mt-1 text-[12.5px] leading-relaxed text-ink-faint">
+            已整理成可直接发给医生的一段话,后续新消息也会留在聊天里。
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void copy()}
+          className="shrink-0 rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-medium text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-200 active:scale-[0.97]"
+        >
+          {copied ? "已复制" : "复制"}
+        </button>
+      </div>
+
+      <div className="select-text rounded-[22px] border border-[var(--line)] bg-white/70 px-4 py-3.5 shadow-[var(--shadow-control)]">
+        <MarkdownMessage text={caseSummaryCopyText} streaming={streaming} />
+      </div>
+
+      {copyError ? (
+        <p className="text-[12.5px] leading-relaxed text-[var(--red)]">
+          {copyError}
+        </p>
+      ) : (
+        <p className="text-[12px] leading-relaxed text-ink-faint">
+          复制后可以直接发给医生,也可以自己删改隐私信息。
+        </p>
+      )}
+    </div>
+  );
+}
+
 function CatTag() {
   return (
     <div className="mb-2.5 flex items-center gap-2">
@@ -298,7 +473,11 @@ function AssistantCard({
     <div className="max-w-[96%] self-start">
       <CatTag />
       <div className="rounded-[28px] rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
-        <MarkdownMessage text={text} streaming={streaming} />
+        {isChatCaseSummaryMessage({ role: "assistant", content: text }) ? (
+          <ChatCaseSummaryCard text={text} streaming={streaming} />
+        ) : (
+          <MarkdownMessage text={text} streaming={streaming} />
+        )}
       </div>
     </div>
   );
@@ -415,12 +594,14 @@ function FollowupChips({
   items,
   disabled,
   onPick,
+  children,
 }: {
   items: string[];
   disabled: boolean;
   onPick: (t: string) => void;
+  children?: ReactNode;
 }) {
-  if (items.length === 0) return null;
+  if (items.length === 0 && !children) return null;
   return (
     <div className="flex max-w-[96%] flex-col gap-2 self-start">
       <span className="ml-1 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
@@ -441,6 +622,7 @@ function FollowupChips({
           </span>
         </button>
       ))}
+      {children}
     </div>
   );
 }
@@ -486,6 +668,21 @@ function parseClaimIds(raw: string | null): string[] {
     .slice(0, 32);
 }
 
+function hasMedicalConversation(
+  messages: Msg[],
+  memo: string,
+  medicalContext: MedicalChatContext | null,
+): boolean {
+  if (medicalContext) return true;
+  const text = [
+    memo,
+    ...messages
+      .filter((m) => m.role === "user")
+      .map((m) => m.content),
+  ].join("\n");
+  return /呕吐|吐|腹泻|拉稀|软便|便血|黑便|不吃|食欲|精神差|嗜睡|尿频|尿血|尿少|尿不出|排尿|咳嗽|喷嚏|鼻涕|眼屎|流泪|眯眼|耳朵|甩头|挠耳|皮肤|掉毛|瘙痒|牙龈|牙齿|牙齿发黄|口臭|流口水|跛|瘸|出血|误食|中毒|百合|巧克力|葡萄|支原体|PCR|医生|兽医|医院|发烧|疼|痛|呼吸|喘|抽搐|昏迷/.test(text);
+}
+
 function medicalContextFromQuery(rawQuery: string): MedicalChatContext | undefined {
   const params = new URLSearchParams(rawQuery);
   const handoff = loadTriageHandoff(params.get("handoff"));
@@ -529,6 +726,10 @@ function BehaviorContent() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [caseSummaryLoading, setCaseSummaryLoading] = useState(false);
+  const [caseSummaryError, setCaseSummaryError] = useState("");
+  const [caseSummaryGeneratedForIndex, setCaseSummaryGeneratedForIndex] =
+    useState<number | null>(null);
   // 追问建议 —— 每轮回答完后台拉取,点一下当成新问题发出。
   const [followups, setFollowups] = useState<string[]>([]);
   // 对话摘要:memo 是较早对话压成的摘要,memoCount 是已折进 memo 的消息条数。
@@ -722,7 +923,92 @@ function BehaviorContent() {
     runChat(messages);
   }
 
+  async function generateChatCaseSummary() {
+    if (caseSummaryLoading || messages.length === 0) return;
+    const sourceIndex = messages.length - 1;
+    const sourceMessages = messages;
+
+    setCaseSummaryLoading(true);
+    setCaseSummaryError("");
+    const eventMeta = {
+      source: "chat",
+      tier: medicalContext?.tier,
+      symptom: medicalContext?.symptom,
+      hasCatProfile: Boolean(cat),
+      hasTriageContext: Boolean(medicalContext),
+    };
+    void trackCaseSummaryEvent("case_summary_opened", eventMeta);
+    void trackCaseSummaryEvent("case_summary_from_chat", eventMeta);
+
+    try {
+      const response = await fetch("/api/case-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...caseSummaryPayload,
+          source: "chat",
+          region: clientRegionPayload(),
+        }),
+      });
+      const body = (await response.json().catch(() => null)) as {
+        summary?: unknown;
+        code?: unknown;
+      } | null;
+
+      if (!response.ok || !isCaseSummaryOutput(body?.summary)) {
+        setCaseSummaryError("这版病情说明没整理好,稍后再试一次。");
+        return;
+      }
+
+      const nextMessages: Msg[] = [
+        ...sourceMessages,
+        { role: "assistant", content: renderChatCaseSummaryMessage(body.summary) },
+      ];
+      setMessages(nextMessages);
+      persistConversation(nextMessages, memo, memoCount);
+      setCaseSummaryGeneratedForIndex(sourceIndex);
+      void trackCaseSummaryEvent("case_summary_generated", {
+        ...eventMeta,
+        contentLength: body.summary.copyText.length,
+        includesUnknown:
+          body.summary.userSummary.includes("不详") ||
+          body.summary.copyText.includes("不详"),
+      });
+    } catch {
+      setCaseSummaryError("网络有点不稳定,稍后再试。");
+    } finally {
+      setCaseSummaryLoading(false);
+    }
+  }
+
   const empty = messages.length === 0;
+  const showCaseSummary =
+    !empty &&
+    !loading &&
+    messages[messages.length - 1]?.role === "assistant" &&
+    !isChatCaseSummaryMessage(messages[messages.length - 1]) &&
+    !messages.some(isChatCaseSummaryMessage) &&
+    caseSummaryGeneratedForIndex !== messages.length - 1 &&
+    hasMedicalConversation(messages, memo, medicalContext ?? null);
+  const caseSummaryPayload = {
+    cat: catProfilePayload(cat),
+    medical: medicalContext
+      ? {
+          symptom: medicalContext.symptom,
+          symptomLabel: medicalContext.symptom
+            ? SYMPTOM_LABELS[medicalContext.symptom] ?? medicalContext.symptom
+            : undefined,
+          tier: medicalContext.tier,
+          claimIds: medicalContext.claimIds,
+          report: medicalContext.report,
+          qa: medicalContext.qa,
+        }
+      : { claimIds: [] },
+    conversation: {
+      memo,
+      messages: messages.slice(memoCount).slice(-12),
+    },
+  };
 
   if (store === undefined) return <main className="min-h-dvh" aria-hidden="true" />;
   if (!cat) return <main className="min-h-dvh" aria-hidden="true" />;
@@ -798,13 +1084,44 @@ function BehaviorContent() {
             )}
             {!loading &&
               !error &&
-              followups.length > 0 &&
               messages[messages.length - 1]?.role === "assistant" && (
                 <FollowupChips
                   items={followups}
                   disabled={loading}
                   onPick={send}
-                />
+                >
+                  {showCaseSummary && (
+                    <>
+                      <button
+                        type="button"
+                        disabled={caseSummaryLoading}
+                        onClick={() => void generateChatCaseSummary()}
+                        className="group flex w-full items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-surface px-4 py-2.5 text-left shadow-[var(--shadow-control)] transition-colors duration-150 active:bg-[var(--surface-2)] disabled:opacity-60"
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-[13.5px] font-medium leading-snug text-ink">
+                            {caseSummaryLoading
+                              ? "正在整理病情说明..."
+                              : "整理成给医生看的病情说明"}
+                          </span>
+                          {!caseSummaryLoading && (
+                            <span className="mt-1 block text-[12px] leading-snug text-ink-faint">
+                              把上面的症状、猫咪档案和分诊结论整理成一段可复制给兽医的话
+                            </span>
+                          )}
+                        </span>
+                        <span className="shrink-0 text-[12.5px] font-medium text-accent transition-transform duration-200 group-active:translate-x-0.5">
+                          {caseSummaryLoading ? "..." : "→"}
+                        </span>
+                      </button>
+                      {caseSummaryError ? (
+                        <p className="px-1 text-[12.5px] leading-relaxed text-[var(--red)]">
+                          {caseSummaryError}
+                        </p>
+                      ) : null}
+                    </>
+                  )}
+                </FollowupChips>
               )}
             {error && <ErrorRow text={error} onRetry={retry} />}
             <div ref={endRef} />

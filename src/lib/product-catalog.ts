@@ -7,6 +7,8 @@ export type ProductCatalogEntry = {
   productName: string;
   productType:
     | "oral_toothpaste_or_brush"
+    | "oral_water_additive"
+    | "oral_dental_chew"
     | "oral_dental_treat_or_diet"
     | "probiotic_supplement"
     | "cat_flea_tick_product"
@@ -79,22 +81,62 @@ const PRODUCT_CATALOG_SEED: ProductCatalogSeed[] = [
     id: "oral_virbac_cet_toothpaste_kit",
     appliesToEntryIds: ["cat_oral_toothpaste_toothbrush"],
     brand: "Virbac C.E.T.",
-    productName: "C.E.T. Enzymatic Toothpaste / Oral Hygiene Kit for Cats",
+    productName: "C.E.T复合酶牙膏 / C.E.T.复合酶牙膏套装 猫用/犬用",
     productType: "oral_toothpaste_or_brush",
     useStage: "daily_care",
     evidenceLevel: "official-brand",
-    availabilityCN: "cn_channel_check_required",
+    availabilityCN: "known_cn_official",
+    lastVerifiedAt: "2026-06-12",
     recommendationBoundary:
-      "知名兽医口腔护理品牌;可作为日常刷牙训练候选。牙龈红肿、疼痛、流口水或出血时不要先硬刷。",
+      "维克中国官方口腔护理产品;可作为国内日常刷牙训练优先候选。牙龈红肿、疼痛、流口水或出血时不要先硬刷。",
     cnVerification: [
-      "核对猫用或犬猫适用、可吞咽说明",
-      "核对成分表,避开人用牙膏、木糖醇、酒精、精油",
-      "优先正规宠物医院、宠物医疗渠道或品牌旗舰店",
+      "核对维克中国官方产品名、猫用/犬猫适用和可吞咽说明",
+      "核对成分表,避开人用牙膏、酒精、精油和不明来源仿品",
+      "优先正规宠物医院、宠物医疗渠道或维克官方指向渠道",
     ],
     sourceUrls: [
+      "https://cn.virbac.com/products/dental/cet-enzymatic-toothpaste",
+      "https://cn.virbac.com/products/dental/4.2-cet-dental-kit",
       "https://us.virbac.com/home/our-products/pagecontent/product-selector/cet-enzymatic-toothpaste-dog-cat.html",
-      "https://us.virbac.com/products/dental/cet-oral-hygiene-kits",
     ],
+  },
+  {
+    id: "oral_virbac_intellident_cat_bite",
+    appliesToEntryIds: ["cat_oral_toothpaste_toothbrush"],
+    brand: "Virbac 怡粒多",
+    productName: "怡粒多™口腔护理咀嚼粒（猫用 INTELLIDENT™ Cat Bite）",
+    productType: "oral_dental_chew",
+    useStage: "daily_care",
+    evidenceLevel: "official-brand",
+    availabilityCN: "known_cn_official",
+    lastVerifiedAt: "2026-06-12",
+    recommendationBoundary:
+      "维克中国官方猫用口腔护理咀嚼粒;只能作为日常洁齿辅助,不能治疗牙龈红肿、口炎、牙周病或口腔疼痛。",
+    cnVerification: [
+      "核对猫用 INTELLIDENT Cat Bite 和官方渠道",
+      "作为洁齿辅助时仍优先刷牙训练,不要替代口腔检查",
+      "口腔疼痛、掉食、出血或不愿咀嚼时不要靠咀嚼粒处理",
+    ],
+    sourceUrls: ["https://cn.virbac.com/products/dental/intellident-cat-bite"],
+  },
+  {
+    id: "oral_virbac_vet_aquadent",
+    appliesToEntryIds: ["cat_oral_toothpaste_toothbrush"],
+    brand: "Virbac 益口清",
+    productName: "益口清™饮水洁牙液 VET AQUADENT™",
+    productType: "oral_water_additive",
+    useStage: "after_vet_check",
+    evidenceLevel: "official-brand",
+    availabilityCN: "known_cn_official",
+    lastVerifiedAt: "2026-06-12",
+    recommendationBoundary:
+      "维克中国官方饮水洁牙液;只作为日常口腔护理补充。涉及饮水量异常、肾病、挑水、口腔疼痛或成分顾虑时先问兽医,不要把它当治疗。",
+    cnVerification: [
+      "核对 VET AQUADENT 官方产品说明和稀释说明",
+      "不要把人用漱口水、含酒精/精油口腔产品类比给猫",
+      "如果猫本来喝水少或有泌尿/肾脏问题,先问兽医再考虑饮水添加类产品",
+    ],
+    sourceUrls: ["https://cn.virbac.com/products/dental/vet-aquadent"],
   },
   {
     id: "oral_healthymouth_cat_products",

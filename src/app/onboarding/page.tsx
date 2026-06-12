@@ -297,6 +297,8 @@ const TIER_VIS = {
 // 健康足迹 —— 最近 30 天分诊/问答计数 + 红黄绿分布条。只统计,不列逐条记录。
 // 零记录时不消失,改为引导态 —— 55% 设备零记录,这里是把人引向分诊的关键位。
 function HealthFootprint({ records }: { records: CatRecord[] }) {
+  const [cutoff] = useState(() => Date.now() - 30 * 86400000);
+
   if (records.length === 0) {
     return (
       <section className="mt-4 rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
@@ -315,7 +317,6 @@ function HealthFootprint({ records }: { records: CatRecord[] }) {
       </section>
     );
   }
-  const cutoff = Date.now() - 30 * 86400000;
   const recent30 = records.filter((r) => {
     const t = new Date(r.date).getTime();
     return !Number.isNaN(t) && t >= cutoff;

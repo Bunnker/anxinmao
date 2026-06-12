@@ -16,6 +16,7 @@
     "harness:behavior-intent": "node scripts/harness-behavior-intent.mjs",
     "harness:agent-loop": "node scripts/harness-agent-loop.mjs",
     "harness:triage": "node scripts/harness-triage-context.mjs",
+    "harness:case-summary": "node scripts/harness-case-summary.mjs",
     "harness:review-regressions": "node scripts/harness-review-regressions.mjs",
     "medical:fetch": "node scripts/fetch-medical-sources.mjs",
     "medical:validate": "node scripts/validate-medical-docs.mjs",
@@ -35,6 +36,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "tsx": "4.22.4",
     "typescript": "^5"
   }
 }
