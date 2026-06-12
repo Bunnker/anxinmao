@@ -28,6 +28,11 @@ const SHEET_COLS = 8;
 const SHEET_ROWS = 12;
 const CELL_W = 192;
 const CELL_H = 208;
+// 格间透明间隙 —— 大图缩放时下/右边界会多采样邻格 1-2px,留出透明缝接住它,
+// 否则下一行的猫耳会渗进当前格底部(上下重叠)。pitch = 单元格 + 间隙。
+const GUTTER = 8;
+const PITCH_X = CELL_W + GUTTER;
+const PITCH_Y = CELL_H + GUTTER;
 
 type RowConfig = {
   row: number;
@@ -218,6 +223,9 @@ export default function PetSprite({
   }
 
   const row = ROWS[shown].row;
+  // 缩放系数:显示宽 / 源单元格宽。bg 尺寸与偏移都按「带间隙的 pitch」算,
+  // 可视窗口仍只有一个单元格大小(width × height),间隙落在窗口外。
+  const scale = width / CELL_W;
   return (
     <span
       aria-hidden="true"
@@ -226,8 +234,8 @@ export default function PetSprite({
         width,
         height,
         backgroundImage: `url(${SHEET_SRC})`,
-        backgroundSize: `${SHEET_COLS * width}px ${SHEET_ROWS * height}px`,
-        backgroundPosition: `${-frame * width}px ${-row * height}px`,
+        backgroundSize: `${SHEET_COLS * PITCH_X * scale}px ${SHEET_ROWS * PITCH_Y * scale}px`,
+        backgroundPosition: `${-frame * PITCH_X * scale}px ${-row * PITCH_Y * scale}px`,
         backgroundRepeat: "no-repeat",
       }}
     />
