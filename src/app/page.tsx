@@ -182,15 +182,7 @@ const PET_TALK = [
   "今天也要记得陪我玩呀。",
   "呼噜呼噜……",
 ];
-// 没事时的日常闲话 —— 猫常驻陪伴,每次进首页随机一句。
-const PET_IDLE = [
-  "我很好,放心~",
-  "今天也要记得给我换水哦。",
-  "天气不错,陪我晒晒太阳?",
-  "喵呜 —— 一切正常!",
-  "闲着也是闲着,摸摸我?",
-  "我蹲在这儿守着你。",
-];
+// 闲话已并入「思考泡」功能入口区;摸猫时才说猫语(PET_TALK)。
 
 function PetNudge({
   cat,
@@ -220,10 +212,6 @@ function PetNudge({
     n: number;
   } | null>(null);
   const talkTimer = useRef<number | null>(null);
-  // 没事时的闲话 —— 惰性初始化,进页随机一句,渲染期间不闪变
-  const [idleLine] = useState(
-    () => PET_IDLE[Math.floor(Math.random() * PET_IDLE.length)],
-  );
 
   // ── 院子漫游(仅无事可说的 idle 场景):坐着 → 随机散步/洗脸/打盹 ──
   // x 是猫在院子里的横向位置,散步用 CSS transition 匀速走过去。
@@ -440,9 +428,8 @@ function PetNudge({
             : roam.kind === "wake"
               ? (roam.wake ?? "stretch")
               : "idle";
-    // 说话时一定冒泡;闲话只在家位(左侧)说 —— 跑远了就安静过自己的小日子
-    const showBubble =
-      talk !== null || (roam.kind === "sit" && roam.x < 40);
+    // 摸猫说话才冒对话泡;平时的「心事」由下方思考泡(功能入口)承担
+    const showBubble = talk !== null;
     // 选剩余空间够的一侧,宽度跟着空间缩,避免压到猫身上
     const rightRoom = yardW - roam.x - 98;
     const bubbleOnRight = rightRoom >= 150;
@@ -496,9 +483,7 @@ function PetNudge({
             }
             style={bubbleStyle}
           >
-            <p className="text-[14px] leading-relaxed text-ink">
-              {talk ?? idleLine}
-            </p>
+            <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
           </div>
         )}
       </section>
@@ -939,65 +924,74 @@ export default function HomePage() {
         onPick={pickOutcome}
       />
 
-      {/* 主次入口 */}
-      <section className="mt-5 flex flex-col gap-3">
-        <Link
-          href="/symptoms"
-          className="group flex items-center gap-4 rounded-[28px] bg-accent px-6 py-5 text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.985]"
-        >
-          <span className="flex-1">
-            <span className="block text-[1.35rem] font-medium leading-tight tracking-tight">
-              我家猫不太对劲
+      {/* 小猫的思考泡 —— 功能入口长在它的心事里(猫第一人称;分诊保持主视觉权重)。
+          思考引导点从院子方向冒下来,三个椭圆泡错峰入场。 */}
+      <section className="mt-1" aria-label="功能入口">
+        <div className="flex items-center gap-2 pl-5" aria-hidden="true">
+          <span className="size-[7px] rounded-full bg-surface shadow-[var(--shadow-control)]" />
+          <span className="size-[12px] rounded-full bg-surface shadow-[var(--shadow-control)]" />
+        </div>
+        <div className="mt-2 flex flex-col gap-2.5">
+          <Link
+            href="/symptoms"
+            className="thought-pop group flex items-center gap-4 rounded-[34px] rounded-tl-[14px] bg-accent px-6 py-4 text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.985]"
+            style={{ animationDelay: "0.05s" }}
+          >
+            <span className="flex-1">
+              <span className="block text-[1.2rem] font-medium leading-tight tracking-tight">
+                我有点不对劲,帮我看看?
+              </span>
+              <span className="mt-1 block text-[12.5px] tracking-wide opacity-80">
+                选症状 → 答几个问题 → 红黄绿就医建议
+              </span>
             </span>
-            <span className="mt-1.5 block text-[12.5px] tracking-wide opacity-80">
-              选症状 → 答几个问题 → 红黄绿就医建议
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0.5">
+              <Arrow />
             </span>
-          </span>
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0.5">
-            <Arrow />
-          </span>
-        </Link>
+          </Link>
 
-        <Link
-          href="/behavior"
-          className="group flex items-center gap-4 rounded-[28px] bg-surface px-6 py-5 text-ink shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.985]"
-        >
-          <span className="flex-1">
-            <span className="block text-[1.15rem] font-medium leading-tight tracking-tight">
-              我想问点什么
+          <Link
+            href="/behavior"
+            className="thought-pop group flex items-center gap-4 rounded-[34px] rounded-tl-[14px] bg-surface px-6 py-4 text-ink shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.985]"
+            style={{ animationDelay: "0.16s" }}
+          >
+            <span className="flex-1">
+              <span className="block text-[1.05rem] font-medium leading-tight tracking-tight">
+                想问我点什么?
+              </span>
+              <span className="mt-1 block text-[12.5px] tracking-wide text-ink-soft">
+                生病 / 喂养 / 行为,直接打字聊
+              </span>
             </span>
-            <span className="mt-1.5 block text-[12.5px] tracking-wide text-ink-soft">
-              直接打字问,生病 / 喂养 / 行为都能聊
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--surface-2)] text-ink-soft transition-transform duration-500 group-hover:translate-x-0.5">
+              <Arrow />
             </span>
-          </span>
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--surface-2)] text-ink-soft transition-transform duration-500 group-hover:translate-x-0.5">
-            <Arrow />
-          </span>
-        </Link>
+          </Link>
+
+          <Link
+            href="/knowledge"
+            className="thought-pop flex items-center gap-3 rounded-[28px] rounded-tl-[12px] bg-surface px-5 py-3 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
+            style={{ animationDelay: "0.27s" }}
+          >
+            <span
+              className="grid size-8 shrink-0 place-items-center rounded-full"
+              style={{ background: "var(--accent-soft)" }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="var(--accent)" strokeWidth="1.7" />
+                <path d="M12 8v5M12 16.5h.01" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14px] font-medium text-ink">有些情况看着吓人,其实不慌</span>
+              <span className="mt-0.5 block text-[12px] text-ink-soft">6 种情况 · 权威兽医来源</span>
+            </span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0 text-ink-ghost" aria-hidden="true">
+              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        </div>
       </section>
-
-      {/* 安心知识卡片 */}
-      <Link
-        href="/knowledge"
-        className="mt-3 flex items-center gap-3 rounded-[20px] bg-surface px-4 py-3.5 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
-      >
-        <span
-          className="grid size-8 shrink-0 place-items-center rounded-full"
-          style={{ background: "var(--accent-soft)" }}
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" stroke="var(--accent)" strokeWidth="1.7" />
-            <path d="M12 8v5M12 16.5h.01" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-[14px] font-medium text-ink">看着吓人但不必慌</span>
-          <span className="mt-0.5 block text-[12px] text-ink-soft">6 种情况 · 权威兽医来源</span>
-        </span>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0 text-ink-ghost" aria-hidden="true">
-          <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </Link>
 
       {/* 最近 */}
       <section className="mt-6 flex-1">

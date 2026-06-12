@@ -180,9 +180,14 @@ button[class*="bg-surface"] {
 .pet-bubble {
   animation: bubble-in 0.35s 0.12s ease-out backwards;
 }
+/* 思考泡(功能入口):错峰冒出来,延迟由 inline animationDelay 给 */
+.thought-pop {
+  animation: bubble-in 0.4s ease-out backwards;
+}
 @media (prefers-reduced-motion: reduce) {
   .pet-enter,
-  .pet-bubble {
+  .pet-bubble,
+  .thought-pop {
     animation: none;
   }
 }
