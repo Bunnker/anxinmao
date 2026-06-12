@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import {
   loadStore,
@@ -177,7 +177,7 @@ const PET_FACE_SRC: Record<PetFace, string> = {
 const PET_TALK = [
   "喵~",
   "蹭蹭你!",
-  "摸到我啦,好痒!",
+  "好舒服,再摸一会儿嘛~",
   "我超乖的。",
   "今天也要记得陪我玩呀。",
   "呼噜呼噜……",
@@ -212,15 +212,29 @@ function PetNudge({
   recordsEmpty: boolean;
   onPick: (rec: CatRecord, oc: NonNullable<CatRecord["outcome"]>) => void;
 }) {
-  // 摸猫彩蛋:蹦一下 + 临时说一句猫语(盖过当前气泡 2.6s)
+  // 摸猫彩蛋:随机「眯眼享受 / 洗脸」+ 临时说一句猫语(盖过当前气泡 2.6s);
+  // n 递增让连续摸每次都从头重播动作
   const [talk, setTalk] = useState<string | null>(null);
+  const [touch, setTouch] = useState<{
+    action: "petted" | "groom";
+    n: number;
+  } | null>(null);
+  const talkTimer = useRef<number | null>(null);
   // 没事时的闲话 —— 惰性初始化,进页随机一句,渲染期间不闪变
   const [idleLine] = useState(
     () => PET_IDLE[Math.floor(Math.random() * PET_IDLE.length)],
   );
   function petTheCat() {
     setTalk(PET_TALK[Math.floor(Math.random() * PET_TALK.length)]);
-    setTimeout(() => setTalk(null), 2600);
+    setTouch((t) => ({
+      action: Math.random() < 0.6 ? "petted" : "groom",
+      n: (t?.n ?? 0) + 1,
+    }));
+    if (talkTimer.current) clearTimeout(talkTimer.current);
+    talkTimer.current = window.setTimeout(() => {
+      setTalk(null);
+      setTouch(null);
+    }, 2600);
   }
 
   // 猫常驻:有事说事,没事也蹲在这儿说句闲话(宠物不该有事才出现)
@@ -234,10 +248,10 @@ function PetNudge({
           ? ({ kind: "starter" } as const)
           : ({ kind: "idle" } as const);
 
-  // 动作随场景(雪碧图九态):摸猫=蹦 / 回执好转=蹦、没好转=耷耳 / 待回答=双爪合十期待 /
-  // 新人引导=招手 / 护理提醒、闲着=idle(自带眨眼呼吸)。
+  // 动作随场景:摸猫=随机享受/洗脸 / 回执好转=蹦一次、没好转=耷耳 /
+  // 待回答=双爪合十期待 / 新人引导=招手(抬爪定格)/ 护理提醒、闲着=idle(自带眨眼呼吸)。
   const spriteState: PetSpriteState = talk
-    ? "jumping"
+    ? (touch?.action ?? "petted")
     : say.kind === "note"
       ? followupNote?.face === "worry"
         ? "failed"
@@ -251,7 +265,10 @@ function PetNudge({
           : "idle";
   // 雪碧图未就绪/加载失败时的静态占位(沿用旧四表情透明图)
   const fallbackFace: PetFace =
-    spriteState === "jumping" || spriteState === "waving"
+    spriteState === "jumping" ||
+    spriteState === "waving" ||
+    spriteState === "petted" ||
+    spriteState === "groom"
       ? "happy"
       : spriteState === "failed"
         ? "worry"
@@ -269,12 +286,13 @@ function PetNudge({
       aria-label={`摸摸${cat.name}`}
       className="pet-enter shrink-0 cursor-pointer select-none"
     >
-      {/* 真·逐帧动画:摸猫切 jumping 行,其余按场景行循环(雪碧图挂了就回静态图) */}
+      {/* 真·逐帧动画:摸猫随机享受/洗脸并每次重播,其余按场景行(雪碧图挂了就回静态图) */}
       <PetSprite
         state={spriteState}
         width={86}
         fallbackSrc={PET_FACE_SRC[fallbackFace]}
         className="drop-shadow-sm"
+        playKey={touch?.n}
       />
     </button>
   );
