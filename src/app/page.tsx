@@ -924,73 +924,55 @@ export default function HomePage() {
         onPick={pickOutcome}
       />
 
-      {/* 小猫的思考泡 —— 功能入口长在它的心事里(猫第一人称;分诊保持主视觉权重)。
-          思考引导点从院子方向冒下来,三个椭圆泡错峰入场。 */}
-      <section className="mt-1" aria-label="功能入口">
-        <div className="flex items-center gap-2 pl-5" aria-hidden="true">
-          <span className="size-[7px] rounded-full bg-surface shadow-[var(--shadow-control)]" />
-          <span className="size-[12px] rounded-full bg-surface shadow-[var(--shadow-control)]" />
+      {/* 小猫的思考泡 —— 真·漫画椭圆泡:不占满宽、右侧错落漂浮,从猫的方向
+          经两个引导点斜着冒上来;整泡可点,猫第一人称。分诊泡保持 accent 锚点。 */}
+      <section className="relative mt-1 flex flex-col gap-3 pb-1" aria-label="功能入口">
+        <div className="flex items-center gap-2.5 pl-10" aria-hidden="true">
+          <span className="thought-float size-[8px] rounded-full bg-surface shadow-[var(--shadow-control)]" />
+          <span
+            className="thought-float size-[14px] rounded-full bg-surface shadow-[var(--shadow-control)]"
+            style={{ animationDelay: "0.5s" }}
+          />
         </div>
-        <div className="mt-2 flex flex-col gap-2.5">
-          <Link
-            href="/symptoms"
-            className="thought-pop group flex items-center gap-4 rounded-[34px] rounded-tl-[14px] bg-accent px-6 py-4 text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.985]"
-            style={{ animationDelay: "0.05s" }}
-          >
-            <span className="flex-1">
-              <span className="block text-[1.2rem] font-medium leading-tight tracking-tight">
-                我有点不对劲,帮我看看?
-              </span>
-              <span className="mt-1 block text-[12.5px] tracking-wide opacity-80">
-                选症状 → 答几个问题 → 红黄绿就医建议
-              </span>
-            </span>
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0.5">
-              <Arrow />
-            </span>
-          </Link>
 
-          <Link
-            href="/behavior"
-            className="thought-pop group flex items-center gap-4 rounded-[34px] rounded-tl-[14px] bg-surface px-6 py-4 text-ink shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.985]"
-            style={{ animationDelay: "0.16s" }}
-          >
-            <span className="flex-1">
-              <span className="block text-[1.05rem] font-medium leading-tight tracking-tight">
-                想问我点什么?
-              </span>
-              <span className="mt-1 block text-[12.5px] tracking-wide text-ink-soft">
-                生病 / 喂养 / 行为,直接打字聊
-              </span>
-            </span>
-            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[var(--surface-2)] text-ink-soft transition-transform duration-500 group-hover:translate-x-0.5">
-              <Arrow />
-            </span>
-          </Link>
+        <Link
+          href="/symptoms"
+          className="thought-pop thought-float self-end px-9 py-4 text-center bg-accent text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.97]"
+          style={{ borderRadius: "50%", animationDelay: "0.05s, 0s" }}
+        >
+          <span className="block text-[1.08rem] font-medium leading-tight tracking-tight">
+            我有点不对劲,帮我看看?
+          </span>
+          <span className="mt-0.5 block text-[11.5px] tracking-wide opacity-80">
+            红黄绿就医建议 · 30 秒
+          </span>
+        </Link>
 
-          <Link
-            href="/knowledge"
-            className="thought-pop flex items-center gap-3 rounded-[28px] rounded-tl-[12px] bg-surface px-5 py-3 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
-            style={{ animationDelay: "0.27s" }}
-          >
-            <span
-              className="grid size-8 shrink-0 place-items-center rounded-full"
-              style={{ background: "var(--accent-soft)" }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="12" cy="12" r="9" stroke="var(--accent)" strokeWidth="1.7" />
-                <path d="M12 8v5M12 16.5h.01" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" />
-              </svg>
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[14px] font-medium text-ink">有些情况看着吓人,其实不慌</span>
-              <span className="mt-0.5 block text-[12px] text-ink-soft">6 种情况 · 权威兽医来源</span>
-            </span>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0 text-ink-ghost" aria-hidden="true">
-              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
-        </div>
+        <Link
+          href="/behavior"
+          className="thought-pop thought-float self-end mr-10 px-9 py-3.5 text-center bg-surface text-ink shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.97]"
+          style={{ borderRadius: "50%", animationDelay: "0.18s, 0.9s" }}
+        >
+          <span className="block text-[1rem] font-medium leading-tight tracking-tight">
+            想问我点什么?
+          </span>
+          <span className="mt-0.5 block text-[11.5px] tracking-wide text-ink-soft">
+            生病 / 喂养 / 行为都能聊
+          </span>
+        </Link>
+
+        <Link
+          href="/knowledge"
+          className="thought-pop thought-float self-end mr-4 px-8 py-3 text-center bg-surface text-ink shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.97]"
+          style={{ borderRadius: "50%", animationDelay: "0.3s, 1.7s" }}
+        >
+          <span className="block text-[13.5px] font-medium leading-tight">
+            看着吓人的情况,其实不慌
+          </span>
+          <span className="mt-0.5 block text-[11px] text-ink-soft">
+            6 种 · 权威兽医来源
+          </span>
+        </Link>
       </section>
 
       {/* 最近 */}
