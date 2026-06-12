@@ -17,8 +17,8 @@ import { readPersisted } from "@/lib/persist";
 import { loadStore, saveConversation, STORAGE_KEY } from "@/lib/storage";
 import { SYMPTOM_LABELS } from "@/lib/triage";
 import { loadTriageHandoff } from "@/lib/triage-handoff";
-import { CaseSummaryPanel } from "@/components/CaseSummaryPanel";
 import { Disclaimer } from "@/components/Disclaimer";
+import type { CaseSummaryOutput } from "@/lib/case-summary";
 import type { Cat, RiskTier, Store } from "@/types/cat";
 
 // 问诊 / 养育问答 —— 对话式,接服务端 /api/behavior 调大模型。
@@ -34,6 +34,34 @@ type MedicalChatContext = {
   qa?: string; // 分诊问答记录(问了什么、用户答了什么)
 };
 
+function isCaseSummaryOutput(value: unknown): value is CaseSummaryOutput {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const summary = value as Record<string, unknown>;
+  return (
+    typeof summary.userSummary === "string" &&
+    typeof summary.doctorNote === "string" &&
+    Array.isArray(summary.doctorQuestions) &&
+    Array.isArray(summary.dontDo) &&
+    typeof summary.copyText === "string"
+  );
+}
+
+function renderChatCaseSummaryMessage(summary: CaseSummaryOutput): string {
+  return [
+    "## 给医生看的病情说明",
+    "我把上面的信息整理成一段可以直接给医生看的说明。继续补充新情况也没关系,这段会留在聊天里。",
+    "",
+    summary.copyText,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function isChatCaseSummaryMessage(message: Msg | undefined): boolean {
+  return message?.role === "assistant" &&
+    message.content.includes("## 给医生看的病情说明");
+}
+
 function clientRegionPayload() {
   if (typeof navigator === "undefined") return undefined;
   const locale = navigator.language;
@@ -42,6 +70,24 @@ function clientRegionPayload() {
     locale,
     timeZone,
   };
+}
+
+async function trackCaseSummaryEvent(
+  name:
+    | "case_summary_opened"
+    | "case_summary_generated"
+    | "case_summary_from_chat",
+  meta: Record<string, unknown>,
+) {
+  try {
+    await fetch("/api/case-summary/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, meta }),
+    });
+  } catch {
+    // 统计不能影响问答主流程。
+  }
 }
 
 const STARTERS = [
@@ -548,6 +594,10 @@ function BehaviorContent() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [caseSummaryLoading, setCaseSummaryLoading] = useState(false);
+  const [caseSummaryError, setCaseSummaryError] = useState("");
+  const [caseSummaryGeneratedForIndex, setCaseSummaryGeneratedForIndex] =
+    useState<number | null>(null);
   // 追问建议 —— 每轮回答完后台拉取,点一下当成新问题发出。
   const [followups, setFollowups] = useState<string[]>([]);
   // 对话摘要:memo 是较早对话压成的摘要,memoCount 是已折进 memo 的消息条数。
@@ -741,11 +791,72 @@ function BehaviorContent() {
     runChat(messages);
   }
 
+  async function generateChatCaseSummary() {
+    if (caseSummaryLoading || messages.length === 0) return;
+    const sourceIndex = messages.length - 1;
+    const sourceMessages = messages;
+
+    setCaseSummaryLoading(true);
+    setCaseSummaryError("");
+    const eventMeta = {
+      source: "chat",
+      tier: medicalContext?.tier,
+      symptom: medicalContext?.symptom,
+      hasCatProfile: Boolean(cat),
+      hasTriageContext: Boolean(medicalContext),
+    };
+    void trackCaseSummaryEvent("case_summary_opened", eventMeta);
+    void trackCaseSummaryEvent("case_summary_from_chat", eventMeta);
+
+    try {
+      const response = await fetch("/api/case-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...caseSummaryPayload,
+          source: "chat",
+          region: clientRegionPayload(),
+        }),
+      });
+      const body = (await response.json().catch(() => null)) as {
+        summary?: unknown;
+        code?: unknown;
+      } | null;
+
+      if (!response.ok || !isCaseSummaryOutput(body?.summary)) {
+        setCaseSummaryError("这版病情说明没整理好,稍后再试一次。");
+        return;
+      }
+
+      const nextMessages: Msg[] = [
+        ...sourceMessages,
+        { role: "assistant", content: renderChatCaseSummaryMessage(body.summary) },
+      ];
+      setMessages(nextMessages);
+      persistConversation(nextMessages, memo, memoCount);
+      setCaseSummaryGeneratedForIndex(sourceIndex);
+      void trackCaseSummaryEvent("case_summary_generated", {
+        ...eventMeta,
+        contentLength: body.summary.copyText.length,
+        includesUnknown:
+          body.summary.userSummary.includes("不详") ||
+          body.summary.copyText.includes("不详"),
+      });
+    } catch {
+      setCaseSummaryError("网络有点不稳定,稍后再试。");
+    } finally {
+      setCaseSummaryLoading(false);
+    }
+  }
+
   const empty = messages.length === 0;
   const showCaseSummary =
     !empty &&
     !loading &&
     messages[messages.length - 1]?.role === "assistant" &&
+    !isChatCaseSummaryMessage(messages[messages.length - 1]) &&
+    !messages.some(isChatCaseSummaryMessage) &&
+    caseSummaryGeneratedForIndex !== messages.length - 1 &&
     hasMedicalConversation(messages, memo, medicalContext ?? null);
   const caseSummaryPayload = {
     cat: catProfilePayload(cat),
@@ -848,17 +959,35 @@ function BehaviorContent() {
                   onPick={send}
                 >
                   {showCaseSummary && (
-                    <CaseSummaryPanel
-                      source="chat"
-                      label="整理成给医生看的病情说明"
-                      description="把上面的症状、猫咪档案和分诊结论整理成一段可复制给兽医的话"
-                      payload={caseSummaryPayload}
-                      tier={medicalContext?.tier}
-                      symptom={medicalContext?.symptom}
-                      hasCatProfile={Boolean(cat)}
-                      hasTriageContext={Boolean(medicalContext)}
-                      variant="followup"
-                    />
+                    <>
+                      <button
+                        type="button"
+                        disabled={caseSummaryLoading}
+                        onClick={() => void generateChatCaseSummary()}
+                        className="group flex w-full items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-surface px-4 py-2.5 text-left shadow-[var(--shadow-control)] transition-colors duration-150 active:bg-[var(--surface-2)] disabled:opacity-60"
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-[13.5px] font-medium leading-snug text-ink">
+                            {caseSummaryLoading
+                              ? "正在整理病情说明..."
+                              : "整理成给医生看的病情说明"}
+                          </span>
+                          {!caseSummaryLoading && (
+                            <span className="mt-1 block text-[12px] leading-snug text-ink-faint">
+                              把上面的症状、猫咪档案和分诊结论整理成一段可复制给兽医的话
+                            </span>
+                          )}
+                        </span>
+                        <span className="shrink-0 text-[12.5px] font-medium text-accent transition-transform duration-200 group-active:translate-x-0.5">
+                          {caseSummaryLoading ? "..." : "→"}
+                        </span>
+                      </button>
+                      {caseSummaryError ? (
+                        <p className="px-1 text-[12.5px] leading-relaxed text-[var(--red)]">
+                          {caseSummaryError}
+                        </p>
+                      ) : null}
+                    </>
                   )}
                 </FollowupChips>
               )}

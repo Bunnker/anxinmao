@@ -478,18 +478,24 @@ assert(
 const behaviorPageSource = read("src/app/behavior/page.tsx");
 
 includesAll(behaviorPageSource, [
-  'import { CaseSummaryPanel } from "@/components/CaseSummaryPanel";',
   "function hasMedicalConversation",
   "showCaseSummary",
+  "function generateChatCaseSummary",
+  "function renderChatCaseSummaryMessage",
   "整理成给医生看的病情说明",
   "把上面的症状、猫咪档案和分诊结论整理成一段可复制给兽医的话",
-  'variant="followup"',
-  "<CaseSummaryPanel",
-  "hasTriageContext={Boolean(medicalContext)}",
+  "setMessages(nextMessages)",
+  "persistConversation(nextMessages",
+  "!messages.some(isChatCaseSummaryMessage)",
+  "hasTriageContext: Boolean(medicalContext)",
 ]);
 assert(
   !behaviorPageSource.includes("总结现在情况"),
   "behavior chat case summary action copy must not use vague old label",
+);
+assert(
+  !behaviorPageSource.includes("<CaseSummaryPanel"),
+  "behavior chat case summary must be appended as an assistant message, not stored in local panel state",
 );
 
 const healthHelperStart = behaviorPageSource.indexOf("function hasMedicalConversation");
