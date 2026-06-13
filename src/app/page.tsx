@@ -198,27 +198,37 @@ const YARD_ITEMS = {
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
-// 钻箱:codex 出的「猫+箱组合」7 帧长条(箱子帧帧锁死、猫和箱一起画 → 不重叠不跳)。
-// 0-3 = 跳进箱(蹲→跃→翻沿→扎进),hopin 顺序播;4-6 = 在箱里(安坐/探头/歪头),box 循环切。
-// 组合图自带箱子,渲染时藏掉院子空箱、整张盖上去即可。
+// 跳进箱:6 帧,猫从箱左侧外接近 → 跃过箱沿 → 落入(箱固定);hopin 顺序播
 const CAT_JUMP_FRAMES = [
-  "/pet/items/cat-box-0.webp",
-  "/pet/items/cat-box-1.webp",
-  "/pet/items/cat-box-2.webp",
-  "/pet/items/cat-box-3.webp",
+  "/pet/items/cat-box-jump-0.webp",
+  "/pet/items/cat-box-jump-1.webp",
+  "/pet/items/cat-box-jump-2.webp",
+  "/pet/items/cat-box-jump-3.webp",
+  "/pet/items/cat-box-jump-4.webp",
+  "/pet/items/cat-box-jump-5.webp",
 ];
+// 在箱里:5 姿势(安坐/探头/歪头/躺箱/躲箱),box 随机循环切
 const CAT_IN_BOX_POSES = [
-  "/pet/items/cat-box-4.webp", // 安坐
-  "/pet/items/cat-box-5.webp", // 探头
-  "/pet/items/cat-box-6.webp", // 歪头
+  "/pet/items/cat-box-sit-0.webp", // 安坐
+  "/pet/items/cat-box-sit-1.webp", // 探头
+  "/pet/items/cat-box-sit-2.webp", // 歪头
+  "/pet/items/cat-box-sit-3.webp", // 躺箱
+  "/pet/items/cat-box-sit-4.webp", // 躲箱
 ];
-// 组合图显示位置:箱子对齐院子空箱;跳跃帧猫会冒到框上方(底对齐 + 居中,尺寸调到箱≈空箱)
-const COMBINED_W = 150;
-const COMBINED_BOTTOM = 44;
+// 在箱里姿势显示:箱居中对齐院子空箱
+const POSE_W = 150;
+const POSE_LEFT = 232 + 108 / 2 - POSE_W / 2;
+const POSE_BOTTOM = 44;
+// 跳箱帧显示:猫从左侧外进来,框更宽、整体左移,让画里的箱对齐空箱位
+const JUMP_W = 210;
+const JUMP_LEFT = 160;
+const JUMP_BOTTOM = 44;
 type InteractKind = "nap" | "play" | "drink" | "box";
 // 猫去互动时的站位:猫(84px)中心对物件中心、同深度
 function itemAnchor(k: ItemKey): { x: number; y: number } {
   const it = YARD_ITEMS[k];
+  // 钻箱:停在箱子左前方(对齐跳箱第 0 帧猫的位置),从这儿起跳钻进去,不叠到箱上才跳
+  if (k === "box") return { x: JUMP_LEFT + 6, y: it.bottom };
   return {
     x: Math.round(it.left + it.w / 2 - 42),
     y: it.bottom,
@@ -372,7 +382,7 @@ function PetNudge({
     return () => clearTimeout(t);
   }, [roam.kind, calm]);
 
-  // 蹦进箱子:hopin 期间(~750ms)顺序播 codex 的 5 帧跳跃,落帧被前壁遮 = 钻进去
+  // 蹦进箱子:hopin 期间(~900ms)顺序播 codex 的 6 帧跳跃(猫从箱左侧外跃入)
   const [jumpFrame, setJumpFrame] = useState(0);
   useEffect(() => {
     if (roam.kind !== "hopin") {
@@ -565,8 +575,8 @@ function PetNudge({
         sayLine(done);
       }, 4200);
     } else if (roam.kind === "hopin") {
-      // 蹦进箱子:跳跃精灵演一下(~750ms)再落进箱里
-      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "box" })), 750);
+      // 蹦进箱子:6 帧跳跃播完(~900ms)再落进箱里
+      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "box" })), 900);
     } else if (roam.kind === "box") {
       // 钻箱:在箱里蹲 10-15s(箱子前壁遮着,只露上半身)
       t = window.setTimeout(
@@ -799,10 +809,9 @@ function PetNudge({
               draggable={false}
               className="absolute"
               style={{
-                left:
-                  YARD_ITEMS.box.left + YARD_ITEMS.box.w / 2 - COMBINED_W / 2,
-                bottom: COMBINED_BOTTOM,
-                width: COMBINED_W,
+                left: JUMP_LEFT,
+                bottom: JUMP_BOTTOM,
+                width: JUMP_W,
                 zIndex: zOf(YARD_ITEMS.box.bottom) + 1,
               }}
             />
@@ -821,10 +830,9 @@ function PetNudge({
               draggable={false}
               className="absolute"
               style={{
-                left:
-                  YARD_ITEMS.box.left + YARD_ITEMS.box.w / 2 - COMBINED_W / 2,
-                bottom: COMBINED_BOTTOM,
-                width: COMBINED_W,
+                left: POSE_LEFT,
+                bottom: POSE_BOTTOM,
+                width: POSE_W,
                 zIndex: zOf(YARD_ITEMS.box.bottom) + 1,
               }}
             />
