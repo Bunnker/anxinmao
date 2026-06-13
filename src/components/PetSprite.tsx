@@ -33,9 +33,10 @@ const SHEET_COLS = 8;
 const SHEET_ROWS = 17;
 const CELL_W = 192;
 const CELL_H = 208;
-// 格间透明间隙 —— 大图缩放时下/右边界会多采样邻格 1-2px,留出透明缝接住它,
-// 否则下一行的猫耳会渗进当前格底部(上下重叠)。pitch = 单元格 + 间隙。
-const GUTTER = 8;
+// 格间透明间隙 —— 大图缩放时边界会多采样邻格,留透明缝接住;
+// 16px 让 pitch(208×224)在 84px 显示(0.4375 缩放)下全为整数网格,
+// 消掉半像素栅格化在高频换帧(跑步)时的残影。
+const GUTTER = 16;
 const PITCH_X = CELL_W + GUTTER;
 const PITCH_Y = CELL_H + GUTTER;
 

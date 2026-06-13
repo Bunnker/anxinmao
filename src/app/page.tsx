@@ -191,7 +191,8 @@ const YARD_DEPTH = 90;
 // 家具摆位:bottom = 深度(大=靠后);玩球/喝水动画自带道具,播放时隐藏地面同款
 const YARD_ITEMS = {
   bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 2, bottom: 58, w: 88 },
-  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 262, bottom: 52, w: 74 },
+  // 箱子要装得下猫:开口比猫宽,前壁才遮得住下半身
+  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 232, bottom: 50, w: 108 },
   bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 132, bottom: 26, w: 44 },
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
 } as const;
@@ -684,7 +685,8 @@ function PetNudge({
           ref={catRef}
           className="absolute bottom-0 left-0"
           style={{
-            transform: `translate(${roam.x}px, ${-roam.y}px) scale(${scaleOf(roam.y).toFixed(3)})`,
+            // 钻箱时蜷小一圈,配合放大的箱子才有「钻进去」的体感
+            transform: `translate(${roam.x}px, ${-roam.y}px) scale(${(scaleOf(roam.y) * (roam.kind === "box" ? 0.84 : 1)).toFixed(3)})`,
             transformOrigin: "50% 100%",
             transition:
               roam.kind === "stroll"
@@ -729,7 +731,7 @@ function PetNudge({
             ))}
             <nav
               className={
-                "absolute top-0 flex flex-col gap-2 " +
+                "absolute top-0 z-[300] flex flex-col gap-2 " +
                 (toRight ? "right-1 items-end" : "left-1 items-start")
               }
               aria-label="功能入口"
