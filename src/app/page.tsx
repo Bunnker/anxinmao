@@ -193,7 +193,7 @@ const YARD_ITEMS = {
   bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 2, bottom: 58, w: 88 },
   // 空箱子;猫钻进去时整只换成 cat-in-box 整图(见院子渲染),不再实时合成
   // 空箱;猫钻箱/蹦箱时藏掉它,换成 codex 的「猫+箱」组合帧(见院子渲染)
-  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 232, bottom: 50, w: 90 },
+  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 264, bottom: 50, w: 45 },
   bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 132, bottom: 26, w: 44 },
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
 } as const;
@@ -215,10 +215,10 @@ const CAT_IN_BOX_POSES = [
   "/pet/items/cat-box-sit-3.webp", // 躺箱
   "/pet/items/cat-box-sit-4.webp", // 躲箱
 ];
-// 在箱里姿势显示:把画里的箱缩到 90px(≈猫窝)、箱中对齐院子空箱中心 277
-// (实测箱占 309/407、中242 → W=90*407/309≈119,left=277-119*242/407≈206)
-const POSE_W = 119;
-const POSE_LEFT = 206;
+// 在箱里姿势显示:把画里的箱缩到 45px(再缩一半)、箱中对齐院子空箱中心 286
+// (实测箱占 309/407、中242 → W=45*407/309≈59,left=286-59*242/407≈251)
+const POSE_W = 59;
+const POSE_LEFT = 251;
 const POSE_BOTTOM = 48;
 // 跳箱帧:画里的箱也缩到 90px、箱中对齐 277;猫从左侧外进来。框宽出的透明边由 section overflow-hidden 兜住
 // (实测箱宽226/362、中170 → W=90*362/226≈144,left=277-144*170/362≈209)
@@ -800,21 +800,24 @@ function PetNudge({
           </div>
         )}
 
-        {/* 蹦进箱子:hopin 顺序播组合跳跃帧(0-3,猫+箱画在一起、箱子固定),整张盖在箱位。 */}
+        {/* 蹦进箱子:hopin 让「猫坐箱里」整图从箱沿下方升入+小回弹(box-hop-in),
+            干净一弹落定 → 随后切到 box 循环姿势。等 gpt-image-2 的干净跳帧到位后再换回逐帧。 */}
         {roam.kind === "hopin" && (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={CAT_JUMP_FRAMES[jumpFrame] ?? CAT_JUMP_FRAMES[0]}
+              src={CAT_IN_BOX_POSES[0]}
               alt=""
               aria-hidden="true"
               draggable={false}
               className="absolute"
               style={{
-                left: JUMP_LEFT,
-                bottom: JUMP_BOTTOM,
-                width: JUMP_W,
+                left: POSE_LEFT,
+                bottom: POSE_BOTTOM,
+                width: POSE_W,
                 zIndex: zOf(YARD_ITEMS.box.bottom) + 1,
+                transformOrigin: "bottom center",
+                animation: "box-hop-in 0.42s cubic-bezier(0.34,1.56,0.64,1) both",
               }}
             />
           </>
