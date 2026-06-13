@@ -215,14 +215,16 @@ const CAT_IN_BOX_POSES = [
   "/pet/items/cat-box-sit-3.webp", // 躺箱
   "/pet/items/cat-box-sit-4.webp", // 躲箱
 ];
-// 在箱里姿势显示:箱居中对齐院子空箱
-const POSE_W = 150;
-const POSE_LEFT = 232 + 108 / 2 - POSE_W / 2;
-const POSE_BOTTOM = 44;
-// 跳箱帧显示:猫从左侧外进来,框更宽、整体左移,让画里的箱对齐空箱位
-const JUMP_W = 210;
-const JUMP_LEFT = 160;
-const JUMP_BOTTOM = 44;
+// 在箱里姿势显示:把画里的箱缩到 108px(=院子空箱)、箱中对齐 286
+// (实测 cat-box-sit 帧:箱占 x88-397=宽309/407、中242 → W=108*407/309≈142,left=286-142*242/407≈202)
+const POSE_W = 142;
+const POSE_LEFT = 202;
+const POSE_BOTTOM = 48;
+// 跳箱帧:画里的箱也缩到 108px、箱中对齐 286;猫从左侧外进来
+// (实测 cat-box-jump 帧:箱宽226/362、中170 → W=108*362/226≈173,left=286-173*170/362≈205)
+const JUMP_W = 173;
+const JUMP_LEFT = 205;
+const JUMP_BOTTOM = 48;
 type InteractKind = "nap" | "play" | "drink" | "box";
 // 猫去互动时的站位:猫(84px)中心对物件中心、同深度
 function itemAnchor(k: ItemKey): { x: number; y: number } {
@@ -375,7 +377,7 @@ function PetNudge({
           });
           tick();
         },
-        2000 + Math.random() * 2000,
+        5000 + Math.random() * 3000,
       );
     };
     tick();
