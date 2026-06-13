@@ -46,19 +46,25 @@ type RowConfig = {
   mode: "loop" | "hold";
   /** hold 模式定格的帧号,缺省 = 最后一帧 */
   holdFrame?: number;
+  /** 只播这些列(格号);缺省 = 顺序 0..durations.length-1。
+      跑步用它跳过腾空帧、只留落地帧 —— 那 3 帧脚缩起腾空且散落,会让猫上下乱飘/空中顿。 */
+  frames?: number[];
 };
 
 // working 对应图集合同里的 "running" 行(专注处理,非跑步)。
 const ROWS: Record<PetSpriteState, RowConfig> = {
   idle: { row: 0, durations: [280, 110, 110, 140, 140, 320], mode: "loop" },
+  // 只播 5 个落地帧(脚底齐平),跳过 #2/#5/#6 腾空帧 —— 那 3 帧脚缩起且散落致上下乱飘
   "running-right": {
     row: 1,
-    durations: [120, 120, 120, 120, 120, 120, 120, 120],
+    durations: [120, 120, 120, 120, 120],
+    frames: [0, 1, 3, 4, 7],
     mode: "loop",
   },
   "running-left": {
     row: 2,
-    durations: [120, 120, 120, 120, 120, 120, 120, 120],
+    durations: [120, 120, 120, 120, 120],
+    frames: [0, 1, 3, 4, 7],
     mode: "loop",
   },
   // 招手:抬到最高那帧就定格,不再放下(循环挥个不停反而忙乱)
@@ -239,7 +245,10 @@ export default function PetSprite({
     );
   }
 
-  const row = ROWS[shown].row;
+  const cfg = ROWS[shown];
+  const row = cfg.row;
+  // 显示的列:有 frames 子集就按子集映射(跳帧),否则顺序播
+  const cell = cfg.frames ? (cfg.frames[frame] ?? 0) : frame;
   // 缩放系数:显示宽 / 源单元格宽。bg 尺寸与偏移都按「带间隙的 pitch」算,
   // 可视窗口仍只有一个单元格大小(width × height),间隙落在窗口外。
   const scale = width / CELL_W;
@@ -252,7 +261,7 @@ export default function PetSprite({
         height,
         backgroundImage: `url(${SHEET_SRC})`,
         backgroundSize: `${SHEET_COLS * PITCH_X * scale}px ${SHEET_ROWS * PITCH_Y * scale}px`,
-        backgroundPosition: `${-frame * PITCH_X * scale}px ${-row * PITCH_Y * scale}px`,
+        backgroundPosition: `${-cell * PITCH_X * scale}px ${-row * PITCH_Y * scale}px`,
         backgroundRepeat: "no-repeat",
       }}
     />
