@@ -53,12 +53,12 @@ const ROWS: Record<PetSpriteState, RowConfig> = {
   idle: { row: 0, durations: [280, 110, 110, 140, 140, 320], mode: "loop" },
   "running-right": {
     row: 1,
-    durations: [120, 120, 120, 120, 120, 120, 120, 220],
+    durations: [120, 120, 120, 120, 120, 120, 120, 120],
     mode: "loop",
   },
   "running-left": {
     row: 2,
-    durations: [120, 120, 120, 120, 120, 120, 120, 220],
+    durations: [120, 120, 120, 120, 120, 120, 120, 120],
     mode: "loop",
   },
   // 招手:抬到最高那帧就定格,不再放下(循环挥个不停反而忙乱)

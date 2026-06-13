@@ -191,20 +191,21 @@ const YARD_DEPTH = 90;
 // 家具摆位:bottom = 深度(大=靠后);玩球/喝水动画自带道具,播放时隐藏地面同款
 const YARD_ITEMS = {
   bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 2, bottom: 58, w: 88 },
-  // 箱子要装得下猫:开口比猫宽,前壁才遮得住下半身
+  // 空箱子;猫钻进去时整只换成 cat-in-box 整图(见院子渲染),不再实时合成
   box: { src: "/pet/items/box.webp", alt: "纸箱", left: 232, bottom: 50, w: 108 },
   bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 132, bottom: 26, w: 44 },
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
+// 钻箱整图(cat-in-box.webp)显示宽度:画里箱身≈空箱大小(略收一点,别太抢)
+const CAT_IN_BOX_W = 116;
 type InteractKind = "nap" | "play" | "drink" | "box";
-// 猫去互动时的站位:猫(84px)中心对物件中心、同深度;
-// 钻箱往深处多坐 8px,让前壁遮住更多下半身(「在箱里」的关键)
+// 猫去互动时的站位:猫(84px)中心对物件中心、同深度
 function itemAnchor(k: ItemKey): { x: number; y: number } {
   const it = YARD_ITEMS[k];
   return {
     x: Math.round(it.left + it.w / 2 - 42),
-    y: it.bottom + (k === "box" ? 8 : 0),
+    y: it.bottom,
   };
 }
 const INTERACT_ITEM: Record<InteractKind, ItemKey> = {
@@ -642,18 +643,16 @@ function PetNudge({
         className="relative mt-4 h-[264px]"
         aria-label={`${cat.name}的家`}
       >
-        {/* 地板家具:点了让猫走过去互动;按深度排层(画家算法),
-            钻箱时箱子临时提到猫前面 = 前壁遮住下半身;
+        {/* 地板家具:点了让猫走过去互动;按深度排层(画家算法)。
+            钻箱时空箱子换成 cat-in-box 整图(见下),所以这里把空箱子藏掉;
             玩球/喝水动画自带道具,进行时把地上同款隐掉防止出现两个 */}
         {(Object.keys(YARD_ITEMS) as ItemKey[]).map((k) => {
           const it = YARD_ITEMS[k];
           const hideForAction =
             (k === "yarn" && roam.kind === "play") ||
-            (k === "bowl" && roam.kind === "drink");
-          const z =
-            k === "box" && roam.kind === "box"
-              ? zOf(roam.y) + 1
-              : zOf(it.bottom);
+            (k === "bowl" && roam.kind === "drink") ||
+            (k === "box" && roam.kind === "box");
+          const z = zOf(it.bottom);
           return (
             <button
               key={k}
@@ -680,38 +679,69 @@ function PetNudge({
         })}
 
         {/* 位移走合成器(transform 独立图层),避免 left+背景换帧+阴影联手留残影;
-            呼吸 scale 动画在内层按钮上,跟位移不抢同一个 transform */}
-        <div
-          ref={catRef}
-          className="absolute bottom-0 left-0"
-          style={{
-            // 钻箱时蜷小一圈,配合放大的箱子才有「钻进去」的体感
-            transform: `translate(${roam.x}px, ${-roam.y}px) scale(${(scaleOf(roam.y) * (roam.kind === "box" ? 0.84 : 1)).toFixed(3)})`,
-            transformOrigin: "50% 100%",
-            transition:
-              roam.kind === "stroll"
-                ? `transform ${roam.dur}ms linear`
-                : "none",
-            willChange: roam.kind === "stroll" ? "transform" : undefined,
-            zIndex: zOf(roam.y),
-          }}
-        >
-          <button
-            type="button"
-            onClick={petTheCat}
-            aria-label={`摸摸${cat.name}`}
-            className="pet-enter block cursor-pointer select-none"
+            呼吸 scale 动画在内层按钮上,跟位移不抢同一个 transform。
+            脚下用一块静态椭圆当影子,不再给精灵挂 drop-shadow 滤镜 —— 滤镜每帧重算,
+            奔跑高频换帧时会残留上一帧的虚影(像涂层);静态 div 不随帧重算,无残影。
+            钻箱时整只换成 cat-in-box 整图(见下),实时精灵藏起。 */}
+        {roam.kind !== "box" && (
+          <div
+            ref={catRef}
+            className="absolute bottom-0 left-0"
+            style={{
+              transform: `translate(${roam.x}px, ${-roam.y}px) scale(${scaleOf(roam.y).toFixed(3)})`,
+              transformOrigin: "50% 100%",
+              transition:
+                roam.kind === "stroll"
+                  ? `transform ${roam.dur}ms linear`
+                  : "none",
+              willChange: roam.kind === "stroll" ? "transform" : undefined,
+              zIndex: zOf(roam.y),
+            }}
           >
-            <PetSprite
-              state={yardSprite}
-              width={84}
-              fallbackSrc={PET_FACE_SRC[talk ? "happy" : "calm"]}
-              className="drop-shadow-sm"
-              playKey={touch?.n}
-              idleFlourish={false}
+            {/* 脚下静态影子 */}
+            <span
+              aria-hidden="true"
+              className="absolute left-1/2 bottom-[5px] -translate-x-1/2 rounded-[50%] bg-black/10 blur-[2px]"
+              style={{ width: 44, height: 8 }}
             />
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={petTheCat}
+              aria-label={`摸摸${cat.name}`}
+              className="pet-enter relative block cursor-pointer select-none"
+            >
+              <PetSprite
+                state={yardSprite}
+                width={84}
+                fallbackSrc={PET_FACE_SRC[talk ? "happy" : "calm"]}
+                playKey={touch?.n}
+                idleFlourish={false}
+              />
+            </button>
+          </div>
+        )}
+
+        {/* 钻箱:猫走到箱边后整只换成「猫坐进箱里」整图(gpt-image-2 出,已抠成真透明)。
+            盖在空箱位置上、底对齐、比空箱略宽,露出探头的上半身。 */}
+        {roam.kind === "box" && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/pet/items/cat-in-box.webp"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className="absolute"
+              style={{
+                left:
+                  YARD_ITEMS.box.left + YARD_ITEMS.box.w / 2 - CAT_IN_BOX_W / 2,
+                bottom: YARD_ITEMS.box.bottom - 2,
+                width: CAT_IN_BOX_W,
+                zIndex: zOf(YARD_ITEMS.box.bottom),
+              }}
+            />
+          </>
+        )}
 
         {thinking && (
           <div key={`th-${Math.round(roam.x)}`}>
