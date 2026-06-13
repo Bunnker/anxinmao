@@ -197,15 +197,15 @@ const YARD_ITEMS = {
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
-// 钻箱整图(cat-in-box.webp)显示宽度:画里箱身≈空箱大小(略收一点,别太抢)
-const CAT_IN_BOX_W = 116;
-// 钻箱里「东张西望」的姿势图(同箱同位同尺寸、透明底)。出图到位后把 ②③ 取消注释即生效;
-// 只剩 ① 时不切换,行为同现状。
+// 钻箱「固定箱+只换猫」:空箱 box.webp 不动,猫上半身姿势图叠在箱口、循环切换 → 箱子绝不跳。
+// 3 张同尺寸同基线(codex 出的 cat-only 3 联条切片,bottom-center 对齐)。
 const CAT_IN_BOX_POSES = [
-  "/pet/items/cat-in-box.webp", // ① 安坐
-  "/pet/items/cat-in-box-look.webp", // ② 探头张望
-  "/pet/items/cat-in-box-tilt.webp", // ③ 歪头看你
+  "/pet/items/cat-inbox-pose-0.webp", // 安坐
+  "/pet/items/cat-inbox-pose-1.webp", // 探头张望
+  "/pet/items/cat-inbox-pose-2.webp", // 歪头看你
 ];
+const CAT_OVERLAY_W = 98; // 猫叠层显示宽(略窄于箱口,像坐进去)
+const CAT_OVERLAY_BOTTOM = 22; // 叠层底相对箱底的偏移(爪落在箱口)
 type InteractKind = "nap" | "play" | "drink" | "box";
 // 猫去互动时的站位:猫(84px)中心对物件中心、同深度
 function itemAnchor(k: ItemKey): { x: number; y: number } {
@@ -233,7 +233,13 @@ function walkTo(
   const dx = a.x - r.x;
   const dist = Math.hypot(dx, a.y - r.y);
   if (dist <= 24)
-    return { kind: then, x: a.x, y: a.y, facing: r.facing, dur: 0 } as const;
+    return {
+      kind: then === "box" ? ("hopin" as const) : then,
+      x: a.x,
+      y: a.y,
+      facing: r.facing,
+      dur: 0,
+    } as const;
   return {
     kind: "stroll" as const,
     x: a.x,
@@ -318,6 +324,7 @@ function PetNudge({
       | "wake"
       | "play"
       | "drink"
+      | "hopin"
       | "box";
     x: number;
     // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
@@ -514,7 +521,7 @@ function PetNudge({
         () =>
           setRoam((r) => ({
             ...r,
-            kind: r.then ?? "sit",
+            kind: r.then === "box" ? "hopin" : (r.then ?? "sit"),
             then: undefined,
             dur: 0,
           })),
@@ -532,6 +539,9 @@ function PetNudge({
         setRoam((r) => ({ ...r, kind: "sit" }));
         sayLine(done);
       }, 4200);
+    } else if (roam.kind === "hopin") {
+      // 蹦进箱子:跳跃精灵演一下(~750ms)再落进箱里
+      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "box" })), 750);
     } else if (roam.kind === "box") {
       // 钻箱:在箱里蹲 10-15s(箱子前壁遮着,只露上半身)
       t = window.setTimeout(
@@ -623,8 +633,8 @@ function PetNudge({
                 ? "play"
                 : roam.kind === "drink"
                   ? "drink"
-                  : roam.kind === "box"
-                    ? "idle"
+                  : roam.kind === "hopin"
+                    ? "jumping"
                     : "idle";
     // 摸猫说话才冒对话泡;坐着思考时冒「心事泡」(功能入口,跟着猫选边)
     const showBubble = talk !== null;
@@ -681,8 +691,7 @@ function PetNudge({
           const it = YARD_ITEMS[k];
           const hideForAction =
             (k === "yarn" && roam.kind === "play") ||
-            (k === "bowl" && roam.kind === "drink") ||
-            (k === "box" && roam.kind === "box");
+            (k === "bowl" && roam.kind === "drink");
           const z = zOf(it.bottom);
           return (
             <button
@@ -752,8 +761,8 @@ function PetNudge({
           </div>
         )}
 
-        {/* 钻箱:猫走到箱边后整只换成「猫坐进箱里」整图(gpt-image-2 出,已抠成真透明)。
-            盖在空箱位置上、底对齐、比空箱略宽,露出探头的上半身。 */}
+        {/* 钻箱:空箱 box.webp 在上面家具循环里照常渲染(不再隐藏),这里把猫上半身姿势图
+            叠在箱口、循环切换 —— 箱子纹丝不动,只猫变姿势(东张西望)。z 压在箱子之上。 */}
         {roam.kind === "box" && (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -765,10 +774,12 @@ function PetNudge({
               className="absolute"
               style={{
                 left:
-                  YARD_ITEMS.box.left + YARD_ITEMS.box.w / 2 - CAT_IN_BOX_W / 2,
-                bottom: YARD_ITEMS.box.bottom - 2,
-                width: CAT_IN_BOX_W,
-                zIndex: zOf(YARD_ITEMS.box.bottom),
+                  YARD_ITEMS.box.left +
+                  YARD_ITEMS.box.w / 2 -
+                  CAT_OVERLAY_W / 2,
+                bottom: YARD_ITEMS.box.bottom + CAT_OVERLAY_BOTTOM,
+                width: CAT_OVERLAY_W,
+                zIndex: zOf(YARD_ITEMS.box.bottom) + 2,
               }}
             />
           </>
