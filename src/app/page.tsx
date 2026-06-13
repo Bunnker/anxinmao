@@ -193,7 +193,7 @@ const YARD_ITEMS = {
   bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 2, bottom: 58, w: 88 },
   // 空箱子;猫钻进去时整只换成 cat-in-box 整图(见院子渲染),不再实时合成
   // 空箱;猫钻箱/蹦箱时藏掉它,换成 codex 的「猫+箱」组合帧(见院子渲染)
-  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 264, bottom: 50, w: 45 },
+  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 252, bottom: 50, w: 88 },
   bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 132, bottom: 26, w: 44 },
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
 } as const;
@@ -215,11 +215,12 @@ const CAT_IN_BOX_POSES = [
   "/pet/items/cat-box-2.webp",
 ];
 // 跳帧 + 姿势共用一套显示:新帧画布 582×520、箱翼跨满整帧 → BOX_W 即箱翼显示宽。
-// 取 45px(=院子空箱,再缩一半);箱底中心在画布 284/582,对齐空箱中心 286 → BOX_LEFT=264;
-// 箱底贴地 → BOX_BOTTOM=50。空箱(box.webp)与这套箱同尺寸同位,钻入时无缝换。
-const BOX_W = 45;
-const BOX_LEFT = 264;
-const BOX_BOTTOM = 50;
+// 取 88px(=猫窝大小);箱底中心在画布 284/582,对齐空箱中心 296 → BOX_LEFT=253;
+// 箱底贴地:箱底在画布距底 6/520 → 88px 下约 1px,故 BOX_BOTTOM=49 使箱底落到地面 50。
+// 空箱(box.webp)与这套箱同尺寸同位(left252/w88/中296),钻入时无缝换。
+const BOX_W = 88;
+const BOX_LEFT = 253;
+const BOX_BOTTOM = 49;
 type InteractKind = "nap" | "play" | "drink" | "box";
 // 猫去互动时的站位:猫(84px)中心对物件中心、同深度
 function itemAnchor(k: ItemKey): { x: number; y: number } {
