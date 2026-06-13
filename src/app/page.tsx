@@ -198,39 +198,33 @@ const YARD_ITEMS = {
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
-// 跳进箱:6 帧,猫从箱左侧外接近 → 跃过箱沿 → 落入(箱固定);hopin 顺序播
+// 钻箱 4 帧(gpt-image-2 一次生成、按箱底中心对齐切片 → 箱子帧间锁死):
+// 0 低头探 → 1 探头扒沿 → 2 坐 → 3 抬头坐。hopin 顺序播 0→3 = 猫从箱里由低升起=跳进去。
 const CAT_JUMP_FRAMES = [
-  "/pet/items/cat-box-jump-0.webp",
-  "/pet/items/cat-box-jump-1.webp",
-  "/pet/items/cat-box-jump-2.webp",
-  "/pet/items/cat-box-jump-3.webp",
-  "/pet/items/cat-box-jump-4.webp",
-  "/pet/items/cat-box-jump-5.webp",
+  "/pet/items/cat-box-0.webp",
+  "/pet/items/cat-box-1.webp",
+  "/pet/items/cat-box-2.webp",
+  "/pet/items/cat-box-3.webp",
 ];
-// 在箱里:5 姿势(安坐/探头/歪头/躺箱/躲箱),box 随机循环切
+// 在箱里随机循环:复用同 4 帧当姿势(抬头坐/探头/躲低/坐),同次生成箱一致、绝不错层。
+// [0]=帧3,正好接上 hopin 落定那帧 → 无缝。
 const CAT_IN_BOX_POSES = [
-  "/pet/items/cat-box-sit-0.webp", // 安坐
-  "/pet/items/cat-box-sit-1.webp", // 探头
-  "/pet/items/cat-box-sit-2.webp", // 歪头
-  "/pet/items/cat-box-sit-3.webp", // 躺箱
-  "/pet/items/cat-box-sit-4.webp", // 躲箱
+  "/pet/items/cat-box-3.webp",
+  "/pet/items/cat-box-1.webp",
+  "/pet/items/cat-box-0.webp",
+  "/pet/items/cat-box-2.webp",
 ];
-// 在箱里姿势显示:把画里的箱缩到 45px(再缩一半)、箱中对齐院子空箱中心 286
-// (实测箱占 309/407、中242 → W=45*407/309≈59,left=286-59*242/407≈251)
-const POSE_W = 59;
-const POSE_LEFT = 251;
-const POSE_BOTTOM = 48;
-// 跳箱帧:画里的箱也缩到 90px、箱中对齐 277;猫从左侧外进来。框宽出的透明边由 section overflow-hidden 兜住
-// (实测箱宽226/362、中170 → W=90*362/226≈144,left=277-144*170/362≈209)
-const JUMP_W = 144;
-const JUMP_LEFT = 209;
-const JUMP_BOTTOM = 48;
+// 跳帧 + 姿势共用一套显示:新帧画布 582×520、箱翼跨满整帧 → BOX_W 即箱翼显示宽。
+// 取 45px(=院子空箱,再缩一半);箱底中心在画布 284/582,对齐空箱中心 286 → BOX_LEFT=264;
+// 箱底贴地 → BOX_BOTTOM=50。空箱(box.webp)与这套箱同尺寸同位,钻入时无缝换。
+const BOX_W = 45;
+const BOX_LEFT = 264;
+const BOX_BOTTOM = 50;
 type InteractKind = "nap" | "play" | "drink" | "box";
 // 猫去互动时的站位:猫(84px)中心对物件中心、同深度
 function itemAnchor(k: ItemKey): { x: number; y: number } {
   const it = YARD_ITEMS[k];
-  // 钻箱:停在箱子左前方(对齐跳箱第 0 帧猫的位置),从这儿起跳钻进去,不叠到箱上才跳
-  if (k === "box") return { x: JUMP_LEFT + 6, y: it.bottom };
+  // 钻箱也用通用站位:猫中心对箱中心,随后 hopin 从箱里由低升起(同位无瞬移)
   return {
     x: Math.round(it.left + it.w / 2 - 42),
     y: it.bottom,
@@ -384,7 +378,7 @@ function PetNudge({
     return () => clearTimeout(t);
   }, [roam.kind, calm]);
 
-  // 蹦进箱子:hopin 期间(~900ms)顺序播 codex 的 6 帧跳跃(猫从箱左侧外跃入)
+  // 蹦进箱子:hopin 期间(~900ms)顺序播 cat-box 0→3,猫从箱里由低升起=跳进去
   const [jumpFrame, setJumpFrame] = useState(0);
   useEffect(() => {
     if (roam.kind !== "hopin") {
@@ -800,24 +794,21 @@ function PetNudge({
           </div>
         )}
 
-        {/* 蹦进箱子:hopin 让「猫坐箱里」整图从箱沿下方升入+小回弹(box-hop-in),
-            干净一弹落定 → 随后切到 box 循环姿势。等 gpt-image-2 的干净跳帧到位后再换回逐帧。 */}
+        {/* 蹦进箱子:hopin 顺序播 cat-box 0→3(猫从箱里由低升起=跳进去,箱帧间锁死),整张盖在箱位。 */}
         {roam.kind === "hopin" && (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={CAT_IN_BOX_POSES[0]}
+              src={CAT_JUMP_FRAMES[jumpFrame] ?? CAT_JUMP_FRAMES[0]}
               alt=""
               aria-hidden="true"
               draggable={false}
               className="absolute"
               style={{
-                left: POSE_LEFT,
-                bottom: POSE_BOTTOM,
-                width: POSE_W,
+                left: BOX_LEFT,
+                bottom: BOX_BOTTOM,
+                width: BOX_W,
                 zIndex: zOf(YARD_ITEMS.box.bottom) + 1,
-                transformOrigin: "bottom center",
-                animation: "box-hop-in 0.42s cubic-bezier(0.34,1.56,0.64,1) both",
               }}
             />
           </>
@@ -835,9 +826,9 @@ function PetNudge({
               draggable={false}
               className="absolute"
               style={{
-                left: POSE_LEFT,
-                bottom: POSE_BOTTOM,
-                width: POSE_W,
+                left: BOX_LEFT,
+                bottom: BOX_BOTTOM,
+                width: BOX_W,
                 zIndex: zOf(YARD_ITEMS.box.bottom) + 1,
               }}
             />
