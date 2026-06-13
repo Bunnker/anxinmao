@@ -192,31 +192,29 @@ const YARD_DEPTH = 90;
 const YARD_ITEMS = {
   bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 2, bottom: 58, w: 88 },
   // 空箱子;猫钻进去时整只换成 cat-in-box 整图(见院子渲染),不再实时合成
-  // 纸箱两层:这里画 box-back(后壁/箱内,猫身后);前壁 box-front 在猫之后单独叠(见院子渲染)
-  box: { src: "/pet/items/box-back.webp", alt: "纸箱", left: 232, bottom: 50, w: 108 },
+  // 空箱;猫钻箱/蹦箱时藏掉它,换成 codex 的「猫+箱」组合帧(见院子渲染)
+  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 232, bottom: 50, w: 108 },
   bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 132, bottom: 26, w: 44 },
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
-// 钻箱:两层箱(box-back/box-front)夹猫,猫上半身姿势图叠在箱口循环切换 → 箱子不跳、
-// 前壁遮住下半身=真在箱里。3 张同尺寸同基线(codex 出的 cat-only 3 联条切片)。
-const CAT_IN_BOX_POSES = [
-  "/pet/items/cat-inbox-pose-0.webp", // 安坐
-  "/pet/items/cat-inbox-pose-1.webp", // 探头张望
-  "/pet/items/cat-inbox-pose-2.webp", // 歪头看你
-];
-const CAT_OVERLAY_W = 88; // 猫叠层显示宽
-const CAT_OVERLAY_BOTTOM = 6; // 坐得深一点,下半身让前壁挡住(只露上半身=真在箱里)
-// 蹦进箱子:codex 出的 5 帧跳跃(蹲→跃→峰→落→收),保留垂直弧线;hopin 期间顺序播
+// 钻箱:codex 出的「猫+箱组合」7 帧长条(箱子帧帧锁死、猫和箱一起画 → 不重叠不跳)。
+// 0-3 = 跳进箱(蹲→跃→翻沿→扎进),hopin 顺序播;4-6 = 在箱里(安坐/探头/歪头),box 循环切。
+// 组合图自带箱子,渲染时藏掉院子空箱、整张盖上去即可。
 const CAT_JUMP_FRAMES = [
-  "/pet/items/cat-jump-0.webp",
-  "/pet/items/cat-jump-1.webp",
-  "/pet/items/cat-jump-2.webp",
-  "/pet/items/cat-jump-3.webp",
-  "/pet/items/cat-jump-4.webp",
+  "/pet/items/cat-box-0.webp",
+  "/pet/items/cat-box-1.webp",
+  "/pet/items/cat-box-2.webp",
+  "/pet/items/cat-box-3.webp",
 ];
-const CAT_JUMP_W = 112; // 跳跃帧显示宽
-const CAT_JUMP_BOTTOM = 4; // 跳跃帧底相对箱底偏移
+const CAT_IN_BOX_POSES = [
+  "/pet/items/cat-box-4.webp", // 安坐
+  "/pet/items/cat-box-5.webp", // 探头
+  "/pet/items/cat-box-6.webp", // 歪头
+];
+// 组合图显示位置:箱子对齐院子空箱;跳跃帧猫会冒到框上方(底对齐 + 居中,尺寸调到箱≈空箱)
+const COMBINED_W = 150;
+const COMBINED_BOTTOM = 44;
 type InteractKind = "nap" | "play" | "drink" | "box";
 // 猫去互动时的站位:猫(84px)中心对物件中心、同深度
 function itemAnchor(k: ItemKey): { x: number; y: number } {
@@ -718,7 +716,9 @@ function PetNudge({
           const it = YARD_ITEMS[k];
           const hideForAction =
             (k === "yarn" && roam.kind === "play") ||
-            (k === "bowl" && roam.kind === "drink");
+            (k === "bowl" && roam.kind === "drink") ||
+            (k === "box" &&
+              (roam.kind === "box" || roam.kind === "hopin"));
           const z = zOf(it.bottom);
           return (
             <button
@@ -788,8 +788,7 @@ function PetNudge({
           </div>
         )}
 
-        {/* 蹦进箱子:hopin 期间顺序播 codex 跳跃帧(保留弧线);落帧身子被前壁(z 更高)
-            遮住下半身 = 钻进去。z 夹在 box-back 与 box-front 之间。 */}
+        {/* 蹦进箱子:hopin 顺序播组合跳跃帧(0-3,猫+箱画在一起、箱子固定),整张盖在箱位。 */}
         {roam.kind === "hopin" && (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -801,19 +800,17 @@ function PetNudge({
               className="absolute"
               style={{
                 left:
-                  YARD_ITEMS.box.left +
-                  YARD_ITEMS.box.w / 2 -
-                  CAT_JUMP_W / 2,
-                bottom: YARD_ITEMS.box.bottom + CAT_JUMP_BOTTOM,
-                width: CAT_JUMP_W,
+                  YARD_ITEMS.box.left + YARD_ITEMS.box.w / 2 - COMBINED_W / 2,
+                bottom: COMBINED_BOTTOM,
+                width: COMBINED_W,
                 zIndex: zOf(YARD_ITEMS.box.bottom) + 1,
               }}
             />
           </>
         )}
 
-        {/* 钻箱:空箱 box-back 在上面家具循环里照常渲染,这里把猫上半身姿势图叠在箱口、
-            循环切换 —— 箱子纹丝不动,只猫变姿势(东张西望)。z 夹在 box-back 与 box-front 间。 */}
+        {/* 在箱里:box 循环切组合帧 4-6(猫+箱画在一起、箱子固定),整张盖在箱位 → 东张西望、
+            箱子不重叠不跳。 */}
         {roam.kind === "box" && (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -825,37 +822,14 @@ function PetNudge({
               className="absolute"
               style={{
                 left:
-                  YARD_ITEMS.box.left +
-                  YARD_ITEMS.box.w / 2 -
-                  CAT_OVERLAY_W / 2,
-                bottom: YARD_ITEMS.box.bottom + CAT_OVERLAY_BOTTOM,
-                width: CAT_OVERLAY_W,
+                  YARD_ITEMS.box.left + YARD_ITEMS.box.w / 2 - COMBINED_W / 2,
+                bottom: COMBINED_BOTTOM,
+                width: COMBINED_W,
                 zIndex: zOf(YARD_ITEMS.box.bottom) + 1,
               }}
             />
           </>
         )}
-
-        {/* 纸箱前壁:常驻箱位(平时和 box-back 同 z = 整箱);钻箱/蹦箱时压到猫之上(catZ+2),
-            挡住猫下半身 = 真坐进箱里;跳进去时身子坠到沿下被前壁遮住。
-            pointer-events-none 让点击穿到底下的 box-back 按钮。 */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/pet/items/box-front.webp"
-          alt=""
-          aria-hidden="true"
-          draggable={false}
-          className="pointer-events-none absolute"
-          style={{
-            left: YARD_ITEMS.box.left,
-            bottom: YARD_ITEMS.box.bottom,
-            width: YARD_ITEMS.box.w,
-            zIndex:
-              roam.kind === "box" || roam.kind === "hopin"
-                ? zOf(YARD_ITEMS.box.bottom) + 2
-                : zOf(YARD_ITEMS.box.bottom),
-          }}
-        />
 
         {thinking && (
           <div key={`th-${Math.round(roam.x)}`}>
