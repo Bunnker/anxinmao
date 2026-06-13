@@ -199,6 +199,13 @@ const YARD_ITEMS = {
 type ItemKey = keyof typeof YARD_ITEMS;
 // 钻箱整图(cat-in-box.webp)显示宽度:画里箱身≈空箱大小(略收一点,别太抢)
 const CAT_IN_BOX_W = 116;
+// 钻箱里「东张西望」的姿势图(同箱同位同尺寸、透明底)。出图到位后把 ②③ 取消注释即生效;
+// 只剩 ① 时不切换,行为同现状。
+const CAT_IN_BOX_POSES = [
+  "/pet/items/cat-in-box.webp", // ① 安坐
+  "/pet/items/cat-in-box-look.webp", // ② 探头张望
+  "/pet/items/cat-in-box-tilt.webp", // ③ 歪头看你
+];
 type InteractKind = "nap" | "play" | "drink" | "box";
 // 猫去互动时的站位:猫(84px)中心对物件中心、同深度
 function itemAnchor(k: ItemKey): { x: number; y: number } {
@@ -324,6 +331,30 @@ function PetNudge({
   }>({ kind: "sit", x: 4, y: 58, facing: "right", dur: 0 });
   // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
   const [calm, setCalm] = useState(false);
+  // 钻箱里东张西望:roam==="box" 时每 2-4s 随机切一张姿势(只 ① 一张时不切;减弱动效不切)
+  const [boxPose, setBoxPose] = useState(0);
+  useEffect(() => {
+    if (roam.kind !== "box" || calm || CAT_IN_BOX_POSES.length < 2) {
+      setBoxPose(0);
+      return;
+    }
+    let t: number;
+    const tick = () => {
+      t = window.setTimeout(
+        () => {
+          setBoxPose((p) => {
+            let n = Math.floor(Math.random() * CAT_IN_BOX_POSES.length);
+            if (n === p) n = (n + 1) % CAT_IN_BOX_POSES.length;
+            return n;
+          });
+          tick();
+        },
+        2000 + Math.random() * 2000,
+      );
+    };
+    tick();
+    return () => clearTimeout(t);
+  }, [roam.kind, calm]);
 
   useEffect(() => {
     const measure = () => setYardW(yardRef.current?.offsetWidth ?? 343);
@@ -727,7 +758,7 @@ function PetNudge({
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/pet/items/cat-in-box.webp"
+              src={CAT_IN_BOX_POSES[boxPose] ?? CAT_IN_BOX_POSES[0]}
               alt=""
               aria-hidden="true"
               draggable={false}
