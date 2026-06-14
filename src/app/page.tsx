@@ -293,11 +293,13 @@ const INTERACT_ITEM: Record<InteractKind, ItemKey> = {
 // 深度 → 层级 / 透视缩放(越靠前 z 越大、猫越大)
 const zOf = (bottom: number) => 100 - Math.round(bottom);
 const scaleOf = (y: number) => 0.92 + ((YARD_DEPTH - y) / YARD_DEPTH) * 0.14;
+// 晒太阳点:猫自主走到这块「阳光地面」(对齐背景右下暖光斑)趴下眯眼晒太阳
+const SUN_SPOT = { x: 190, y: 30 };
 // 走过去再做事:距离近直接做,远了先散步(then 接续)
 function walkTo(
   r: { x: number; y: number; facing: "left" | "right" },
   a: { x: number; y: number },
-  then: InteractKind,
+  then: InteractKind | "sunbathe",
 ) {
   const dx = a.x - r.x;
   const dist = Math.hypot(dx, a.y - r.y);
@@ -338,6 +340,11 @@ const EMPTY_WATER_TALK = [
   "喵呜——(碗空了啦好渴 ´；ω；`)",
   "嗷呜~(主人水没了 >﹏<)",
   "喵…喵…(快给我加点水嘛 ╥﹏╥)",
+];
+const SUNBATHE_TALK = [
+  "咕噜~(晒得暖洋洋的 ´ω`)",
+  "喵~(这块阳光归我啦 ˘ω˘)",
+  "噜噜~(晒太阳最幸福了 =^‥^=)",
 ];
 // 物件 → 点击它触发的互动
 const TARGET_OF: Record<ItemKey, InteractKind> = {
@@ -428,7 +435,8 @@ function PetNudge({
       | "drybowl"
       | "brushing"
       | "rug"
-      | "pounce";
+      | "pounce"
+      | "sunbathe";
     x: number;
     // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
     y: number;
@@ -437,7 +445,7 @@ function PetNudge({
     // wake 时演哪个起床动作(伸懒腰/打哈欠/弓背)
     wake?: PetSpriteState;
     // 散步到达后的下一步(走到窝边再蜷睡 / 走到球边再玩……)
-    then?: InteractKind;
+    then?: InteractKind | "sunbathe";
     // 梳毛动作变体(back 顺毛长梳 / belly 梳肚皮……),决定盖帧序列
     brushVariant?: string;
   }>({ kind: "sit", x: 4, y: 58, facing: "right", dur: 0 });
@@ -900,6 +908,11 @@ function PetNudge({
             setRoam((r) => ({ ...r, kind: "hop", dur: 0 }));
             return;
           }
+          if (roll < 0.67) {
+            // 晒太阳:走到阳光地面趴下眯眼(自主安静停留点)
+            setRoam((r) => walkTo(r, SUN_SPOT, "sunbathe"));
+            return;
+          }
           const target: InteractKind =
             roll < 0.7
               ? "nap"
@@ -960,6 +973,14 @@ function PetNudge({
         setRoam((r) => ({ ...r, kind: "sit" }));
         sayLine("play");
       }, 2400);
+    } else if (roam.kind === "sunbathe") {
+      // 晒太阳:趴在阳光里眯眼 ~6s 后坐起,说句晒太阳猫语
+      t = window.setTimeout(() => {
+        setRoam((r) => ({ ...r, kind: "sit" }));
+        sayText(
+          SUNBATHE_TALK[Math.floor(Math.random() * SUNBATHE_TALK.length)],
+        );
+      }, 6000);
     } else if (roam.kind === "brushing") {
       // 梳毛:专属疏毛盖帧演 ~3.4s 后坐回,说句梳毛猫语
       t = window.setTimeout(() => {
@@ -1078,7 +1099,7 @@ function PetNudge({
           ? "groom"
           : roam.kind === "scratch"
             ? "stretch"
-            : roam.kind === "nap"
+            : roam.kind === "nap" || roam.kind === "sunbathe"
               ? "nap"
             : roam.kind === "wake"
               ? (roam.wake ?? "stretch")
@@ -1169,7 +1190,7 @@ function PetNudge({
             className="absolute inset-0"
             style={{
               background:
-                "radial-gradient(135% 95% at 88% 4%, rgba(255,246,236,0.5), rgba(255,246,236,0) 50%)",
+                "radial-gradient(82% 70% at 74% 56%, rgba(255,246,236,0.52), rgba(255,246,236,0) 60%)",
             }}
           />
           {/* 木地板带(底部 ~46%):远暗近亮暖木 + 等间距木缝 + 顶沿墙脚阴影线 */}
