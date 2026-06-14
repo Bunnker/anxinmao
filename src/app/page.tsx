@@ -194,7 +194,7 @@ const PET_TALK = [
 // ── 2.5D 地板:院子有纵深(bottom 0~YARD_DEPTH 的深度带)──
 // 猫还用左右跑动画,走斜线时 y 同步变、越靠前越大(伪透视);
 // 猫与家具按 bottom 做画家算法排序,猫能绕到窝后面去。
-const YARD_DEPTH = 90;
+const YARD_DEPTH = 140;
 // 家具摆位:bottom = 深度(大=靠后);玩球/喝水动画自带道具,播放时隐藏地面同款
 const YARD_ITEMS = {
   bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 2, bottom: 58, w: 88 },
@@ -204,9 +204,8 @@ const YARD_ITEMS = {
   box: { src: "/pet/items/box.webp", alt: "纸箱", left: 253, bottom: 49, w: 88 },
   bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 132, bottom: 26, w: 44 },
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
-  // codex 出的新家具(可拖):猫抓板(配 stretch 伸展)/ 软垫(配 nap 打盹)
+  // codex 出的新家具(可拖):猫抓板 —— 走过去挠抓
   scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 88, bottom: 92, w: 78 },
-  cushion: { src: "/pet/items/cushion.webp", alt: "软垫", left: 178, bottom: 98, w: 68 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
 // 钻箱 4 帧(gpt-image-2 一次生成、按箱底中心对齐切片 → 箱子帧间锁死):
@@ -229,7 +228,7 @@ const CAT_IN_BOX_POSES = [
 //(=猫窝大小)。在箱帧的 left/bottom 直接用 live 的 layout.box(空箱坐标)→ 拖动箱子时
 // 在箱帧/钻入帧跟着箱子走、像素级重合。
 const BOX_W = 88;
-type InteractKind = "nap" | "play" | "drink" | "box" | "scratch" | "lounge";
+type InteractKind = "nap" | "play" | "drink" | "box" | "scratch";
 // 家具可拖拽:left/bottom 抽成 layout state(见 PetNudge 内),w/src/alt 仍是常量。
 // 院子布局存档(全局一份,院子是共享的家,不分猫)+ 默认值(=各家具初始坐标)。
 type Pos = { left: number; bottom: number };
@@ -253,7 +252,6 @@ const INTERACT_ITEM: Record<InteractKind, ItemKey> = {
   drink: "bowl",
   box: "box",
   scratch: "scratch",
-  lounge: "cushion",
 };
 // 深度 → 层级 / 透视缩放(越靠前 z 越大、猫越大)
 const zOf = (bottom: number) => 100 - Math.round(bottom);
@@ -290,7 +288,6 @@ const INTERACT_TALK: Record<InteractKind, string[]> = {
   box: ["这个箱子,本喵承包了。", "箱子里好有安全感……"],
   nap: [],
   scratch: ["挠挠挠~爽!", "指甲管理,完成!", "这板子,本喵盖章了。"],
-  lounge: [],
 };
 // 物件 → 点击它触发的互动
 const TARGET_OF: Record<ItemKey, InteractKind> = {
@@ -299,7 +296,6 @@ const TARGET_OF: Record<ItemKey, InteractKind> = {
   bowl: "drink",
   box: "box",
   scratch: "scratch",
-  cushion: "lounge",
 };
 
 function PetNudge({
@@ -367,8 +363,7 @@ function PetNudge({
       | "box"
       | "greet"
       | "hop"
-      | "scratch"
-      | "lounge";
+      | "scratch";
     x: number;
     // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
     y: number;
@@ -660,7 +655,7 @@ function PetNudge({
               ),
             );
             const dist = Math.hypot(tx - roam.x, ty - roam.y);
-            if (dist >= 60) {
+            if (dist >= 40) {
               setRoam({
                 kind: "stroll",
                 x: tx,
@@ -690,13 +685,11 @@ function PetNudge({
               ? "nap"
               : roll < 0.78
                 ? "play"
-                : roll < 0.85
+                : roll < 0.86
                   ? "drink"
-                  : roll < 0.91
+                  : roll < 0.93
                     ? "scratch"
-                    : roll < 0.96
-                      ? "lounge"
-                      : "box";
+                    : "box";
           setRoam((r) =>
             walkTo(r, itemAnchor(liveItem(INTERACT_ITEM[target])), target),
           );
@@ -829,8 +822,8 @@ function PetNudge({
           ? "groom"
           : roam.kind === "scratch"
             ? "stretch"
-            : roam.kind === "nap" || roam.kind === "lounge"
-            ? "nap"
+            : roam.kind === "nap"
+              ? "nap"
             : roam.kind === "wake"
               ? (roam.wake ?? "stretch")
               : roam.kind === "play"
@@ -889,7 +882,7 @@ function PetNudge({
     return (
       <section
         ref={yardRef}
-        className="relative mt-4 h-[264px] overflow-hidden"
+        className="relative mt-4 h-[280px] overflow-hidden"
         aria-label={`${cat.name}的家`}
       >
         {/* 地板家具:点了让猫走过去互动;按深度排层(画家算法)。
