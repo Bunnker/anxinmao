@@ -208,6 +208,16 @@ const YARD_ITEMS = {
   scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 88, bottom: 92, w: 78 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
+// 挠抓板 2 帧(codex 出图、按板右下角对齐切片 → 板不抖):前爪在斜面 高→低 来回=挠。
+// 画布 908×520,板占宽 0.58、板中 0.68;显示时让板与静态 scratch.webp 重合(见院子渲染)。
+const CAT_SCRATCH_FRAMES = [
+  "/pet/items/cat-scratch-0.webp",
+  "/pet/items/cat-scratch-1.webp",
+];
+// 显示宽 134 → 板=78(=scratch.webp.w);相对板原点偏移(猫在板左):
+const SCRATCH_W = 134;
+const SCRATCH_DX = -52; // 帧 left = layout.scratch.left + DX
+const SCRATCH_DY = -18; // 帧 bottom = layout.scratch.bottom + DY
 // 钻箱 4 帧(gpt-image-2 一次生成、按箱底中心对齐切片 → 箱子帧间锁死):
 // 0 低头探 → 1 探头扒沿 → 2 坐 → 3 抬头坐。hopin 顺序播 0→3 = 猫从箱里由低升起=跳进去。
 const CAT_JUMP_FRAMES = [
@@ -527,6 +537,20 @@ function PetNudge({
       return () => clearInterval(id);
     }
     setJumpFrame(0);
+  }, [roam.kind]);
+
+  // 挠抓板:scratch 期间 0↔1 来回切(前爪在斜面上下挠),~220ms 一拍
+  const [scratchFrame, setScratchFrame] = useState(0);
+  useEffect(() => {
+    if (roam.kind !== "scratch") {
+      setScratchFrame(0);
+      return;
+    }
+    const id = window.setInterval(
+      () => setScratchFrame((f) => (f === 0 ? 1 : 0)),
+      220,
+    );
+    return () => clearInterval(id);
   }, [roam.kind]);
 
   useEffect(() => {
@@ -893,6 +917,7 @@ function PetNudge({
           const hideForAction =
             (k === "yarn" && roam.kind === "play") ||
             (k === "bowl" && roam.kind === "drink") ||
+            (k === "scratch" && roam.kind === "scratch") ||
             (k === "box" &&
               (roam.kind === "box" ||
                 roam.kind === "hopin" ||
@@ -949,7 +974,8 @@ function PetNudge({
             钻箱时整只换成 cat-in-box 整图(见下),实时精灵藏起。 */}
         {roam.kind !== "box" &&
           roam.kind !== "hopin" &&
-          roam.kind !== "hopout" && (
+          roam.kind !== "hopout" &&
+          roam.kind !== "scratch" && (
           <div
             ref={catRef}
             className="absolute bottom-0 left-0"
@@ -1026,6 +1052,27 @@ function PetNudge({
                 bottom: layout.box.bottom,
                 width: BOX_W,
                 zIndex: zOf(layout.box.bottom) + 1,
+              }}
+            />
+          </>
+        )}
+
+        {/* 挠抓板:scratch 期间隐掉静态板 + 实时精灵,换成 codex「猫挠板」2 帧来回切,
+            帧里的板与静态板重合(SCRATCH_DX/DY/W 算好),猫在板左侧前爪上下挠。 */}
+        {roam.kind === "scratch" && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={CAT_SCRATCH_FRAMES[scratchFrame] ?? CAT_SCRATCH_FRAMES[0]}
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              className="absolute"
+              style={{
+                left: layout.scratch.left + SCRATCH_DX,
+                bottom: layout.scratch.bottom + SCRATCH_DY,
+                width: SCRATCH_W,
+                zIndex: zOf(layout.scratch.bottom) + 1,
               }}
             />
           </>
