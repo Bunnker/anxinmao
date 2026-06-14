@@ -585,7 +585,7 @@ function PetNudge({
       }, 4200);
     } else if (roam.kind === "hopin") {
       // 蹦进箱子:0→3 升起播完(~900ms)再落进箱里
-      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "box" })), 750);
+      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "box" })), 850);
     } else if (roam.kind === "box") {
       // 钻箱:在箱里蹲 10-15s,到点先爬出来(hopout)
       t = window.setTimeout(
