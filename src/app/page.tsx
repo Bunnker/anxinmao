@@ -986,17 +986,29 @@ function PetNudge({
                         : roam.kind === "drybowl"
                           ? "failed"
                           : "idle";
-    // 摸猫说话才冒对话泡;坐着思考时冒「心事泡」(功能入口,跟着猫选边)
+    // 摸猫说话才冒对话泡 —— 气泡跟随小猫:贴着猫身体边缘的左/右侧,按边界选边
     const showBubble = talk !== null;
-    // 选剩余空间够的一侧,宽度跟着空间缩,避免压到猫身上
-    const rightRoom = yardW - roam.x - 98;
-    const bubbleOnRight = rightRoom >= 150;
-    const bubbleW = bubbleOnRight
-      ? Math.min(240, rightRoom)
-      : Math.min(240, Math.max(140, roam.x - 16));
+    // 猫的视觉范围:容器锚在 roam.x,精灵宽 84、底中心缩放(按深度 scaleOf)
+    const catScale = scaleOf(roam.y);
+    const catCenterX = roam.x + 42;
+    const catHalfW = 42 * catScale;
+    const catLeftEdge = catCenterX - catHalfW;
+    const catRightEdge = catCenterX + catHalfW;
+    const GAP = 10;
+    const EDGE = 6;
+    // 选空间更大的一侧贴着猫放,气泡宽度收进该侧可用空间(窄了就换行),不压到猫
+    const rightRoom = yardW - catRightEdge - GAP - EDGE;
+    const leftRoom = catLeftEdge - GAP - EDGE;
+    const bubbleOnRight = rightRoom >= leftRoom;
+    const bubbleW = Math.min(240, Math.max(96, bubbleOnRight ? rightRoom : leftRoom));
     const bubbleStyle = bubbleOnRight
-      ? { left: roam.x + 90, maxWidth: bubbleW }
-      : { left: Math.max(8, roam.x - 8 - bubbleW), maxWidth: bubbleW };
+      ? { left: Math.round(catRightEdge + GAP), maxWidth: bubbleW }
+      : {
+          left: Math.round(Math.max(EDGE, catLeftEdge - GAP - bubbleW)),
+          maxWidth: bubbleW,
+        };
+    // 垂直:贴在猫头/肩高度(精灵高约 91*scale),尾角朝下指向猫,不再钉在脚边
+    const bubbleBottom = Math.round(roam.y + 52 * catScale);
     // 心事泡:猫坐下(思考)才冒,散步/洗脸/打盹时收起 —— 入口是猫的行为产物。
     // 猫在左半场泡往右上冒,右半场往左上冒;三个点链从猫头斜向泡群。
     const thinking = roam.kind === "sit" && !talk;
@@ -1264,7 +1276,7 @@ function PetNudge({
               "pet-bubble absolute rounded-[22px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] " +
               (bubbleOnRight ? "rounded-bl-md" : "rounded-br-md")
             }
-            style={{ ...bubbleStyle, bottom: roam.y + 4, zIndex: 200 }}
+            style={{ ...bubbleStyle, bottom: bubbleBottom, zIndex: 200 }}
           >
             <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
           </div>
