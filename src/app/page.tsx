@@ -850,7 +850,7 @@ function PetNudge({
         setRoam((r) => ({ ...r, kind: "sit" }));
         if (done === "drink") {
           if (hadWater) {
-            setWater(waterLevel - 34); // 喝 3 口见底
+            setWater(waterLevel - 50); // 满→半→空,每口看得出降
             sayLine("drink");
           } else {
             sayText("碗里没水了,倒点水嘛~");
@@ -1064,8 +1064,12 @@ function PetNudge({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={
-                  k === "bowl" && waterLevel <= 0
-                    ? "/pet/items/bowl-empty.webp"
+                  k === "bowl"
+                    ? waterLevel > 50
+                      ? it.src // 满
+                      : waterLevel > 0
+                        ? "/pet/items/bowl-half.webp" // 半
+                        : "/pet/items/bowl-empty.webp" // 空
                     : it.src
                 }
                 alt=""
