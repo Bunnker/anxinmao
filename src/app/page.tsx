@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import Link from "next/link";
 import {
   loadStore,
@@ -191,9 +198,9 @@ const YARD_DEPTH = 90;
 // 家具摆位:bottom = 深度(大=靠后);玩球/喝水动画自带道具,播放时隐藏地面同款
 const YARD_ITEMS = {
   bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 2, bottom: 58, w: 88 },
-  // 空箱:由 cat-box-0 抠掉猫补绘而成(同 582×520 画布、箱位一致),left/bottom/w
-  // 与 BOX_LEFT/BOTTOM/W 对齐 → 空箱与在箱帧像素级重合,钻进/钻出箱子不变样。
-  // 猫钻箱/蹦箱时藏掉它,换成在箱帧(见院子渲染)。
+  // 空箱:由 cat-box-0 抠掉猫补绘而成(同 582×520 画布、箱位一致)。在箱帧渲染时直接读
+  // 这里的 live 坐标(layout.box)→ 空箱与在箱帧像素级重合,钻进/钻出/拖动箱子都不变样。
+  // 猫钻箱/蹦箱时藏掉它,换成在箱帧(见院子渲染)。w 用 BOX_W 常量。
   box: { src: "/pet/items/box.webp", alt: "纸箱", left: 253, bottom: 49, w: 88 },
   bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 132, bottom: 26, w: 44 },
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
@@ -215,22 +222,27 @@ const CAT_IN_BOX_POSES = [
   "/pet/items/cat-box-0.webp",
   "/pet/items/cat-box-2.webp",
 ];
-// 跳帧 + 姿势共用一套显示:新帧画布 582×520、箱翼跨满整帧 → BOX_W 即箱翼显示宽。
-// 取 88px(=猫窝大小);箱底中心在画布 284/582,对齐空箱中心 296 → BOX_LEFT=253;
-// 箱底贴地:箱底在画布距底 6/520 → 88px 下约 1px,故 BOX_BOTTOM=49 使箱底落到地面 50。
-// 空箱(box.webp)与这套箱同尺寸同位(left252/w88/中296),钻入时无缝换。
+// 跳帧 + 姿势共用一套显示:新帧画布 582×520、箱翼跨满整帧 → BOX_W 即箱翼显示宽 88px
+//(=猫窝大小)。在箱帧的 left/bottom 直接用 live 的 layout.box(空箱坐标)→ 拖动箱子时
+// 在箱帧/钻入帧跟着箱子走、像素级重合。
 const BOX_W = 88;
-const BOX_LEFT = 253;
-const BOX_BOTTOM = 49;
 type InteractKind = "nap" | "play" | "drink" | "box";
-// 猫去互动时的站位:猫(84px)中心对物件中心、同深度
-function itemAnchor(k: ItemKey): { x: number; y: number } {
-  const it = YARD_ITEMS[k];
-  // 钻箱也用通用站位:猫中心对箱中心,随后 hopin 从箱里由低升起(同位无瞬移)
-  return {
-    x: Math.round(it.left + it.w / 2 - 42),
-    y: it.bottom,
-  };
+// 家具可拖拽:left/bottom 抽成 layout state(见 PetNudge 内),w/src/alt 仍是常量。
+// 院子布局存档(全局一份,院子是共享的家,不分猫)+ 默认值(=各家具初始坐标)。
+type Pos = { left: number; bottom: number };
+const YARD_LAYOUT_KEY = "yardLayout:v1";
+function defaultLayout(): Record<ItemKey, Pos> {
+  const o = {} as Record<ItemKey, Pos>;
+  for (const k of Object.keys(YARD_ITEMS) as ItemKey[])
+    o[k] = { left: YARD_ITEMS[k].left, bottom: YARD_ITEMS[k].bottom };
+  return o;
+}
+// 猫去互动时的站位:猫(84px)中心对物件中心、同深度。传 live 坐标 → 家具挪了走位也跟着挪。
+function itemAnchor(it: { left: number; bottom: number; w: number }): {
+  x: number;
+  y: number;
+} {
+  return { x: Math.round(it.left + it.w / 2 - 42), y: it.bottom };
 }
 const INTERACT_ITEM: Record<InteractKind, ItemKey> = {
   nap: "bed",
@@ -356,6 +368,108 @@ function PetNudge({
   }>({ kind: "sit", x: 4, y: 58, facing: "right", dur: 0 });
   // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
   const [calm, setCalm] = useState(false);
+
+  // ── 家具拖拽摆位:坐标存 layout(默认=初始坐标,有存档则覆盖);长按拿起再拖 ──
+  const [layout, setLayout] = useState<Record<ItemKey, Pos>>(defaultLayout);
+  const [dragKey, setDragKey] = useState<ItemKey | null>(null);
+  const pressRef = useRef<{
+    k: ItemKey;
+    pointerId: number;
+    startX: number;
+    startY: number;
+    startLeft: number;
+    startBottom: number;
+    lifted: boolean;
+    moved: boolean;
+    timer: number;
+  } | null>(null);
+  const suppressClickRef = useRef(false);
+  // live 家具:默认常量(w/src/alt)+ 可变坐标(left/bottom)
+  const liveItem = (k: ItemKey) => ({ ...YARD_ITEMS[k], ...layout[k] });
+
+  // 读存档(仅客户端,首帧用默认避免水合不一致)
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(YARD_LAYOUT_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<Record<ItemKey, Pos>>;
+      setLayout((cur) => {
+        const next = { ...cur };
+        for (const k of Object.keys(YARD_ITEMS) as ItemKey[]) {
+          const p = saved[k];
+          if (p && Number.isFinite(p.left) && Number.isFinite(p.bottom))
+            next[k] = { left: p.left, bottom: p.bottom };
+        }
+        return next;
+      });
+    } catch {}
+  }, []);
+  const saveLayout = (next: Record<ItemKey, Pos>) => {
+    try {
+      window.localStorage.setItem(YARD_LAYOUT_KEY, JSON.stringify(next));
+    } catch {}
+  };
+
+  const LIFT_MS = 400; // 长按这么久才拿起
+  const MOVE_CANCEL = 8; // 拿起前移动超过这个 px 就当滑动、不拿起
+  function onItemPointerDown(k: ItemKey, e: ReactPointerEvent<HTMLButtonElement>) {
+    if (talk || pressRef.current) return;
+    suppressClickRef.current = false;
+    const timer = window.setTimeout(() => {
+      const pr = pressRef.current;
+      if (pr && !pr.moved) {
+        pr.lifted = true;
+        setDragKey(pr.k);
+      }
+    }, LIFT_MS);
+    pressRef.current = {
+      k,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      startLeft: layout[k].left,
+      startBottom: layout[k].bottom,
+      lifted: false,
+      moved: false,
+      timer,
+    };
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+  }
+  function onItemPointerMove(e: ReactPointerEvent<HTMLButtonElement>) {
+    const pr = pressRef.current;
+    if (!pr || pr.pointerId !== e.pointerId) return;
+    const dx = e.clientX - pr.startX;
+    const dy = e.clientY - pr.startY;
+    if (!pr.lifted) {
+      if (Math.hypot(dx, dy) > MOVE_CANCEL) {
+        pr.moved = true; // 滑动 → 放弃长按(不拿起,松手也不互动)
+        window.clearTimeout(pr.timer);
+      }
+      return;
+    }
+    const w = YARD_ITEMS[pr.k].w;
+    const left = Math.round(Math.min(Math.max(0, yardW - w), Math.max(0, pr.startLeft + dx)));
+    // 屏幕往上拖 = bottom 变大(往院子里);夹在地面带
+    const bottom = Math.round(Math.min(100, Math.max(0, pr.startBottom - dy)));
+    setLayout((cur) => ({ ...cur, [pr.k]: { left, bottom } }));
+  }
+  function onItemPointerUp(e: ReactPointerEvent<HTMLButtonElement>) {
+    const pr = pressRef.current;
+    if (!pr || pr.pointerId !== e.pointerId) return;
+    window.clearTimeout(pr.timer);
+    pressRef.current = null;
+    if (pr.lifted) {
+      setDragKey(null);
+      suppressClickRef.current = true; // 刚拖完,别让随后的 click 触发互动
+      setLayout((cur) => {
+        saveLayout(cur);
+        return cur;
+      });
+    }
+  }
+
   // 钻箱里东张西望:roam==="box" 时每 2-4s 随机切一张姿势(只 ① 一张时不切;减弱动效不切)
   const [boxPose, setBoxPose] = useState(0);
   useEffect(() => {
@@ -463,7 +577,7 @@ function PetNudge({
           : { x: r.x, y: r.y };
       return walkTo(
         { x: Math.round(cur.x), y: Math.round(cur.y), facing: r.facing },
-        itemAnchor(INTERACT_ITEM[target]),
+        itemAnchor(liveItem(INTERACT_ITEM[target])),
         target,
       );
     });
@@ -556,7 +670,9 @@ function PetNudge({
                 : roll < 0.9
                   ? "drink"
                   : "box";
-          setRoam((r) => walkTo(r, itemAnchor(INTERACT_ITEM[target]), target));
+          setRoam((r) =>
+            walkTo(r, itemAnchor(liveItem(INTERACT_ITEM[target])), target),
+          );
         },
         12000 + Math.random() * 14000,
       );
@@ -743,19 +859,38 @@ function PetNudge({
               (roam.kind === "box" ||
                 roam.kind === "hopin" ||
                 roam.kind === "hopout"));
-          const z = zOf(it.bottom);
+          const pos = layout[k];
+          const lifted = dragKey === k;
+          const z = lifted ? 200 : zOf(pos.bottom);
           return (
             <button
               key={k}
               type="button"
-              onClick={() => goInteract(TARGET_OF[k])}
-              aria-label={`让${cat.name}去${it.alt}那儿`}
+              onClick={() => {
+                if (suppressClickRef.current) {
+                  suppressClickRef.current = false;
+                  return;
+                }
+                goInteract(TARGET_OF[k]);
+              }}
+              onPointerDown={(e) => onItemPointerDown(k, e)}
+              onPointerMove={onItemPointerMove}
+              onPointerUp={onItemPointerUp}
+              onPointerCancel={onItemPointerUp}
+              aria-label={`让${cat.name}去${it.alt}那儿(长按可拖动摆位)`}
               className="absolute cursor-pointer select-none p-0"
               style={{
-                left: it.left,
-                bottom: it.bottom,
+                left: pos.left,
+                bottom: pos.bottom,
                 width: it.w,
                 zIndex: z,
+                touchAction: "none",
+                transformOrigin: "bottom center",
+                transform: lifted ? "scale(1.08)" : undefined,
+                filter: lifted
+                  ? "drop-shadow(0 7px 9px rgba(0,0,0,0.28))"
+                  : undefined,
+                transition: lifted ? "none" : "transform 0.14s ease-out",
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -828,10 +963,10 @@ function PetNudge({
                 (roam.kind === "hopin" ? "box-hop-in" : "box-hop-out")
               }
               style={{
-                left: BOX_LEFT,
-                bottom: BOX_BOTTOM,
+                left: layout.box.left,
+                bottom: layout.box.bottom,
                 width: BOX_W,
-                zIndex: zOf(YARD_ITEMS.box.bottom) + 1,
+                zIndex: zOf(layout.box.bottom) + 1,
               }}
             />
           </>
@@ -849,10 +984,10 @@ function PetNudge({
               draggable={false}
               className="absolute"
               style={{
-                left: BOX_LEFT,
-                bottom: BOX_BOTTOM,
+                left: layout.box.left,
+                bottom: layout.box.bottom,
                 width: BOX_W,
-                zIndex: zOf(YARD_ITEMS.box.bottom) + 1,
+                zIndex: zOf(layout.box.bottom) + 1,
               }}
             />
           </>
