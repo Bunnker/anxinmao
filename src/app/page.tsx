@@ -204,6 +204,9 @@ const YARD_ITEMS = {
   box: { src: "/pet/items/box.webp", alt: "纸箱", left: 253, bottom: 49, w: 88 },
   bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 132, bottom: 26, w: 44 },
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
+  // codex 出的新家具(可拖):猫抓板(配 stretch 伸展)/ 软垫(配 nap 打盹)
+  scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 88, bottom: 92, w: 78 },
+  cushion: { src: "/pet/items/cushion.webp", alt: "软垫", left: 178, bottom: 98, w: 68 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
 // 钻箱 4 帧(gpt-image-2 一次生成、按箱底中心对齐切片 → 箱子帧间锁死):
@@ -226,7 +229,7 @@ const CAT_IN_BOX_POSES = [
 //(=猫窝大小)。在箱帧的 left/bottom 直接用 live 的 layout.box(空箱坐标)→ 拖动箱子时
 // 在箱帧/钻入帧跟着箱子走、像素级重合。
 const BOX_W = 88;
-type InteractKind = "nap" | "play" | "drink" | "box";
+type InteractKind = "nap" | "play" | "drink" | "box" | "scratch" | "lounge";
 // 家具可拖拽:left/bottom 抽成 layout state(见 PetNudge 内),w/src/alt 仍是常量。
 // 院子布局存档(全局一份,院子是共享的家,不分猫)+ 默认值(=各家具初始坐标)。
 type Pos = { left: number; bottom: number };
@@ -249,6 +252,8 @@ const INTERACT_ITEM: Record<InteractKind, ItemKey> = {
   play: "yarn",
   drink: "bowl",
   box: "box",
+  scratch: "scratch",
+  lounge: "cushion",
 };
 // 深度 → 层级 / 透视缩放(越靠前 z 越大、猫越大)
 const zOf = (bottom: number) => 100 - Math.round(bottom);
@@ -284,6 +289,8 @@ const INTERACT_TALK: Record<InteractKind, string[]> = {
   drink: ["咕咚咕咚……舒服~", "水很新鲜,谢谢铲屎官!"],
   box: ["这个箱子,本喵承包了。", "箱子里好有安全感……"],
   nap: [],
+  scratch: ["挠挠挠~爽!", "指甲管理,完成!", "这板子,本喵盖章了。"],
+  lounge: [],
 };
 // 物件 → 点击它触发的互动
 const TARGET_OF: Record<ItemKey, InteractKind> = {
@@ -291,6 +298,8 @@ const TARGET_OF: Record<ItemKey, InteractKind> = {
   yarn: "play",
   bowl: "drink",
   box: "box",
+  scratch: "scratch",
+  cushion: "lounge",
 };
 
 function PetNudge({
@@ -357,7 +366,9 @@ function PetNudge({
       | "hopout"
       | "box"
       | "greet"
-      | "hop";
+      | "hop"
+      | "scratch"
+      | "lounge";
     x: number;
     // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
     y: number;
@@ -675,13 +686,17 @@ function PetNudge({
             return;
           }
           const target: InteractKind =
-            roll < 0.73
+            roll < 0.7
               ? "nap"
-              : roll < 0.82
+              : roll < 0.78
                 ? "play"
-                : roll < 0.91
+                : roll < 0.85
                   ? "drink"
-                  : "box";
+                  : roll < 0.91
+                    ? "scratch"
+                    : roll < 0.96
+                      ? "lounge"
+                      : "box";
           setRoam((r) =>
             walkTo(r, itemAnchor(liveItem(INTERACT_ITEM[target])), target),
           );
@@ -710,6 +725,12 @@ function PetNudge({
     } else if (roam.kind === "hop") {
       // 蹦跶:蹦一下定格回味后坐回
       t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "sit" })), 1100);
+    } else if (roam.kind === "scratch") {
+      // 挠抓板:伸展(stretch)演一遍后坐起说句猫语
+      t = window.setTimeout(() => {
+        setRoam((r) => ({ ...r, kind: "sit" }));
+        sayLine("scratch");
+      }, 3200);
     } else if (roam.kind === "play" || roam.kind === "drink") {
       // 玩球/喝水:动画播一遍定格回味,完了坐起说句猫语
       const done = roam.kind;
@@ -806,7 +827,9 @@ function PetNudge({
           : "running-left"
         : roam.kind === "groom"
           ? "groom"
-          : roam.kind === "nap"
+          : roam.kind === "scratch"
+            ? "stretch"
+            : roam.kind === "nap" || roam.kind === "lounge"
             ? "nap"
             : roam.kind === "wake"
               ? (roam.wake ?? "stretch")
