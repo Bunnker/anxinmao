@@ -1118,10 +1118,17 @@ function PetNudge({
             脚下用一块静态椭圆当影子,不再给精灵挂 drop-shadow 滤镜 —— 滤镜每帧重算,
             奔跑高频换帧时会残留上一帧的虚影(像涂层);静态 div 不随帧重算,无残影。
             钻箱时整只换成 cat-in-box 整图(见下),实时精灵藏起。 */}
-        {roam.kind !== "box" &&
-          roam.kind !== "hopin" &&
-          roam.kind !== "hopout" &&
-          roam.kind !== "scratch" && (
+        {(() => {
+          // 帧状态(box/hopin/hopout/scratch)期间用 gpt 帧盖在上面,这只实时精灵隐藏。
+          // 关键:不「卸载」而是隐藏 —— 卸载后切回 stroll 会重新挂载,新挂载的 div 没有
+          // 上一帧 transform 作为 CSS transition 起点,会从家具位置「瞬移」到新目标
+          // (item2:从纸箱出来连点别的家具会瞬移)。常驻挂载则平移能平滑过渡走过去。
+          const catHidden =
+            roam.kind === "box" ||
+            roam.kind === "hopin" ||
+            roam.kind === "hopout" ||
+            roam.kind === "scratch";
+          return (
           <div
             ref={catRef}
             className="absolute bottom-0 left-0"
@@ -1134,6 +1141,8 @@ function PetNudge({
                   : "none",
               willChange: roam.kind === "stroll" ? "transform" : undefined,
               zIndex: zOf(roam.y),
+              opacity: catHidden ? 0 : 1,
+              pointerEvents: catHidden ? "none" : undefined,
             }}
           >
             {/* 脚下静态影子 */}
@@ -1157,7 +1166,8 @@ function PetNudge({
               />
             </button>
           </div>
-        )}
+          );
+        })()}
 
         {/* 钻箱动画:hopin 播 0→3(跳进去)/ hopout 播 3→1(爬出来),整张盖在箱位、箱帧间锁死。 */}
         {(roam.kind === "hopin" || roam.kind === "hopout") && (
