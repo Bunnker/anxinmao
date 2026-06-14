@@ -249,20 +249,38 @@ button[class*="bg-surface"] {
     transform: translateY(-3.5px);
   }
 }
-/* 梳毛时整只猫轻轻摇摆(被梳得舒服、随梳子扭动)——给盖帧 overlay 用。
+/* 梳毛「酥麻颤抖」——纯位移高频底噪 + 两次稀疏「一激灵」(多 agent 设计 + 评审定稿)。
+   红线:平时只动 translate(亚像素~1px、不规则、凑不成正弦节拍)→ 矩阵恒为纯位移,
+   物理上读不出旋转,绝不会变成旧版「整图绕底钟摆 / 图层在晃」的假感;
+   两次激灵(40%/72%)只在峰值掺极轻各向异性 scale(scaleY 略大 = 毛根立起)随即归 1,绝不加 rotate;
+   全程位移 ≤~1.1px、scale ≤1.012、净位移归零 → 猫不移位。
    Tailwind v4 会摇掉只在内联 style 用的 @keyframes,所以必须挂 class 引用。 */
-@keyframes cat-groom-sway {
-  0%,
-  100% {
-    transform: rotate(-2deg) translateY(0);
-  }
-  50% {
-    transform: rotate(2deg) translateY(-2.5px);
-  }
+@keyframes cat-groom-shiver {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  7% { transform: translate3d(0.5px, -0.3px, 0) scale(1); }
+  15% { transform: translate3d(-0.5px, 0.3px, 0) scale(1); }
+  24% { transform: translate3d(0.4px, -0.6px, 0) scale(1); }
+  32% { transform: translate3d(-0.4px, 0.2px, 0) scale(1); }
+  38% { transform: translate3d(0.2px, -0.4px, 0) scale(1); }
+  /* ① 第一次一激灵:毛根一紧、竖一下(y 抬 ~1.1px + scaleY 微拉),脆而短 */
+  40% { transform: translate3d(-0.3px, -1.1px, 0) scaleX(0.992) scaleY(1.012); }
+  43% { transform: translate3d(0.3px, -0.3px, 0) scale(1.002); }
+  47% { transform: translate3d(-0.4px, 0.3px, 0) scale(1); }
+  56% { transform: translate3d(0.5px, -0.4px, 0) scale(1); }
+  64% { transform: translate3d(-0.4px, 0.2px, 0) scale(1); }
+  /* ② 第二次一激灵:偏 x、和第一次不同形,避免被读成第二周期 */
+  72% { transform: translate3d(0.6px, -0.9px, 0) scaleX(0.99) scaleY(1.011); }
+  75% { transform: translate3d(-0.3px, -0.3px, 0) scale(1.002); }
+  83% { transform: translate3d(0.3px, -0.4px, 0) scale(1); }
+  91% { transform: translate3d(-0.3px, 0.2px, 0) scale(1); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
 }
 .cat-groom-sway {
-  transform-origin: 50% 92%;
-  animation: cat-groom-sway 1.05s ease-in-out infinite;
+  transform-origin: 50% 92%; /* 脚掌锚点:激灵向上窜、底边不漂 */
+  will-change: transform;
+  backface-visibility: hidden;
+  /* 2.4s 一轮,内部高频:底噪 ≈6Hz 细颤 + 40%/72% 两次脆跳。linear 不让 ease 把抖抹成柔摆 */
+  animation: cat-groom-shiver 2.4s linear infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   .pet-enter,
