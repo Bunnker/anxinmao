@@ -253,6 +253,22 @@ const CAT_WAND_FRAMES = [
 const WAND_W = 156;
 const WAND_DX = 16;
 const WAND_DY = -4;
+// 洗脸动作 → 帧序列(codex 专门画的「洗脸/理毛」盖帧,非复用 groom row;点地毯随机演一组)。
+// 同梳毛盖帧机制:藏实时精灵、在猫位置盖帧、2 帧 ping-pong。先上 paw(舔爪抹脸)+ hindleg(举旗杆),
+// 后补 ear(抹耳后)/scratch(后腿挠耳)。
+const WASH_SEQS: Record<string, string[]> = {
+  paw: ["/pet/items/cat-wash-paw-0.webp", "/pet/items/cat-wash-paw-1.webp"],
+};
+const WASH_VARIANTS = ["paw"] as const;
+const WASH_ALIGN: Record<string, { w: number; dx: number; dy: number }> = {
+  paw: { w: 124, dx: 0, dy: -4 },
+};
+const WASH_TALK = [
+  "舔舔~(先把爪子舔湿再抹脸 ´ω`)",
+  "呼噜~(脸要洗得香香的 =^‥^=)",
+  "喵嗯~(一抹一抹好认真呀 ˘ω˘)",
+  "喵呜~(脸蛋抹干净最舒服 ฅ^•ﻌ•^ฅ)",
+];
 // 钻箱 4 帧(gpt-image-2 一次生成、按箱底中心对齐切片 → 箱子帧间锁死):
 // 0 低头探 → 1 探头扒沿 → 2 坐 → 3 抬头坐。hopin 顺序播 0→3 = 猫从箱里由低升起=跳进去。
 const CAT_JUMP_FRAMES = [
@@ -445,7 +461,8 @@ function PetNudge({
       | "brushing"
       | "rug"
       | "pounce"
-      | "sunbathe";
+      | "sunbathe"
+      | "washing";
     x: number;
     // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
     y: number;
@@ -457,6 +474,8 @@ function PetNudge({
     then?: InteractKind | "sunbathe";
     // 梳毛动作变体(back 顺毛长梳 / belly 梳肚皮……),决定盖帧序列
     brushVariant?: string;
+    // 洗脸动作变体(paw 舔爪抹脸 / hindleg 举旗杆……),决定盖帧序列
+    washVariant?: string;
   }>({ kind: "sit", x: 4, y: 58, facing: "right", dur: 0 });
   // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
   const [calm, setCalm] = useState(false);
@@ -684,6 +703,20 @@ function PetNudge({
     const id = window.setInterval(
       () => setPounceFrame((f) => (f === 0 ? 1 : 0)),
       260,
+    );
+    return () => clearInterval(id);
+  }, [roam.kind]);
+
+  // 洗脸:washing 期间 0↔1 来回切(局部动作:舔爪抹脸/抬后腿),~240ms 一拍
+  const [washFrame, setWashFrame] = useState(0);
+  useEffect(() => {
+    if (roam.kind !== "washing") {
+      setWashFrame(0);
+      return;
+    }
+    const id = window.setInterval(
+      () => setWashFrame((f) => (f === 0 ? 1 : 0)),
+      620,
     );
     return () => clearInterval(id);
   }, [roam.kind]);
@@ -985,11 +1018,16 @@ function PetNudge({
         sayLine("scratch");
       }, 3200);
     } else if (roam.kind === "rug") {
-      // 地毯:走过去坐下洗脸(复用 groom 帧)~3.4s 后坐起说句猫语
+      // 到地毯:随机选一组洗脸动作,立即转 washing(codex 专属洗脸盖帧)
+      const v =
+        WASH_VARIANTS[Math.floor(Math.random() * WASH_VARIANTS.length)];
+      setRoam((r) => ({ ...r, kind: "washing", washVariant: v }));
+    } else if (roam.kind === "washing") {
+      // 洗脸:盖帧演 ~3.4s 后坐回,说句洗脸猫语
       t = window.setTimeout(() => {
         setRoam((r) => ({ ...r, kind: "sit" }));
-        sayLine("rug");
-      }, 3400);
+        sayText(WASH_TALK[Math.floor(Math.random() * WASH_TALK.length)]);
+      }, 3600);
     } else if (roam.kind === "pounce") {
       // 逗猫棒:原地扑跳捕猎 ~2.4s 后坐回,说句捕猎猫语(复用 play 捕猎语)
       t = window.setTimeout(() => {
@@ -1301,7 +1339,8 @@ function PetNudge({
             roam.kind === "hopout" ||
             roam.kind === "scratch" ||
             roam.kind === "brushing" ||
-            roam.kind === "pounce";
+            roam.kind === "pounce" ||
+            roam.kind === "washing";
           return (
           <div
             ref={catRef}
@@ -1468,6 +1507,39 @@ function PetNudge({
                   style={{
                     left,
                     bottom: Math.round(roam.y + WAND_DY * s),
+                    width: w,
+                    zIndex: Math.max(zOf(roam.y), 150) + 1,
+                  }}
+                />
+              </>
+            );
+          })()}
+
+        {/* 洗脸:washing 期间藏实时精灵,在猫位置盖 codex 专属洗脸帧(随机一组)2 帧来回切。 */}
+        {roam.kind === "washing" &&
+          (() => {
+            const variant = roam.washVariant ?? "paw";
+            const align = WASH_ALIGN[variant] ?? WASH_ALIGN.paw;
+            const s = scaleOf(roam.y);
+            const w = Math.round(align.w * s);
+            const seq = WASH_SEQS[variant] ?? WASH_SEQS.paw;
+            const src = seq[washFrame] ?? seq[0];
+            const rawLeft = roam.x + 42 - w / 2 + align.dx * s;
+            const left = Math.round(
+              Math.max(4, Math.min(yardW - w - 4, rawLeft)),
+            );
+            return (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className="absolute"
+                  style={{
+                    left,
+                    bottom: Math.round(roam.y + align.dy * s),
                     width: w,
                     zIndex: Math.max(zOf(roam.y), 150) + 1,
                   }}
