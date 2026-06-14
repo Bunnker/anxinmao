@@ -585,7 +585,7 @@ function PetNudge({
       }, 4200);
     } else if (roam.kind === "hopin") {
       // 蹦进箱子:0→3 升起播完(~900ms)再落进箱里
-      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "box" })), 900);
+      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "box" })), 750);
     } else if (roam.kind === "box") {
       // 钻箱:在箱里蹲 10-15s,到点先爬出来(hopout)
       t = window.setTimeout(
@@ -597,7 +597,7 @@ function PetNudge({
       t = window.setTimeout(() => {
         setRoam((r) => ({ ...r, kind: "sit" }));
         sayLine("box");
-      }, 800);
+      }, 480);
     } else {
       // 打盹 18-32s —— 睡够了随机演一个起床动作(伸懒腰/打哈欠/弓背)再坐起
       t = window.setTimeout(
@@ -829,6 +829,11 @@ function PetNudge({
                 bottom: BOX_BOTTOM,
                 width: BOX_W,
                 zIndex: zOf(YARD_ITEMS.box.bottom) + 1,
+                transformOrigin: "bottom center",
+                animation:
+                  roam.kind === "hopin"
+                    ? "box-hop-in 0.7s cubic-bezier(0.34,1.45,0.5,1) both"
+                    : "box-hop-out 0.45s cubic-bezier(0.5,0,0.7,0.3) both",
               }}
             />
           </>

@@ -162,6 +162,40 @@ button[class*="bg-surface"] {
     transform: none;
   }
 }
+/* 钻箱可见动作(整图 transform,transform-origin 内联设为 bottom):
+   4 帧太像、逐帧看不出动 → 用 CSS 大幅位移+挤压把「跳进/爬出」做明显。 */
+@keyframes box-hop-in {
+  /* 从箱沿下方矮趴 → 窜起回弹 → 落定:像猫一跃钻进箱里 */
+  0% {
+    opacity: 0.25;
+    transform: translateY(30px) scaleY(0.5) scaleX(1.1);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-12px) scaleY(1.12) scaleX(0.93);
+  }
+  78% {
+    transform: translateY(4px) scaleY(0.97) scaleX(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes box-hop-out {
+  /* 先下蹲蓄力 → 向上窜出并淡出:像猫从箱里跳出来 */
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(7px) scaleY(0.86) scaleX(1.07);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-36px) scaleY(1.16) scaleX(0.9);
+  }
+}
 @keyframes bubble-in {
   from {
     opacity: 0;
