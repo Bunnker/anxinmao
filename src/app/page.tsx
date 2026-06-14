@@ -216,6 +216,32 @@ const CAT_SCRATCH_FRAMES = [
 const SCRATCH_W = 134;
 const SCRATCH_DX = -52; // 帧 left = layout.scratch.left + DX
 const SCRATCH_DY = -18; // 帧 bottom = layout.scratch.bottom + DY
+// 梳毛 2 帧(codex 专门画的「疏毛动作」,非复用素材):针梳贴后背 上↔下 来回梳。
+// 梳毛在猫的实时位置发生(不是固定家具),所以盖在 roam.x/roam.y 上、藏掉实时精灵。
+// 梳毛动作 → 帧序列(brushFrame 在序列里 ping-pong 来回播)。
+// codex 专门画的「疏毛」帧:猫身体/表情锁死,只梳子(+被带起的局部毛)移动。
+// back 顺毛长梳:梳子从头颈 → 背 → 腰 → 尾根,来回播 = 从头梳到尾再回头。
+// (head/tail 帧 codex 出好后把 back 扩成 4 帧;belly 梳肚皮变体后续加)
+const BRUSH_SEQS: Record<string, string[]> = {
+  // 顺毛长梳:梳子 肩背 → 腰 → 尾根,来回播 = 从背一路梳到尾再回
+  back: [
+    "/pet/items/cat-brush-0.webp",
+    "/pet/items/cat-brush-1.webp",
+    "/pet/items/cat-brush-tail.webp",
+  ],
+  // 梳肚皮:半躺露肚,梳子在肚皮上来回
+  belly: [
+    "/pet/items/cat-brush-belly-0.webp",
+    "/pet/items/cat-brush-belly-1.webp",
+  ],
+};
+const BRUSH_VARIANTS = ["back", "belly"] as const;
+// 每种梳毛动作的对齐:显示宽(scale 1 时)/ 水平微调 / 垂直贴地微调。
+// 半躺(belly)比坐姿(back)更宽、身体下沿离画布底更远,所以分开调。
+const BRUSH_ALIGN: Record<string, { w: number; dx: number; dy: number }> = {
+  back: { w: 124, dx: 0, dy: -4 },
+  belly: { w: 150, dx: 0, dy: -14 },
+};
 // 钻箱 4 帧(gpt-image-2 一次生成、按箱底中心对齐切片 → 箱子帧间锁死):
 // 0 低头探 → 1 探头扒沿 → 2 坐 → 3 抬头坐。hopin 顺序播 0→3 = 猫从箱里由低升起=跳进去。
 const CAT_JUMP_FRAMES = [
@@ -393,7 +419,8 @@ function PetNudge({
       | "greet"
       | "hop"
       | "scratch"
-      | "drybowl";
+      | "drybowl"
+      | "brushing";
     x: number;
     // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
     y: number;
@@ -403,6 +430,8 @@ function PetNudge({
     wake?: PetSpriteState;
     // 散步到达后的下一步(走到窝边再蜷睡 / 走到球边再玩……)
     then?: InteractKind;
+    // 梳毛动作变体(back 顺毛长梳 / belly 梳肚皮……),决定盖帧序列
+    brushVariant?: string;
   }>({ kind: "sit", x: 4, y: 58, facing: "right", dur: 0 });
   // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
   const [calm, setCalm] = useState(false);
@@ -589,6 +618,37 @@ function PetNudge({
     return () => clearInterval(id);
   }, [roam.kind]);
 
+  // 梳毛:brushing 期间帧序列来回播(ping-pong)——从头顺到尾再回头 = 明显的顺毛长梳。
+  // 帧数随梳毛动作(brushVariant)对应的序列长度变化,2 帧时退化为 0↔1。
+  const [brushFrame, setBrushFrame] = useState(0);
+  useEffect(() => {
+    if (roam.kind !== "brushing") {
+      setBrushFrame(0);
+      return;
+    }
+    const seq = BRUSH_SEQS[roam.brushVariant ?? "back"] ?? BRUSH_SEQS.back;
+    const n = seq.length;
+    if (n < 2) {
+      setBrushFrame(0);
+      return;
+    }
+    let i = 0;
+    let dir = 1;
+    setBrushFrame(0);
+    const id = window.setInterval(() => {
+      i += dir;
+      if (i >= n - 1) {
+        i = n - 1;
+        dir = -1;
+      } else if (i <= 0) {
+        i = 0;
+        dir = 1;
+      }
+      setBrushFrame(i);
+    }, 230);
+    return () => clearInterval(id);
+  }, [roam.kind, roam.brushVariant]);
+
   useEffect(() => {
     const measure = () => setYardW(yardRef.current?.offsetWidth ?? 343);
     measure();
@@ -679,21 +739,25 @@ function PetNudge({
     }, 3800);
   }
 
-  // 让猫就地停下、享受 + 说句话(梳子拖到猫身上用)
-  function catEnjoy(line: string) {
+  // 梳子拖到猫身上:就地停下,演专属「疏毛」动作(盖帧,见院子渲染),
+  // ~3.4s 后由调度器坐回并说句梳毛猫语(不在这里 setTalk,否则调度器会被 talk 挡住)。
+  function brushTheCat() {
+    const variant =
+      BRUSH_VARIANTS[Math.floor(Math.random() * BRUSH_VARIANTS.length)];
     setRoam((r) => {
-      if (r.kind !== "stroll") return { ...r, kind: "sit", dur: 0 };
-      const cur = readCatXY({ x: r.x, y: r.y });
-      return {
-        kind: "sit",
-        x: Math.round(cur.x),
-        y: Math.round(cur.y),
-        facing: r.facing,
-        dur: 0,
-      };
+      if (r.kind === "stroll") {
+        const cur = readCatXY({ x: r.x, y: r.y });
+        return {
+          kind: "brushing",
+          x: Math.round(cur.x),
+          y: Math.round(cur.y),
+          facing: r.facing,
+          dur: 0,
+          brushVariant: variant,
+        };
+      }
+      return { ...r, kind: "brushing", dur: 0, brushVariant: variant };
     });
-    setTouch((t) => ({ action: "groom", n: (t?.n ?? 0) + 1 }));
-    sayText(line);
   }
 
   // ── 道具工具栏拖拽:按住拖出 → 落到目标(猫/碗)→ 命中触发动作,没中回工具栏 ──
@@ -738,7 +802,7 @@ function PetNudge({
           );
     if (!hit) return; // 没命中 → 道具留在工具栏(carried 已清)
     if (pr.key === "brush") {
-      catEnjoy(BRUSH_TALK[Math.floor(Math.random() * BRUSH_TALK.length)]);
+      brushTheCat();
     } else if (pr.key === "bottle") {
       setWater(100); // 倒满
       goInteract("drink"); // 猫跑来喝新水
@@ -857,6 +921,12 @@ function PetNudge({
         setRoam((r) => ({ ...r, kind: "sit" }));
         sayLine("scratch");
       }, 3200);
+    } else if (roam.kind === "brushing") {
+      // 梳毛:专属疏毛盖帧演 ~3.4s 后坐回,说句梳毛猫语
+      t = window.setTimeout(() => {
+        setRoam((r) => ({ ...r, kind: "sit" }));
+        sayText(BRUSH_TALK[Math.floor(Math.random() * BRUSH_TALK.length)]);
+      }, 2600);
     } else if (roam.kind === "play" || roam.kind === "drink") {
       // 玩球/喝水:动画播一遍定格回味,完了坐起说句猫语;喝水还会降水量
       // (空碗已在凑近时改去 drybowl,这里 drink 必有水)
@@ -1127,7 +1197,8 @@ function PetNudge({
             roam.kind === "box" ||
             roam.kind === "hopin" ||
             roam.kind === "hopout" ||
-            roam.kind === "scratch";
+            roam.kind === "scratch" ||
+            roam.kind === "brushing";
           return (
           <div
             ref={catRef}
@@ -1233,6 +1304,42 @@ function PetNudge({
             />
           </>
         )}
+
+        {/* 梳毛:brushing 期间藏掉实时精灵,在猫的实时位置(roam.x/roam.y,按深度缩放)
+            盖上 codex 专门画的「疏毛」2 帧,针梳贴后背上下来回梳。猫脚底对齐 roam.y、
+            水平居中对齐猫中心(roam.x+42),DX/DY/W 微调。 */}
+        {roam.kind === "brushing" &&
+          (() => {
+            const variant = roam.brushVariant ?? "back";
+            const align = BRUSH_ALIGN[variant] ?? BRUSH_ALIGN.back;
+            const s = scaleOf(roam.y);
+            const w = Math.round(align.w * s);
+            const seq = BRUSH_SEQS[variant] ?? BRUSH_SEQS.back;
+            const src = seq[brushFrame] ?? seq[0];
+            // 水平居中对齐猫中心,再 clamp 进院子内 → 靠边时不出界被截
+            const rawLeft = roam.x + 42 - w / 2 + align.dx * s;
+            const left = Math.round(
+              Math.max(4, Math.min(yardW - w - 4, rawLeft)),
+            );
+            return (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className="absolute cat-groom-sway"
+                  style={{
+                    left,
+                    bottom: Math.round(roam.y + align.dy * s),
+                    width: w,
+                    zIndex: zOf(roam.y) + 1,
+                  }}
+                />
+              </>
+            );
+          })()}
 
         {thinking && (
           <div key={`th-${Math.round(roam.x)}`}>

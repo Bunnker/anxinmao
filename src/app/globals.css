@@ -249,10 +249,26 @@ button[class*="bg-surface"] {
     transform: translateY(-3.5px);
   }
 }
+/* 梳毛时整只猫轻轻摇摆(被梳得舒服、随梳子扭动)——给盖帧 overlay 用。
+   Tailwind v4 会摇掉只在内联 style 用的 @keyframes,所以必须挂 class 引用。 */
+@keyframes cat-groom-sway {
+  0%,
+  100% {
+    transform: rotate(-2deg) translateY(0);
+  }
+  50% {
+    transform: rotate(2deg) translateY(-2.5px);
+  }
+}
+.cat-groom-sway {
+  transform-origin: 50% 92%;
+  animation: cat-groom-sway 1.05s ease-in-out infinite;
+}
 @media (prefers-reduced-motion: reduce) {
   .pet-enter,
   .pet-bubble,
-  .thought-in {
+  .thought-in,
+  .cat-groom-sway {
     animation: none;
   }
 }
