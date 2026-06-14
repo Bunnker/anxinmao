@@ -244,6 +244,15 @@ const BRUSH_ALIGN: Record<string, { w: number; dx: number; dy: number }> = {
   back: { w: 124, dx: 0, dy: -4 },
   belly: { w: 150, dx: 0, dy: -14 },
 };
+// 逗猫棒「扑抓」2 帧(codex 专门画的「猫举爪扑头顶羽毛」,非复用蹦跶):来回切 = 扑打。
+// 在猫实时位置盖帧、藏掉实时精灵(同梳毛盖帧)。帧里猫身体偏左、棒在右上,DX 右移对齐猫身体。
+const CAT_WAND_FRAMES = [
+  "/pet/items/cat-wand-0.webp",
+  "/pet/items/cat-wand-1.webp",
+];
+const WAND_W = 156;
+const WAND_DX = 16;
+const WAND_DY = -4;
 // 钻箱 4 帧(gpt-image-2 一次生成、按箱底中心对齐切片 → 箱子帧间锁死):
 // 0 低头探 → 1 探头扒沿 → 2 坐 → 3 抬头坐。hopin 顺序播 0→3 = 猫从箱里由低升起=跳进去。
 const CAT_JUMP_FRAMES = [
@@ -664,6 +673,20 @@ function PetNudge({
     }, 230);
     return () => clearInterval(id);
   }, [roam.kind, roam.brushVariant]);
+
+  // 逗猫棒扑抓:pounce 期间 0↔1 来回切(举爪扑羽毛),~260ms 一拍
+  const [pounceFrame, setPounceFrame] = useState(0);
+  useEffect(() => {
+    if (roam.kind !== "pounce") {
+      setPounceFrame(0);
+      return;
+    }
+    const id = window.setInterval(
+      () => setPounceFrame((f) => (f === 0 ? 1 : 0)),
+      260,
+    );
+    return () => clearInterval(id);
+  }, [roam.kind]);
 
   useEffect(() => {
     const measure = () => setYardW(yardRef.current?.offsetWidth ?? 343);
@@ -1174,7 +1197,7 @@ function PetNudge({
       <>
       <section
         ref={yardRef}
-        className="relative isolate mt-4 h-[280px] overflow-hidden"
+        className="relative isolate mt-4 h-[280px] overflow-hidden rounded-[28px]"
         aria-label={`${cat.name}的家`}
       >
         {/* 院子背景:codex 出的温馨房间图(暖墙 + 右上窗户/窗台 + 浅木地板 + 窗边暖光斑)。
@@ -1187,7 +1210,14 @@ function PetNudge({
           aria-hidden="true"
           draggable={false}
           className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-          style={{ zIndex: 0 }}
+          style={{ zIndex: 0, filter: "saturate(0.74) brightness(1.05)" }}
+        />
+        {/* 叠一层暖奶白把房间图往主题色拉、洗淡存在感,融进页面的奶白调
+            (filter/遮罩只作用背景层叶子节点,三色圆点在 yard section 外,零影响) */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{ zIndex: 0, background: "rgba(247,246,243,0.4)" }}
         />
         {/* 地板家具:点了让猫走过去互动;按深度排层(画家算法)。
             钻箱时空箱子换成 cat-in-box 整图(见下),所以这里把空箱子藏掉;
@@ -1270,7 +1300,8 @@ function PetNudge({
             roam.kind === "hopin" ||
             roam.kind === "hopout" ||
             roam.kind === "scratch" ||
-            roam.kind === "brushing";
+            roam.kind === "brushing" ||
+            roam.kind === "pounce";
           return (
           <div
             ref={catRef}
@@ -1409,6 +1440,36 @@ function PetNudge({
                     bottom: Math.round(roam.y + align.dy * s),
                     width: w,
                     zIndex: Math.max(zOf(roam.y), 150) + 1, // 同 live sprite:前景化,梳毛盖帧也不被家具遮
+                  }}
+                />
+              </>
+            );
+          })()}
+
+        {/* 逗猫棒扑抓:pounce 期间藏实时精灵,在猫位置盖 codex「扑逗猫棒」2 帧来回切。 */}
+        {roam.kind === "pounce" &&
+          (() => {
+            const s = scaleOf(roam.y);
+            const w = Math.round(WAND_W * s);
+            const src = CAT_WAND_FRAMES[pounceFrame] ?? CAT_WAND_FRAMES[0];
+            const rawLeft = roam.x + 42 - w / 2 + WAND_DX * s;
+            const left = Math.round(
+              Math.max(4, Math.min(yardW - w - 4, rawLeft)),
+            );
+            return (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt=""
+                  aria-hidden="true"
+                  draggable={false}
+                  className="absolute"
+                  style={{
+                    left,
+                    bottom: Math.round(roam.y + WAND_DY * s),
+                    width: w,
+                    zIndex: Math.max(zOf(roam.y), 150) + 1,
                   }}
                 />
               </>
