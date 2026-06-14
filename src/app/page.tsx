@@ -1114,7 +1114,7 @@ function PetNudge({
       <>
       <section
         ref={yardRef}
-        className="relative mt-4 h-[280px] overflow-hidden"
+        className="relative isolate mt-4 h-[280px] overflow-hidden"
         aria-label={`${cat.name}的家`}
       >
         {/* 地板家具:点了让猫走过去互动;按深度排层(画家算法)。
@@ -1211,7 +1211,9 @@ function PetNudge({
                   ? `transform ${roam.dur}ms linear`
                   : "none",
               willChange: roam.kind === "stroll" ? "transform" : undefined,
-              zIndex: zOf(roam.y),
+              // 猫是前景角色:z 始终高于地面家具(zOf 上限 ~100),漫游到院子深处
+              // 也不会被家具图整个盖住消失;yard 已加 isolate 把这套高 z 封在院子内。
+              zIndex: Math.max(zOf(roam.y), 150),
               opacity: catHidden ? 0 : 1,
               pointerEvents: catHidden ? "none" : undefined,
             }}
@@ -1334,7 +1336,7 @@ function PetNudge({
                     left,
                     bottom: Math.round(roam.y + align.dy * s),
                     width: w,
-                    zIndex: zOf(roam.y) + 1,
+                    zIndex: Math.max(zOf(roam.y), 150) + 1, // 同 live sprite:前景化,梳毛盖帧也不被家具遮
                   }}
                 />
               </>
