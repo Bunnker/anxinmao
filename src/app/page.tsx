@@ -182,12 +182,10 @@ const PET_FACE_SRC: Record<PetFace, string> = {
   happy: "/guide/cat-happy-t.png",
 };
 const PET_TALK = [
-  "喵~",
-  "蹭蹭你!",
-  "好舒服,再摸一会儿嘛~",
-  "我超乖的。",
-  "今天也要记得陪我玩呀。",
-  "呼噜呼噜……",
+  "咕噜~(手别停继续摸)",
+  "喵~(这里也要摸摸)",
+  "噜噜噜~(被你摸最幸福)",
+  "咕噜咕噜……(最喜欢你了)",
 ];
 // 闲话已并入「思考泡」功能入口区;摸猫时才说猫语(PET_TALK)。
 
@@ -291,14 +289,26 @@ function walkTo(
     then,
   };
 }
-// 互动完成后的猫语正反馈(Finch 式:行为 → 可爱回报)
+// 互动完成的猫语正反馈:猫语拟声 +(中文翻译),拟声按真实叫声情绪(查证见对话:
+// trill/咕噜=友好满足、唧唧/咯咯=捕猎兴奋、拖长喵/嗷=委屈抗议)
 const INTERACT_TALK: Record<InteractKind, string[]> = {
-  play: ["毛线球最好玩了!", "再来一回合!", "看我猫猫拳!"],
-  drink: ["咕咚咕咚……舒服~", "水很新鲜,谢谢铲屎官!"],
-  box: ["这个箱子,本喵承包了。", "箱子里好有安全感……"],
+  play: ["唧唧唧~(猎物休想逃!)", "咯咯咯~(扑它扑它扑它)", "喵嗷~(看我一爪定胜负)"],
+  drink: ["咕噜咕噜~(这口水甜甜的)", "吧嗒吧嗒~(喝饱啦超舒服)", "噜~(今天的水满分)"],
+  box: ["噗噜噜~(这是我的城堡)", "喵~(箱子完美刚刚好)", "咕噜~(躲进来好安心)"],
   nap: [],
-  scratch: ["挠挠挠~爽!", "指甲管理,完成!", "这板子,本喵盖章了。"],
+  scratch: ["唰唰唰~(这块板子太懂我)", "喵嗯~(爪子爽到飞起)", "噜噜~(磨完爪子神清气爽)"],
 };
+// 梳毛 / 没水了 的猫语(不是 InteractKind,单独存)
+const BRUSH_TALK = [
+  "咕噜咕噜~(再往后背梳梳)",
+  "噜~(舒服到要化掉了)",
+  "喵呜~(毛梳得顺顺的真好)",
+];
+const EMPTY_WATER_TALK = [
+  "喵呜——(碗空了啦好渴)",
+  "嗷呜~(主人水没了!)",
+  "喵…喵…(快给我加点水嘛)",
+];
 // 物件 → 点击它触发的互动
 const TARGET_OF: Record<ItemKey, InteractKind> = {
   bed: "nap",
@@ -382,7 +392,8 @@ function PetNudge({
       | "box"
       | "greet"
       | "hop"
-      | "scratch";
+      | "scratch"
+      | "drybowl";
     x: number;
     // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
     y: number;
@@ -681,7 +692,7 @@ function PetNudge({
         dur: 0,
       };
     });
-    setTouch((t) => ({ action: "petted", n: (t?.n ?? 0) + 1 }));
+    setTouch((t) => ({ action: "groom", n: (t?.n ?? 0) + 1 }));
     sayText(line);
   }
 
@@ -727,7 +738,7 @@ function PetNudge({
           );
     if (!hit) return; // 没命中 → 道具留在工具栏(carried 已清)
     if (pr.key === "brush") {
-      catEnjoy("梳毛好舒服~呼噜呼噜");
+      catEnjoy(BRUSH_TALK[Math.floor(Math.random() * BRUSH_TALK.length)]);
     } else if (pr.key === "bottle") {
       setWater(100); // 倒满
       goInteract("drink"); // 猫跑来喝新水
@@ -817,12 +828,16 @@ function PetNudge({
     } else if (roam.kind === "stroll") {
       t = window.setTimeout(
         () =>
-          setRoam((r) => ({
-            ...r,
-            kind: r.then === "box" ? "hopin" : (r.then ?? "sit"),
-            then: undefined,
-            dur: 0,
-          })),
+          setRoam((r) => {
+            // 凑到碗前才看水:空碗就改演「委屈」(drybowl),不进喝水动作
+            const next =
+              r.then === "drink" && waterLevel <= 0
+                ? "drybowl"
+                : r.then === "box"
+                  ? "hopin"
+                  : (r.then ?? "sit");
+            return { ...r, kind: next, then: undefined, dur: 0 };
+          }),
         roam.dur + 80,
       );
     } else if (roam.kind === "groom") {
@@ -844,21 +859,25 @@ function PetNudge({
       }, 3200);
     } else if (roam.kind === "play" || roam.kind === "drink") {
       // 玩球/喝水:动画播一遍定格回味,完了坐起说句猫语;喝水还会降水量
+      // (空碗已在凑近时改去 drybowl,这里 drink 必有水)
       const done = roam.kind;
-      const hadWater = waterLevel > 0;
       t = window.setTimeout(() => {
         setRoam((r) => ({ ...r, kind: "sit" }));
         if (done === "drink") {
-          if (hadWater) {
-            setWater(waterLevel - 50); // 满→半→空,每口看得出降
-            sayLine("drink");
-          } else {
-            sayText("碗里没水了,倒点水嘛~");
-          }
+          setWater(Math.max(0, waterLevel - 50)); // 满→半→空,每口看得出降
+          sayLine("drink");
         } else {
           sayLine(done);
         }
       }, 4200);
+    } else if (roam.kind === "drybowl") {
+      // 凑到空碗前发现没水:委屈表情定格一拍后坐回,说句委屈猫语
+      t = window.setTimeout(() => {
+        setRoam((r) => ({ ...r, kind: "sit" }));
+        sayText(
+          EMPTY_WATER_TALK[Math.floor(Math.random() * EMPTY_WATER_TALK.length)],
+        );
+      }, 2200);
     } else if (roam.kind === "hopin") {
       // 蹦进箱子:0→3 升起播完(~900ms)再落进箱里
       t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "box" })), 850);
@@ -887,7 +906,7 @@ function PetNudge({
       );
     }
     return () => clearTimeout(t);
-  }, [say.kind, calm, talk, roam, yardW]);
+  }, [say.kind, calm, talk, roam, yardW, waterLevel]);
 
   // 动作随场景:摸猫=随机享受/洗脸 / 回执好转=蹦一次、没好转=耷耳 /
   // 待回答=双爪合十期待 / 新人引导=招手(抬爪定格)/ 护理提醒、闲着=idle(自带眨眼呼吸)。
@@ -964,7 +983,9 @@ function PetNudge({
                       ? "jumping"
                       : roam.kind === "hopin"
                         ? "jumping"
-                        : "idle";
+                        : roam.kind === "drybowl"
+                          ? "failed"
+                          : "idle";
     // 摸猫说话才冒对话泡;坐着思考时冒「心事泡」(功能入口,跟着猫选边)
     const showBubble = talk !== null;
     // 选剩余空间够的一侧,宽度跟着空间缩,避免压到猫身上
