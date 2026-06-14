@@ -204,6 +204,8 @@ const YARD_ITEMS = {
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
   // codex 出的新家具(可拖):猫抓板 —— 走过去挠抓
   scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 88, bottom: 92, w: 78 },
+  // 墙角小地毯:垫在地上的「地面物」(渲染 z 压到家具下、猫上 → 猫站毯上),走过去坐下洗脸
+  rug: { src: "/pet/items/rug.webp", alt: "小地毯", left: 140, bottom: 16, w: 92 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
 // 挠抓板 2 帧(codex 出图、按板右下角对齐切片 → 板不抖):前爪在斜面 高→低 来回=挠。
@@ -262,7 +264,7 @@ const CAT_IN_BOX_POSES = [
 //(=猫窝大小)。在箱帧的 left/bottom 直接用 live 的 layout.box(空箱坐标)→ 拖动箱子时
 // 在箱帧/钻入帧跟着箱子走、像素级重合。
 const BOX_W = 88;
-type InteractKind = "nap" | "play" | "drink" | "box" | "scratch";
+type InteractKind = "nap" | "play" | "drink" | "box" | "scratch" | "rug";
 // 家具可拖拽:left/bottom 抽成 layout state(见 PetNudge 内),w/src/alt 仍是常量。
 // 院子布局存档(全局一份,院子是共享的家,不分猫)+ 默认值(=各家具初始坐标)。
 type Pos = { left: number; bottom: number };
@@ -286,6 +288,7 @@ const INTERACT_ITEM: Record<InteractKind, ItemKey> = {
   drink: "bowl",
   box: "box",
   scratch: "scratch",
+  rug: "rug",
 };
 // 深度 → 层级 / 透视缩放(越靠前 z 越大、猫越大)
 const zOf = (bottom: number) => 100 - Math.round(bottom);
@@ -323,6 +326,7 @@ const INTERACT_TALK: Record<InteractKind, string[]> = {
   box: ["噗噜噜~(这是我的城堡 =｀ω´=)", "喵~(箱子完美刚刚好 ´ω`)", "咕噜~(躲进来好安心 ˘ω˘)"],
   nap: [],
   scratch: ["唰唰唰~(这块板子太懂我 ฅ^•ﻌ•^ฅ)", "喵嗯~(爪子爽到飞起 ≧▽≦)", "噜噜~(磨完爪子神清气爽 ´∀`)"],
+  rug: ["噜噜~(这块毯子真软乎 ´ω`)", "喵~(我的专属位置 =^‥^=)", "咕噜~(趴这儿刚刚好 ˘ω˘)"],
 };
 // 梳毛 / 没水了 的猫语(不是 InteractKind,单独存)
 const BRUSH_TALK = [
@@ -342,6 +346,7 @@ const TARGET_OF: Record<ItemKey, InteractKind> = {
   bowl: "drink",
   box: "box",
   scratch: "scratch",
+  rug: "rug",
 };
 // 道具工具栏(「最近」上方):长按拖拽到 target 上触发动作(梳子→猫梳毛 / 瓶子→碗续水)
 type ToolKey = "brush" | "bottle";
@@ -420,7 +425,8 @@ function PetNudge({
       | "hop"
       | "scratch"
       | "drybowl"
-      | "brushing";
+      | "brushing"
+      | "rug";
     x: number;
     // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
     y: number;
@@ -921,6 +927,12 @@ function PetNudge({
         setRoam((r) => ({ ...r, kind: "sit" }));
         sayLine("scratch");
       }, 3200);
+    } else if (roam.kind === "rug") {
+      // 地毯:走过去坐下洗脸(复用 groom 帧)~3.4s 后坐起说句猫语
+      t = window.setTimeout(() => {
+        setRoam((r) => ({ ...r, kind: "sit" }));
+        sayLine("rug");
+      }, 3400);
     } else if (roam.kind === "brushing") {
       // 梳毛:专属疏毛盖帧演 ~3.4s 后坐回,说句梳毛猫语
       t = window.setTimeout(() => {
@@ -1035,7 +1047,7 @@ function PetNudge({
         ? roam.facing === "right"
           ? "running-right"
           : "running-left"
-        : roam.kind === "groom"
+        : roam.kind === "groom" || roam.kind === "rug"
           ? "groom"
           : roam.kind === "scratch"
             ? "stretch"
@@ -1117,6 +1129,35 @@ function PetNudge({
         className="relative isolate mt-4 h-[280px] overflow-hidden"
         aria-label={`${cat.name}的家`}
       >
+        {/* 院子背景:客厅木地板角(纯 CSS 垫底,zIndex 0 低于家具/猫;不碰三色信号层——
+            三色圆点在 yard 外的「最近」列表,背景被 overflow-hidden 封在院子内,
+            只用暖奶白系渐变、不碰红黄绿、不挂 filter/blend) */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{ zIndex: 0 }}
+        >
+          {/* 右上午后暖光斑(暖白不偏黄,压到 ~0.1 不抢戏) */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(135% 95% at 88% 4%, rgba(255,246,236,0.5), rgba(255,246,236,0) 50%)",
+            }}
+          />
+          {/* 木地板带(底部 ~46%):远暗近亮暖木 + 等间距木缝 + 顶沿墙脚阴影线 */}
+          <div
+            className="absolute inset-x-0 bottom-0"
+            style={{
+              height: "46%",
+              background: [
+                "linear-gradient(180deg, rgba(28,26,22,0.05) 0, rgba(28,26,22,0) 7px)",
+                "linear-gradient(180deg, transparent 0, transparent 26px, rgba(120,96,72,0.045) 26px, rgba(120,96,72,0.045) 27px, transparent 27px, transparent 58px, rgba(120,96,72,0.05) 58px, rgba(120,96,72,0.05) 59px, transparent 59px, transparent 98px, rgba(120,96,72,0.055) 98px, rgba(120,96,72,0.055) 99px, transparent 99px)",
+                "linear-gradient(180deg, #efe9e2 0, #f4efe8 100%)",
+              ].join(","),
+            }}
+          />
+        </div>
         {/* 地板家具:点了让猫走过去互动;按深度排层(画家算法)。
             钻箱时空箱子换成 cat-in-box 整图(见下),所以这里把空箱子藏掉;
             玩球/喝水动画自带道具,进行时把地上同款隐掉防止出现两个 */}
@@ -1132,7 +1173,7 @@ function PetNudge({
                 roam.kind === "hopout"));
           const pos = layout[k];
           const lifted = dragKey === k;
-          const z = lifted ? 200 : zOf(pos.bottom);
+          const z = lifted ? 200 : k === "rug" ? 1 : zOf(pos.bottom);
           return (
             <button
               key={k}
