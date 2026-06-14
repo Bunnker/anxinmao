@@ -307,6 +307,15 @@ const TARGET_OF: Record<ItemKey, InteractKind> = {
   box: "box",
   scratch: "scratch",
 };
+// 道具工具栏(「最近」上方):长按拖拽到 target 上触发动作(梳子→猫梳毛 / 瓶子→碗续水)
+type ToolKey = "brush" | "bottle";
+const TOOLBAR_ITEMS: Record<
+  ToolKey,
+  { src: string; alt: string; target: "cat" | "bowl" }
+> = {
+  brush: { src: "/pet/toolbar/brush.webp", alt: "梳子", target: "cat" },
+  bottle: { src: "/pet/toolbar/bottle.webp", alt: "矿泉水瓶", target: "bowl" },
+};
 
 function PetNudge({
   cat,
@@ -389,6 +398,22 @@ function PetNudge({
 
   // ── 家具拖拽摆位:坐标存 layout(默认=初始坐标,有存档则覆盖);长按拿起再拖 ──
   const [layout, setLayout] = useState<Record<ItemKey, Pos>>(defaultLayout);
+  // 水碗水量 0~100:猫喝降一截、喝光见底,用矿泉水瓶倒水续满(localStorage 持久化)
+  const [waterLevel, setWaterLevel] = useState(100);
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("yardWater:v1");
+      const n = raw == null ? NaN : parseInt(raw, 10);
+      if (Number.isFinite(n)) setWaterLevel(Math.max(0, Math.min(100, n)));
+    } catch {}
+  }, []);
+  const setWater = (n: number) => {
+    const v = Math.max(0, Math.min(100, Math.round(n)));
+    setWaterLevel(v);
+    try {
+      window.localStorage.setItem("yardWater:v1", String(v));
+    } catch {}
+  };
   const [dragKey, setDragKey] = useState<ItemKey | null>(null);
   const pressRef = useRef<{
     k: ItemKey;
@@ -587,16 +612,19 @@ function PetNudge({
     };
   }, []);
 
-  // 互动完成后说一句猫语(复用 talk 泡;不触发摸猫动作重播)
-  function sayLine(k: InteractKind) {
-    const lines = INTERACT_TALK[k];
-    if (!lines.length) return;
-    setTalk(lines[Math.floor(Math.random() * lines.length)]);
+  // 说一句话(复用 talk 泡;不触发摸猫动作重播)
+  function sayText(text: string) {
+    setTalk(text);
     if (talkTimer.current) clearTimeout(talkTimer.current);
     talkTimer.current = window.setTimeout(() => {
       setTalk(null);
       setTouch(null);
     }, 3800);
+  }
+  // 互动完成后随机说一句对应猫语
+  function sayLine(k: InteractKind) {
+    const lines = INTERACT_TALK[k];
+    if (lines.length) sayText(lines[Math.floor(Math.random() * lines.length)]);
   }
 
   // 点家具:让猫走过去互动(说话/被摸中不接单)
@@ -638,6 +666,72 @@ function PetNudge({
       setTalk(null);
       setTouch(null);
     }, 3800);
+  }
+
+  // 让猫就地停下、享受 + 说句话(梳子拖到猫身上用)
+  function catEnjoy(line: string) {
+    setRoam((r) => {
+      if (r.kind !== "stroll") return { ...r, kind: "sit", dur: 0 };
+      const cur = readCatXY({ x: r.x, y: r.y });
+      return {
+        kind: "sit",
+        x: Math.round(cur.x),
+        y: Math.round(cur.y),
+        facing: r.facing,
+        dur: 0,
+      };
+    });
+    setTouch((t) => ({ action: "petted", n: (t?.n ?? 0) + 1 }));
+    sayText(line);
+  }
+
+  // ── 道具工具栏拖拽:按住拖出 → 落到目标(猫/碗)→ 命中触发动作,没中回工具栏 ──
+  const [carried, setCarried] = useState<{
+    key: ToolKey;
+    x: number;
+    y: number;
+  } | null>(null);
+  const toolPressRef = useRef<{ key: ToolKey; pointerId: number } | null>(null);
+  function onToolPointerDown(key: ToolKey, e: ReactPointerEvent<HTMLButtonElement>) {
+    if (toolPressRef.current) return;
+    toolPressRef.current = { key, pointerId: e.pointerId };
+    setCarried({ key, x: e.clientX, y: e.clientY });
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {}
+  }
+  function onToolPointerMove(e: ReactPointerEvent<HTMLButtonElement>) {
+    const pr = toolPressRef.current;
+    if (!pr || pr.pointerId !== e.pointerId) return;
+    setCarried((c) => (c ? { ...c, x: e.clientX, y: e.clientY } : c));
+  }
+  function onToolPointerUp(e: ReactPointerEvent<HTMLButtonElement>) {
+    const pr = toolPressRef.current;
+    if (!pr || pr.pointerId !== e.pointerId) return;
+    toolPressRef.current = null;
+    setCarried(null);
+    const tool = TOOLBAR_ITEMS[pr.key];
+    const inRect = (r?: DOMRect | null) =>
+      !!r &&
+      e.clientX >= r.left &&
+      e.clientX <= r.right &&
+      e.clientY >= r.top &&
+      e.clientY <= r.bottom;
+    const hit =
+      tool.target === "cat"
+        ? inRect(catRef.current?.getBoundingClientRect())
+        : inRect(
+            document
+              .querySelector('button[aria-label*="水碗"]')
+              ?.getBoundingClientRect() ?? null,
+          );
+    if (!hit) return; // 没命中 → 道具留在工具栏(carried 已清)
+    if (pr.key === "brush") {
+      catEnjoy("梳毛好舒服~呼噜呼噜");
+    } else if (pr.key === "bottle") {
+      setWater(100); // 倒满
+      goInteract("drink"); // 猫跑来喝新水
+    }
   }
 
   // 猫常驻:有事说事,没事也蹲在这儿说句闲话(宠物不该有事才出现)
@@ -749,11 +843,21 @@ function PetNudge({
         sayLine("scratch");
       }, 3200);
     } else if (roam.kind === "play" || roam.kind === "drink") {
-      // 玩球/喝水:动画播一遍定格回味,完了坐起说句猫语
+      // 玩球/喝水:动画播一遍定格回味,完了坐起说句猫语;喝水还会降水量
       const done = roam.kind;
+      const hadWater = waterLevel > 0;
       t = window.setTimeout(() => {
         setRoam((r) => ({ ...r, kind: "sit" }));
-        sayLine(done);
+        if (done === "drink") {
+          if (hadWater) {
+            setWater(waterLevel - 34); // 喝 3 口见底
+            sayLine("drink");
+          } else {
+            sayText("碗里没水了,倒点水嘛~");
+          }
+        } else {
+          sayLine(done);
+        }
       }, 4200);
     } else if (roam.kind === "hopin") {
       // 蹦进箱子:0→3 升起播完(~900ms)再落进箱里
@@ -904,6 +1008,7 @@ function PetNudge({
       },
     ];
     return (
+      <>
       <section
         ref={yardRef}
         className="relative mt-4 h-[280px] overflow-hidden"
@@ -958,7 +1063,11 @@ function PetNudge({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={it.src}
+                src={
+                  k === "bowl" && waterLevel <= 0
+                    ? "/pet/items/bowl-empty.webp"
+                    : it.src
+                }
                 alt=""
                 draggable={false}
                 className={"w-full " + (hideForAction ? "opacity-0" : "")}
@@ -1136,6 +1245,62 @@ function PetNudge({
           </div>
         )}
       </section>
+
+      {/* 道具工具栏:长按拖到目标上触发(梳子→拖到猫=梳毛;瓶子→拖到碗=倒水续满) */}
+      <div className="mt-2 flex items-end gap-3 px-1" aria-label="道具工具栏">
+        {(Object.keys(TOOLBAR_ITEMS) as ToolKey[]).map((tk) => {
+          const tool = TOOLBAR_ITEMS[tk];
+          const grabbed = carried?.key === tk;
+          return (
+            <button
+              key={tk}
+              type="button"
+              aria-label={`${tool.alt}(长按拖到${tool.target === "cat" ? "猫" : "水碗"}上)`}
+              className="flex h-16 w-14 items-end justify-center rounded-2xl bg-surface p-1 shadow-[var(--shadow-control)] select-none"
+              style={{ touchAction: "none", opacity: grabbed ? 0.35 : 1 }}
+              onPointerDown={(e) => onToolPointerDown(tk, e)}
+              onPointerMove={onToolPointerMove}
+              onPointerUp={onToolPointerUp}
+              onPointerCancel={onToolPointerUp}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={tool.src}
+                alt=""
+                draggable={false}
+                className="max-h-14 w-auto"
+              />
+            </button>
+          );
+        })}
+        <span className="ml-1 self-center text-[12px] leading-snug text-ink/40">
+          长按拖到
+          <br />
+          猫 / 碗上
+        </span>
+      </div>
+
+      {carried && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={TOOLBAR_ITEMS[carried.key].src}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          style={{
+            position: "fixed",
+            left: carried.x,
+            top: carried.y,
+            transform: "translate(-50%, -50%) rotate(-12deg)",
+            width: 56,
+            height: "auto",
+            zIndex: 999,
+            pointerEvents: "none",
+            filter: "drop-shadow(0 6px 8px rgba(0,0,0,0.25))",
+          }}
+        />
+      )}
+      </>
     );
   }
 
