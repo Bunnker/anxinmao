@@ -349,13 +349,14 @@ const TARGET_OF: Record<ItemKey, InteractKind> = {
   rug: "rug",
 };
 // 道具工具栏(「最近」上方):长按拖拽到 target 上触发动作(梳子→猫梳毛 / 瓶子→碗续水)
-type ToolKey = "brush" | "bottle";
+type ToolKey = "brush" | "bottle" | "wand";
 const TOOLBAR_ITEMS: Record<
   ToolKey,
   { src: string; alt: string; target: "cat" | "bowl" }
 > = {
   brush: { src: "/pet/toolbar/brush.webp", alt: "梳子", target: "cat" },
   bottle: { src: "/pet/toolbar/bottle.webp", alt: "矿泉水瓶", target: "bowl" },
+  wand: { src: "/pet/toolbar/wand.webp", alt: "逗猫棒", target: "cat" },
 };
 
 function PetNudge({
@@ -426,7 +427,8 @@ function PetNudge({
       | "scratch"
       | "drybowl"
       | "brushing"
-      | "rug";
+      | "rug"
+      | "pounce";
     x: number;
     // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
     y: number;
@@ -766,6 +768,23 @@ function PetNudge({
     });
   }
 
+  // 逗猫棒拖到猫身上:就地停下原地扑跳捕猎(jumping 帧),~2.4s 后坐回说句捕猎猫语
+  function pounceForWand() {
+    setRoam((r) => {
+      if (r.kind === "stroll") {
+        const cur = readCatXY({ x: r.x, y: r.y });
+        return {
+          kind: "pounce",
+          x: Math.round(cur.x),
+          y: Math.round(cur.y),
+          facing: r.facing,
+          dur: 0,
+        };
+      }
+      return { ...r, kind: "pounce", dur: 0 };
+    });
+  }
+
   // ── 道具工具栏拖拽:按住拖出 → 落到目标(猫/碗)→ 命中触发动作,没中回工具栏 ──
   const [carried, setCarried] = useState<{
     key: ToolKey;
@@ -812,6 +831,8 @@ function PetNudge({
     } else if (pr.key === "bottle") {
       setWater(100); // 倒满
       goInteract("drink"); // 猫跑来喝新水
+    } else if (pr.key === "wand") {
+      pounceForWand(); // 逗猫棒:猫原地扑跳捕猎
     }
   }
 
@@ -933,6 +954,12 @@ function PetNudge({
         setRoam((r) => ({ ...r, kind: "sit" }));
         sayLine("rug");
       }, 3400);
+    } else if (roam.kind === "pounce") {
+      // 逗猫棒:原地扑跳捕猎 ~2.4s 后坐回,说句捕猎猫语(复用 play 捕猎语)
+      t = window.setTimeout(() => {
+        setRoam((r) => ({ ...r, kind: "sit" }));
+        sayLine("play");
+      }, 2400);
     } else if (roam.kind === "brushing") {
       // 梳毛:专属疏毛盖帧演 ~3.4s 后坐回,说句梳毛猫语
       t = window.setTimeout(() => {
@@ -1061,7 +1088,7 @@ function PetNudge({
                   ? "drink"
                   : roam.kind === "greet"
                     ? "waving"
-                    : roam.kind === "hop"
+                    : roam.kind === "hop" || roam.kind === "pounce"
                       ? "jumping"
                       : roam.kind === "hopin"
                         ? "jumping"
