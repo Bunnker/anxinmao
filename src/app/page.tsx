@@ -391,7 +391,7 @@ function PetNudge({
     const id = window.setInterval(() => {
       i = Math.min(i + 1, CAT_JUMP_FRAMES.length - 1);
       setJumpFrame(i);
-    }, 150);
+    }, 230);
     return () => clearInterval(id);
   }, [roam.kind]);
 
