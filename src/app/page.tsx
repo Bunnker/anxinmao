@@ -191,9 +191,10 @@ const YARD_DEPTH = 90;
 // 家具摆位:bottom = 深度(大=靠后);玩球/喝水动画自带道具,播放时隐藏地面同款
 const YARD_ITEMS = {
   bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 2, bottom: 58, w: 88 },
-  // 空箱子;猫钻进去时整只换成 cat-in-box 整图(见院子渲染),不再实时合成
-  // 空箱;猫钻箱/蹦箱时藏掉它,换成 codex 的「猫+箱」组合帧(见院子渲染)
-  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 252, bottom: 50, w: 88 },
+  // 空箱:由 cat-box-0 抠掉猫补绘而成(同 582×520 画布、箱位一致),left/bottom/w
+  // 与 BOX_LEFT/BOTTOM/W 对齐 → 空箱与在箱帧像素级重合,钻进/钻出箱子不变样。
+  // 猫钻箱/蹦箱时藏掉它,换成在箱帧(见院子渲染)。
+  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 253, bottom: 49, w: 88 },
   bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 132, bottom: 26, w: 44 },
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
 } as const;
