@@ -196,6 +196,16 @@ button[class*="bg-surface"] {
     transform: translateY(-36px) scaleY(1.16) scaleX(0.9);
   }
 }
+/* 必须用 class 引用上面两个 keyframes —— Tailwind v4 会摇掉「只在内联 style 里出现」
+   的 @keyframes(扫不到内联),所以钻箱动画只能挂 class,不能写 style.animation。 */
+.box-hop-in {
+  transform-origin: bottom center;
+  animation: box-hop-in 0.7s cubic-bezier(0.34, 1.45, 0.5, 1) both;
+}
+.box-hop-out {
+  transform-origin: bottom center;
+  animation: box-hop-out 0.45s cubic-bezier(0.5, 0, 0.7, 0.3) both;
+}
 @keyframes bubble-in {
   from {
     opacity: 0;

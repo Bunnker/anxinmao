@@ -823,17 +823,15 @@ function PetNudge({
               alt=""
               aria-hidden="true"
               draggable={false}
-              className="absolute"
+              className={
+                "absolute " +
+                (roam.kind === "hopin" ? "box-hop-in" : "box-hop-out")
+              }
               style={{
                 left: BOX_LEFT,
                 bottom: BOX_BOTTOM,
                 width: BOX_W,
                 zIndex: zOf(YARD_ITEMS.box.bottom) + 1,
-                transformOrigin: "bottom center",
-                animation:
-                  roam.kind === "hopin"
-                    ? "box-hop-in 0.7s cubic-bezier(0.34,1.45,0.5,1) both"
-                    : "box-hop-out 0.45s cubic-bezier(0.5,0,0.7,0.3) both",
               }}
             />
           </>
