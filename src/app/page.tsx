@@ -355,7 +355,9 @@ function PetNudge({
       | "drink"
       | "hopin"
       | "hopout"
-      | "box";
+      | "box"
+      | "greet"
+      | "hop";
     x: number;
     // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
     y: number;
@@ -658,16 +660,26 @@ function PetNudge({
               return;
             }
           }
-          if (roll < 0.5) {
+          if (roll < 0.46) {
             setRoam((r) => ({ ...r, kind: "groom", dur: 0 }));
             return;
           }
+          if (roll < 0.54) {
+            // 招手:坐着抬爪挥手打个招呼
+            setRoam((r) => ({ ...r, kind: "greet", dur: 0 }));
+            return;
+          }
+          if (roll < 0.61) {
+            // 蹦跶:原地开心蹦一下
+            setRoam((r) => ({ ...r, kind: "hop", dur: 0 }));
+            return;
+          }
           const target: InteractKind =
-            roll < 0.7
+            roll < 0.73
               ? "nap"
-              : roll < 0.8
+              : roll < 0.82
                 ? "play"
-                : roll < 0.9
+                : roll < 0.91
                   ? "drink"
                   : "box";
           setRoam((r) =>
@@ -692,6 +704,12 @@ function PetNudge({
     } else if (roam.kind === "wake") {
       // 起床动作演一遍(~2.5-2.9s)后定格收尾,再坐回
       t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "sit" })), 3300);
+    } else if (roam.kind === "greet") {
+      // 招手:挥手定格一拍后坐回
+      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "sit" })), 1600);
+    } else if (roam.kind === "hop") {
+      // 蹦跶:蹦一下定格回味后坐回
+      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "sit" })), 1100);
     } else if (roam.kind === "play" || roam.kind === "drink") {
       // 玩球/喝水:动画播一遍定格回味,完了坐起说句猫语
       const done = roam.kind;
@@ -796,9 +814,13 @@ function PetNudge({
                 ? "play"
                 : roam.kind === "drink"
                   ? "drink"
-                  : roam.kind === "hopin"
-                    ? "jumping"
-                    : "idle";
+                  : roam.kind === "greet"
+                    ? "waving"
+                    : roam.kind === "hop"
+                      ? "jumping"
+                      : roam.kind === "hopin"
+                        ? "jumping"
+                        : "idle";
     // 摸猫说话才冒对话泡;坐着思考时冒「心事泡」(功能入口,跟着猫选边)
     const showBubble = talk !== null;
     // 选剩余空间够的一侧,宽度跟着空间缩,避免压到猫身上
