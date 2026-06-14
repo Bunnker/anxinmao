@@ -342,6 +342,7 @@ function PetNudge({
       | "play"
       | "drink"
       | "hopin"
+      | "hopout"
       | "box";
     x: number;
     // 地板深度(bottom 偏移,0=最前沿,YARD_DEPTH=最里)
@@ -380,20 +381,30 @@ function PetNudge({
     return () => clearTimeout(t);
   }, [roam.kind, calm]);
 
-  // 蹦进箱子:hopin 期间(~900ms)顺序播 cat-box 0→3,猫从箱里由低升起=跳进去
+  // 钻箱帧序:hopin 顺序播 0→3(猫从箱里由低升起=跳进去);
+  // hopout 倒着播 3→1(坐起 → 扒到箱沿探出去=爬出来),停在 1,随后切回漫游精灵走开。
   const [jumpFrame, setJumpFrame] = useState(0);
   useEffect(() => {
-    if (roam.kind !== "hopin") {
+    const last = CAT_JUMP_FRAMES.length - 1;
+    if (roam.kind === "hopin") {
+      let i = 0;
       setJumpFrame(0);
-      return;
+      const id = window.setInterval(() => {
+        i = Math.min(i + 1, last);
+        setJumpFrame(i);
+      }, 230);
+      return () => clearInterval(id);
     }
-    let i = 0;
-    setJumpFrame(0);
-    const id = window.setInterval(() => {
-      i = Math.min(i + 1, CAT_JUMP_FRAMES.length - 1);
+    if (roam.kind === "hopout") {
+      let i = last;
       setJumpFrame(i);
-    }, 230);
-    return () => clearInterval(id);
+      const id = window.setInterval(() => {
+        i = Math.max(i - 1, 1);
+        setJumpFrame(i);
+      }, 200);
+      return () => clearInterval(id);
+    }
+    setJumpFrame(0);
   }, [roam.kind]);
 
   useEffect(() => {
@@ -573,17 +584,20 @@ function PetNudge({
         sayLine(done);
       }, 4200);
     } else if (roam.kind === "hopin") {
-      // 蹦进箱子:6 帧跳跃播完(~900ms)再落进箱里
+      // 蹦进箱子:0→3 升起播完(~900ms)再落进箱里
       t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "box" })), 900);
     } else if (roam.kind === "box") {
-      // 钻箱:在箱里蹲 10-15s(箱子前壁遮着,只露上半身)
+      // 钻箱:在箱里蹲 10-15s,到点先爬出来(hopout)
       t = window.setTimeout(
-        () => {
-          setRoam((r) => ({ ...r, kind: "sit" }));
-          sayLine("box");
-        },
+        () => setRoam((r) => ({ ...r, kind: "hopout" })),
         10000 + Math.random() * 5000,
       );
+    } else if (roam.kind === "hopout") {
+      // 爬出箱子:3→1 扒着箱沿探出去(~800ms)后落地坐下、说句猫语
+      t = window.setTimeout(() => {
+        setRoam((r) => ({ ...r, kind: "sit" }));
+        sayLine("box");
+      }, 800);
     } else {
       // 打盹 18-32s —— 睡够了随机演一个起床动作(伸懒腰/打哈欠/弓背)再坐起
       t = window.setTimeout(
@@ -726,7 +740,9 @@ function PetNudge({
             (k === "yarn" && roam.kind === "play") ||
             (k === "bowl" && roam.kind === "drink") ||
             (k === "box" &&
-              (roam.kind === "box" || roam.kind === "hopin"));
+              (roam.kind === "box" ||
+                roam.kind === "hopin" ||
+                roam.kind === "hopout"));
           const z = zOf(it.bottom);
           return (
             <button
@@ -758,7 +774,9 @@ function PetNudge({
             脚下用一块静态椭圆当影子,不再给精灵挂 drop-shadow 滤镜 —— 滤镜每帧重算,
             奔跑高频换帧时会残留上一帧的虚影(像涂层);静态 div 不随帧重算,无残影。
             钻箱时整只换成 cat-in-box 整图(见下),实时精灵藏起。 */}
-        {roam.kind !== "box" && roam.kind !== "hopin" && (
+        {roam.kind !== "box" &&
+          roam.kind !== "hopin" &&
+          roam.kind !== "hopout" && (
           <div
             ref={catRef}
             className="absolute bottom-0 left-0"
@@ -796,8 +814,8 @@ function PetNudge({
           </div>
         )}
 
-        {/* 蹦进箱子:hopin 顺序播 cat-box 0→3(猫从箱里由低升起=跳进去,箱帧间锁死),整张盖在箱位。 */}
-        {roam.kind === "hopin" && (
+        {/* 钻箱动画:hopin 播 0→3(跳进去)/ hopout 播 3→1(爬出来),整张盖在箱位、箱帧间锁死。 */}
+        {(roam.kind === "hopin" || roam.kind === "hopout") && (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
