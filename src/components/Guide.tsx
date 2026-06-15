@@ -2,7 +2,7 @@
 
 // 新手使用教程 —— 首次进入自动弹一次(localStorage 记标记),首页可随时重开。
 // 文案走「第一次养猫也能懂」的朋友口吻,避免产品黑话。
-// 4 屏:先分急不急 → 怎么用 → 依据边界 → 建档开始。
+// 5 屏:先分急不急 → 怎么用 → 依据边界 → 桌宠陪伴 → 建档开始。
 import { useState } from "react";
 
 const TIERS = ["var(--red)", "var(--amber)", "var(--green)"];
@@ -58,7 +58,7 @@ function Card({
   );
 }
 
-const TOTAL = 4;
+const TOTAL = 5;
 
 export function Guide({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0);
@@ -170,7 +170,34 @@ export function Guide({ onClose }: { onClose: () => void }) {
             )}
 
             {step === 3 && (
-              <Card variant={3} badge="开始前" title="让它先认识你家猫">
+              <Card variant={3} badge="首页的小伙伴" title="有只小猫,陪你住在首页">
+                <ul className="flex flex-col gap-3">
+                  <li>
+                    <span className="font-medium text-ink">摸摸它</span>
+                    <br />
+                    它平时自己在屋里溜达、晒太阳、打盹;点它,会跟你说说话。
+                  </li>
+                  <li>
+                    <span className="font-medium text-ink">用上面的小道具</span>
+                    <br />
+                    长按拖到它身上:梳子给它梳毛、水瓶给碗续水、逗猫棒逗它扑。
+                  </li>
+                  <li>
+                    <span className="font-medium text-ink">点屋里的家具</span>
+                    <br />
+                    猫窝、抓板、纸箱、毛线球、水碗,它会自己走过去睡 / 挠 / 钻 / 玩 / 喝。
+                  </li>
+                  <li>
+                    <span className="font-medium text-ink">找功能</span>
+                    <br />
+                    看病、聊天、小知识,点它坐下时冒的小泡泡,或用底部「分诊」。
+                  </li>
+                </ul>
+              </Card>
+            )}
+
+            {step === 4 && (
+              <Card variant={1} badge="开始前" title="让它先认识你家猫">
                 几个月、几斤、公猫母猫、打没打针,都会影响判断。
                 <br />
                 先简单填一下就好,以后慢慢补;想马上开始,直接选情况也行。

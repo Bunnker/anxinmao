@@ -208,7 +208,7 @@ const YARD_ITEMS = {
   // codex 出的新家具(可拖):猫抓板 —— 走过去挠抓
   scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 88, bottom: 92, w: 78 },
   // 墙角小地毯:垫在地上的「地面物」(渲染 z 压到家具下、猫上 → 猫站毯上),走过去坐下洗脸
-  rug: { src: "/pet/items/rug.webp", alt: "小地毯", left: 92, bottom: 10, w: 150 },
+  rug: { src: "/pet/items/rug.webp", alt: "小地毯", left: 96, bottom: 8, w: 104 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
 // 挠抓板 2 帧(codex 出图、按板右下角对齐切片 → 板不抖):前爪在斜面 高→低 来回=挠。
