@@ -193,6 +193,9 @@ const PET_TALK = [
 // 猫还用左右跑动画,走斜线时 y 同步变、越靠前越大(伪透视);
 // 猫与家具按 bottom 做画家算法排序,猫能绕到窝后面去。
 const YARD_DEPTH = 140;
+// 院子内容的固定设计基准宽:家具/猫/盖帧/泡泡坐标全部基于它布局,
+// 外层 wrapper 再按 yardW/YARD_BASE_W 等比缩放 → 任何屏宽都协调(窄不裁、宽不留白)。
+const YARD_BASE_W = 345;
 // 家具摆位:bottom = 深度(大=靠后);玩球/喝水动画自带道具,播放时隐藏地面同款
 const YARD_ITEMS = {
   bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 2, bottom: 58, w: 88 },
@@ -576,10 +579,14 @@ function PetNudge({
       }
       return;
     }
+    // 家具在按 sx 缩放的 wrapper 内,屏幕位移要除以 sx 换算回基准坐标
+    const sx = Math.min(1, (yardRef.current?.offsetWidth ?? YARD_BASE_W) / YARD_BASE_W);
     const w = YARD_ITEMS[pr.k].w;
-    const left = Math.round(Math.min(Math.max(0, yardW - w), Math.max(0, pr.startLeft + dx)));
+    const left = Math.round(
+      Math.min(Math.max(0, YARD_BASE_W - w), Math.max(0, pr.startLeft + dx / sx)),
+    );
     // 屏幕往上拖 = bottom 变大(往院子里);夹在地面带
-    const bottom = Math.round(Math.min(100, Math.max(0, pr.startBottom - dy)));
+    const bottom = Math.round(Math.min(100, Math.max(0, pr.startBottom - dy / sx)));
     setLayout((cur) => ({ ...cur, [pr.k]: { left, bottom } }));
   }
   function onItemPointerUp(e: ReactPointerEvent<HTMLButtonElement>) {
@@ -922,7 +929,7 @@ function PetNudge({
     if (roam.kind === "sit") {
       t = window.setTimeout(
         () => {
-          const w = yardRef.current?.offsetWidth ?? yardW;
+          const w = YARD_BASE_W;
           const maxX = Math.max(0, w - 84);
           const roll = Math.random();
           // 35% 散步 / 15% 洗脸 / 20% 回窝睡 / 10% 玩球 / 10% 喝水 / 10% 钻箱
@@ -1188,7 +1195,7 @@ function PetNudge({
     const GAP = 10;
     const EDGE = 6;
     // 选空间更大的一侧贴着猫放,气泡宽度收进该侧可用空间(窄了就换行),不压到猫
-    const rightRoom = yardW - catRightEdge - GAP - EDGE;
+    const rightRoom = YARD_BASE_W - catRightEdge - GAP - EDGE;
     const leftRoom = catLeftEdge - GAP - EDGE;
     const bubbleOnRight = rightRoom >= leftRoom;
     const bubbleW = Math.min(240, Math.max(96, bubbleOnRight ? rightRoom : leftRoom));
@@ -1203,7 +1210,7 @@ function PetNudge({
     // 心事泡:猫坐下(思考)才冒,散步/洗脸/打盹时收起 —— 入口是猫的行为产物。
     // 猫在左半场泡往右上冒,右半场往左上冒;三个点链从猫头斜向泡群。
     const thinking = roam.kind === "sit" && !talk;
-    const toRight = roam.x + 42 < yardW / 2;
+    const toRight = roam.x + 42 < YARD_BASE_W / 2;
     const dotBase = roam.x + (toRight ? 62 : 14);
     // 点链从猫头(随深度抬升)斜向泡群
     const dots = [
@@ -1257,6 +1264,18 @@ function PetNudge({
           className="pointer-events-none absolute inset-0"
           style={{ zIndex: 0, background: "rgba(247,246,243,0.4)" }}
         />
+        {/* 院子内容层:家具/猫/盖帧/泡泡全部基于 YARD_BASE_W×280 设计坐标,整层按
+            yardW/YARD_BASE_W 等比缩放 → 任何屏宽协调(窄屏不裁家具、宽屏不留白);
+            背景图在本层外(section 直接)、object-cover 自适应铺满,不随内容缩放。 */}
+        <div
+          className="absolute bottom-0 left-1/2"
+          style={{
+            width: YARD_BASE_W,
+            height: 280,
+            transform: `translateX(-50%) scale(${Math.min(1, yardW / YARD_BASE_W).toFixed(4)})`,
+            transformOrigin: "bottom center",
+          }}
+        >
         {/* 地板家具:点了让猫走过去互动;按深度排层(画家算法)。
             钻箱时空箱子换成 cat-in-box 整图(见下),所以这里把空箱子藏掉;
             玩球/喝水动画自带道具,进行时把地上同款隐掉防止出现两个 */}
@@ -1463,7 +1482,7 @@ function PetNudge({
             // 水平居中对齐猫中心,再 clamp 进院子内 → 靠边时不出界被截
             const rawLeft = roam.x + 42 - w / 2 + align.dx * s;
             const left = Math.round(
-              Math.max(4, Math.min(yardW - w - 4, rawLeft)),
+              Math.max(4, Math.min(YARD_BASE_W - w - 4, rawLeft)),
             );
             return (
               <>
@@ -1493,7 +1512,7 @@ function PetNudge({
             const src = CAT_WAND_FRAMES[pounceFrame] ?? CAT_WAND_FRAMES[0];
             const rawLeft = roam.x + 42 - w / 2 + WAND_DX * s;
             const left = Math.round(
-              Math.max(4, Math.min(yardW - w - 4, rawLeft)),
+              Math.max(4, Math.min(YARD_BASE_W - w - 4, rawLeft)),
             );
             return (
               <>
@@ -1526,7 +1545,7 @@ function PetNudge({
             const src = seq[washFrame] ?? seq[0];
             const rawLeft = roam.x + 42 - w / 2 + align.dx * s;
             const left = Math.round(
-              Math.max(4, Math.min(yardW - w - 4, rawLeft)),
+              Math.max(4, Math.min(YARD_BASE_W - w - 4, rawLeft)),
             );
             return (
               <>
@@ -1559,7 +1578,7 @@ function PetNudge({
                   width: d.size,
                   height: d.size,
                   bottom: d.bottom,
-                  left: Math.max(4, Math.min(yardW - 16, dotBase + d.dx)),
+                  left: Math.max(4, Math.min(YARD_BASE_W - 16, dotBase + d.dx)),
                   animationDelay: `${i * 0.09}s, ${0.7 + i * 0.35}s`,
                 }}
               />
@@ -1605,6 +1624,7 @@ function PetNudge({
             <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
           </div>
         )}
+        </div>
       </section>
 
       {/* 道具工具栏:长按拖到目标上触发(梳子→拖到猫=梳毛;瓶子→拖到碗=倒水续满) */}
