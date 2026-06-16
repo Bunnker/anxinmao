@@ -23,6 +23,7 @@ import { CatAvatar } from "@/components/CatAvatar";
 import { Welcome } from "@/components/Welcome";
 import { Guide } from "@/components/Guide";
 import PetSprite, { type PetSpriteState } from "@/components/PetSprite";
+import { CatFace } from "@/components/CatFace";
 import type { Cat, CatRecord, Store } from "@/types/cat";
 
 // 新手教程「看过了」标记 —— 与猫档案分开,首次进入弹一次,首页可重开。
@@ -2026,87 +2027,101 @@ export default function HomePage() {
         }}
         aria-hidden="true"
       />
-      {/* 顶栏 */}
-      <header className="flex items-center gap-2.5 py-2">
-        <span className="text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
-          {greeting()}
-        </span>
+      {/* 问候条(精简):头像 + 早上好,名字 + 月龄/性别。厚资料卡(疫苗/绝育/相册)移到「毛孩子」页 */}
+      <header className="flex items-center gap-3 py-3">
+        <CatFace
+          mood="relieved"
+          size={46}
+          className="shrink-0 rounded-full bg-[var(--accent-tint)] shadow-[var(--shadow-control)]"
+          style={{ padding: 3 }}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="font-serif text-[19px] font-semibold tracking-wide text-ink">
+            {greeting()},{cat.name}
+          </p>
+          <p className="mt-0.5 truncate text-[13px] tracking-wide text-ink-soft">
+            {meta}
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => setShowGuide(true)}
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium tracking-[0.06em]"
+          className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-medium tracking-[0.06em]"
           style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
         >
           使用说明
         </button>
       </header>
 
-      {/* 宠物画像 */}
-      <section className="pt-7">
-        <div className="relative overflow-hidden rounded-[34px] bg-surface p-5 shadow-[var(--shadow-card)]">
-          <div className="absolute -right-10 -top-12 size-36 rounded-full bg-[var(--accent-soft)]" />
-          <div className="relative flex items-start gap-4">
-            <div className="shrink-0">
-              <CatAvatar
-                avatar={cat.avatar}
-                name={cat.name}
-                size={92}
-                className="shadow-[var(--shadow-control)]"
-              />
-            </div>
-            <div className="min-w-0 flex-1 pt-1">
-              <p className="text-[12px] font-semibold tracking-[0.16em] text-accent">
-                {greeting()}
-              </p>
-              <h1 className="mt-2 text-[2.25rem] font-semibold leading-none tracking-tight text-ink">
-                {cat.name}
-              </h1>
-              <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{meta}</p>
-              <div className="mt-4 grid grid-cols-3 gap-2">
-                <span className="rounded-[22px] bg-[var(--surface-2)] px-3 py-2.5">
-                  <span className="block text-[11px] text-ink-faint">疫苗</span>
-                  <span className="mt-0.5 block text-[14px] font-semibold tabular-nums text-ink">
-                    {vaccines ? `${vaccines} 针` : "未记"}
-                  </span>
-                </span>
-                <span className="rounded-[22px] bg-[var(--surface-2)] px-3 py-2.5">
-                  <span className="block text-[11px] text-ink-faint">绝育</span>
-                  <span className="mt-0.5 block text-[14px] font-semibold text-ink">
-                    {cat.neutered}
-                  </span>
-                </span>
-                <span className="rounded-[22px] bg-[var(--surface-2)] px-3 py-2.5">
-                  <span className="block text-[11px] text-ink-faint">相册</span>
-                  <span className="mt-0.5 block text-[14px] font-semibold tabular-nums text-ink">
-                    {photos.length}/6
-                  </span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative mt-5 flex items-center justify-between rounded-[24px] bg-white/65 px-4 py-3 shadow-[var(--shadow-control)]">
-            <span className="min-w-0">
-              <span className="block text-[13px] font-medium text-ink">
-                {photos.length ? `已保存 ${photos.length} 张生活照` : "还没有生活照"}
+      {/* 价值主张 + 看病主入口 —— 一眼看懂「这是猫咪分诊器、看病点这」 */}
+      <section className="pt-1">
+        <h1 className="font-serif text-[22px] font-semibold leading-[1.45] tracking-wide text-ink">
+          <span className="text-accent">猫不对劲?</span>选症状,
+          <br />
+          30 秒给你红黄绿就医建议
+        </h1>
+        <div className="mt-3 flex items-center gap-2.5 text-[13px] tracking-wide text-ink-soft">
+          <span className="flex items-center gap-1.5" aria-hidden="true">
+            <i className="size-2.5 rounded-full bg-[var(--red)] shadow-[0_0_0_2.5px_rgba(255,255,255,0.85)]" />
+            <i className="size-2.5 rounded-full bg-[var(--amber)] shadow-[0_0_0_2.5px_rgba(255,255,255,0.85)]" />
+            <i className="size-2.5 rounded-full bg-[var(--green)] shadow-[0_0_0_2.5px_rgba(255,255,255,0.85)]" />
+          </span>
+          <span>三档风险信号,该不该去医院一眼明白</span>
+        </div>
+        <Link
+          href="/symptoms"
+          aria-label="看病:选症状做分诊,30 秒红黄绿就医建议"
+          className="mt-4 flex items-center justify-between rounded-[20px] px-5 py-4 text-white transition-transform active:scale-[0.99]"
+          style={{
+            background:
+              "linear-gradient(180deg,#bd6258,var(--accent) 42%,var(--accent-deep))",
+            boxShadow:
+              "0 10px 24px rgba(176,90,80,0.34), inset 0 1px 0 rgba(255,255,255,0.22)",
+          }}
+        >
+          <span className="flex items-center gap-3">
+            <span className="grid size-9 place-items-center rounded-[13px] bg-white/[0.16]">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#fff"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4.8 3v5a4 4 0 0 0 8 0V3" />
+                <path d="M4.8 3h-1M12.8 3h1" />
+                <path d="M8.8 12v3a5 5 0 0 0 10 0v-2" />
+                <circle cx="18.8" cy="11" r="2.2" />
+              </svg>
+            </span>
+            <span>
+              <span className="block font-serif text-[19px] font-semibold tracking-[0.06em]">
+                看病
               </span>
-              <span className="mt-0.5 block text-[12px] text-ink-faint">
-                详细相册在「我的」档案里管理
+              <span className="mt-0.5 block text-[12px] opacity-80">
+                选症状 · 智能分诊
               </span>
             </span>
-            <label className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-full bg-[var(--surface-2)] text-accent shadow-[var(--shadow-control)]">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={onAlbumPick}
-                className="hidden"
-              />
-              <CameraIcon />
-            </label>
-          </div>
-
-        </div>
+          </span>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#fff"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="opacity-90"
+            aria-hidden="true"
+          >
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </Link>
       </section>
 
       {/* 小猫陪伴提醒 —— 跟进 / 驱虫疫苗 / 新手引导,统一从它的气泡说出来 */}
