@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { loadStore, saveStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
+import { ageLabel } from "@/lib/profile";
+import { WeightSparkline } from "@/components/profile/WeightSparkline";
+import { HealthFootprint } from "@/components/profile/HealthFootprint";
 import type { Cat, CatRecord, Store, Vaccine } from "@/types/cat";
 
 function newCat(): Cat {
@@ -103,13 +106,6 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-function ageLabel(months: number): string {
-  if (months < 12) return `${months} 个月`;
-  const y = Math.floor(months / 12);
-  const m = months % 12;
-  return m ? `${y} 岁 ${m} 个月` : `${y} 岁`;
-}
-
 function displayValue(value: string | number | undefined, fallback = "未记录") {
   if (value === undefined || value === "") return fallback;
   return String(value);
@@ -127,59 +123,6 @@ function withWeightLog(c: Cat): Cat {
     ...c,
     weightLog: [...prev, { date: today, kg: c.weight }].slice(-60),
   };
-}
-
-// 体重迷你折线 —— 无依赖手画 SVG,取最近 12 条。≥2 条才有曲线可言。
-function WeightSparkline({ log }: { log: { date: string; kg: number }[] }) {
-  const pts = log.slice(-12);
-  if (pts.length < 2) return null;
-  const w = 280;
-  const h = 56;
-  const pad = 8;
-  const kgs = pts.map((p) => p.kg);
-  const min = Math.min(...kgs);
-  const max = Math.max(...kgs);
-  const span = max - min || 1;
-  const x = (i: number) => pad + (i * (w - 2 * pad)) / (pts.length - 1);
-  const y = (kg: number) => h - pad - ((kg - min) * (h - 2 * pad)) / span;
-  const d = pts
-    .map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.kg).toFixed(1)}`)
-    .join(" ");
-  const lastPt = pts[pts.length - 1];
-  const delta = Number((lastPt.kg - pts[0].kg).toFixed(1));
-  return (
-    <div className="relative mt-3 rounded-[22px] bg-[var(--surface-2)] px-4 py-3">
-      <div className="flex items-baseline justify-between">
-        <span className="text-[11px] text-ink-faint">
-          体重记录 · {pts.length} 次
-        </span>
-        <span className="text-[12px] tabular-nums text-ink-soft">
-          {pts[0].kg} → {lastPt.kg} kg
-          {delta !== 0 && ` (${delta > 0 ? "+" : ""}${delta})`}
-        </span>
-      </div>
-      <svg
-        viewBox={`0 0 ${w} ${h}`}
-        className="mt-1 h-14 w-full"
-        aria-hidden="true"
-      >
-        <path
-          d={d}
-          fill="none"
-          stroke="var(--accent)"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <circle
-          cx={x(pts.length - 1)}
-          cy={y(lastPt.kg)}
-          r="3.4"
-          fill="var(--accent)"
-        />
-      </svg>
-    </div>
-  );
 }
 
 // 查看页的信息行 —— iOS 设置风格:左 label 右值。
@@ -284,100 +227,6 @@ function EditCard({
         </p>
       )}
       <div className="mt-4 flex flex-col gap-6">{children}</div>
-    </section>
-  );
-}
-
-const TIER_VIS = {
-  red: { color: "var(--red)", label: "红" },
-  yellow: { color: "var(--amber)", label: "黄" },
-  green: { color: "var(--green)", label: "绿" },
-} as const;
-
-// 健康足迹 —— 最近 30 天分诊/问答计数 + 红黄绿分布条。只统计,不列逐条记录。
-// 零记录时不消失,改为引导态 —— 55% 设备零记录,这里是把人引向分诊的关键位。
-function HealthFootprint({ records }: { records: CatRecord[] }) {
-  if (records.length === 0) {
-    return (
-      <section className="mt-4 rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
-        <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
-          健康足迹
-        </p>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft">
-          还没有分诊记录 —— 它不对劲时来分诊,这里会自动长出它的病历。
-        </p>
-        <Link
-          href="/symptoms"
-          className="mt-2 inline-block text-[13.5px] font-medium text-accent"
-        >
-          试试分诊 →
-        </Link>
-      </section>
-    );
-  }
-  const cutoff = Date.now() - 30 * 86400000;
-  const recent30 = records.filter((r) => {
-    const t = new Date(r.date).getTime();
-    return !Number.isNaN(t) && t >= cutoff;
-  });
-  const triage30 = recent30.filter((r) => r.kind === "triage");
-  const chat30 = recent30.filter((r) => r.kind === "behavior");
-  const tierN: Record<"red" | "yellow" | "green", number> = {
-    red: 0,
-    yellow: 0,
-    green: 0,
-  };
-  for (const t of triage30) if (t.tier) tierN[t.tier] += 1;
-  const totalTier = tierN.red + tierN.yellow + tierN.green;
-
-  return (
-    <section className="mt-4 rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
-      <div className="mb-1.5 flex items-center justify-between">
-        <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
-          健康足迹
-        </p>
-        <span className="text-[11px] text-ink-faint">最近 30 天</span>
-      </div>
-      <p className="text-[13px] text-ink-soft">
-        分诊 {triage30.length} 次 · 问答 {chat30.length} 次
-      </p>
-
-      {totalTier > 0 && (
-        <>
-          <div className="mt-2.5 flex h-2.5 overflow-hidden rounded-full bg-[var(--surface-2)]">
-            {(["red", "yellow", "green"] as const).map(
-              (k) =>
-                tierN[k] > 0 && (
-                  <span
-                    key={k}
-                    style={{
-                      width: `${(tierN[k] / totalTier) * 100}%`,
-                      background: TIER_VIS[k].color,
-                    }}
-                  />
-                ),
-            )}
-          </div>
-          <div className="mt-2 flex gap-4">
-            {(["red", "yellow", "green"] as const).map(
-              (k) =>
-                tierN[k] > 0 && (
-                  <span
-                    key={k}
-                    className="flex items-center gap-1.5 text-[12px] text-ink-soft"
-                  >
-                    <span
-                      className="size-2 rounded-full"
-                      style={{ background: TIER_VIS[k].color }}
-                    />
-                    {TIER_VIS[k].label} {tierN[k]}
-                  </span>
-                ),
-            )}
-          </div>
-        </>
-      )}
-
     </section>
   );
 }
