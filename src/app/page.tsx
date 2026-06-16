@@ -1061,7 +1061,7 @@ function PetNudge({
         };
     // 垂直:贴在猫头/肩高度(精灵高约 91*scale),尾角朝下指向猫,不再钉在脚边
     const bubbleBottom = Math.round(roam.y + 52 * catScale);
-    // 功能入口改为院子顶部常驻竖排 pills(见下),不再依赖「猫坐下才冒心事泡」。
+    // 看病/问答入口在底部 sheet;院子顶只留 小知识💡 + 使用说明? 两个图标(见下)。
     // 全屏 stage:院子内容层(345×280 设计坐标)整体上抬 floorLift,落到背景地面带;
     // floorLift 按实际院子高 yardH 比例,适配不同机身高度(地面在背景下部)。
     const contentScale = Math.min(1, yardW / YARD_BASE_W);
@@ -1432,68 +1432,47 @@ function PetNudge({
           </div>
         </div>
 
-        {/* 「?」使用说明(右上,开 Guide) */}
-        <button
-          type="button"
-          onClick={onOpenGuide}
-          aria-label="使用说明"
-          className="absolute right-4 z-30 grid size-9 place-items-center rounded-full bg-white/60 font-serif text-[16px] font-bold text-accent shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-90"
+        {/* 右上两个同款毛玻璃圆按钮:小知识 💡(→/knowledge)+ 使用说明 ?(开 Guide)。
+            看病/问答已在底部 sheet(CTA + 问问),不再在院子顶重复入口。 */}
+        <div
+          className="absolute right-4 z-30 flex items-center gap-2"
           style={{ top: "calc(env(safe-area-inset-top, 0px) + 14px)" }}
         >
-          ?
-        </button>
-
-        {/* 常驻竖排 pills(右上,看病/问答/小知识):取代「猫坐下才冒」的心事泡,入口随时可见。
-            看病 primary(陶土红 dot)、其余 alt(灰 dot);全是中性/陶土红,不碰风险三色。 */}
-        <nav
-          className="absolute right-4 z-30 flex flex-col items-end gap-2"
-          style={{ top: "calc(env(safe-area-inset-top, 0px) + 60px)" }}
-          aria-label="功能入口"
-        >
-          {(
-            [
-              {
-                href: "/symptoms",
-                label: "看病",
-                primary: true,
-                aria: "看病:选症状做分诊,30 秒红黄绿就医建议",
-              },
-              {
-                href: "/behavior",
-                label: "问答",
-                primary: false,
-                aria: "问答:喂养 / 习性 / 拿不准的病情都能问",
-              },
-              {
-                href: "/knowledge",
-                label: "小知识",
-                primary: false,
-                aria: "小知识:看着吓人但不必慌的 6 种情况,权威兽医来源",
-              },
-            ] as const
-          ).map((p) => (
-            <Link
-              key={p.href}
-              href={p.href}
-              aria-label={p.aria}
-              className="flex items-center gap-2 rounded-full bg-white/60 py-2 pr-4 pl-3.5 text-[14px] font-medium text-ink shadow-[0_4px_12px_rgba(120,90,60,0.14),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-95"
+          <Link
+            href="/knowledge"
+            aria-label="小知识:看着吓人但不必慌的 6 种情况,权威兽医来源"
+            className="grid size-9 place-items-center rounded-full bg-white/60 text-accent shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-90"
+          >
+            <svg
+              width="19"
+              height="19"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
             >
-              <i
-                className="size-1.5 rounded-full"
-                style={{
-                  background: p.primary ? "var(--accent)" : "var(--ink-faint)",
-                }}
-                aria-hidden="true"
-              />
-              {p.label}
-            </Link>
-          ))}
-        </nav>
+              <path d="M9 18h6" />
+              <path d="M10 21h4" />
+              <path d="M12 3a6 6 0 0 0-3.8 10.7c.5.6.8 1.1.8 1.8V16h6v-.5c0-.7.3-1.2.8-1.8A6 6 0 0 0 12 3Z" />
+            </svg>
+          </Link>
+          <button
+            type="button"
+            onClick={onOpenGuide}
+            aria-label="使用说明"
+            className="grid size-9 place-items-center rounded-full bg-white/60 font-serif text-[16px] font-bold text-accent shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-90"
+          >
+            ?
+          </button>
+        </div>
 
         {/* 道具栏迁到院子 floor(care-float):梳子/水/逗猫棒,长按拖到猫/碗上触发(拖拽逻辑不变) */}
         <div
           className="absolute left-4 z-20 flex items-end gap-2.5"
-          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 46px)" }}
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 32px)" }}
           aria-label="道具工具栏"
         >
           {(Object.keys(TOOLBAR_ITEMS) as ToolKey[]).map((tk) => {
@@ -1516,7 +1495,7 @@ function PetNudge({
                   src={tool.src}
                   alt=""
                   draggable={false}
-                  className="max-h-full w-auto"
+                  className="h-9 w-9 object-contain"
                 />
               </button>
             );
@@ -1757,7 +1736,7 @@ export default function HomePage() {
         className="relative mx-auto flex h-dvh max-w-[430px] flex-col overflow-hidden"
         style={{ background: "var(--paper)" }}
       >
-        {/* 全屏 stage:沉浸院子 —— 浮动问候 / 「?」/ 竖排 pills / floor 道具栏 / 搭话泡全在 PetNudge 内 */}
+        {/* 全屏 stage:沉浸院子 —— 浮动问候 / 小知识💡 / 「?」/ floor 道具栏 / 搭话泡全在 PetNudge 内 */}
         <PetNudge cat={cat} onOpenGuide={() => setShowGuide(true)} />
 
         {/* 底部上拉 sheet:盖院子下沿、圆角顶、上向阴影 —— 回访(如有)+ 看病 CTA + 问问 + 最近 */}
