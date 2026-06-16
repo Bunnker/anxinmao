@@ -446,6 +446,8 @@ function PetNudge({
       : fallback;
   }
   const [yardW, setYardW] = useState(343);
+  // 院子实际高(全屏 stage 模式下随机身/视口变);内容层据此把地面带上抬到背景地面。
+  const [yardH, setYardH] = useState(560);
   const [roam, setRoam] = useState<{
     kind:
       | "sit"
@@ -730,7 +732,10 @@ function PetNudge({
   }, [roam.kind]);
 
   useEffect(() => {
-    const measure = () => setYardW(yardRef.current?.offsetWidth ?? 343);
+    const measure = () => {
+      setYardW(yardRef.current?.offsetWidth ?? 343);
+      setYardH(yardRef.current?.offsetHeight ?? 560);
+    };
     measure();
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
@@ -1239,11 +1244,15 @@ function PetNudge({
         cls: "bg-surface text-ink shadow-[var(--shadow-control)]",
       },
     ];
+    // 全屏 stage:院子内容层(345×280 设计坐标)整体上抬 floorLift,落到背景地面带;
+    // floorLift 按实际院子高 yardH 比例,适配不同机身高度(地面在背景下部)。
+    const contentScale = Math.min(1, yardW / YARD_BASE_W);
+    const floorLift = Math.round(yardH * 0.12);
     return (
       <>
       <section
         ref={yardRef}
-        className="relative isolate mt-4 h-[280px] overflow-hidden rounded-[28px]"
+        className="relative isolate h-[560px] overflow-hidden"
         aria-label={`${cat.name}的家`}
       >
         {/* 院子背景:codex 出的温馨房间图(暖墙 + 右上窗户/窗台 + 浅木地板 + 窗边暖光斑)。
@@ -1269,11 +1278,12 @@ function PetNudge({
             yardW/YARD_BASE_W 等比缩放 → 任何屏宽协调(窄屏不裁家具、宽屏不留白);
             背景图在本层外(section 直接)、object-cover 自适应铺满,不随内容缩放。 */}
         <div
-          className="absolute bottom-0 left-1/2"
+          className="absolute left-1/2"
           style={{
             width: YARD_BASE_W,
             height: 280,
-            transform: `translateX(-50%) scale(${Math.min(1, yardW / YARD_BASE_W).toFixed(4)})`,
+            bottom: floorLift,
+            transform: `translateX(-50%) scale(${contentScale.toFixed(4)})`,
             transformOrigin: "bottom center",
           }}
         >
