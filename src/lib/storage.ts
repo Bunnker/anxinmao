@@ -131,6 +131,47 @@ export function updateRecordOutcome(
   return next;
 }
 
+// ── 多猫操作(数据层早已是 cats[] + activeCatId;以下是切换/添加/删除的写入口)──
+// 都返回更新后的 store(失败返回 null),方便调用方就地 setState。
+
+// 添加一只猫(由编辑表单 newCat() 构造好传入),追加并设为活动猫。
+export function addCat(cat: Cat): Store | null {
+  if (typeof window === "undefined") return null;
+  const store = loadStore() ?? { cats: [], activeCatId: null, records: [] };
+  const next: Store = {
+    ...store,
+    cats: [...store.cats, cat],
+    activeCatId: cat.id,
+  };
+  saveStore(next);
+  return next;
+}
+
+// 切换活动猫(id 不存在则原样不动返回 null)。
+export function setActiveCat(id: string): Store | null {
+  if (typeof window === "undefined") return null;
+  const store = loadStore();
+  if (!store || !store.cats.some((c) => c.id === id)) return null;
+  const next: Store = { ...store, activeCatId: id };
+  saveStore(next);
+  return next;
+}
+
+// 删除一只猫:连带删它的 records;活动猫被删则改指向剩余第一只(无则 null)。
+// 删到 0 只时 cats:[] 写回 —— loadStore 对空 cats 返回 null,首页/档案页自然回到新建流程。
+export function deleteCat(id: string): Store | null {
+  if (typeof window === "undefined") return null;
+  const store = loadStore();
+  if (!store) return null;
+  const cats = store.cats.filter((c) => c.id !== id);
+  const records = store.records.filter((r) => r.catId !== id);
+  const activeCatId =
+    store.activeCatId === id ? (cats[0]?.id ?? null) : store.activeCatId;
+  const next: Store = { cats, activeCatId, records };
+  saveStore(next);
+  return next;
+}
+
 // 演示猫 —— 仅开发期 / 用户主动「先看看 demo」时使用,不再自动塞给新用户。
 export const DEMO_CAT: Cat = {
   id: "demo-cat",
