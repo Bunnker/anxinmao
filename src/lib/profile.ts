@@ -1,6 +1,41 @@
 // 毛孩子档案页 / 编辑页共享的纯函数(派生展示文案)。零副作用、零依赖。
 
-import type { Cat } from "@/types/cat";
+import type { Cat, CatRecord } from "@/types/cat";
+
+// 记录 → 可点回的目标:分诊→重开报告卡(需 symptomKey+tier);问答→回到那次对话。
+// 老记录缺字段则返回 null(不可点,优雅降级)。
+export function recordHref(record: CatRecord): string | null {
+  if (record.kind === "triage") {
+    if (!record.symptomKey || !record.tier) return null;
+    const params = new URLSearchParams({
+      tier: record.tier,
+      symptom: record.symptomKey,
+    });
+    if (record.claimIds && record.claimIds.length > 0) {
+      params.set("claims", record.claimIds.join(","));
+    }
+    return `/report?${params.toString()}`;
+  }
+  if (record.kind === "behavior") {
+    return `/behavior?c=${encodeURIComponent(record.id)}`;
+  }
+  return null;
+}
+
+// 相对日期:今天 / 昨天 / N 天前 / M 月 D 日。
+export function relativeDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const dayIndex = (x: Date) =>
+    Math.floor(
+      new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime() / 86400000,
+    );
+  const diff = dayIndex(new Date()) - dayIndex(d);
+  if (diff <= 0) return "今天";
+  if (diff === 1) return "昨天";
+  if (diff < 7) return `${diff} 天前`;
+  return `${d.getMonth() + 1} 月 ${d.getDate()} 日`;
+}
 
 // 月龄 → 「N 个月 / N 岁 / N 岁 M 个月」。
 export function ageLabel(months: number): string {

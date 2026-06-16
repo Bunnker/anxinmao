@@ -19,6 +19,8 @@ import {
   ageLabel,
   companionDays,
   careStatus,
+  recordHref,
+  relativeDate,
   type CareStatus,
 } from "@/lib/profile";
 import type { Cat, CatRecord, Store } from "@/types/cat";
@@ -38,6 +40,17 @@ const CARE_BADGE: Record<CareStatus, { color: string; bg: string }> = {
   done: { color: "var(--accent)", bg: "var(--accent-tint)" },
   due: { color: "#8a6f54", bg: "#f0ebe2" },
   no: { color: "var(--ink-soft)", bg: "#efece6" },
+};
+
+// 健康记录时间轴 —— 真分诊记录的 tier 点/标签用红黄绿(合规:风险信号本体);
+// 问答 / 其它用中性米色点。
+const TIER_TL: Record<
+  "red" | "yellow" | "green",
+  { dot: string; tag: string }
+> = {
+  green: { dot: "var(--green)", tag: "绿档" },
+  yellow: { dot: "var(--amber)", tag: "黄档" },
+  red: { dot: "var(--red)", tag: "红档" },
 };
 
 // 护理项图标(疫苗 / 驱虫 / 绝育)—— 描边 SVG。
@@ -162,6 +175,8 @@ export default function PetsPage() {
     setCat(s.cats[0]);
     setRecords([]);
   }
+
+  const [showAllRecords, setShowAllRecords] = useState(false);
 
   // ── 生活相册:本地照片墙(≤6 张、单张 ≤5MB)。仅本地橱窗展示,不参与分诊判断(红线)──
   const [albumEdit, setAlbumEdit] = useState(false);
@@ -609,6 +624,87 @@ export default function PetsPage() {
             </div>
           ))}
         </div>
+
+        {/* 健康记录:健康足迹(合规三色统计)+ timeline + 查看全部 */}
+        <div className="mt-[22px] mb-1 flex items-baseline justify-between px-0.5">
+          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+            健康记录
+          </span>
+          {records.length > 6 && (
+            <button
+              type="button"
+              onClick={() => setShowAllRecords((v) => !v)}
+              className="text-[12.5px] font-semibold text-accent"
+            >
+              {showAllRecords ? "收起" : `全部 ${records.length} 条 ›`}
+            </button>
+          )}
+        </div>
+        <HealthFootprint records={records} />
+        {records.length > 0 && (
+          <div className="relative mt-3.5 pl-1.5">
+            {(showAllRecords ? records : records.slice(0, 6)).map(
+              (r, i, arr) => {
+                const tv =
+                  r.kind === "triage" && r.tier ? TIER_TL[r.tier] : null;
+                const href = recordHref(r);
+                const last = i === arr.length - 1;
+                const card = (
+                  <div className="flex-1 rounded-[15px] bg-surface px-3.5 py-3 shadow-[var(--shadow-control)]">
+                    <p className="text-[14px] leading-snug font-medium text-ink">
+                      {r.summary}
+                    </p>
+                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11.5px] text-ink-faint">
+                      {tv && (
+                        <>
+                          <span
+                            className="font-semibold"
+                            style={{ color: tv.dot }}
+                          >
+                            {tv.tag}
+                          </span>
+                          <span>·</span>
+                        </>
+                      )}
+                      <span>{r.kind === "triage" ? "分诊" : "问答"}</span>
+                      <span>·</span>
+                      <span>{relativeDate(r.date)}</span>
+                    </p>
+                  </div>
+                );
+                return (
+                  <div
+                    key={r.id}
+                    className={
+                      "relative flex gap-3.5 " + (last ? "" : "pb-[18px]")
+                    }
+                  >
+                    <div className="relative flex w-3.5 flex-none justify-center">
+                      {!last && (
+                        <span className="absolute top-4 -bottom-1 w-0.5 bg-[var(--line)]" />
+                      )}
+                      <span
+                        className="relative z-[1] mt-[3px] size-3.5 rounded-full shadow-[0_0_0_3px_var(--paper)]"
+                        style={{ background: tv?.dot ?? "#cdbfae" }}
+                      />
+                    </div>
+                    {href ? (
+                      <Link
+                        href={href}
+                        aria-label={`查看「${r.summary}」`}
+                        className="flex-1 transition active:scale-[0.99]"
+                      >
+                        {card}
+                      </Link>
+                    ) : (
+                      card
+                    )}
+                  </div>
+                );
+              },
+            )}
+          </div>
+        )}
 
         <Disclaimer />
       </div>

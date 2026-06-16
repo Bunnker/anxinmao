@@ -16,6 +16,7 @@ import {
 } from "@/lib/storage";
 import { pullHistory } from "@/lib/history-sync";
 import { readPersisted, writePersisted } from "@/lib/persist";
+import { recordHref } from "@/lib/profile";
 import { Disclaimer } from "@/components/Disclaimer";
 import { Welcome } from "@/components/Welcome";
 import { Guide } from "@/components/Guide";
@@ -1528,28 +1529,7 @@ function PetNudge({
   }
 }
 
-// 记录 → 可点回的目标:
-// - 分诊 → 重开当时那张报告卡(确定性,只靠 tier/symptom/claims 重建)。
-//   老记录没存 symptomKey 则不可点(优雅降级)。
-// - 问答 → 回到那次聊天 /behavior?c=<id> 还原对话。
-function recordHref(record: CatRecord): string | null {
-  if (record.kind === "triage") {
-    if (!record.symptomKey || !record.tier) return null;
-    const params = new URLSearchParams({
-      tier: record.tier,
-      symptom: record.symptomKey,
-    });
-    if (record.claimIds && record.claimIds.length > 0) {
-      params.set("claims", record.claimIds.join(","));
-    }
-    return `/report?${params.toString()}`;
-  }
-  if (record.kind === "behavior") {
-    return `/behavior?c=${encodeURIComponent(record.id)}`;
-  }
-  return null;
-}
-
+// 「最近」一行 —— 复用 lib/profile 的 recordHref(分诊→报告卡 / 问答→对话)。
 function RecentRow({ record }: { record: CatRecord }) {
   const dot =
     record.kind === "triage" && record.tier
