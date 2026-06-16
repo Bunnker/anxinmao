@@ -24,6 +24,9 @@
   --accent: #b05a50;
   --accent-fg: #fff8f7;
   --accent-soft: #faeee9;
+  /* claude design 落地补:CTA/按钮渐变深底 + 图标/chip 暖底(比 accent-soft 更深更暖) */
+  --accent-deep: #9c4a41;
+  --accent-tint: #f3e3df;
 
   /* 风险信号层 —— 独立于暖色品牌盘,更饱和,慌乱中零歧义。
      颜色绝不单独扛:风险等级永远 = 颜色 + 图标 + 文字。 */
@@ -37,11 +40,15 @@
   --green-bg: #e8f7ee;
   --green-ink: #13512b;
 
-  /* 字体 —— SF / PingFang 优先;保留 font-serif token 以兼容现有类名。 */
+  /* 字体 —— 功能文字用黑体(SF / PingFang 优先)。 */
   --font-sans:
     -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
     "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", system-ui, sans-serif;
-  --font-serif: var(--font-sans);
+  /* 衬线(仅标题/名字/情绪文案):优先系统宋体,避免国内 Google Fonts 加载问题、
+     也省掉中文全量 web font 体积;无系统宋体的设备优雅回退到黑体。中文不用斜体。 */
+  --font-serif:
+    "Songti SC", "STSong", "Source Han Serif SC", "Source Han Serif CN",
+    "Noto Serif SC", var(--font-sans);
 
   /* 形状 / 阴影 */
   --radius-card: 28px;
