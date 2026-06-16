@@ -5,13 +5,11 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import Link from "next/link";
 import {
   loadStore,
-  saveStore,
   saveStoreLocal,
   seedTemplateStore,
   updateRecordOutcome,
@@ -19,7 +17,6 @@ import {
 import { pullHistory } from "@/lib/history-sync";
 import { readPersisted, writePersisted } from "@/lib/persist";
 import { Disclaimer } from "@/components/Disclaimer";
-import { CatAvatar } from "@/components/CatAvatar";
 import { Welcome } from "@/components/Welcome";
 import { Guide } from "@/components/Guide";
 import PetSprite, { type PetSpriteState } from "@/components/PetSprite";
@@ -28,7 +25,6 @@ import type { Cat, CatRecord, Store } from "@/types/cat";
 
 // 新手教程「看过了」标记 —— 与猫档案分开,首次进入弹一次,首页可重开。
 const GUIDE_SEEN_KEY = "catTriage:guideSeen:v1";
-const MAX_HOME_PHOTOS = 6;
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -54,60 +50,6 @@ function formatDate(iso: string): string {
   return `${d.getMonth() + 1} 月 ${d.getDate()} 日`;
 }
 
-function Arrow({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M5 12h14M13 6l6 6-6 6"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function CameraIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path
-        d="M4 8.2A2.2 2.2 0 0 1 6.2 6h2.1l1.4-1.8h4.6L15.7 6h2.1A2.2 2.2 0 0 1 20 8.2v8.1a2.2 2.2 0 0 1-2.2 2.2H6.2A2.2 2.2 0 0 1 4 16.3V8.2Z"
-        stroke="currentColor"
-        strokeLinejoin="round"
-        strokeWidth="1.6"
-      />
-      <circle cx="12" cy="12.7" r="3.1" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
-  );
-}
-
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () =>
-      typeof reader.result === "string"
-        ? resolve(reader.result)
-        : reject(new Error("图片读取失败。"));
-    reader.onerror = () => reject(new Error("图片读取失败。"));
-    reader.readAsDataURL(file);
-  });
-}
-
 function ageLabel(months: number): string {
   if (months < 12) return `${months} 个月`;
   const y = Math.floor(months / 12);
@@ -120,39 +62,6 @@ const TIER_DOT: Record<string, string> = {
   yellow: "var(--amber)",
   green: "var(--green)",
 };
-
-// 日常护理提醒 —— 只基于用户自己填的日期做保守提示,不替用户定周期。
-// 驱虫超 45 天 / 最后一针疫苗超 350 天才出现;没填就不打扰。
-function careReminders(cat: Cat): string[] {
-  const out: string[] = [];
-  const daysSince = (iso: string) => {
-    const t = new Date(iso).getTime();
-    if (Number.isNaN(t)) return -1;
-    return Math.floor((Date.now() - t) / 86400000);
-  };
-  if (cat.deworm) {
-    const d = daysSince(cat.deworm);
-    if (d > 45 && d < 3650) {
-      out.push(
-        `我上次驱虫已经 ${d} 天啦 —— 体内外驱虫一般 1-3 个月一次,可以帮我安排了`,
-      );
-    }
-  }
-  const lastVac = (cat.vaccines ?? [])
-    .map((v) => v.date)
-    .filter(Boolean)
-    .sort()
-    .at(-1);
-  if (lastVac) {
-    const d = daysSince(lastVac);
-    if (d > 350 && d < 3650) {
-      out.push(
-        `我上次打疫苗满 ${Math.floor(d / 30)} 个月了 —— 年度加强可以下次问问医生`,
-      );
-    }
-  }
-  return out;
-}
 
 // 分诊跟进 —— 找「最近一条 12 小时 ~ 7 天内、还没写跟进结果」的分诊记录。
 // 太快问没意义(刚分诊完),太久了不再追问。records 本身最近在前。
@@ -397,24 +306,9 @@ const TOOLBAR_ITEMS: Record<
 
 function PetNudge({
   cat,
-  followupTarget,
-  followupNote,
-  careList,
-  recordsEmpty,
-  onPick,
   onOpenGuide,
 }: {
   cat: Cat;
-  followupTarget: CatRecord | null;
-  followupNote: {
-    text: string;
-    href?: string;
-    label?: string;
-    face?: PetFace;
-  } | null;
-  careList: string[];
-  recordsEmpty: boolean;
-  onPick: (rec: CatRecord, oc: NonNullable<CatRecord["outcome"]>) => void;
   onOpenGuide: () => void;
 }) {
   // 摸猫彩蛋:随机「眯眼享受 / 洗脸」+ 临时说一句猫语(盖过当前气泡 4.2s,
@@ -734,13 +628,23 @@ function PetNudge({
   }, [roam.kind]);
 
   useEffect(() => {
+    const el = yardRef.current;
     const measure = () => {
-      setYardW(yardRef.current?.offsetWidth ?? 343);
-      setYardH(yardRef.current?.offsetHeight ?? 560);
+      setYardW(el?.offsetWidth ?? 343);
+      setYardH(el?.offsetHeight ?? 560);
     };
     measure();
+    // 全屏 stage 模式:院子高随 sheet 内容/视口变 → ResizeObserver 重测,floorLift 跟着调。
+    const ro =
+      el && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(measure)
+        : null;
+    if (el && ro) ro.observe(el);
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, []);
 
   useEffect(() => {
@@ -915,21 +819,11 @@ function PetNudge({
     }
   }
 
-  // 猫常驻:有事说事,没事也蹲在这儿说句闲话(宠物不该有事才出现)
-  const say = followupNote
-    ? ({ kind: "note" } as const)
-    : followupTarget
-      ? ({ kind: "followup" } as const)
-      : careList.length > 0
-        ? ({ kind: "care" } as const)
-        : recordsEmpty
-          ? ({ kind: "starter" } as const)
-          : ({ kind: "idle" } as const);
-
   // 院子行为调度:坐 12-26s 后掷骰子 —— 50% 散步(约 35px/s 匀速)/
-  // 25% 洗脸 / 25% 打盹(9-15s);摸猫说话时暂停,说完从坐姿重新计时
+  // 25% 洗脸 / 25% 打盹(9-15s);摸猫说话时暂停,说完从坐姿重新计时。
+  // 院子是常驻沉浸 stage,猫始终鲜活(回访/护理等改由 HomePage 底部 sheet 承载)。
   useEffect(() => {
-    if (say.kind !== "idle" || calm || talk) return;
+    if (calm || talk) return;
     let t: number;
     // 院子真实宽度同步(场景切进 idle 后 ref 才挂上)
     const live = yardRef.current?.offsetWidth;
@@ -1112,59 +1006,11 @@ function PetNudge({
       );
     }
     return () => clearTimeout(t);
-  }, [say.kind, calm, talk, roam, yardW, waterLevel]);
+  }, [calm, talk, roam, yardW, waterLevel]);
 
-  // 动作随场景:摸猫=随机享受/洗脸 / 回执好转=蹦一次、没好转=耷耳 /
-  // 待回答=双爪合十期待 / 新人引导=招手(抬爪定格)/ 护理提醒、闲着=idle(自带眨眼呼吸)。
-  const spriteState: PetSpriteState = talk
-    ? (touch?.action ?? "petted")
-    : say.kind === "note"
-      ? followupNote?.face === "worry"
-        ? "failed"
-        : followupNote?.face === "curious"
-          ? "review"
-          : "jumping"
-      : say.kind === "followup"
-        ? "waiting"
-        : say.kind === "starter"
-          ? "waving"
-          : "idle";
-  // 雪碧图未就绪/加载失败时的静态占位(沿用旧四表情透明图)
-  const fallbackFace: PetFace =
-    spriteState === "jumping" ||
-    spriteState === "waving" ||
-    spriteState === "petted" ||
-    spriteState === "groom"
-      ? "happy"
-      : spriteState === "failed"
-        ? "worry"
-        : spriteState === "waiting" || spriteState === "review"
-          ? "curious"
-          : "calm";
-
-  const bubbleCls =
-    "pet-bubble min-w-0 flex-1 rounded-[22px] rounded-bl-md bg-surface px-4 py-3.5 shadow-[var(--shadow-card)]";
-
-  const catImg = (
-    <button
-      type="button"
-      onClick={petTheCat}
-      aria-label={`摸摸${cat.name}`}
-      className="pet-enter shrink-0 cursor-pointer select-none"
-    >
-      {/* 真·逐帧动画:摸猫随机享受/洗脸并每次重播,其余按场景行(雪碧图挂了就回静态图) */}
-      <PetSprite
-        state={spriteState}
-        width={84}
-        fallbackSrc={PET_FACE_SRC[fallbackFace]}
-        className="drop-shadow-sm"
-        playKey={touch?.n}
-      />
-    </button>
-  );
-
-  // ── 院子模式:没事时小猫在整行里生活,气泡跟着猫走 ──
-  if (say.kind === "idle") {
+  // ── 院子始终是沉浸 stage:小猫在院子里生活,气泡跟着猫走。
+  //    回访/护理/新用户引导等内容改由 HomePage 底部 sheet 承载(不再返回小气泡卡)。 ──
+  {
     const yardSprite: PetSpriteState = talk
       ? (touch?.action ?? "idle")
       : roam.kind === "stroll"
@@ -1224,7 +1070,7 @@ function PetNudge({
       <>
       <section
         ref={yardRef}
-        className="relative isolate h-[560px] overflow-hidden"
+        className="relative isolate min-h-0 flex-1 overflow-hidden"
         aria-label={`${cat.name}的家`}
       >
         {/* 院子背景:codex 出的温馨房间图(暖墙 + 右上窗户/窗台 + 浅木地板 + 窗边暖光斑)。
@@ -1701,96 +1547,6 @@ function PetNudge({
       </>
     );
   }
-
-  // 摸猫时:猫语气泡盖过一切
-  if (talk) {
-    return (
-      <section
-        className="mt-5 flex items-end gap-2"
-        aria-label={`${cat.name}的提醒`}
-      >
-        {catImg}
-        <div className={bubbleCls}>
-          <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section
-      className="mt-5 flex items-end gap-2"
-      aria-label={`${cat.name}的提醒`}
-    >
-      {catImg}
-
-      {say.kind === "starter" ? (
-        <Link
-          href="/symptoms"
-          className={bubbleCls + " block transition-transform active:scale-[0.985]"}
-        >
-          <p className="text-[14px] leading-relaxed text-ink">
-            带我去试一次分诊吧!选个最像的情况、答几个小问题,30
-            秒看到红黄绿报告。现在没事,拿「打喷嚏」练手也行 →
-          </p>
-        </Link>
-      ) : (
-        <div className={bubbleCls}>
-          {say.kind === "note" && followupNote && (
-            <>
-              <p className="text-[14px] leading-relaxed text-ink">
-                {followupNote.text}
-              </p>
-              {followupNote.href && (
-                <Link
-                  href={followupNote.href}
-                  className="mt-1.5 inline-block text-[13.5px] font-medium text-accent"
-                >
-                  {followupNote.label}
-                </Link>
-              )}
-            </>
-          )}
-
-          {say.kind === "followup" && followupTarget && (
-            <>
-              <p className="text-[14px] leading-relaxed text-ink">
-                上次「{followupTarget.summary}」之后,我看起来好点了吗?
-              </p>
-              <div className="mt-2.5 flex gap-2">
-                {(
-                  [
-                    ["好多了", "在家好转"],
-                    ["已就医", "已就医"],
-                    ["还没好", "未跟进"],
-                  ] as const
-                ).map(([label, oc]) => (
-                  <button
-                    key={oc}
-                    type="button"
-                    onClick={() => onPick(followupTarget, oc)}
-                    className="flex-1 rounded-full bg-[var(--surface-2)] px-2 py-2 text-[13px] font-medium text-ink shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-
-          {say.kind === "care" && (
-            <div className="flex flex-col gap-1.5">
-              {careList.slice(0, 2).map((t) => (
-                <p key={t} className="text-[13.5px] leading-relaxed text-ink">
-                  {t}
-                </p>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </section>
-  );
 }
 
 // 记录 → 可点回的目标:
@@ -1935,31 +1691,6 @@ export default function HomePage() {
     setRecords([]);
   }
 
-  function persistCat(nextCat: Cat) {
-    if (!store) return;
-    const nextStore: Store = {
-      ...store,
-      cats: store.cats.map((c) => (c.id === nextCat.id ? nextCat : c)),
-    };
-    saveStore(nextStore);
-    setStore(nextStore);
-    setCat(nextCat);
-  }
-
-  async function onAlbumPick(e: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    e.target.value = "";
-    if (files.length === 0 || !cat) return;
-    const usable = files
-      .filter((file) => file.size <= 5 * 1024 * 1024)
-      .slice(0, MAX_HOME_PHOTOS);
-    const dataUrls = await Promise.all(usable.map(fileToDataUrl));
-    persistCat({
-      ...cat,
-      photos: [...(cat.photos ?? []), ...dataUrls].slice(0, MAX_HOME_PHOTOS),
-    });
-  }
-
   // 分诊跟进卡 —— 选中目标记录 + 点选后的回执文案(「还没好」带再分诊链接)。
   const followupTarget = useMemo(() => findFollowupTarget(records), [records]);
   const [followupNote, setFollowupNote] = useState<{
@@ -2019,183 +1750,205 @@ export default function HomePage() {
       </>
     );
 
-  const meta = [ageLabel(cat.ageMonths), cat.sex, cat.coat, `${cat.weight} kg`]
-    .filter(Boolean)
-    .join(" · ");
-  const vaccines = cat.vaccines?.length ?? 0;
-  const photos = cat.photos ?? [];
-
   return (
     <>
       {guide}
       <main
-        className="relative mx-auto flex min-h-dvh max-w-[430px] flex-col px-6 pb-24"
-        style={{
-          background: "var(--gradient-page)",
-          paddingTop: "calc(1.25rem + env(safe-area-inset-top, 0px))",
-        }}
+        className="relative mx-auto flex h-dvh max-w-[430px] flex-col overflow-hidden"
+        style={{ background: "var(--paper)" }}
       >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-56"
-        style={{
-          background:
-            "radial-gradient(ellipse 85% 60% at 50% 0%, rgba(176,90,80,0.11) 0%, transparent 100%)",
-        }}
-        aria-hidden="true"
-      />
-      {/* 问候条(精简):头像 + 早上好,名字 + 月龄/性别。厚资料卡(疫苗/绝育/相册)移到「毛孩子」页 */}
-      <header className="flex items-center gap-3 py-3">
-        <CatFace
-          mood="relieved"
-          size={46}
-          className="shrink-0 rounded-full bg-[var(--accent-tint)] shadow-[var(--shadow-control)]"
-          style={{ padding: 3 }}
-        />
-        <div className="min-w-0 flex-1">
-          <p className="font-serif text-[19px] font-semibold tracking-wide text-ink">
-            {greeting()},{cat.name}
-          </p>
-          <p className="mt-0.5 truncate text-[13px] tracking-wide text-ink-soft">
-            {meta}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShowGuide(true)}
-          className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-medium tracking-[0.06em]"
-          style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
-        >
-          使用说明
-        </button>
-      </header>
+        {/* 全屏 stage:沉浸院子 —— 浮动问候 / 「?」/ 竖排 pills / floor 道具栏 / 搭话泡全在 PetNudge 内 */}
+        <PetNudge cat={cat} onOpenGuide={() => setShowGuide(true)} />
 
-      {/* 价值主张 + 看病主入口 —— 一眼看懂「这是猫咪分诊器、看病点这」 */}
-      <section className="pt-1">
-        <h1 className="font-serif text-[22px] font-semibold leading-[1.45] tracking-wide text-ink">
-          <span className="text-accent">猫不对劲?</span>选症状,
-          <br />
-          30 秒给你红黄绿就医建议
-        </h1>
-        <div className="mt-3 flex items-center gap-2.5 text-[13px] tracking-wide text-ink-soft">
-          <span className="flex items-center gap-1.5" aria-hidden="true">
-            <i className="size-2.5 rounded-full bg-[var(--red)] shadow-[0_0_0_2.5px_rgba(255,255,255,0.85)]" />
-            <i className="size-2.5 rounded-full bg-[var(--amber)] shadow-[0_0_0_2.5px_rgba(255,255,255,0.85)]" />
-            <i className="size-2.5 rounded-full bg-[var(--green)] shadow-[0_0_0_2.5px_rgba(255,255,255,0.85)]" />
-          </span>
-          <span>三档风险信号,该不该去医院一眼明白</span>
-        </div>
-        <Link
-          href="/symptoms"
-          aria-label="看病:选症状做分诊,30 秒红黄绿就医建议"
-          className="mt-4 flex items-center justify-between rounded-[20px] px-5 py-4 text-white transition-transform active:scale-[0.99]"
+        {/* 底部上拉 sheet:盖院子下沿、圆角顶、上向阴影 —— 回访(如有)+ 看病 CTA + 问问 + 最近 */}
+        <div
+          className="relative z-10 -mt-[30px] flex-none rounded-t-[28px] px-5 pt-3"
           style={{
-            background:
-              "linear-gradient(180deg,#bd6258,var(--accent) 42%,var(--accent-deep))",
-            boxShadow:
-              "0 10px 24px rgba(176,90,80,0.34), inset 0 1px 0 rgba(255,255,255,0.22)",
+            background: "var(--paper)",
+            boxShadow: "0 -10px 30px rgba(60,45,30,0.1)",
+            paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 4rem)",
           }}
         >
-          <span className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-[13px] bg-white/[0.16]">
+          <div
+            className="mx-auto mb-3.5 h-1 w-9 rounded-full bg-[var(--paper-deep)]"
+            aria-hidden="true"
+          />
+
+          {/* 回访闭环(从院子小卡迁来):待回访记录 → 问一句 + 三选一回执;回执后转致谢 note */}
+          {followupNote ? (
+            <div className="mb-2.5 rounded-[18px] bg-surface px-4 py-3 shadow-[var(--shadow-card)]">
+              <p className="text-[14px] leading-relaxed text-ink">
+                {followupNote.text}
+              </p>
+              {followupNote.href && (
+                <Link
+                  href={followupNote.href}
+                  className="mt-1.5 inline-block text-[13.5px] font-medium text-accent"
+                >
+                  {followupNote.label}
+                </Link>
+              )}
+            </div>
+          ) : followupTarget ? (
+            <div className="mb-2.5 rounded-[18px] bg-surface px-4 py-3 shadow-[var(--shadow-card)]">
+              <p className="text-[14px] leading-relaxed text-ink">
+                上次「{followupTarget.summary}」之后,{cat.name}好点了吗?
+              </p>
+              <div className="mt-2.5 flex gap-2">
+                {(
+                  [
+                    ["好多了", "在家好转"],
+                    ["已就医", "已就医"],
+                    ["还没好", "未跟进"],
+                  ] as const
+                ).map(([label, oc]) => (
+                  <button
+                    key={oc}
+                    type="button"
+                    onClick={() => pickOutcome(followupTarget, oc)}
+                    className="flex-1 rounded-full bg-[var(--surface-2)] px-2 py-2 text-[13px] font-medium text-ink shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* 看病 CTA —— 页面级主入口(陶土红渐变 + 内嵌 rgy + 30 秒红黄绿) */}
+          <Link
+            href="/symptoms"
+            aria-label="看病:选症状做分诊,30 秒红黄绿就医建议"
+            className="flex items-center justify-between rounded-[20px] px-5 py-4 text-white transition-transform active:scale-[0.99]"
+            style={{
+              background:
+                "linear-gradient(180deg,#bd6258,var(--accent) 42%,var(--accent-deep))",
+              boxShadow:
+                "0 12px 26px rgba(176,90,80,0.34), inset 0 1px 0 rgba(255,255,255,0.22)",
+            }}
+          >
+            <span className="flex items-center gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-[12px] bg-white/[0.16]">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#fff"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M4.8 3v5a4 4 0 0 0 8 0V3" />
+                  <path d="M4.8 3h-1M12.8 3h1" />
+                  <path d="M8.8 12v3a5 5 0 0 0 10 0v-2" />
+                  <circle cx="18.8" cy="11" r="2.2" />
+                </svg>
+              </span>
+              <span className="text-left">
+                <span className="block font-serif text-[18px] font-semibold tracking-[0.04em]">
+                  猫不对劲?选症状看病
+                </span>
+                <span className="mt-1 flex items-center gap-1.5 text-[11.5px] opacity-90">
+                  <span className="flex items-center gap-1" aria-hidden="true">
+                    <i className="size-[7px] rounded-full bg-[var(--red)] shadow-[0_0_0_2px_rgba(255,255,255,0.25)]" />
+                    <i className="size-[7px] rounded-full bg-[var(--amber)] shadow-[0_0_0_2px_rgba(255,255,255,0.25)]" />
+                    <i className="size-[7px] rounded-full bg-[var(--green)] shadow-[0_0_0_2px_rgba(255,255,255,0.25)]" />
+                  </span>
+                  30 秒红黄绿就医建议
+                </span>
+              </span>
+            </span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#fff"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="shrink-0 opacity-90"
+              aria-hidden="true"
+            >
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </Link>
+
+          {/* 问问哈基米 —— 行为问答入口 */}
+          <Link
+            href="/behavior"
+            aria-label={`问问${cat.name}:喂养 / 习性 / 拿不准的病情都能问`}
+            className="mt-2.5 flex items-center gap-3 rounded-[18px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] transition-transform active:scale-[0.99]"
+          >
+            <span
+              className="grid size-9 shrink-0 place-items-center rounded-[12px]"
+              style={{ background: "var(--accent-tint)", color: "var(--accent)" }}
+            >
               <svg
-                width="22"
-                height="22"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#fff"
+                stroke="currentColor"
                 strokeWidth="1.8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 aria-hidden="true"
               >
-                <path d="M4.8 3v5a4 4 0 0 0 8 0V3" />
-                <path d="M4.8 3h-1M12.8 3h1" />
-                <path d="M8.8 12v3a5 5 0 0 0 10 0v-2" />
-                <circle cx="18.8" cy="11" r="2.2" />
+                <path d="M4 5.5h16v10H10l-4 3.2V15.5H4z" />
+                <circle cx="9" cy="10.5" r=".4" fill="currentColor" />
+                <circle cx="12" cy="10.5" r=".4" fill="currentColor" />
+                <circle cx="15" cy="10.5" r=".4" fill="currentColor" />
               </svg>
             </span>
-            <span>
-              <span className="block font-serif text-[19px] font-semibold tracking-[0.06em]">
-                看病
+            <span className="min-w-0 flex-1">
+              <span className="block text-[14.5px] font-semibold tracking-wide text-ink">
+                问问{cat.name}
               </span>
-              <span className="mt-0.5 block text-[12px] opacity-80">
-                选症状 · 智能分诊
+              <span className="mt-0.5 block truncate text-[11.5px] text-ink-faint">
+                喂养 · 习性 · 拿不准的病情,都能问
               </span>
             </span>
-          </span>
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#fff"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="opacity-90"
-            aria-hidden="true"
-          >
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </Link>
-      </section>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="shrink-0 text-ink-faint"
+              aria-hidden="true"
+            >
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </Link>
 
-      {/* 小猫陪伴提醒 —— 跟进 / 驱虫疫苗 / 新手引导,统一从它的气泡说出来 */}
-      <PetNudge
-        cat={cat}
-        followupTarget={followupTarget}
-        followupNote={followupNote}
-        careList={careReminders(cat)}
-        recordsEmpty={records.length === 0}
-        onPick={pickOutcome}
-        onOpenGuide={() => setShowGuide(true)}
-      />
+          {/* 最近一条 */}
+          {records.length > 0 ? (
+            <div className="mt-2.5">
+              <RecentRow record={records[0]} />
+            </div>
+          ) : (
+            <p className="mt-3 px-1 text-[12.5px] leading-relaxed text-ink-faint">
+              还没有记录 —— {cat.name}有情况,选症状看病就行。
+            </p>
+          )}
 
-      {/* 功能入口已变成小猫的「心事泡」,长在上面的院子里(坐下思考时冒出);
-          底部 Tab 的分诊/问答仍是常驻兜底。 */}
-
-      {/* 最近 */}
-      <section className="mt-6 flex-1">
-        <p className="text-[11px] font-semibold tracking-[0.22em] text-ink-faint">
-          最近
-        </p>
-        {records.length === 0 ? (
-          <p className="mt-3 text-[13px] leading-relaxed text-ink-faint">
-            还没有记录 —— {cat.name}有情况,点上面就行。
-          </p>
-        ) : (
-          <div className="mt-1">
-            {records.slice(0, 6).map((r) => (
-              <RecentRow key={r.id} record={r} />
-            ))}
+          {/* 红线:每屏底部固定免责 + 反馈入口(/feedback 仅此一处入口,勿删致孤立) */}
+          <div className="mt-2 flex flex-col items-center gap-1">
+            <Disclaimer />
+            <Link
+              href="/feedback"
+              className="text-[11px] tracking-wide text-ink-faint transition-opacity active:opacity-60"
+            >
+              有话想说?提个意见
+            </Link>
           </div>
-        )}
-      </section>
-
-      <Link
-        href="/feedback"
-        className="mt-7 inline-flex items-center justify-center gap-2 self-center rounded-full bg-surface px-5 py-2.5 text-[13px] font-medium tracking-wide text-ink-soft shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
-      >
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          aria-hidden="true"
-          className="text-accent"
-        >
-          <path
-            d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 9 9 0 0 1-3.8-.8L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        有话想说?给我提个意见
-      </Link>
-
-      <Disclaimer />
+        </div>
       </main>
     </>
   );
