@@ -53,15 +53,24 @@
    - 一行 `品种 · 毛色 · 月龄`。
    - tags:`体重kg` / 驱虫态 / 绝育态。
 4. **四宫格 `.statrow`**:年龄(月/岁)/ 体重 kg / 健康记录数(该猫 records 条数)/ 陪伴天数(由 `homeDate` 算 today−homeDate)。
-5. **健康档案 `.care`**(疫苗/驱虫/绝育三行,icon + 文案 + 状态徽章):
+5. **🆕 生活相册(照片墙)`.album`**(用户要求 + 整合现有 onboarding 相册能力):
+   - 3 列网格(`repeat(3,1fr) gap8`),格子 `aspect-1 / 圆角16 / overflow-hidden / soft-sm`,首张可标「主图」(=作头像那张);末位虚线「添加」格。空态:「还没有生活照」+ 添加。
+   - 数据 `cat.photos?: string[]`(base64 dataURL,≤6 张、单张 ≤5MB);**仅本地橱窗展示,不参与分诊**(随能力保留该红线说明文案)。
+   - **可单独编辑**(用户要求):分区右上「编辑 ›」进**相册管理态**(不走完整档案表单):每格 × 删除 / 设为主图(作头像)/ 替换 + 「添加」上传(复用现有 `onAlbumUpload`/`removeAlbumPhoto` 逻辑);点单格上滑 `.scrim+.sheet` 选项(复用 pet-edit 现成 bottom-sheet 范式)。「设为主图」兼容现有 AI 头像生成路径(`cat.avatar`)。
+6. **健康档案 `.care`**(疫苗/驱虫/绝育三行,icon + 文案 + 状态徽章):
    - 派生自 `vaccines[]` / `deworm`(ISO date)/ `neutered`(是/否)。小 helper `careStatus(cat)`。
-   - **红线**:状态徽章只用**中性灰 / 陶土红系**,`done`=陶土红或浅绿中性、`due/未做`=中性灰或陶土红 tint,**绝不用 `--red/--amber/--green` 风险三色**(设计稿用了 risk-green/yellow,落地必须改)。
+   - **红线**:状态徽章只用**中性灰 / 陶土红系**——`done`=陶土红 tint(✓已完成)、`due/待做`=暖中性 `#f0ebe2/#8a6f54`、`未安排`=中性灰,**绝不用 `--red/--amber/--green` 风险三色**(设计稿用了 risk-green/yellow,落地必须改)。
    - 「管理」入口 → `/onboarding?pet=id`(滚到对应分组,沿用现有 editFocus 锚点)。
-6. **健康记录 timeline `.tl`**:取该猫 `records`(triage + behavior),时间倒序:
-   - 真分诊记录 tier 点用红黄绿(**合规**:这是风险分档信号本体,同首页 record tier);问答/其它用中性米色点。
-   - 点击 → 沿用现有 `recordHref`(triage→报告卡、behavior→`/behavior?c=id`)。
-   - **不放**「手动记一笔」按钮(本批不做)。「全部 N 条」入口可指向 /pets 自身的完整列表或先 toast 占位。
-7. **Disclaimer** 固定底部(红线)。
+7. **🆕 体重曲线 `.wcard`**(整合现有 `WeightSparkline`):`weightLog≥2` 条时画陶土红折线(近 N 次 + 起→止 kg + delta);<2 条给「记满 2 次出现曲线」引导。「记一笔」入口 → 编辑(保存档案 `withWeightLog` 自动记一笔,迁移须保留该隐式行为)。
+8. **🆕 健康背景 `.bg-card`**(整合现有,设计稿没有):慢性病史 / 过敏史 / 其它备注三行;空态引导「填了分诊和问答会替它考虑」。「编辑」→ `/onboarding?pet=id#edit-background`。
+9. **健康记录**(整合现有 `HealthFootprint` + 设计稿 timeline):
+   - **🆕 健康足迹条 `.foot`**:最近 30 天 分诊 N 次 · 问答 N 次 + 红黄绿三色分布条 + 图例计数(**合规**:tier 统计是风险信号本体)。
+   - **timeline `.tl`**:取该猫 `records` 时间倒序(展示最近若干条);真分诊 tier 点用红黄绿(合规,同首页 record tier),问答/疫苗等用中性米色点。
+   - **查看全部(用户要求)**:点单条 → 沿用 `recordHref`(triage→报告卡、behavior→`/behavior?c=id`);点「全部 N 条」→ 查看该猫**全部**记录(timeline 内联展开全部,或 `/pets` 全量列表态),不止最近几条。
+   - **不放**「手动记一笔」按钮(本批不做)。
+10. **Disclaimer** 固定底部(红线)。
+
+> 原型:`public/_proto/pets-proto.html`(临时静态稿,验收后清掉或移入 `prototype/claude-design/`)。已三段截图确认整合方向。
 
 ## `/onboarding` 编辑/添加页(增强现有,不退化)
 
@@ -83,11 +92,12 @@
 | 多猫红线反转 | 同步改 `CLAUDE.md`:「不做多猫切换 UI(数据结构留接口)」→「支持多猫切换/添加/删除」 |
 
 ## 涉及文件
-- 新增 `src/app/pets/page.tsx`(/pets 展示页)。
-- 改 `src/app/onboarding/page.tsx`(读 query + 添加/删除 + 提醒开关)。
+- 新增 `src/app/pets/page.tsx`(/pets 展示页:整合切换条 + hero + 四宫格 + 生活相册 + 健康档案 + 体重曲线 + 健康背景 + 健康足迹 + 健康记录全部可看)。
+- 改 `src/app/onboarding/page.tsx`(读 query `?pet`/`?add` + 添加/删除 + 提醒开关;现有相册/AI 头像/sparkline/健康背景全保留)。
+- 抽复用:`WeightSparkline` / `HealthFootprint` / 相册管理(`onAlbumUpload`/`removeAlbumPhoto`)等现有组件/逻辑从 onboarding 抽成共享(供 /pets 与照片墙单独编辑态复用),避免重写退化。
 - 改 `src/lib/storage.ts`(addCat/setActiveCat/deleteCat)。
 - 改 `src/types/cat.ts`(Cat.reminders)。
-- 改 `src/components/TabBar.tsx`(href + SHOW_PATHS)。
+- 改 `src/components/TabBar.tsx`(href `/onboarding`→`/pets` + SHOW_PATHS)。
 - 改 `CLAUDE.md`(多猫红线反转)。
 - 可选:更新大 spec §3.6/§4 指向本文(标注 §4 作废)。
 
