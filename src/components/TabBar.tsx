@@ -9,10 +9,11 @@ const TABS = [
   { href: "/", label: "首页", icon: "home" },
   { href: "/symptoms", label: "分诊", icon: "triage" },
   { href: "/behavior", label: "问答", icon: "chat" },
-  { href: "/onboarding", label: "毛孩子", icon: "profile" },
+  { href: "/pets", label: "毛孩子", icon: "profile" },
 ] as const;
 
-const SHOW_PATHS = ["/", "/symptoms", "/behavior", "/onboarding", "/knowledge"];
+// /pets 是档案展示页(显 TabBar);/onboarding 是编辑/添加表单(全屏,不显 TabBar)。
+const SHOW_PATHS = ["/", "/symptoms", "/behavior", "/pets", "/knowledge"];
 
 function HomeIcon({ active }: { active: boolean }) {
   return (
