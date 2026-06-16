@@ -3,6 +3,7 @@
 import {
   Suspense,
   useEffect,
+  useRef,
   useState,
   type ChangeEvent,
   type ReactNode,
@@ -209,6 +210,21 @@ function OnboardingForm() {
       cancelled = true;
     };
   }, [sp]);
+
+  // 深链直达:URL #hash 滚到对应分组(/pets 各区「编辑」单独编辑那一块)。只跑一次。
+  // 不在 cleanup 清 timeout —— 否则 StrictMode 双调用会清掉它导致不滚动。
+  const scrolledRef = useRef(false);
+  useEffect(() => {
+    if (!draft || scrolledRef.current) return;
+    scrolledRef.current = true;
+    const id = window.location.hash.replace("#", "");
+    if (!id) return;
+    setTimeout(() => {
+      document
+        .getElementById(id)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 200);
+  }, [draft]);
 
   if (!draft) return <main className="min-h-dvh" aria-hidden="true" />;
 

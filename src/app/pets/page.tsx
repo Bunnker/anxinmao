@@ -181,8 +181,11 @@ export default function PetsPage() {
   // ── 生活相册:本地照片墙(≤6 张、单张 ≤5MB)。仅本地橱窗展示,不参与分诊判断(红线)──
   const [albumEdit, setAlbumEdit] = useState(false);
   const [sheetIdx, setSheetIdx] = useState<number | null>(null);
+  const [addSheet, setAddSheet] = useState(false); // 添加照片:拍照 / 从相册选
   const replaceIdxRef = useRef<number | null>(null);
   const replaceInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
 
   function fileToDataUrl(file: File): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -244,12 +247,6 @@ export default function PetsPage() {
   const breedLine = [cat.breed, cat.coat, ageLabel(cat.ageMonths)]
     .filter(Boolean)
     .join(" · ");
-  const tags = [
-    `${cat.weight} kg`,
-    care.deworm.status === "done" ? "已驱虫" : "待驱虫",
-    cat.neutered === "是" ? "已绝育" : "未绝育",
-    `到家 ${companionDays(cat.homeDate)} 天`,
-  ];
   const editHref = `/onboarding?pet=${cat.id}`;
 
   return (
@@ -387,16 +384,6 @@ export default function PetsPage() {
             <p className="mt-1.5 text-[13px] tracking-wide text-ink-soft">
               {breedLine || "资料待完善"}
             </p>
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {tags.map((t) => (
-                <span
-                  key={t}
-                  className="rounded-full bg-white/60 px-2.5 py-[5px] text-[11px] tracking-wide text-[#8a6f54] whitespace-nowrap"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -488,7 +475,11 @@ export default function PetsPage() {
             </button>
           ))}
           {photos.length < MAX_PROFILE_PHOTOS && (
-            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-[1.5px] border-dashed border-[#d9d2c6] bg-white/45 text-[11.5px] text-ink-faint">
+            <button
+              type="button"
+              onClick={() => setAddSheet(true)}
+              className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-[1.5px] border-dashed border-[#d9d2c6] bg-white/45 text-[11.5px] text-ink-faint"
+            >
               <svg
                 width="20"
                 height="20"
@@ -503,14 +494,7 @@ export default function PetsPage() {
                 <path d="M12 5v14M5 12h14" />
               </svg>
               添加
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={onAlbumUpload}
-              />
-            </label>
+            </button>
           )}
         </div>
         {photos.length === 0 && !albumEdit ? (
@@ -528,7 +512,10 @@ export default function PetsPage() {
           <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
             健康档案
           </span>
-          <Link href={editHref} className="text-[12.5px] text-ink-faint">
+          <Link
+            href={editHref + "#edit-health"}
+            className="text-[12.5px] text-ink-faint"
+          >
             管理 ›
           </Link>
         </div>
@@ -544,7 +531,7 @@ export default function PetsPage() {
             return (
               <Link
                 key={type}
-                href={editHref}
+                href={editHref + (type === "neuter" ? "#edit-basic" : "#edit-health")}
                 className="flex items-center gap-3 rounded-2xl bg-surface px-[15px] py-3.5 shadow-[var(--shadow-control)] transition active:scale-[0.99]"
               >
                 <span className="grid size-[42px] flex-none place-items-center rounded-[13px] bg-[var(--accent-tint)] text-accent">
@@ -574,7 +561,10 @@ export default function PetsPage() {
           <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
             体重
           </span>
-          <Link href={editHref} className="text-[12.5px] text-ink-faint">
+          <Link
+            href={editHref + "#edit-basic"}
+            className="text-[12.5px] text-ink-faint"
+          >
             记一笔 ›
           </Link>
         </div>
@@ -591,7 +581,10 @@ export default function PetsPage() {
           <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
             健康背景
           </span>
-          <Link href={editHref} className="text-[12.5px] text-ink-faint">
+          <Link
+            href={editHref + "#edit-background"}
+            className="text-[12.5px] text-ink-faint"
+          >
             编辑 ›
           </Link>
         </div>
@@ -709,7 +702,7 @@ export default function PetsPage() {
         <Disclaimer />
       </div>
 
-      {/* 隐藏「替换」文件选择 */}
+      {/* 隐藏文件选择:替换 / 拍照(capture)/ 从相册选(multiple) */}
       <input
         ref={replaceInputRef}
         type="file"
@@ -717,6 +710,86 @@ export default function PetsPage() {
         className="hidden"
         onChange={onReplace}
       />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={onAlbumUpload}
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={onAlbumUpload}
+      />
+
+      {/* 添加照片:拍照 / 从相册选 */}
+      {addSheet && (
+        <div
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 backdrop-blur-[2px]"
+          onClick={() => setAddSheet(false)}
+        >
+          <div
+            className="w-full max-w-[460px] rounded-t-[26px] bg-paper px-3.5 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[#e0dcd2]" />
+            <button
+              type="button"
+              onClick={() => {
+                setAddSheet(false);
+                cameraInputRef.current?.click();
+              }}
+              className="flex w-full items-center gap-3 rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 8.5h3l1.5-2h7L17 8.5h3v10H4z" />
+                <circle cx="12" cy="13" r="3.2" />
+              </svg>
+              拍照
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAddSheet(false);
+                galleryInputRef.current?.click();
+              }}
+              className="flex w-full items-center gap-3 rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <circle cx="8.5" cy="10" r="1.5" />
+                <path d="M21 16l-5-5L5 19" />
+              </svg>
+              从相册选
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 单格编辑 bottom-sheet */}
       {sheetIdx !== null && photos[sheetIdx] && (
