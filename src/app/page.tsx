@@ -1078,19 +1078,19 @@ function PetNudge({
             当底不抢戏。三色信号层在 yard section 外、被 overflow-hidden 隔离,背景不碰红黄绿。 */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/pet/items/yard-bg.webp"
+          src="/pet/items/yard-bg-v2.webp"
           alt=""
           aria-hidden="true"
           draggable={false}
           className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-          style={{ zIndex: 0, filter: "saturate(0.74) brightness(1.05)" }}
+          style={{ zIndex: 0, filter: "saturate(0.92) brightness(1.02)" }}
         />
-        {/* 叠一层暖奶白把房间图往主题色拉、洗淡存在感,融进页面的奶白调
+        {/* 极淡一层奶白把房间图融进页面奶白调(新背景已低饱和温馨,只轻扫一下不洗白)
             (filter/遮罩只作用背景层叶子节点,三色圆点在 yard section 外,零影响) */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
-          style={{ zIndex: 0, background: "rgba(247,246,243,0.4)" }}
+          style={{ zIndex: 0, background: "rgba(247,246,243,0.12)" }}
         />
         {/* 院子内容层:家具/猫/盖帧/泡泡全部基于 YARD_BASE_W×280 设计坐标,整层按
             yardW/YARD_BASE_W 等比缩放 → 任何屏宽协调(窄屏不裁家具、宽屏不留白);
