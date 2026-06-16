@@ -402,6 +402,7 @@ function PetNudge({
   careList,
   recordsEmpty,
   onPick,
+  onOpenGuide,
 }: {
   cat: Cat;
   followupTarget: CatRecord | null;
@@ -414,6 +415,7 @@ function PetNudge({
   careList: string[];
   recordsEmpty: boolean;
   onPick: (rec: CatRecord, oc: NonNullable<CatRecord["outcome"]>) => void;
+  onOpenGuide: () => void;
 }) {
   // 摸猫彩蛋:随机「眯眼享受 / 洗脸」+ 临时说一句猫语(盖过当前气泡 4.2s,
   // 给慢节奏动作留足播完+定格回味的时间);n 递增让连续摸每次都从头重播动作
@@ -1213,37 +1215,7 @@ function PetNudge({
         };
     // 垂直:贴在猫头/肩高度(精灵高约 91*scale),尾角朝下指向猫,不再钉在脚边
     const bubbleBottom = Math.round(roam.y + 52 * catScale);
-    // 心事泡:猫坐下(思考)才冒,散步/洗脸/打盹时收起 —— 入口是猫的行为产物。
-    // 猫在左半场泡往右上冒,右半场往左上冒;三个点链从猫头斜向泡群。
-    const thinking = roam.kind === "sit" && !talk;
-    const toRight = roam.x + 42 < YARD_BASE_W / 2;
-    const dotBase = roam.x + (toRight ? 62 : 14);
-    // 点链从猫头(随深度抬升)斜向泡群
-    const dots = [
-      { size: 6, bottom: roam.y + 88, dx: 0 },
-      { size: 9, bottom: roam.y + 112, dx: toRight ? 26 : -28 },
-      { size: 12, bottom: roam.y + 136, dx: toRight ? 54 : -58 },
-    ];
-    const THOUGHTS = [
-      {
-        href: "/symptoms",
-        label: "看病",
-        aria: "它有点不对劲?选症状做分诊,30 秒红黄绿就医建议",
-        cls: "bg-accent text-accent-fg shadow-[var(--shadow-accent)]",
-      },
-      {
-        href: "/behavior",
-        label: "聊天",
-        aria: "想问点什么?生病、喂养、行为都能聊",
-        cls: "bg-surface text-ink shadow-[var(--shadow-card)]",
-      },
-      {
-        href: "/knowledge",
-        label: "小知识",
-        aria: "看着吓人但不必慌的 6 种情况,权威兽医来源",
-        cls: "bg-surface text-ink shadow-[var(--shadow-control)]",
-      },
-    ];
+    // 功能入口改为院子顶部常驻竖排 pills(见下),不再依赖「猫坐下才冒心事泡」。
     // 全屏 stage:院子内容层(345×280 设计坐标)整体上抬 floorLift,落到背景地面带;
     // floorLift 按实际院子高 yardH 比例,适配不同机身高度(地面在背景下部)。
     const contentScale = Math.min(1, yardW / YARD_BASE_W);
@@ -1578,52 +1550,6 @@ function PetNudge({
             );
           })()}
 
-        {thinking && (
-          <div key={`th-${Math.round(roam.x)}`}>
-            {dots.map((d, i) => (
-              <span
-                key={i}
-                aria-hidden="true"
-                className="thought-in absolute rounded-full bg-surface shadow-[var(--shadow-control)]"
-                style={{
-                  width: d.size,
-                  height: d.size,
-                  bottom: d.bottom,
-                  left: Math.max(4, Math.min(YARD_BASE_W - 16, dotBase + d.dx)),
-                  animationDelay: `${i * 0.09}s, ${0.7 + i * 0.35}s`,
-                }}
-              />
-            ))}
-            <nav
-              className={
-                "absolute top-0 z-[300] flex flex-col gap-2 " +
-                (toRight ? "right-1 items-end" : "left-1 items-start")
-              }
-              aria-label="功能入口"
-            >
-              {THOUGHTS.map((t, i) => (
-                <Link
-                  key={t.href}
-                  href={t.href}
-                  aria-label={t.aria}
-                  className={
-                    "thought-in px-7 py-2.5 text-[15.5px] font-medium tracking-wide transition-transform duration-300 active:scale-[0.94] " +
-                    t.cls +
-                    (i === 1 ? (toRight ? " mr-5" : " ml-5") : "") +
-                    (i === 2 ? (toRight ? " mr-2" : " ml-2") : "")
-                  }
-                  style={{
-                    borderRadius: "50%",
-                    animationDelay: `${0.28 + i * 0.13}s, ${1 + i * 0.45}s`,
-                  }}
-                >
-                  {t.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-        )}
-
         {showBubble && (
           <div
             className={
@@ -1636,41 +1562,121 @@ function PetNudge({
           </div>
         )}
         </div>
-      </section>
 
-      {/* 道具工具栏:长按拖到目标上触发(梳子→拖到猫=梳毛;瓶子→拖到碗=倒水续满) */}
-      <div className="mt-2 flex items-end gap-3 px-1" aria-label="道具工具栏">
-        {(Object.keys(TOOLBAR_ITEMS) as ToolKey[]).map((tk) => {
-          const tool = TOOLBAR_ITEMS[tk];
-          const grabbed = carried?.key === tk;
-          return (
-            <button
-              key={tk}
-              type="button"
-              aria-label={`${tool.alt}(长按拖到${tool.target === "cat" ? "猫" : "水碗"}上)`}
-              className="flex h-16 w-14 items-end justify-center rounded-2xl bg-surface p-1 shadow-[var(--shadow-control)] select-none"
-              style={{ touchAction: "none", opacity: grabbed ? 0.35 : 1 }}
-              onPointerDown={(e) => onToolPointerDown(tk, e)}
-              onPointerMove={onToolPointerMove}
-              onPointerUp={onToolPointerUp}
-              onPointerCancel={onToolPointerUp}
+        {/* ── 院子浮层 ── 全在 section 内、content 层外:不随内容缩放、不被裁。 */}
+        {/* 浮动问候(左上,毛玻璃胶囊):头像 + 衬线问候 + 月龄/性别 */}
+        <div
+          className="pointer-events-none absolute left-4 z-30 flex items-center gap-2.5 rounded-full bg-white/55 py-1.5 pr-3.5 pl-2 shadow-[0_6px_16px_rgba(120,90,60,0.14),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 14px)" }}
+        >
+          <CatFace
+            mood="relieved"
+            size={36}
+            className="shrink-0 rounded-full bg-[var(--accent-tint)] shadow-[inset_0_0_0_2px_#fff]"
+          />
+          <div className="min-w-0">
+            <p className="font-serif text-[15px] font-semibold leading-tight tracking-wide text-ink">
+              {greeting()},{cat.name}
+            </p>
+            <p className="mt-px truncate text-[11px] tracking-wide text-ink-soft">
+              {[ageLabel(cat.ageMonths), cat.sex, cat.coat]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          </div>
+        </div>
+
+        {/* 「?」使用说明(右上,开 Guide) */}
+        <button
+          type="button"
+          onClick={onOpenGuide}
+          aria-label="使用说明"
+          className="absolute right-4 z-30 grid size-9 place-items-center rounded-full bg-white/60 font-serif text-[16px] font-bold text-accent shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-90"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 14px)" }}
+        >
+          ?
+        </button>
+
+        {/* 常驻竖排 pills(右上,看病/问答/小知识):取代「猫坐下才冒」的心事泡,入口随时可见。
+            看病 primary(陶土红 dot)、其余 alt(灰 dot);全是中性/陶土红,不碰风险三色。 */}
+        <nav
+          className="absolute right-4 z-30 flex flex-col items-end gap-2"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 60px)" }}
+          aria-label="功能入口"
+        >
+          {(
+            [
+              {
+                href: "/symptoms",
+                label: "看病",
+                primary: true,
+                aria: "看病:选症状做分诊,30 秒红黄绿就医建议",
+              },
+              {
+                href: "/behavior",
+                label: "问答",
+                primary: false,
+                aria: "问答:喂养 / 习性 / 拿不准的病情都能问",
+              },
+              {
+                href: "/knowledge",
+                label: "小知识",
+                primary: false,
+                aria: "小知识:看着吓人但不必慌的 6 种情况,权威兽医来源",
+              },
+            ] as const
+          ).map((p) => (
+            <Link
+              key={p.href}
+              href={p.href}
+              aria-label={p.aria}
+              className="flex items-center gap-2 rounded-full bg-white/60 py-2 pr-4 pl-3.5 text-[14px] font-medium text-ink shadow-[0_4px_12px_rgba(120,90,60,0.14),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-95"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={tool.src}
-                alt=""
-                draggable={false}
-                className="max-h-14 w-auto"
+              <i
+                className="size-1.5 rounded-full"
+                style={{
+                  background: p.primary ? "var(--accent)" : "var(--ink-faint)",
+                }}
+                aria-hidden="true"
               />
-            </button>
-          );
-        })}
-        <span className="ml-1 self-center text-[12px] leading-snug text-ink/40">
-          长按拖到
-          <br />
-          猫 / 碗上
-        </span>
-      </div>
+              {p.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* 道具栏迁到院子 floor(care-float):梳子/水/逗猫棒,长按拖到猫/碗上触发(拖拽逻辑不变) */}
+        <div
+          className="absolute left-4 z-20 flex items-end gap-2.5"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 46px)" }}
+          aria-label="道具工具栏"
+        >
+          {(Object.keys(TOOLBAR_ITEMS) as ToolKey[]).map((tk) => {
+            const tool = TOOLBAR_ITEMS[tk];
+            const grabbed = carried?.key === tk;
+            return (
+              <button
+                key={tk}
+                type="button"
+                aria-label={`${tool.alt}(长按拖到${tool.target === "cat" ? "猫" : "水碗"}上)`}
+                className="grid size-[52px] place-items-center rounded-[15px] bg-white/65 p-1.5 shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.55)] backdrop-blur-md select-none"
+                style={{ touchAction: "none", opacity: grabbed ? 0.35 : 1 }}
+                onPointerDown={(e) => onToolPointerDown(tk, e)}
+                onPointerMove={onToolPointerMove}
+                onPointerUp={onToolPointerUp}
+                onPointerCancel={onToolPointerUp}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={tool.src}
+                  alt=""
+                  draggable={false}
+                  className="max-h-full w-auto"
+                />
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       {carried && (
         /* eslint-disable-next-line @next/next/no-img-element */
@@ -2142,6 +2148,7 @@ export default function HomePage() {
         careList={careReminders(cat)}
         recordsEmpty={records.length === 0}
         onPick={pickOutcome}
+        onOpenGuide={() => setShowGuide(true)}
       />
 
       {/* 功能入口已变成小猫的「心事泡」,长在上面的院子里(坐下思考时冒出);
