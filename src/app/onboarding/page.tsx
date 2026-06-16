@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { loadStore, saveStore } from "@/lib/storage";
+import {
+  Suspense,
+  useEffect,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+} from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { addCat, deleteCat, loadStore, saveStore } from "@/lib/storage";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
-import { ageLabel } from "@/lib/profile";
-import { WeightSparkline } from "@/components/profile/WeightSparkline";
-import { HealthFootprint } from "@/components/profile/HealthFootprint";
-import type { Cat, CatRecord, Store, Vaccine } from "@/types/cat";
+import type { Cat, Store, Vaccine } from "@/types/cat";
 
 function newCat(): Cat {
   const id =
@@ -106,11 +108,6 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-function displayValue(value: string | number | undefined, fallback = "未记录") {
-  if (value === undefined || value === "") return fallback;
-  return String(value);
-}
-
 // 保存档案时自动记一笔体重 —— 体重值有变化就追加(同一天改多次也各记一笔,
 // 当天就能看到曲线;之前的「同日覆盖」会让用户第一天永远凑不齐 2 条)。
 // 与上一条相同则不重复记;最多留 60 条。
@@ -125,83 +122,7 @@ function withWeightLog(c: Cat): Cat {
   };
 }
 
-// 查看页的信息行 —— iOS 设置风格:左 label 右值。
-function InfoRow({
-  label,
-  value,
-  muted,
-}: {
-  label: string;
-  value: string;
-  muted?: boolean;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-[var(--line-soft)] py-2.5 last:border-b-0 last:pb-0">
-      <span className="shrink-0 text-[13px] text-ink-faint">{label}</span>
-      <span
-        className={
-          "min-w-0 text-right text-[14px] leading-relaxed " +
-          (muted ? "text-ink-faint" : "font-medium text-ink")
-        }
-      >
-        {value}
-      </span>
-    </div>
-  );
-}
-
-// 查看页的分组卡 —— 标题 + 右上角「编辑」直达编辑表单对应分组。
-// 整卡即编辑入口(点卡直达编辑表单对应分组),行尾 › 提示可点 —— 不再放「编辑」按钮。
-function GroupCard({
-  title,
-  onEdit,
-  children,
-}: {
-  title: string;
-  onEdit: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <section
-      role="button"
-      tabIndex={0}
-      aria-label={`编辑${title}`}
-      onClick={onEdit}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onEdit();
-        }
-      }}
-      className="mt-4 cursor-pointer rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)] transition-transform duration-300 active:scale-[0.99]"
-    >
-      <div className="mb-1.5 flex items-center justify-between">
-        <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
-          {title}
-        </p>
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          className="shrink-0 text-ink-ghost"
-          aria-hidden="true"
-        >
-          <path
-            d="M9 6l6 6-6 6"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-      {children}
-    </section>
-  );
-}
-
-// 编辑表单的分组卡 —— 与查看页同组同名,scroll-mt 给直达滚动留出顶部空间。
+// 编辑表单的分组卡 —— scroll-mt 给深链滚动留出顶部空间。
 function EditCard({
   id,
   title,
@@ -233,12 +154,15 @@ function EditCard({
 
 /* ---------- 页面 ---------- */
 
-export default function OnboardingPage() {
+// 编辑/添加表单 —— 档案展示已搬到 /pets;本页只做录入(首次建档 / 编辑 / 添加)。
+function OnboardingForm() {
   const router = useRouter();
+  const sp = useSearchParams();
   const [draft, setDraft] = useState<Cat | null>(null);
   const [store, setStore] = useState<Store | null>(null);
+  // 模式:edit = 编辑已有猫(?pet 或活动猫);add = 新增一只(?add=1);else = 首次建档。
   const [isEdit, setIsEdit] = useState(false);
-  const [editing, setEditing] = useState(true);
+  const [isAdd, setIsAdd] = useState(false);
   // 头像生成 —— 仅 UI 状态,生成结果落到 draft.avatar
   const [avatarDesc, setAvatarDesc] = useState("");
   const [avatarPhoto, setAvatarPhoto] = useState<string | null>(null); // dataURL
@@ -248,50 +172,45 @@ export default function OnboardingPage() {
   const [avatarNotCat, setAvatarNotCat] = useState(false);
   // 头像设置弹窗 —— 上传真实头像 / AI 生成卡通,二合一
   const [avatarModalOpen, setAvatarModalOpen] = useState(false);
-  // 查看页各分组卡「编辑」直达 —— 记录要滚到的编辑表单分组 id。
-  const [editFocus, setEditFocus] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    const add = sp.get("add") === "1";
+    const petId = sp.get("pet");
     queueMicrotask(() => {
       if (cancelled) return;
       const s = loadStore();
-      if (s && s.cats.length > 0) {
-        const active = s.cats.find((c) => c.id === s.activeCatId) ?? s.cats[0];
+      if (add) {
+        // 添加新猫(进入空白表单,保存=addCat 追加)。
         setStore(s);
-        setDraft({ ...active });
-        setIsEdit(true);
-        setEditing(false);
-      } else {
         setDraft(newCat());
+        setIsAdd(true);
         setIsEdit(false);
-        setEditing(true);
+        return;
       }
+      if (s && s.cats.length > 0) {
+        // 编辑指定猫(?pet)或活动猫。
+        const target =
+          (petId && s.cats.find((c) => c.id === petId)) ||
+          s.cats.find((c) => c.id === s.activeCatId) ||
+          s.cats[0];
+        setStore(s);
+        setDraft({ ...target });
+        setIsEdit(true);
+        setIsAdd(false);
+        return;
+      }
+      // 首次建档(尚无任何猫)。
+      setDraft(newCat());
+      setIsEdit(false);
+      setIsAdd(false);
     });
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  // 进入编辑模式后,把指定分组滚进视野(查看页「编辑」直达)。
-  useEffect(() => {
-    if (!editing || !editFocus) return;
-    const t = setTimeout(() => {
-      document
-        .getElementById(editFocus)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-      setEditFocus(null);
-    }, 80);
-    return () => clearTimeout(t);
-  }, [editing, editFocus]);
+  }, [sp]);
 
   if (!draft) return <main className="min-h-dvh" aria-hidden="true" />;
-
-  // 查看页分组卡的「编辑」入口:带锚进编辑模式;不带锚 = 从头改。
-  function openEdit(anchor?: string) {
-    setEditFocus(anchor ?? null);
-    setEditing(true);
-  }
 
   function set<K extends keyof Cat>(k: K, v: Cat[K]) {
     setDraft((d) => (d ? { ...d, [k]: v } : d));
@@ -307,6 +226,16 @@ export default function OnboardingPage() {
           }
         : d,
     );
+  }
+
+  // 健康提醒偏好 —— 默认 vaccine/deworm 开、weight 关。仅存偏好,本批不真推送。
+  const reminders = draft.reminders ?? {
+    vaccine: true,
+    deworm: true,
+    weight: false,
+  };
+  function setReminder(key: "vaccine" | "deworm" | "weight", val: boolean) {
+    setDraft((d) => (d ? { ...d, reminders: { ...reminders, [key]: val } } : d));
   }
 
   const ready = draft.name.trim().length > 0;
@@ -417,228 +346,36 @@ export default function OnboardingPage() {
   function commit() {
     if (!ready || !draft) return;
     const saved = withWeightLog(draft); // 顺手记一笔体重(同日覆盖,不重复)
-    const next: Store =
-      isEdit && store
-        ? {
-            ...store,
-            cats: store.cats.map((c) => (c.id === saved.id ? saved : c)),
-          }
-        : { cats: [saved], activeCatId: saved.id, records: [] };
-    saveStore(next);
+    if (isAdd) {
+      addCat(saved); // 追加 + 设为活动猫
+      router.push("/pets");
+      return;
+    }
+    if (isEdit && store) {
+      saveStore({
+        ...store,
+        cats: store.cats.map((c) => (c.id === saved.id ? saved : c)),
+      });
+      router.push("/pets");
+      return;
+    }
+    // 首次建档 —— 新建并设为活动猫,回首页看它在院子里。
+    saveStore({ cats: [saved], activeCatId: saved.id, records: [] });
     router.push("/");
   }
 
-  // 离开建档页(返回)。直接回首页 —— 无档案时首页显示欢迎页(有选择,非死胡同),
-  // 不再 seed 豆豆。
+  // 删除这只猫(连带它的 records);删后回 /pets(删空则 /pets 自然回新建流程)。
+  function removeCat() {
+    if (!draft || !isEdit) return;
+    if (!window.confirm(`确定移除「${draft.name || "这只猫"}」?它的记录也会一起删除。`))
+      return;
+    deleteCat(draft.id);
+    router.push("/pets");
+  }
+
+  // 离开表单(取消)—— 首次建档回首页;编辑/添加回 /pets。
   function leaveOnboarding() {
-    router.push("/");
-  }
-
-  if (isEdit && !editing) {
-    const meta = [
-      ageLabel(draft.ageMonths),
-      draft.sex,
-      draft.coat,
-      `${draft.weight} kg`,
-    ]
-      .filter(Boolean)
-      .join(" · ");
-    const photos = draft.photos ?? [];
-
-    return (
-      <main
-        className="relative mx-auto flex min-h-dvh max-w-[430px] flex-col px-6 pb-24"
-        style={{
-          background: "var(--gradient-page)",
-          paddingTop: "calc(1.25rem + env(safe-area-inset-top, 0px))",
-        }}
-      >
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-56"
-          style={{
-            background:
-              "radial-gradient(ellipse 85% 60% at 50% 0%, rgba(176,90,80,0.11) 0%, transparent 100%)",
-          }}
-          aria-hidden="true"
-        />
-        <header className="flex items-center py-2">
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-medium tracking-[0.06em]"
-            style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <ellipse cx="12" cy="16" rx="4.2" ry="3.4" />
-              <circle cx="6.4" cy="11" r="1.9" />
-              <circle cx="10" cy="7.8" r="1.9" />
-              <circle cx="14" cy="7.8" r="1.9" />
-              <circle cx="17.6" cy="11" r="1.9" />
-            </svg>
-            {draft.name ? `${draft.name}的档案` : "我的档案"}
-          </span>
-        </header>
-
-        <section className="pt-7">
-          <div className="relative overflow-hidden rounded-[34px] bg-surface p-5 shadow-[var(--shadow-card)]">
-            <div className="absolute -right-10 -top-12 size-36 rounded-full bg-[var(--accent-soft)]" />
-            <button
-              type="button"
-              onClick={() => openEdit()}
-              className="absolute right-4 top-4 z-10 rounded-full bg-[var(--surface-2)] px-3 py-1 text-[12px] font-medium text-accent shadow-[var(--shadow-control)]"
-            >
-              编辑
-            </button>
-            <div className="relative flex items-start gap-4">
-              <CatAvatar
-                avatar={draft.avatar}
-                name={draft.name}
-                size={92}
-                className="shadow-[var(--shadow-control)]"
-              />
-              <div className="min-w-0 flex-1 pt-1">
-                <p className="text-[12px] font-semibold tracking-[0.16em] text-accent">
-                  猫咪档案
-                </p>
-                <h1 className="mt-2 text-[2.25rem] font-semibold leading-none tracking-tight text-ink">
-                  {draft.name}
-                </h1>
-                <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{meta}</p>
-              </div>
-            </div>
-
-          </div>
-        </section>
-
-        {/* 生活照 —— 紧跟身份卡,情感点缀前置 */}
-        <section
-          role="button"
-          tabIndex={0}
-          aria-label="管理生活照"
-          onClick={() => openEdit("edit-photos")}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              openEdit("edit-photos");
-            }
-          }}
-          className="mt-4 cursor-pointer rounded-[28px] bg-surface p-4 shadow-[var(--shadow-card)] transition-transform duration-300 active:scale-[0.99]"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[14px] font-medium text-ink">生活照</p>
-              <p className="mt-1 text-[12px] text-ink-faint">
-                {photos.length ? `${photos.length}/${MAX_PROFILE_PHOTOS} 张` : "还没有上传"}
-              </p>
-            </div>
-            <svg
-              width="15"
-              height="15"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="shrink-0 text-ink-ghost"
-              aria-hidden="true"
-            >
-              <path
-                d="M9 6l6 6-6 6"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          {photos.length > 0 && (
-            <div className="mt-4 grid grid-cols-4 gap-2.5">
-              {photos.slice(0, 4).map((photo, index) => (
-                <div
-                  key={`${photo.slice(0, 32)}-${index}`}
-                  className="aspect-square overflow-hidden rounded-[22px] bg-[var(--surface-2)] shadow-[var(--shadow-control)]"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={photo}
-                    alt={`${draft.name}的生活照 ${index + 1}`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* 基本信息 —— 品种 / 性别 / 毛发 / 绝育 / 到家 */}
-        <GroupCard title="基本信息" onEdit={() => openEdit("edit-basic")}>
-          <InfoRow
-            label="品种"
-            value={displayValue(draft.breed, "未填")}
-            muted={!draft.breed}
-          />
-          <InfoRow label="性别" value={draft.sex} />
-          <InfoRow
-            label="毛发"
-            value={displayValue(draft.coat, "未填")}
-            muted={!draft.coat}
-          />
-          <InfoRow label="绝育" value={draft.neutered} />
-          <InfoRow
-            label="到家日期"
-            value={displayValue(draft.homeDate)}
-            muted={!draft.homeDate}
-          />
-        </GroupCard>
-
-        {/* 健康记录 —— 疫苗 / 驱虫 / 体重曲线 */}
-        <GroupCard title="健康记录" onEdit={() => openEdit("edit-health")}>
-          <InfoRow
-            label="疫苗"
-            value={
-              draft.vaccines.length ? `${draft.vaccines.length} 针` : "未记录"
-            }
-            muted={draft.vaccines.length === 0}
-          />
-          <InfoRow
-            label="上次驱虫"
-            value={displayValue(draft.deworm)}
-            muted={!draft.deworm}
-          />
-          {(draft.weightLog?.length ?? 0) >= 2 ? (
-            <WeightSparkline log={draft.weightLog!} />
-          ) : (
-            <>
-              <InfoRow label="体重" value={`${draft.weight} kg`} />
-              <p className="pt-2 text-[11.5px] leading-relaxed text-ink-faint">
-                每次保存档案会自动记一笔体重 —— 记满 2 次,这里就会出现变化曲线。
-              </p>
-            </>
-          )}
-        </GroupCard>
-
-        {/* 健康背景 —— 慢性病 / 过敏 / 备注;全空时给一句引导 */}
-        <GroupCard title="健康背景" onEdit={() => openEdit("edit-background")}>
-          {draft.chronicConditions || draft.allergies || draft.notes ? (
-            <>
-              {draft.chronicConditions && (
-                <InfoRow label="慢性病史" value={draft.chronicConditions} />
-              )}
-              {draft.allergies && (
-                <InfoRow label="过敏史" value={draft.allergies} />
-              )}
-              {draft.notes && <InfoRow label="备注" value={draft.notes} />}
-            </>
-          ) : (
-            <p className="py-1 text-[13px] leading-relaxed text-ink-faint">
-              还没记录慢性病 / 过敏史 —— 填了之后,分诊和问答会替它考虑这些。
-            </p>
-          )}
-        </GroupCard>
-
-        {/* 健康足迹 —— 红黄绿分布小结(只统计,不列逐条记录) */}
-        <HealthFootprint
-          records={(store?.records ?? []).filter((r) => r.catId === draft.id)}
-        />
-
-        <Disclaimer />
-      </main>
-    );
+    router.push(isEdit || isAdd ? "/pets" : "/");
   }
 
   return (
@@ -657,30 +394,26 @@ export default function OnboardingPage() {
         }}
         aria-hidden="true"
       />
-      {/* 顶栏：isEdit 时是 Tab 入口不需要返回按钮；首次建档 Tab Bar 隐藏需要保留 */}
+      {/* 顶栏:取消(返回)+ 标题。编辑/添加回 /pets,首次建档回首页(leaveOnboarding 已分流) */}
       <header className="flex items-center py-2">
-        {!isEdit ? (
-          <button
-            type="button"
-            onClick={leaveOnboarding}
-            aria-label="返回"
-            className="grid size-9 place-items-center rounded-full text-ink"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M15 18l-6-6 6-6"
-                stroke="currentColor"
-                strokeWidth="1.6"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        ) : (
-          <span className="size-9" />
-        )}
+        <button
+          type="button"
+          onClick={leaveOnboarding}
+          aria-label={isEdit || isAdd ? "取消" : "返回"}
+          className="grid size-9 place-items-center rounded-full text-ink"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M15 18l-6-6 6-6"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
         <span className="flex-1 text-center text-[12px] font-medium uppercase tracking-[0.18em] text-ink-soft">
-          {isEdit ? `${draft.name || "我的"}的档案` : "新建档案"}
+          {isAdd ? "添加毛孩子" : isEdit ? `${draft.name || "我的"}的档案` : "新建档案"}
         </span>
         <span className="size-9" />
       </header>
@@ -688,10 +421,18 @@ export default function OnboardingPage() {
       {/* 引导 */}
       <section className="pb-7 pt-6">
         <p className="mb-3 text-[13px] leading-relaxed text-ink-soft">
-          {isEdit ? "——改完点最下面保存。" : "——你好,先认识一下你家的小家伙。"}
+          {isAdd
+            ? "——给家里添一只新成员。"
+            : isEdit
+              ? "——改完点最下面保存。"
+              : "——你好,先认识一下你家的小家伙。"}
         </p>
         <h1 className="font-serif text-[2rem] font-medium leading-tight tracking-tight text-ink">
-          {isEdit ? `${draft.name || "这只猫"}的档案` : "新加一只猫"}
+          {isAdd
+            ? "添加毛孩子"
+            : isEdit
+              ? `${draft.name || "这只猫"}的档案`
+              : "新加一只猫"}
         </h1>
         <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
           这些帮我判断它的情况。
@@ -1009,6 +750,56 @@ export default function OnboardingPage() {
           />
         </Field>
         </EditCard>
+
+        {/* 健康提醒 —— 开关存偏好(Cat.reminders),本批不真推送 */}
+        <EditCard id="edit-reminders" title="健康提醒">
+          {(
+            [
+              ["vaccine", "疫苗加强提醒", "到期前提醒一次"],
+              ["deworm", "每月驱虫提醒", "每月提醒一次"],
+              ["weight", "体重记录提醒", "每两周称一次"],
+            ] as const
+          ).map(([key, title, sub], i) => {
+            const on = reminders[key];
+            return (
+              <div
+                key={key}
+                className={
+                  "flex items-center gap-3 py-3 " +
+                  (i < 2 ? "border-b border-[var(--line-soft)]" : "")
+                }
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14.5px] text-ink">{title}</span>
+                  <span className="mt-0.5 block text-[11.5px] text-ink-faint">
+                    {sub}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={on}
+                  aria-label={title}
+                  onClick={() => setReminder(key, !on)}
+                  className={
+                    "relative h-7 w-[46px] flex-none rounded-full transition-colors " +
+                    (on ? "bg-accent" : "bg-[var(--surface-2)]")
+                  }
+                >
+                  <span
+                    className={
+                      "absolute top-[3px] size-[22px] rounded-full bg-white shadow transition-all " +
+                      (on ? "left-[21px]" : "left-[3px]")
+                    }
+                  />
+                </button>
+              </div>
+            );
+          })}
+          <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">
+            本地提醒偏好,暂不发推送通知。
+          </p>
+        </EditCard>
       </div>
 
       {/* CTA */}
@@ -1024,7 +815,7 @@ export default function OnboardingPage() {
               : "bg-[var(--surface-2)] text-ink-faint")
           }
         >
-          {isEdit ? "保存修改" : "建档,开始 →"}
+          {isAdd ? "添加" : isEdit ? "保存修改" : "建档,开始 →"}
         </button>
         {!ready && (
           <p className="mt-3 text-center text-[12px] text-ink-faint">
@@ -1032,6 +823,20 @@ export default function OnboardingPage() {
           </p>
         )}
       </div>
+
+      {/* 危险区:移除这只猫(仅编辑已有猫时;暗红非风险红,二次确认) */}
+      {isEdit && (
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={removeCat}
+            className="px-2 py-2 text-[13.5px] tracking-wide"
+            style={{ color: "#b54b3f" }}
+          >
+            移除这只毛孩子
+          </button>
+        </div>
+      )}
 
       {/* 头像设置弹窗 —— 上传真实照片 / AI 生成卡通,二合一 */}
       {avatarModalOpen && (
@@ -1206,5 +1011,14 @@ export default function OnboardingPage() {
 
       <Disclaimer />
     </main>
+  );
+}
+
+// useSearchParams 需 Suspense 边界(Next 16)。
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<main className="min-h-dvh" aria-hidden="true" />}>
+      <OnboardingForm />
+    </Suspense>
   );
 }

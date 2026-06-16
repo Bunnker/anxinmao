@@ -92,8 +92,8 @@ function CareIcon({ type }: { type: "vaccine" | "deworm" | "neuter" }) {
 // 头像:优先 AI 生成图 cat.avatar,无则 CatFace 通用猫脸(许可范围:身份/陪伴)。
 function Avatar({ cat, size }: { cat: Cat; size: number }) {
   if (cat.avatar) {
-    // eslint-disable-next-line @next/next/no-img-element
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={cat.avatar}
         alt=""
