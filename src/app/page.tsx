@@ -1917,15 +1917,29 @@ export default function HomePage() {
             </p>
           )}
 
-          {/* 红线:每屏底部固定免责 + 反馈入口(/feedback 仅此一处入口,勿删致孤立) */}
-          <div className="mt-2 flex flex-col items-center gap-1">
-            <Disclaimer />
+          {/* 红线:每屏底部固定免责。反馈入口做成可见小药丸(/feedback 仅此一处入口,勿删致孤立);
+              免责行守红线留在最底。 */}
+          <div className="mt-2.5 flex flex-col items-center gap-1.5">
             <Link
               href="/feedback"
-              className="text-[11px] tracking-wide text-ink-faint transition-opacity active:opacity-60"
+              className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-[12.5px] font-medium tracking-wide text-ink-soft shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
             >
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--accent)"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 9 9 0 0 1-3.8-.8L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z" />
+              </svg>
               有话想说?提个意见
             </Link>
+            <Disclaimer />
           </div>
         </div>
       </main>
