@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小猫怎么了 · 首页方案</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#efece5;--ink:#1a1a18;--ink-soft:#6b675f;--ink-faint:#9a958c;
+    --terra:#b05a50;--card:#fff;--line:#e4e0d8;
+    --serif:"Noto Serif SC",serif;--sans:"Noto Sans SC",-apple-system,system-ui,sans-serif;
+    --risk-red:#d92d20;--risk-yellow:#b97900;--risk-green:#238146;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:var(--sans);background:radial-gradient(130% 90% at 50% 0%,#f3f0ea,#e7e3db);color:var(--ink);-webkit-font-smoothing:antialiased;min-height:100vh;padding:44px 0 60px;}
+
+  .head{max-width:1180px;margin:0 auto 36px;padding:0 40px;}
+  .kicker{font-size:13px;letter-spacing:3px;color:var(--terra);font-weight:600;text-transform:uppercase;}
+  .head h1{font-family:var(--serif);font-weight:600;font-size:34px;letter-spacing:1px;margin-top:10px;}
+  .head .lede{font-size:15px;color:var(--ink-soft);margin-top:12px;line-height:1.7;max-width:680px;text-wrap:pretty;}
+
+  .tips{max-width:1180px;margin:0 auto 46px;padding:0 40px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .tip{background:var(--card);border-radius:18px;padding:18px 20px;box-shadow:0 6px 20px rgba(60,45,30,.06);border:1px solid var(--line);}
+  .tip .n{font-family:var(--serif);font-size:14px;color:var(--terra);font-weight:600;display:flex;align-items:center;gap:8px;}
+  .tip .n b{width:22px;height:22px;border-radius:50%;background:#f3e3df;color:var(--terra);display:flex;align-items:center;justify-content:center;font-size:12px;flex:none;}
+  .tip p{font-size:13px;color:var(--ink-soft);line-height:1.6;margin-top:9px;}
+
+  .rail{display:flex;gap:48px;justify-content:flex-start;padding:0 56px;width:max-content;margin:0 auto;min-width:100%;}
+  .scroll-wrap{overflow-x:auto;padding-bottom:14px;}
+  .scroll-wrap::-webkit-scrollbar{height:10px;}
+  .scroll-wrap::-webkit-scrollbar-thumb{background:#d7d2c8;border-radius:6px;}
+
+  .col{display:flex;flex-direction:column;align-items:center;width:390px;flex:none;}
+  .tag{display:inline-flex;align-items:center;gap:9px;margin-bottom:18px;}
+  .tag .badge{font-family:var(--serif);font-weight:600;font-size:15px;color:#fff;background:var(--terra);width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;letter-spacing:.5px;}
+  .tag .tt{text-align:left;}
+  .tag .tt .t1{font-family:var(--serif);font-weight:600;font-size:18px;letter-spacing:.5px;}
+  .tag .tt .t2{font-size:12px;color:var(--ink-faint);margin-top:1px;}
+
+  .device{width:390px;height:844px;border-radius:46px;background:#111014;padding:11px;box-shadow:0 40px 80px -30px rgba(45,35,25,.5),0 0 0 1px rgba(0,0,0,.5);position:relative;flex:none;}
+  .device::before{content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#111014;border-radius:0 0 18px 18px;z-index:3;}
+  .device iframe{width:100%;height:100%;border:0;border-radius:36px;background:#f7f6f3;display:block;}
+
+  .note{margin-top:24px;width:390px;background:var(--card);border-radius:18px;padding:18px 20px;box-shadow:0 6px 20px rgba(60,45,30,.06);border:1px solid var(--line);}
+  .note h3{font-family:var(--serif);font-size:15px;font-weight:600;margin-bottom:10px;}
+  .note ul{list-style:none;display:flex;flex-direction:column;gap:8px;}
+  .note li{font-size:12.5px;color:var(--ink-soft);line-height:1.55;padding-left:18px;position:relative;}
+  .note li::before{content:"";position:absolute;left:2px;top:7px;width:6px;height:6px;border-radius:50%;background:var(--terra);opacity:.55;}
+  .note .best{margin-top:12px;font-size:12px;color:var(--terra);font-weight:600;background:#f3e3df;border-radius:10px;padding:8px 11px;line-height:1.5;}
+
+  .foot{max-width:1180px;margin:54px auto 0;padding:0 40px;font-size:13px;color:var(--ink-faint);text-align:center;line-height:1.7;}
+  .foot a{color:var(--terra);text-decoration:none;font-weight:500;}
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="kicker">小猫怎么了 · 首页优化</div>
+    <h1>三套方向,挑一个继续打磨</h1>
+    <p class="lede">在你画的稿子基础上做了梳理。共用同一套暖奶白色彩、衬线标题与桌宠院子,差别只在<b>信息的优先级</b>:谁先被看到——是哈基米的档案、那只「看病」的分诊按钮,还是会溜达的小猫本身。红黄绿三色始终只用在风险档位圆点上。</p>
+  </div>
+
+  <div class="tips">
+    <div class="tip"><div class="n"><b>1</b>院子是主角</div><p>你画的暖房间最动人,但原稿被档案卡压在了下半屏。三套都让院子更早、更大地出现。</p></div>
+    <div class="tip"><div class="n"><b>2</b>看病要显眼</div><p>分诊是这个 App 的命根子。把「看病」从三选一的小药丸,提成不会被错过的主入口。</p></div>
+    <div class="tip"><div class="n"><b>3</b>默认是安心</div><p>原稿首页停在「红档」会吓人。首页静息态改为绿档先观察,情绪从怕落到安。</p></div>
+  </div>
+
+  <div class="scroll-wrap">
+    <div class="rail">
+
+      <div class="col">
+        <div class="tag"><span class="badge">A</span><span class="tt"><span class="t1">档案 · 院子</span><span class="t2">你的原稿,梳理优化版</span></span></div>
+        <div class="device"><iframe src="variations/A.html" title="方案 A"></iframe></div>
+        <div class="note">
+          <h3>最贴近你的原稿</h3>
+          <ul>
+            <li>保留档案卡,但瘦身:去掉「还没有生活照」空状态,疫苗 / 绝育 / 相册压成一行小卡。</li>
+            <li>明牌 pills 从右侧竖排移到院子顶部毛玻璃横排,不再挡住小猫。</li>
+            <li>小猫窝在猫窝里打盹(冒 z),最安静治愈;逗猫棒等道具保留可拖拽。</li>
+          </ul>
+          <div class="best">适合:想保住信息齐全的档案感,改动最小。</div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="tag"><span class="badge">B</span><span class="tt"><span class="t1">分诊优先</span><span class="t2">最稳妥的医疗工具气质</span></span></div>
+        <div class="device"><iframe src="variations/B.html" title="方案 B"></iframe></div>
+        <div class="note">
+          <h3>担心时打开,一步到位</h3>
+          <ul>
+            <li>精简问候条 + 一句价值主张「猫不对劲?30 秒红黄绿就医建议」。</li>
+            <li>陶土红「看病」大按钮独占一行,最高优先级,焦虑时不用找。</li>
+            <li>院子退居其下作陪伴,小猫照常溜达、说话泡可点。</li>
+          </ul>
+          <div class="best">适合:把「分诊工具」立为第一身份,我个人最推荐。</div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="tag"><span class="badge">C</span><span class="tt"><span class="t1">院子沉浸</span><span class="t2">最强的桌宠陪伴感</span></span></div>
+        <div class="device"><iframe src="variations/C.html" title="方案 C"></iframe></div>
+        <div class="note">
+          <h3>一打开就是它的家</h3>
+          <ul>
+            <li>院子全屏铺满,问候条与明牌 pills 浮在场景上,道具散落在地板。</li>
+            <li>底部毛玻璃浮起一张行动卡:看病大按钮 + 最近记录,始终够得着。</li>
+            <li>陪伴感最强,但医疗信息密度最低。</li>
+          </ul>
+          <div class="best">适合:主打情感陪伴、想要最高记忆点。</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="foot">
+    告诉我选哪套(A / B / C),或想混搭——比如「B 的看病按钮 + C 的全屏院子」。<br>
+    也可单独打开 <a href="variations/A.html">A</a> · <a href="variations/B.html">B</a> · <a href="variations/C.html">C</a> 全屏看细节。
+  </div>
+</body>
+</html>

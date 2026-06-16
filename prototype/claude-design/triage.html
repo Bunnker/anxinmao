@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小猫怎么了 · 分诊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="variations/shared.css">
+<style>
+  body{background:radial-gradient(130% 90% at 50% 0%,#f0ece4,#e4e0d7);display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;}
+  .device-wrap{transform-origin:center center;}
+  .device{width:390px;height:844px;border-radius:46px;background:#111014;padding:11px;box-shadow:0 44px 90px -34px rgba(45,35,25,.55),0 0 0 1px rgba(0,0,0,.5);position:relative;}
+  .device::before{content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#111014;border-radius:0 0 18px 18px;z-index:50;}
+  .phone{border-radius:36px;background:var(--bg);}
+
+  .navbar{flex:none;display:flex;align-items:center;gap:10px;padding:2px 18px 8px;}
+  .navbar .back{width:38px;height:38px;border-radius:50%;background:var(--card);box-shadow:var(--soft-sm);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer;flex:none;transition:transform .14s;}
+  .navbar .back:active{transform:scale(.92);}
+  .navbar .nb-pet{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-soft);margin-left:auto;background:var(--card);padding:5px 11px 5px 6px;border-radius:20px;box-shadow:var(--soft-sm);}
+  .navbar .nb-pet .avatar{width:26px;height:26px;}
+
+  .screen{padding:2px 20px 120px;}
+
+  .head h1{font-family:var(--serif);font-weight:600;font-size:25px;line-height:1.34;letter-spacing:.4px;text-wrap:pretty;}
+  .head h1 .q{color:var(--terra);}
+  .head .sub{font-size:13px;color:var(--ink-soft);margin-top:9px;line-height:1.6;letter-spacing:.1px;}
+  .head .meta{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:11.5px;color:var(--ink-faint);background:var(--card);padding:5px 11px;border-radius:20px;box-shadow:var(--soft-sm);white-space:nowrap;}
+  .head .meta b{color:var(--terra);font-weight:600;}
+
+  /* search */
+  .search{display:flex;align-items:center;gap:9px;margin-top:16px;background:var(--card);border-radius:16px;padding:12px 15px;box-shadow:var(--soft-sm);}
+  .search svg{color:var(--ink-faint);flex:none;}
+  .search input{border:none;outline:none;background:none;font-family:var(--sans);font-size:14px;color:var(--ink);width:100%;}
+  .search input::placeholder{color:var(--ink-faint);}
+
+  /* slim trust line */
+  .trust{margin-top:11px;background:var(--card);border-radius:14px;box-shadow:var(--soft-sm);overflow:hidden;cursor:pointer;}
+  .trust .tline{display:flex;align-items:center;gap:9px;padding:11px 14px;}
+  .trust .tline .shield{color:var(--terra);flex:none;}
+  .trust .tline .tt{flex:1;font-size:12.5px;color:var(--ink-soft);letter-spacing:.1px;}
+  .trust .tline .tt b{color:var(--ink);font-weight:600;}
+  .trust .tline .chev{color:var(--ink-faint);transition:transform .25s;flex:none;}
+  .trust.open .tline .chev{transform:rotate(180deg);}
+  .trust .tbody{max-height:0;opacity:0;transition:max-height .3s ease,opacity .25s ease;padding:0 14px;}
+  .trust.open .tbody{max-height:200px;opacity:1;padding:0 14px 13px;}
+  .trust .tbody p{font-size:12px;color:var(--ink-soft);line-height:1.75;}
+  .trust .tbody p b{color:var(--ink);font-weight:600;}
+
+  /* section labels */
+  .sl{display:flex;align-items:center;gap:8px;margin:22px 2px 12px;}
+  .sl .lab{font-size:12.5px;font-weight:600;letter-spacing:1.5px;flex:none;white-space:nowrap;}
+  .sl.urgent .lab{color:var(--risk-red);}
+  .sl.common .lab{color:var(--ink-faint);}
+  .sl .ln{flex:1;height:1px;background:var(--line);}
+
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+
+  /* style toggle */
+  .styletoggle{display:flex;align-items:center;gap:9px;margin-top:14px;}
+  .styletoggle .stl{font-size:11.5px;color:var(--ink-faint);letter-spacing:.5px;flex:none;white-space:nowrap;}
+  .seg{display:flex;background:#ece7df;border-radius:12px;padding:3px;gap:3px;margin-left:auto;}
+  .seg button{border:none;cursor:pointer;font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--ink-soft);background:none;padding:7px 15px;border-radius:9px;transition:all .16s;}
+  .seg button.on{background:#fff;color:var(--terra);font-weight:600;box-shadow:0 2px 6px rgba(60,45,30,.1);}
+
+  /* illustration mode: bigger, full-color cat tiles */
+  .phone.illus .card{gap:9px;padding:13px 12px 14px;}
+  .phone.illus .card .ico{width:62px;height:62px;border-radius:16px;background:#f6efe4;color:inherit;}
+  .phone.illus .card.sel .ico{background:#f0e0d6;transform:none;}
+  .phone.illus .card .ico svg{width:54px;height:54px;}
+  .card{position:relative;display:flex;flex-direction:column;gap:11px;background:var(--card);border-radius:18px;padding:14px;box-shadow:var(--soft-sm);cursor:pointer;border:1.5px solid transparent;transition:transform .14s ease,border-color .14s ease,box-shadow .14s;overflow:hidden;}
+  .card:active{transform:scale(.975);}
+  .card .ico{width:42px;height:42px;border-radius:13px;flex:none;background:#f1ebe1;display:flex;align-items:center;justify-content:center;color:#a87c64;transition:background .16s ease,color .16s ease,transform .16s ease;}
+  .card.sel .ico{background:var(--terra-tint);color:var(--terra);transform:scale(1.04);}
+  .card .ctext{min-width:0;}
+  .card .ct{font-size:15px;font-weight:600;letter-spacing:.2px;}
+  .card .cd{font-size:11px;color:var(--ink-faint);margin-top:4px;letter-spacing:.1px;line-height:1.4;}
+  .card.urgent{border-left:3px solid var(--risk-red);}
+  .card .udot{position:absolute;top:13px;right:13px;width:8px;height:8px;border-radius:50%;background:var(--risk-red);box-shadow:0 0 0 3px #fff;}
+  .card .check{position:absolute;top:11px;right:11px;width:22px;height:22px;border-radius:50%;background:var(--terra);display:none;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(176,90,80,.4);}
+  .card.sel{border-color:var(--terra);box-shadow:0 6px 18px rgba(176,90,80,.18);}
+  .card.sel .check{display:flex;}
+  .card.sel.urgent .udot{display:none;}
+
+  .nores{display:none;text-align:center;color:var(--ink-faint);font-size:13px;padding:26px 0 10px;line-height:1.7;}
+  .nores a{color:var(--terra);font-weight:600;text-decoration:none;}
+
+  /* sticky bottom action */
+  .dock{position:absolute;left:0;right:0;bottom:0;z-index:20;padding:12px 20px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(247,246,243,0),var(--bg) 26%);}
+  .dock .bridge{display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;color:var(--ink-soft);padding:13px;background:var(--card);border-radius:16px;box-shadow:var(--soft-sm);cursor:pointer;}
+  .dock .bridge b{color:var(--terra);font-weight:600;}
+  .dock .next{display:none;align-items:center;justify-content:space-between;width:100%;border:none;cursor:pointer;background:linear-gradient(180deg,#bd6258,var(--terra) 45%,var(--terra-deep));color:#fff;border-radius:18px;padding:15px 20px;box-shadow:0 12px 26px rgba(176,90,80,.34);font-family:var(--sans);transition:transform .14s;}
+  .dock .next:active{transform:scale(.99);}
+  .dock.has .bridge{display:none;}
+  .dock.has .next{display:flex;}
+  .dock .next .nl{display:flex;flex-direction:column;align-items:flex-start;gap:2px;}
+  .dock .next .nl .n1{font-weight:600;font-size:15px;letter-spacing:.4px;white-space:nowrap;}
+  .dock .next .nl .n2{font-size:11px;opacity:.9;white-space:nowrap;}
+  .dock .next .cnt{background:rgba(255,255,255,.22);border-radius:20px;padding:7px 13px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;}
+
+  /* result sheet */
+  .scrim{position:absolute;inset:0;z-index:40;background:rgba(40,28,18,.4);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:none;align-items:flex-end;}
+  .scrim.on{display:flex;}
+  .result{width:100%;background:var(--bg);border-radius:28px 28px 0 0;padding:10px 22px calc(22px + env(safe-area-inset-bottom));box-shadow:0 -12px 40px rgba(40,28,18,.25);transform:translateY(100%);transition:transform .42s cubic-bezier(.2,.9,.3,1.1);max-height:88%;overflow-y:auto;}
+  .scrim.on .result{transform:none;}
+  .result::-webkit-scrollbar{display:none;}
+  .result .grab{width:38px;height:4px;border-radius:3px;background:#e0dcd2;margin:0 auto 16px;}
+  .tierhead{display:flex;align-items:center;gap:13px;}
+  .tierbadge{width:54px;height:54px;border-radius:18px;flex:none;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:700;font-size:21px;color:#fff;}
+  .tierbadge.r{background:var(--risk-red);}
+  .tierbadge.y{background:var(--risk-yellow);}
+  .tierbadge.g{background:var(--risk-green);}
+  .tierhead .th-t .lvl{font-family:var(--serif);font-weight:600;font-size:18px;letter-spacing:.3px;white-space:nowrap;}
+  .tierhead .th-t .adv{font-size:12.5px;color:var(--ink-soft);margin-top:3px;}
+  .result .for{font-size:12px;color:var(--ink-faint);margin-top:14px;}
+  .result .for b{color:var(--ink);font-weight:600;}
+  .advice{margin-top:13px;display:flex;flex-direction:column;gap:9px;}
+  .advice .ai{display:flex;gap:10px;font-size:13.5px;color:var(--ink);line-height:1.55;background:var(--card);border-radius:14px;padding:12px 13px;box-shadow:var(--soft-sm);}
+  .advice .ai .n{width:20px;height:20px;border-radius:50%;background:var(--terra-tint);color:var(--terra);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;}
+  .src{margin-top:13px;font-size:11px;color:var(--ink-faint);line-height:1.6;display:flex;align-items:center;gap:7px;}
+  .src .shield{color:var(--terra);flex:none;}
+  .ractions{margin-top:16px;display:flex;flex-direction:column;gap:10px;}
+  .ractions .ask{width:100%;border:none;cursor:pointer;background:linear-gradient(180deg,#bd6258,var(--terra) 45%,var(--terra-deep));color:#fff;border-radius:16px;padding:15px;display:flex;align-items:center;justify-content:center;gap:9px;font-family:var(--sans);font-weight:600;font-size:15px;letter-spacing:.5px;box-shadow:0 10px 22px rgba(176,90,80,.3);transition:transform .14s;}
+  .ractions .ask:active{transform:scale(.98);}
+  .ractions .save{width:100%;border:none;cursor:pointer;background:var(--card);color:var(--ink-soft);border-radius:16px;padding:13px;font-family:var(--sans);font-size:14px;box-shadow:var(--soft-sm);}
+  .ractions .note{font-size:11px;color:var(--ink-faint);text-align:center;line-height:1.6;margin-top:2px;}
+</style>
+</head>
+<body>
+  <div class="device-wrap" id="wrap">
+  <div class="device">
+  <div class="phone" data-screen-label="分诊页">
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <span class="sb-right">
+        <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#1a1a18"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 11.2 1 4.3a10.6 10.6 0 0 1 15 0L8.5 11.2Z" fill="#1a1a18"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13"><rect x="1" y="1" width="21" height="11" rx="3.2" fill="none" stroke="#1a1a18" stroke-opacity=".4" stroke-width="1"/><rect x="2.6" y="2.6" width="16" height="7.8" rx="2" fill="#1a1a18"/><rect x="23.4" y="4" width="1.8" height="5" rx="1" fill="#1a1a18" fill-opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="navbar">
+      <div class="back" id="backBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="nb-pet"><span class="avatar"><span class="a-ear l"></span><span class="a-ear r"></span><span class="a-face"></span><span class="a-eye l"></span><span class="a-eye r"></span><span class="a-nose"></span></span>哈基米 · 6个月</div>
+    </div>
+
+    <div class="screen">
+      <div class="head">
+        <h1><span class="q">它现在</span>最让你担心的是?</h1>
+        <div class="sub">挑最像的一项,可多选 —— 后面我会再追问几个问题。</div>
+        <div class="meta">约 30 秒 · <b>3–5 个问题</b></div>
+      </div>
+
+      <div class="styletoggle">
+        <span class="stl">卡片样式</span>
+        <div class="seg" id="seg">
+          <button data-style="icon" class="on">图标</button>
+          <button data-style="illus">小猫插画</button>
+        </div>
+      </div>
+
+      <div class="search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input id="searchInput" placeholder="搜症状,或直接描述…">
+      </div>
+
+      <div class="trust" id="trust">
+        <div class="tline">
+          <span class="shield"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <span class="tt"><b>经执业兽医审核 · 判级偏保守</b></span>
+          <span class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+        </div>
+        <div class="tbody"><p>分诊的每个问题、判级与建议都依据 <b>Cornell、Merck、VCA、iCatCare</b> 等权威兽医资料整理,并经执业兽医逐条审核。它帮你判断<b>「要不要去看兽医」,但不替代兽医的面诊和检查</b>。</p></div>
+      </div>
+
+      <div class="sl urgent"><span class="lab">可能要急的</span><span class="ln"></span></div>
+      <div class="grid" id="gridUrgent">
+        <div class="card urgent" data-k="可能误食 线 植物 不该吃的"><span class="udot"></span><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3h4"/><path d="M11 3v6l-4.2 8A2 2 0 0 0 8.6 20h6.8a2 2 0 0 0 1.8-3l-4.2-8V3"/><path d="M8.3 14h7.4"/></svg></span><div class="ctext"><div class="ct">可能误食</div><div class="cd">线 / 植物 / 不该吃的</div></div></div>
+        <div class="card urgent" data-k="呼吸怪 急促 张嘴喘"><span class="udot"></span><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h10a3 3 0 1 0-3-3"/><path d="M3 14h12.5a3 3 0 1 1-3 3"/></svg></span><div class="ctext"><div class="ct">呼吸怪</div><div class="cd">急促 / 张嘴喘</div></div></div>
+        <div class="card urgent" data-k="看到血 便 尿 口鼻"><span class="udot"></span><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5s6 6.8 6 11a6 6 0 0 1-12 0c0-4.2 6-11 6-11Z"/></svg></span><div class="ctext"><div class="ct">看到血</div><div class="cd">便 / 尿 / 口鼻</div></div></div>
+        <div class="card urgent" data-k="尿不出 频繁蹲砂 没尿"><span class="udot"></span><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10h16v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6Z"/><path d="M7 10V8.5A1.5 1.5 0 0 1 8.5 7h7A1.5 1.5 0 0 1 17 8.5V10"/></svg></span><div class="ctext"><div class="ct">尿不出</div><div class="cd">频繁蹲砂、没尿</div></div></div>
+      </div>
+
+      <div class="sl common"><span class="lab">常 见</span><span class="ln"></span></div>
+      <div class="grid" id="gridCommon">
+        <div class="card" data-k="呕吐 吐了 干呕"><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6c0 4.5 2.7 7 6 7s6-2.5 6-7"/><path d="M9 15v2.4M12 16v3M15 15v2.4"/></svg></span><div class="ctext"><div class="ct">呕吐</div><div class="cd">吐了 / 干呕</div></div></div>
+        <div class="card" data-k="腹泻 拉稀 软便"><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8c2-2 4-2 6 0s4 2 6 0"/><path d="M4 12.5c2-2 4-2 6 0s4 2 6 0"/><path d="M4 17c2-2 4-2 6 0s4 2 6 0"/></svg></span><div class="ctext"><div class="ct">腹泻</div><div class="cd">拉稀 / 软便</div></div></div>
+        <div class="card" data-k="不吃东西 没碰食"><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.5h17a8.5 8.5 0 0 1-17 0Z"/><path d="M12 11.5V7.4"/><path d="M12 7.4a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"/></svg></span><div class="ctext"><div class="ct">不吃东西</div><div class="cd">≥ 8 小时没碰食</div></div></div>
+        <div class="card" data-k="精神差 蔫 躲起来 不动"><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13.6A8 8 0 1 1 10.4 4a6.2 6.2 0 0 0 9.6 9.6Z"/></svg></span><div class="ctext"><div class="ct">精神差</div><div class="cd">蔫 / 躲起来 / 不动</div></div></div>
+        <div class="card" data-k="打喷嚏 流鼻涕 眼鼻分泌物"><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7c2.5 0 4.5 2 4.5 4.5S9.5 16 7 16"/><path d="M7 7v9"/><path d="M14.5 9l3-1M14.5 12.5h3M14.5 16l3 1"/></svg></span><div class="ctext"><div class="ct">打喷嚏 / 流鼻涕</div><div class="cd">眼鼻分泌物 / 一直喷嚏</div></div></div>
+        <div class="card" data-k="耳朵问题 挠耳 甩头 分泌物"><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16c-1-1.6-1.5-3.6-1.5-5.6a7.5 7.5 0 0 1 15 0c0 2-.5 4-1.5 5.6"/><path d="M9 18a3 3 0 0 0 6 0"/></svg></span><div class="ctext"><div class="ct">耳朵问题</div><div class="cd">挠耳 / 甩头 / 有分泌物</div></div></div>
+        <div class="card" data-k="皮肤痒 掉毛 蹭 红疹"><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="15" r="3.4" fill="currentColor" stroke="none"/><circle cx="6.6" cy="11" r="1.5" fill="currentColor" stroke="none"/><circle cx="10" cy="8" r="1.5" fill="currentColor" stroke="none"/><circle cx="14" cy="8" r="1.5" fill="currentColor" stroke="none"/><circle cx="17.4" cy="11" r="1.5" fill="currentColor" stroke="none"/></svg></span><div class="ctext"><div class="ct">皮肤痒 / 掉毛</div><div class="cd">蹭 / 抓多 / 有红疹</div></div></div>
+        <div class="card" data-k="眼睛问题 流泪 红肿 分泌物"><span class="check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z"/><circle cx="12" cy="12" r="2.6"/></svg></span><div class="ctext"><div class="ct">眼睛问题</div><div class="cd">流泪 / 红肿 / 分泌物</div></div></div>
+      </div>
+
+      <div class="nores" id="nores">没有匹配的症状卡。<br>说不清的话,<a id="toAskFromSearch">直接描述给哈基米 →</a></div>
+    </div>
+
+    <!-- sticky dock -->
+    <div class="dock" id="dock">
+      <div class="bridge" id="bridge">找不到?<b>去问答直接描述&nbsp;→</b></div>
+      <button class="next" id="nextBtn">
+        <span class="nl"><span class="n1">下一步 · 回答几个问题</span><span class="n2">越具体,判级越准</span></span>
+        <span class="cnt"><span id="selCount">0</span> 项 ›</span>
+      </button>
+    </div>
+
+    <!-- result sheet -->
+    <div class="scrim" id="scrim">
+      <div class="result" id="result">
+        <div class="grab"></div>
+        <div class="tierhead">
+          <div class="tierbadge g" id="tBadge">绿</div>
+          <div class="th-t"><div class="lvl" id="tLvl">绿档 · 先在家观察</div><div class="adv" id="tAdv">目前不像急症,按下面的方式观察。</div></div>
+        </div>
+        <div class="for">针对 <b id="forSym">打喷嚏</b> · 结合哈基米 6个月 / 已免疫的情况</div>
+        <div class="advice" id="advice"></div>
+        <div class="src"><span class="shield"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg></span>判级依据 Cornell / Merck / VCA 整理 · 偏保守,不替代兽医面诊</div>
+        <div class="ractions">
+          <button class="ask" id="toAsk"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10H10l-4 3.2V15.5H4z"/></svg>带着这个结果,继续追问哈基米</button>
+          <button class="save" id="saveBtn">保存到健康记录</button>
+          <div class="note">紧急情况请直接联系就近的宠物医院 / 急诊。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabbar">
+      <div class="tab" data-go="home"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3.5l9 7"/><path d="M5.2 9v10.5h13.6V9"/></svg></span><span>首页</span></div>
+      <div class="tab on"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5V6h6V3.5"/><path d="M8.5 11h7M8.5 15h4"/></svg></span><span>分诊</span></div>
+      <div class="tab" data-go="ask"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v11H9l-4 3.5v-3.5H4z"/><path d="M8.5 10h7M8.5 13h4"/></svg></span><span>问答</span></div>
+      <div class="tab" data-go="pet"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8.5" r="2"/><circle cx="16" cy="8.5" r="2"/><circle cx="5" cy="13" r="1.7"/><circle cx="19" cy="13" r="1.7"/><path d="M12 12c-2.6 0-4.5 2-4.5 4.2 0 1.5 1.2 2.3 2.6 2.3 .9 0 1.3-.4 1.9-.4s1 .4 1.9.4c1.4 0 2.6-.8 2.6-2.3C16 14 14.6 12 12 12Z"/></svg></span><span>毛孩子</span></div>
+    </div>
+  </div>
+  </div>
+  </div>
+
+<script src="cat-illus.js"></script>
+<script>
+  var HOME='小猫怎么了 · 首页(C引导版).html', ASK='问答.html', PET='毛孩子.html';
+  function fit(){var w=document.getElementById('wrap');var s=Math.min(1,(innerHeight-32)/844,(innerWidth-32)/390);w.style.transform='scale('+s+')';}
+  addEventListener('resize',fit);fit();
+
+  document.getElementById('backBtn').onclick=function(){location.href=HOME;};
+  document.querySelectorAll('[data-go]').forEach(function(t){t.onclick=function(){var g=t.dataset.go;location.href=g==='ask'?ASK:(g==='pet'?PET:HOME);};});
+  document.getElementById('bridge').onclick=function(){location.href=ASK;};
+  document.getElementById('toAskFromSearch').onclick=function(){location.href=ASK;};
+
+  // trust expand
+  document.getElementById('trust').onclick=function(){this.classList.toggle('open');};
+
+  // selection
+  var dock=document.getElementById('dock'), selCount=document.getElementById('selCount');
+  function refresh(){
+    var sel=document.querySelectorAll('.card.sel');
+    selCount.textContent=sel.length;
+    dock.classList.toggle('has',sel.length>0);
+  }
+  document.querySelectorAll('.card').forEach(function(c){
+    c.onclick=function(){ c.classList.toggle('sel'); refresh(); };
+  });
+
+  // search filter
+  document.getElementById('searchInput').addEventListener('input',function(){
+    var q=this.value.trim().toLowerCase(), any=false;
+    document.querySelectorAll('.card').forEach(function(c){
+      var hit=!q || c.dataset.k.toLowerCase().indexOf(q)>-1 || c.querySelector('.ct').textContent.toLowerCase().indexOf(q)>-1;
+      c.style.display=hit?'':'none'; if(hit)any=true;
+    });
+    document.querySelectorAll('.sl,.grid').forEach(function(e){e.style.opacity=q?'.0':'';e.style.height=q&&!any?'':''; });
+    document.getElementById('nores').style.display=(q&&!any)?'block':'none';
+  });
+
+  // result sheet
+  var scrim=document.getElementById('scrim');
+  var ADV={
+    r:['尽量别让它再接触可疑物 / 别催吐,先拍下吃到的东西。','记录开始时间、次数、状态变化。','尽快联系就近的宠物医院或急诊,带上这份报告。'],
+    y:['先隔离喂食,少量多次给清水,观察 6–12 小时。','留意进食、精神、排泄三件事,有变化就记录。','明显加重、或 24 小时无好转,就去医院。'],
+    g:['保持环境安静,备好干净的水和猫砂。','每天记一笔:症状有没有变多、变重。','48 小时没改善,再回来做一次分诊。']
+  };
+  var LVL={r:['红','红档 · 建议尽快就医','这一类风险较高,别等。'],y:['黄','黄档 · 24 小时内留意/就医','先观察,但要盯紧。'],g:['绿','绿档 · 先在家观察','目前不像急症,按下面的方式观察。']};
+  function decideTier(){
+    var sel=[].map.call(document.querySelectorAll('.card.sel'),function(c){return {t:c.querySelector('.ct').textContent,u:c.classList.contains('urgent')};});
+    if(sel.some(function(s){return s.u;})) return 'r';
+    var heavy=sel.some(function(s){return s.t==='精神差'||s.t==='不吃东西';});
+    if(heavy||sel.length>=3) return 'y';
+    return 'g';
+  }
+  var _sym='', _tier='g';
+  document.getElementById('nextBtn').onclick=function(){
+    var sel=document.querySelectorAll('.card.sel'); if(!sel.length)return;
+    // 可能误食 -> illustrated follow-up question flow
+    var hasEat=[].some.call(sel,function(c){return c.querySelector('.ct').textContent==='可能误食';});
+    if(hasEat){ location.href='分诊问诊.html'; return; }
+    var tier=decideTier(); _tier=tier; _sym=sel[0].querySelector('.ct').textContent;
+    document.getElementById('forSym').textContent=sel[0].querySelector('.ct').textContent;
+    var badge=document.getElementById('tBadge'); badge.className='tierbadge '+tier; badge.textContent=LVL[tier][0];
+    document.getElementById('tLvl').textContent=LVL[tier][1];
+    document.getElementById('tAdv').textContent=LVL[tier][2];
+    var ad=document.getElementById('advice'); ad.innerHTML='';
+    ADV[tier].forEach(function(t,i){ad.insertAdjacentHTML('beforeend','<div class="ai"><span class="n">'+(i+1)+'</span><span>'+t+'</span></div>');});
+    scrim.classList.add('on');
+  };
+  scrim.onclick=function(e){ if(e.target===scrim) scrim.classList.remove('on'); };
+  document.getElementById('toAsk').onclick=function(){ var m={r:'red',y:'yellow',g:'green'}; location.href=ASK+'?from=triage&s='+encodeURIComponent(_sym)+'&t='+m[_tier]; };
+  document.getElementById('saveBtn').onclick=function(){ scrim.classList.remove('on'); };
+
+  // ===== cat-state illustrations (toggle) =====
+  var ILLUS = window.CatIllus.SYM;
+
+  // build icon-mode store + swap
+  var phoneEl=document.querySelector('.phone');
+  document.querySelectorAll('.card').forEach(function(c){
+    c.dataset.iconHtml=c.querySelector('.ico').innerHTML;
+  });
+  function applyStyle(mode){
+    phoneEl.classList.toggle('illus',mode==='illus');
+    document.querySelectorAll('.card').forEach(function(c){
+      var t=c.querySelector('.ct').textContent, ico=c.querySelector('.ico');
+      ico.innerHTML = mode==='illus' ? (ILLUS[t]||c.dataset.iconHtml) : c.dataset.iconHtml;
+    });
+  }
+  document.querySelectorAll('#seg button').forEach(function(b){
+    b.onclick=function(){
+      document.querySelectorAll('#seg button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on'); applyStyle(b.dataset.style);
+    };
+  });
+</script>
+</body>
+</html>

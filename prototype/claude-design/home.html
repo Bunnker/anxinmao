@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小猫怎么了 · 首页</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7f6f3;
+    --card:#ffffff;
+    --ink:#1a1a18;
+    --ink-soft:#6b675f;
+    --ink-faint:#9a958c;
+    --terra:#b05a50;
+    --terra-deep:#9c4a41;
+    --line:#ece9e3;
+    /* risk signal layer — only for risk dots */
+    --risk-red:#d92d20;
+    --risk-yellow:#b97900;
+    --risk-green:#238146;
+    --serif:"Noto Serif SC",serif;
+    --sans:"Noto Sans SC",-apple-system,system-ui,sans-serif;
+    --soft:0 8px 28px rgba(60,45,30,.07);
+    --soft-sm:0 4px 14px rgba(60,45,30,.06);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    font-family:var(--sans);
+    color:var(--ink);
+    background:#e7e4dd;
+    background:radial-gradient(120% 80% at 50% 0%,#eeebe4 0%,#e3dfd6 100%);
+    display:flex;align-items:center;justify-content:center;
+    min-height:100vh;padding:24px 0;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ===== Phone frame ===== */
+  .phone{
+    width:390px;height:844px;
+    background:var(--bg);
+    border-radius:46px;
+    box-shadow:0 30px 80px rgba(45,35,25,.28),0 0 0 11px #111014,0 0 0 12px #2a2a2e;
+    overflow:hidden;position:relative;
+    display:flex;flex-direction:column;
+  }
+
+  /* ===== Status bar ===== */
+  .statusbar{
+    height:50px;flex:none;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 30px 0 34px;
+    font-weight:600;font-size:15px;letter-spacing:.3px;
+    position:relative;z-index:5;
+  }
+  .statusbar .time{font-variant-numeric:tabular-nums;}
+  .sb-right{display:flex;align-items:center;gap:7px;}
+  .sb-right svg{display:block;}
+
+  /* ===== Scroll body ===== */
+  .screen{
+    flex:1;overflow-y:auto;overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    padding:2px 20px 22px;
+  }
+  .screen::-webkit-scrollbar{display:none;}
+
+  /* ===== Greeting ===== */
+  .greet{
+    display:flex;align-items:center;gap:13px;
+    padding:8px 2px 12px;
+  }
+  .avatar{
+    width:46px;height:46px;border-radius:50%;flex:none;
+    background:linear-gradient(150deg,#f0d9b9,#e7c79c);
+    box-shadow:var(--soft-sm),inset 0 0 0 2px #fff;
+    position:relative;overflow:hidden;
+  }
+  /* tiny tabby face in avatar */
+  .avatar .a-ear{position:absolute;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:11px solid #d98b52;top:9px;}
+  .avatar .a-ear.l{left:9px;transform:rotate(-18deg);}
+  .avatar .a-ear.r{right:9px;transform:rotate(18deg);}
+  .avatar .a-face{position:absolute;left:50%;top:48%;transform:translate(-50%,-30%);width:30px;height:27px;border-radius:50% 50% 48% 48%;background:#e09a5b;}
+  .avatar .a-stripe{position:absolute;top:15px;left:50%;width:3px;height:7px;border-radius:2px;background:#c2733a;transform:translateX(-50%);}
+  .avatar .a-stripe.s2{margin-left:-6px;height:5px;}
+  .avatar .a-stripe.s3{margin-left:6px;height:5px;}
+  .avatar .a-eye{position:absolute;top:24px;width:3.5px;height:4px;border-radius:50%;background:#2b2724;}
+  .avatar .a-eye.l{left:15px;}
+  .avatar .a-eye.r{right:15px;}
+  .avatar .a-nose{position:absolute;top:29px;left:50%;transform:translateX(-50%);width:4px;height:3px;border-radius:50%;background:#b05a50;}
+  .greet-text .hi{font-family:var(--serif);font-weight:600;font-size:19px;letter-spacing:.2px;}
+  .greet-text .meta{font-size:13px;color:var(--ink-soft);margin-top:3px;letter-spacing:.2px;}
+  .greet-text .meta b{color:var(--ink);font-weight:500;}
+  .greet .spacer{flex:1;}
+  .greet .bell{
+    width:40px;height:40px;border-radius:50%;flex:none;
+    background:var(--card);box-shadow:var(--soft-sm);
+    display:flex;align-items:center;justify-content:center;color:var(--ink-soft);
+  }
+
+  /* ===== Value prop + CTA ===== */
+  .value{padding:2px 2px 0;}
+  .value .lead{
+    font-family:var(--serif);font-weight:600;
+    font-size:22px;line-height:1.45;letter-spacing:.2px;
+    text-wrap:pretty;
+  }
+  .value .lead .q{color:var(--terra);}
+  .value .sub{
+    display:flex;align-items:center;gap:9px;
+    margin-top:11px;font-size:13px;color:var(--ink-soft);letter-spacing:.1px;white-space:nowrap;
+  }
+  .rgy{display:flex;align-items:center;gap:5px;}
+  .rgy i{width:9px;height:9px;border-radius:50%;display:block;box-shadow:0 0 0 2.5px rgba(255,255,255,.85);}
+  .rgy .r{background:var(--risk-red);}
+  .rgy .y{background:var(--risk-yellow);}
+  .rgy .g{background:var(--risk-green);}
+
+  .cta{
+    margin-top:16px;width:100%;
+    border:none;cursor:pointer;
+    background:linear-gradient(180deg,#bb645a,#a9504650 0%,var(--terra) 18%,var(--terra-deep));
+    background:linear-gradient(180deg,#bd6258,var(--terra) 42%,var(--terra-deep));
+    color:#fff;border-radius:20px;
+    padding:18px 22px;
+    display:flex;align-items:center;justify-content:space-between;
+    box-shadow:0 10px 24px rgba(176,90,80,.34),inset 0 1px 0 rgba(255,255,255,.22);
+    transition:transform .15s ease,box-shadow .15s ease;
+    font-family:var(--sans);
+  }
+  .cta:active{transform:translateY(1px) scale(.992);box-shadow:0 6px 16px rgba(176,90,80,.3);}
+  .cta .cta-l{display:flex;align-items:center;gap:13px;}
+  .cta .ico{
+    width:38px;height:38px;border-radius:13px;flex:none;
+    background:rgba(255,255,255,.16);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .cta .tt{text-align:left;}
+  .cta .tt .t1{font-family:var(--serif);font-weight:600;font-size:19px;letter-spacing:1px;}
+  .cta .tt .t2{font-size:12px;opacity:.82;margin-top:2px;letter-spacing:.4px;}
+  .cta .arrow{opacity:.9;}
+
+  /* ===== Section label ===== */
+  .sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:20px 4px 11px;}
+  .sec-h .t{font-family:var(--serif);font-weight:600;font-size:16px;letter-spacing:.3px;}
+  .sec-h .more{font-size:12.5px;color:var(--ink-faint);white-space:nowrap;}
+
+  /* ===== Yard (hero) ===== */
+  .yard{
+    position:relative;width:100%;height:280px;
+    border-radius:30px;overflow:hidden;
+    box-shadow:var(--soft),inset 0 0 0 1px rgba(255,255,255,.5);
+    /* warm wall */
+    background:linear-gradient(180deg,#f5e6d6 0%,#f1dcc6 58%);
+  }
+  /* sunlight wash */
+  .yard .sun{
+    position:absolute;top:0;right:18%;width:160px;height:230px;
+    background:linear-gradient(190deg,rgba(255,247,232,.85),rgba(255,247,232,0) 72%);
+    transform:skewX(-12deg);filter:blur(2px);pointer-events:none;z-index:1;
+  }
+  /* window */
+  .window{
+    position:absolute;top:20px;right:22px;width:84px;height:96px;
+    border-radius:14px 14px 12px 12px;
+    background:linear-gradient(180deg,#cfe6ec,#e7f0ec 70%,#f2efe2);
+    box-shadow:0 6px 14px rgba(120,100,70,.14),inset 0 0 0 5px #fbf3e6,0 0 0 6px #ead9c2;
+    overflow:hidden;z-index:2;
+  }
+  .window::before,.window::after{content:"";position:absolute;background:#fbf3e6;}
+  .window::before{left:50%;top:0;width:5px;height:100%;transform:translateX(-50%);}
+  .window::after{top:50%;left:0;height:5px;width:100%;transform:translateY(-50%);}
+  .window .cloud{position:absolute;width:34px;height:13px;border-radius:10px;background:rgba(255,255,255,.85);top:20px;left:8px;box-shadow:14px 6px 0 -2px rgba(255,255,255,.7);}
+  /* floor */
+  .floor{
+    position:absolute;left:0;right:0;bottom:0;height:108px;z-index:1;
+    background:
+      repeating-linear-gradient(91deg,rgba(150,110,70,.08) 0 1.5px,transparent 1.5px 44px),
+      linear-gradient(180deg,#eed4b2,#e4c69f);
+    box-shadow:inset 0 3px 8px rgba(150,110,70,.12);
+  }
+
+  /* glass pills */
+  .pills{
+    position:absolute;top:16px;left:16px;z-index:6;
+    display:flex;gap:7px;
+  }
+  .pill{
+    display:flex;align-items:center;gap:5px;
+    padding:8px 13px;border-radius:30px;cursor:pointer;
+    font-size:12.5px;font-weight:500;color:#5a4a3e;letter-spacing:.3px;white-space:nowrap;
+    background:rgba(255,255,255,.42);
+    -webkit-backdrop-filter:blur(9px) saturate(1.3);
+    backdrop-filter:blur(9px) saturate(1.3);
+    box-shadow:0 4px 12px rgba(120,90,60,.14),inset 0 0 0 1px rgba(255,255,255,.6);
+    transition:transform .14s ease,background .14s ease;
+  }
+  .pill:active{transform:scale(.95);}
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:var(--terra);opacity:.85;}
+  .pill.alt .dot{background:#8a8378;}
+
+  /* furniture */
+  .yard .rug{
+    position:absolute;left:50%;bottom:14px;transform:translateX(-58%);
+    width:182px;height:54px;border-radius:50%;z-index:1;
+    background:radial-gradient(closest-side,#e9ba9f 0 38%,#e0a98c 39% 60%,#e9ba9f 61% 100%);
+    opacity:.85;box-shadow:0 5px 12px rgba(150,100,70,.12);
+  }
+  .bed{
+    position:absolute;left:20px;bottom:16px;z-index:2;
+    width:74px;height:40px;border-radius:50%;
+    background:radial-gradient(closest-side at 50% 60%,#f3ece1 0 46%,#d8b59c 50% 100%);
+    box-shadow:0 6px 13px rgba(150,100,70,.16),inset 0 -3px 6px rgba(150,100,70,.12);
+  }
+  .box{
+    position:absolute;right:16px;bottom:18px;z-index:2;width:58px;height:46px;
+  }
+  .box .b-body{position:absolute;inset:8px 0 0;border-radius:5px;background:linear-gradient(180deg,#e8c79b,#dcb583);box-shadow:0 6px 12px rgba(150,100,70,.16);}
+  .box .b-open{position:absolute;left:9px;right:9px;top:11px;height:13px;border-radius:4px;background:#b88a59;box-shadow:inset 0 2px 4px rgba(80,50,20,.3);}
+  .box .b-flap{position:absolute;height:9px;border-radius:3px;background:#edcfa3;box-shadow:0 2px 4px rgba(150,100,70,.18);}
+  .box .b-flap.l{left:-2px;top:5px;width:26px;transform:rotate(-26deg);transform-origin:right;}
+  .box .b-flap.r{right:-2px;top:5px;width:26px;transform:rotate(26deg);transform-origin:left;}
+  /* yarn ball */
+  .yarn{
+    position:absolute;left:120px;bottom:18px;z-index:3;width:24px;height:24px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#c98b7f,#b05a50);
+    box-shadow:0 4px 8px rgba(150,90,70,.28);
+    overflow:hidden;
+  }
+  .yarn::before,.yarn::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1.5px solid rgba(255,255,255,.28);}
+  .yarn::after{inset:-2px;transform:rotate(60deg);border-color:rgba(0,0,0,.12);}
+
+  /* ===== CSS Cat ===== */
+  .cat-walk{
+    position:absolute;bottom:26px;left:128px;z-index:4;
+    width:84px;height:74px;
+    transform-origin:50% 100%;
+    animation:stroll 16s ease-in-out infinite;
+  }
+  .cat{position:absolute;inset:0;animation:bob 1.4s ease-in-out infinite;}
+  /* shadow */
+  .cat-shadow{position:absolute;left:8px;bottom:-3px;width:64px;height:13px;border-radius:50%;background:rgba(120,80,50,.18);filter:blur(2px);z-index:-1;}
+  .c-body{
+    position:absolute;left:14px;bottom:6px;width:58px;height:40px;
+    border-radius:50% 50% 46% 46%;
+    background:linear-gradient(160deg,#e3995a,#d98246);
+  }
+  .c-body .bstripe{position:absolute;top:5px;width:5px;height:20px;border-radius:4px;background:#c2703a;opacity:.85;}
+  .c-body .bstripe.s1{left:14px;}
+  .c-body .bstripe.s2{left:26px;height:24px;}
+  .c-body .bstripe.s3{left:38px;}
+  .c-belly{position:absolute;left:30px;bottom:6px;width:30px;height:24px;border-radius:50%;background:#f0c79a;opacity:.9;}
+  .c-leg{position:absolute;bottom:0;width:13px;height:13px;border-radius:6px 6px 5px 5px;background:#dd8c4f;}
+  .c-leg.front{left:54px;animation:legF 1.4s ease-in-out infinite;}
+  .c-leg.back{left:24px;animation:legB 1.4s ease-in-out infinite;}
+  .c-tail{
+    position:absolute;left:2px;bottom:18px;width:14px;height:40px;
+    border-radius:10px;background:linear-gradient(180deg,#d98246,#cf7a3e);
+    transform-origin:bottom center;transform:rotate(34deg);
+    animation:tail 2.4s ease-in-out infinite;
+  }
+  .c-tail .tstripe{position:absolute;left:2px;width:10px;height:4px;border-radius:3px;background:#c2703a;opacity:.8;}
+  .c-tail .tstripe.t1{top:7px;}
+  .c-tail .tstripe.t2{top:17px;}
+  .c-tail .tstripe.t3{top:27px;}
+  .c-head{
+    position:absolute;right:6px;bottom:24px;width:42px;height:38px;
+    border-radius:50% 50% 47% 47%;
+    background:linear-gradient(160deg,#e8a061,#df9051);
+    z-index:2;
+  }
+  .c-ear{position:absolute;width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:15px solid #db8748;top:-8px;}
+  .c-ear.l{left:1px;transform:rotate(-22deg);}
+  .c-ear.r{right:1px;transform:rotate(22deg);}
+  .c-ear i{position:absolute;left:-5px;top:6px;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:8px solid #ecae8c;}
+  .c-cheek{position:absolute;left:50%;top:42%;transform:translateX(-50%);width:34px;height:24px;border-radius:50%;background:#f4d1a8;}
+  .c-eye{position:absolute;top:15px;width:5px;height:6.5px;border-radius:50%;background:#3a2a20;}
+  .c-eye.l{left:11px;}
+  .c-eye.r{right:11px;}
+  .c-eye::after{content:"";position:absolute;top:1px;left:1px;width:2px;height:2px;border-radius:50%;background:rgba(255,255,255,.85);}
+  .c-nose{position:absolute;top:23px;left:50%;transform:translateX(-50%);width:6px;height:4px;border-radius:50% 50% 60% 60%;background:#b86a5c;}
+  .c-mouth{position:absolute;top:27px;left:50%;width:14px;height:6px;transform:translateX(-50%);border-bottom:1.5px solid #b07a5e;border-radius:0 0 8px 8px;border-left:1.5px solid transparent;border-right:1.5px solid transparent;}
+  .c-hstripe{position:absolute;top:2px;left:50%;transform:translateX(-50%);width:4px;height:8px;border-radius:3px;background:#c2703a;opacity:.8;}
+  .c-hstripe.h2{margin-left:-9px;height:6px;top:4px;}
+  .c-hstripe.h3{margin-left:9px;height:6px;top:4px;}
+
+  /* speech bubble */
+  .bubble{
+    position:absolute;left:46px;top:84px;z-index:7;cursor:pointer;
+    background:#fff;border-radius:16px 16px 16px 5px;
+    padding:9px 13px;max-width:172px;
+    box-shadow:0 8px 20px rgba(90,60,40,.16),inset 0 0 0 1px rgba(0,0,0,.02);
+    font-size:13px;color:var(--ink);letter-spacing:.2px;font-weight:500;
+    animation:floaty 3.4s ease-in-out infinite;
+    transition:transform .14s ease;
+  }
+  .bubble:active{transform:scale(.96);}
+  .bubble .go{color:var(--terra);font-weight:700;margin-left:2px;}
+  .bubble::after{content:"";position:absolute;left:14px;bottom:-7px;width:14px;height:14px;background:#fff;border-radius:0 0 0 4px;transform:rotate(45deg);box-shadow:-2px 2px 4px rgba(90,60,40,.06);}
+
+  @keyframes stroll{
+    0%{transform:translateX(0) scaleX(1);}
+    6%{transform:translateX(0) scaleX(1);}
+    44%{transform:translateX(118px) scaleX(1);}
+    50%{transform:translateX(118px) scaleX(-1);}
+    56%{transform:translateX(118px) scaleX(-1);}
+    94%{transform:translateX(0) scaleX(-1);}
+    100%{transform:translateX(0) scaleX(1);}
+  }
+  @keyframes bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-2px);}}
+  @keyframes tail{0%,100%{transform:rotate(34deg);}50%{transform:rotate(20deg);}}
+  @keyframes legF{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px) rotate(8deg);}}
+  @keyframes legB{0%,100%{transform:translateY(-3px) rotate(-8deg);}50%{transform:translateY(0);}}
+  @keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+  @media (prefers-reduced-motion: reduce){
+    .cat-walk,.cat,.c-tail,.c-leg,.bubble{animation:none;}
+  }
+
+  /* ===== Recent record ===== */
+  .record{
+    margin-top:0;background:var(--card);border-radius:20px;
+    padding:15px 16px;display:flex;align-items:center;gap:13px;
+    box-shadow:var(--soft-sm);
+  }
+  .record .tier{position:relative;flex:none;width:14px;height:14px;}
+  .record .tier i{position:absolute;inset:0;border-radius:50%;background:var(--risk-green);}
+  .record .tier i::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid var(--risk-green);opacity:.28;}
+  .record .rc{flex:1;min-width:0;}
+  .record .rc .r1{font-size:14.5px;font-weight:500;line-height:1.5;letter-spacing:.2px;}
+  .record .rc .r2{font-size:12px;color:var(--ink-faint);margin-top:4px;display:flex;align-items:center;gap:7px;}
+  .record .rc .r2 .tag{color:var(--risk-green);font-weight:500;}
+  .record .chev{color:var(--ink-faint);flex:none;}
+
+  /* ===== Tab bar ===== */
+  .tabbar{
+    flex:none;height:84px;
+    background:rgba(247,246,243,.86);
+    -webkit-backdrop-filter:blur(16px) saturate(1.4);
+    backdrop-filter:blur(16px) saturate(1.4);
+    border-top:1px solid var(--line);
+    display:flex;align-items:flex-start;justify-content:space-around;
+    padding:11px 14px 0;
+  }
+  .tab{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;width:64px;color:var(--ink-faint);}
+  .tab .ic{height:25px;display:flex;align-items:center;}
+  .tab span{font-size:10.5px;letter-spacing:.4px;white-space:nowrap;}
+  .tab.on{color:var(--terra);}
+  .tab.on span{font-weight:700;}
+</style>
+</head>
+<body>
+  <div class="phone" data-screen-label="首页">
+
+    <!-- Status bar -->
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <span class="sb-right">
+        <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#1a1a18"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 11.2 1 4.3a10.6 10.6 0 0 1 15 0L8.5 11.2Z" fill="#1a1a18"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13"><rect x="1" y="1" width="21" height="11" rx="3.2" fill="none" stroke="#1a1a18" stroke-opacity=".4" stroke-width="1"/><rect x="2.6" y="2.6" width="16" height="7.8" rx="2" fill="#1a1a18"/><rect x="23.4" y="4" width="1.8" height="5" rx="1" fill="#1a1a18" fill-opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <!-- Scroll body -->
+    <div class="screen">
+
+      <!-- Greeting -->
+      <div class="greet">
+        <div class="avatar">
+          <span class="a-ear l"></span><span class="a-ear r"></span>
+          <span class="a-face"></span>
+          <span class="a-stripe"></span><span class="a-stripe s2"></span><span class="a-stripe s3"></span>
+          <span class="a-eye l"></span><span class="a-eye r"></span>
+          <span class="a-nose"></span>
+        </div>
+        <div class="greet-text">
+          <div class="hi">早上好,哈基米</div>
+          <div class="meta"><b>6个月</b> · 母 · 橘猫</div>
+        </div>
+        <div class="spacer"></div>
+        <div class="bell">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </div>
+      </div>
+
+      <!-- Value prop + CTA -->
+      <div class="value">
+        <div class="lead"><span class="q">猫不对劲?</span>选症状,<br>30 秒给你红黄绿就医建议</div>
+        <div class="sub">
+          <span class="rgy"><i class="r"></i><i class="y"></i><i class="g"></i></span>
+          <span>三档风险信号,该不该去医院,一眼明白</span>
+        </div>
+        <button class="cta">
+          <span class="cta-l">
+            <span class="ico">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 3v5a4 4 0 0 0 8 0V3"/><path d="M4.8 3h-1M12.8 3h1"/><path d="M8.8 12v3a5 5 0 0 0 10 0v-2"/><circle cx="18.8" cy="11" r="2.2"/></svg>
+            </span>
+            <span class="tt">
+              <span class="t1">看病</span>
+              <span class="t2">选症状 · 智能分诊</span>
+            </span>
+          </span>
+          <span class="arrow">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+          </span>
+        </button>
+      </div>
+
+      <!-- Yard hero -->
+      <div class="sec-h"><span class="t">哈基米的院子</span><span class="more">在家陪你</span></div>
+      <div class="yard">
+        <div class="sun"></div>
+        <div class="window"><span class="cloud"></span></div>
+        <div class="floor"></div>
+
+        <!-- glass pills -->
+        <div class="pills">
+          <div class="pill"><span class="dot"></span>看病</div>
+          <div class="pill alt"><span class="dot"></span>聊天</div>
+          <div class="pill alt"><span class="dot"></span>小知识</div>
+        </div>
+
+        <!-- furniture -->
+        <div class="rug"></div>
+        <div class="bed"></div>
+        <div class="box">
+          <span class="b-flap l"></span><span class="b-flap r"></span>
+          <span class="b-body"></span>
+          <span class="b-open"></span>
+        </div>
+        <div class="yarn"></div>
+
+        <!-- speech bubble -->
+        <div class="bubble">你是来找我聊天的吗?<span class="go">→</span></div>
+
+        <!-- cat -->
+        <div class="cat-walk">
+          <div class="cat">
+            <span class="cat-shadow"></span>
+            <span class="c-tail"><i class="tstripe t1"></i><i class="tstripe t2"></i><i class="tstripe t3"></i></span>
+            <span class="c-leg back"></span>
+            <span class="c-leg front"></span>
+            <span class="c-body">
+              <i class="bstripe s1"></i><i class="bstripe s2"></i><i class="bstripe s3"></i>
+            </span>
+            <span class="c-belly"></span>
+            <span class="c-head">
+              <span class="c-ear l"><i></i></span><span class="c-ear r"><i></i></span>
+              <span class="c-cheek"></span>
+              <i class="c-hstripe"></i><i class="c-hstripe h2"></i><i class="c-hstripe h3"></i>
+              <span class="c-eye l"></span><span class="c-eye r"></span>
+              <span class="c-nose"></span>
+              <span class="c-mouth"></span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent record -->
+      <div class="sec-h"><span class="t">最近记录</span><span class="more">查看全部</span></div>
+      <div class="record">
+        <span class="tier"><i></i></span>
+        <div class="rc">
+          <div class="r1">打喷嚏几声,精神食欲都正常</div>
+          <div class="r2"><span class="tag">绿档 · 先观察</span><span>·</span><span>今天 08:12</span></div>
+        </div>
+        <span class="chev">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </span>
+      </div>
+
+    </div>
+
+    <!-- Tab bar -->
+    <div class="tabbar">
+      <div class="tab on">
+        <span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3.5l9 7"/><path d="M5.2 9v10.5h13.6V9"/></svg></span>
+        <span>首页</span>
+      </div>
+      <div class="tab">
+        <span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5V6h6V3.5"/><path d="M8.5 11h7M8.5 15h4"/></svg></span>
+        <span>分诊</span>
+      </div>
+      <div class="tab">
+        <span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v11H9l-4 3.5v-3.5H4z"/><path d="M8.5 10h7M8.5 13h4"/></svg></span>
+        <span>问答</span>
+      </div>
+      <div class="tab">
+        <span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8.5" r="2"/><circle cx="16" cy="8.5" r="2"/><circle cx="5" cy="13" r="1.7"/><circle cx="19" cy="13" r="1.7"/><path d="M12 12c-2.6 0-4.5 2-4.5 4.2 0 1.5 1.2 2.3 2.6 2.3 .9 0 1.3-.4 1.9-.4s1 .4 1.9.4c1.4 0 2.6-.8 2.6-2.3C16 14 14.6 12 12 12Z"/></svg></span>
+        <span>毛孩子</span>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

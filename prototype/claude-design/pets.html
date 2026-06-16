@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小猫怎么了 · 毛孩子</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="variations/shared.css">
+<style>
+  body{background:radial-gradient(130% 90% at 50% 0%,#f0ece4,#e4e0d7);display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;}
+  .device-wrap{transform-origin:center center;}
+  .device{width:390px;height:844px;border-radius:46px;background:#111014;padding:11px;box-shadow:0 44px 90px -34px rgba(45,35,25,.55),0 0 0 1px rgba(0,0,0,.5);position:relative;}
+  .device::before{content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#111014;border-radius:0 0 18px 18px;z-index:50;}
+  .phone{border-radius:36px;background:var(--bg);}
+
+  .screen{padding:0 0 18px;}
+
+  /* hero */
+  .phero{position:relative;background:linear-gradient(180deg,#f6e7d6,#f3ddc6);padding:8px 20px 24px;}
+  .phero .topbar{display:flex;align-items:center;justify-content:space-between;height:34px;}
+  .phero .topbar .pt{font-family:var(--serif);font-weight:600;font-size:16px;letter-spacing:.5px;}
+  .phero .topbar .edit{font-size:13px;color:var(--terra);font-weight:600;cursor:pointer;white-space:nowrap;}
+
+  /* pet switcher */
+  .switcher{display:flex;align-items:center;gap:8px;margin-top:12px;overflow-x:auto;padding-bottom:2px;}
+  .switcher::-webkit-scrollbar{display:none;}
+  .pchip{display:flex;align-items:center;gap:8px;flex:none;padding:5px 13px 5px 5px;border-radius:24px;background:rgba(255,255,255,.45);cursor:pointer;border:1.5px solid transparent;transition:all .16s;}
+  .pchip .pa{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7);}
+  .pchip .pa svg{width:26px;height:26px;}
+  .pchip .pn{font-size:13px;font-weight:600;color:var(--ink-soft);letter-spacing:.3px;white-space:nowrap;}
+  .pchip.on{background:#fff;border-color:var(--terra);box-shadow:0 4px 12px rgba(176,90,80,.16);}
+  .pchip.on .pn{color:var(--terra);}
+  .padd{width:38px;height:38px;border-radius:50%;flex:none;border:1.5px dashed #cdbfae;background:rgba(255,255,255,.35);color:#9a7e62;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .14s;}
+  .padd:active{transform:scale(.9);}
+  .avslot .cathero svg, .pchip .pa svg{transition:filter .2s;}
+  .phero .pcard{display:flex;align-items:flex-start;gap:16px;margin-top:6px;}
+  .avcol{display:flex;flex-direction:column;align-items:center;gap:9px;flex:none;}
+  .editmini{display:flex;align-items:center;gap:5px;border:none;cursor:pointer;background:rgba(255,255,255,.7);color:var(--terra);font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:.2px;padding:6px 12px;border-radius:20px;box-shadow:var(--soft-sm);white-space:nowrap;transition:transform .14s;}
+  .editmini:active{transform:scale(.95);}
+  .pmeta{padding-top:4px;}
+  .avslot{position:relative;width:88px;height:88px;flex:none;border-radius:28px;background:radial-gradient(circle at 50% 38%,#f3c590,#e2954f 76%);box-shadow:0 10px 24px -8px rgba(190,130,70,.55),inset 0 0 0 3px #fff;overflow:hidden;}
+  .avslot image-slot{position:absolute;inset:0;width:100%;height:100%;}
+  .avslot .cathero{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+  .avslot .cathero svg{width:74px;height:74px;}
+  .avslot .camera{position:absolute;right:5px;bottom:5px;z-index:3;width:24px;height:24px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--terra);box-shadow:0 2px 6px rgba(120,80,40,.3);}
+  .phero .pmeta .nm{font-family:var(--serif);font-weight:700;font-size:25px;letter-spacing:1px;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .phero .pmeta .nm .sex{font-size:13px;color:#c77fa0;background:#fbeaf1;border-radius:8px;padding:3px 8px;font-family:var(--sans);font-weight:600;white-space:nowrap;}
+  .phero .pmeta .br{font-size:13px;color:var(--ink-soft);margin-top:6px;letter-spacing:.2px;}
+  .phero .pmeta .tags{display:flex;gap:6px;margin-top:11px;}
+  .phero .pmeta .tags span{font-size:11px;color:#8a6f54;background:rgba(255,255,255,.6);border-radius:20px;padding:5px 11px;letter-spacing:.2px;white-space:nowrap;}
+
+  .statrow{display:flex;gap:1px;margin-top:18px;background:rgba(255,255,255,.5);border-radius:16px;overflow:hidden;box-shadow:var(--soft-sm);}
+  .statrow .st{flex:1;text-align:center;padding:12px 6px;background:rgba(255,255,255,.55);}
+  .statrow .st .v{font-family:var(--serif);font-weight:600;font-size:18px;letter-spacing:.3px;}
+  .statrow .st .v small{font-size:11px;font-weight:400;color:var(--ink-soft);margin-left:1px;}
+  .statrow .st .k{font-size:11px;color:var(--ink-faint);margin-top:3px;letter-spacing:.3px;white-space:nowrap;}
+
+  .body{padding:0 20px;}
+  .sec-h{display:flex;align-items:baseline;justify-content:space-between;margin:22px 2px 12px;}
+  .sec-h .t{font-family:var(--serif);font-weight:600;font-size:16px;letter-spacing:.3px;}
+  .sec-h .more{font-size:12.5px;color:var(--ink-faint);cursor:pointer;}
+
+  /* care status */
+  .care{display:flex;flex-direction:column;gap:10px;}
+  .crow{display:flex;align-items:center;gap:13px;background:var(--card);border-radius:16px;padding:14px 15px;box-shadow:var(--soft-sm);cursor:pointer;transition:transform .14s;}
+  .crow:active{transform:scale(.99);}
+  .crow .ci{width:42px;height:42px;border-radius:13px;flex:none;background:var(--terra-tint);color:var(--terra);display:flex;align-items:center;justify-content:center;}
+  .crow .cc{flex:1;min-width:0;}
+  .crow .cc .c1{font-size:14.5px;font-weight:600;letter-spacing:.2px;}
+  .crow .cc .c2{font-size:12px;color:var(--ink-faint);margin-top:3px;letter-spacing:.1px;}
+  .crow .cs{font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:20px;flex:none;white-space:nowrap;}
+  .crow .cs.done{color:var(--risk-green);background:#e3f0e8;}
+  .crow .cs.due{color:var(--risk-yellow);background:#f6edd9;}
+  .crow .cs.no{color:var(--ink-soft);background:#efece6;}
+
+  /* timeline */
+  .tl{position:relative;padding-left:6px;}
+  .tl .ti{position:relative;display:flex;gap:14px;padding-bottom:18px;}
+  .tl .ti:last-child{padding-bottom:0;}
+  .tl .ti .rail{position:relative;flex:none;width:14px;display:flex;justify-content:center;}
+  .tl .ti .rail::before{content:"";position:absolute;top:16px;bottom:-4px;width:2px;background:var(--line);}
+  .tl .ti:last-child .rail::before{display:none;}
+  .tl .ti .dot{position:relative;z-index:1;width:14px;height:14px;border-radius:50%;margin-top:3px;box-shadow:0 0 0 3px var(--bg);}
+  .tl .ti .dot.g{background:var(--risk-green);}
+  .tl .ti .dot.y{background:var(--risk-yellow);}
+  .tl .ti .dot.r{background:var(--risk-red);}
+  .tl .ti .dot.b{background:#cdbfae;}
+  .tl .ti .tc{flex:1;background:var(--card);border-radius:15px;padding:12px 14px;box-shadow:var(--soft-sm);cursor:pointer;transition:transform .14s;}
+  .tl .ti .tc:active{transform:scale(.99);}
+  .tl .ti .tc .r1{font-size:14px;font-weight:500;line-height:1.45;letter-spacing:.2px;}
+  .tl .ti .tc .r2{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:11.5px;color:var(--ink-faint);white-space:nowrap;}
+  .tl .ti .tc .r2 .tag{font-weight:600;}
+  .tl .ti .tc .r2 .tag.g{color:var(--risk-green);}
+  .tl .ti .tc .r2 .tag.y{color:var(--risk-yellow);}
+  .tl .ti .tc .r2 .tag.r{color:var(--risk-red);}
+  .tl .ti .tc .r2 .src{display:inline-flex;align-items:center;gap:4px;}
+
+  .addrec{margin-top:14px;width:100%;border:1.5px dashed #d9d2c6;background:none;border-radius:15px;padding:13px;color:var(--ink-soft);font-family:var(--sans);font-size:13.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .14s;}
+  .addrec:active{transform:scale(.99);background:rgba(0,0,0,.02);}
+
+  .toast{position:absolute;left:50%;bottom:108px;transform:translateX(-50%) translateY(8px);z-index:60;background:rgba(26,26,24,.92);color:#fff;font-size:12.5px;padding:10px 16px;border-radius:13px;opacity:0;pointer-events:none;transition:all .22s;max-width:260px;text-align:center;line-height:1.5;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+  <div class="device-wrap" id="wrap">
+  <div class="device">
+  <div class="phone" data-screen-label="毛孩子档案页">
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <span class="sb-right">
+        <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#1a1a18"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 11.2 1 4.3a10.6 10.6 0 0 1 15 0L8.5 11.2Z" fill="#1a1a18"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13"><rect x="1" y="1" width="21" height="11" rx="3.2" fill="none" stroke="#1a1a18" stroke-opacity=".4" stroke-width="1"/><rect x="2.6" y="2.6" width="16" height="7.8" rx="2" fill="#1a1a18"/><rect x="23.4" y="4" width="1.8" height="5" rx="1" fill="#1a1a18" fill-opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="screen">
+      <div class="phero">
+        <div class="topbar"><span class="pt">毛孩子</span></div>
+        <div class="switcher" id="switcher"></div>
+        <div class="pcard">
+          <div class="avcol">
+            <div class="avslot" id="avslot">
+              <span class="cathero" id="catHero"></span>
+              <span class="camera" id="cameraBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h3l1.5-2h7L17 8.5h3v10H4z"/><circle cx="12" cy="13" r="3.2"/></svg></span>
+            </div>
+            <button class="editmini" id="editBtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4l6 6M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/></svg>编辑档案</button>
+          </div>
+          <div class="pmeta">
+            <div class="nm" id="pName">哈基米 <span class="sex" id="pSex">♀ 母</span></div>
+            <div class="br" id="pBreed">中华田园猫 · 橘 · 6个月</div>
+            <div class="tags" id="pTags"></div>
+          </div>
+        </div>
+
+        <div class="statrow" id="statRow"></div>
+      </div>
+
+      <div class="body">
+        <!-- care status -->
+        <div class="sec-h"><span class="t">健康档案</span><span class="more" id="moreCare">管理</span></div>
+        <div class="care" id="careList"></div>
+
+        <!-- health timeline -->
+        <div class="sec-h"><span class="t">健康记录</span><span class="more" id="moreRec">全部</span></div>
+        <div class="tl" id="tlList"></div>
+        <button class="addrec" id="addRec"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>手动记一笔</button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="tabbar">
+      <div class="tab" data-go="home"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3.5l9 7"/><path d="M5.2 9v10.5h13.6V9"/></svg></span><span>首页</span></div>
+      <div class="tab" data-go="triage"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5V6h6V3.5"/><path d="M8.5 11h7M8.5 15h4"/></svg></span><span>分诊</span></div>
+      <div class="tab" data-go="ask"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v11H9l-4 3.5v-3.5H4z"/><path d="M8.5 10h7M8.5 13h4"/></svg></span><span>问答</span></div>
+      <div class="tab on"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8.5" r="2"/><circle cx="16" cy="8.5" r="2"/><circle cx="5" cy="13" r="1.7"/><circle cx="19" cy="13" r="1.7"/><path d="M12 12c-2.6 0-4.5 2-4.5 4.2 0 1.5 1.2 2.3 2.6 2.3 .9 0 1.3-.4 1.9-.4s1 .4 1.9.4c1.4 0 2.6-.8 2.6-2.3C16 14 14.6 12 12 12Z"/></svg></span><span>毛孩子</span></div>
+    </div>
+  </div>
+  </div>
+  </div>
+
+<script src="cat-illus.js"></script>
+<script>
+  var HOME='小猫怎么了 · 首页(C引导版).html', TRIAGE='分诊.html', ASK='问答.html', EDIT='毛孩子-编辑.html';
+  function fit(){var w=document.getElementById('wrap');var s=Math.min(1,(innerHeight-32)/844,(innerWidth-32)/390);w.style.transform='scale('+s+')';}
+  addEventListener('resize',fit);fit();
+
+  var toast=document.getElementById('toast'),tT;
+  function showToast(m){toast.textContent=m;toast.classList.add('show');clearTimeout(tT);tT=setTimeout(function(){toast.classList.remove('show');},1900);}
+
+  // ===== pet data =====
+  var ICON={
+    vac:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3l5 5M18.5 5.5 9 15l-3 .8.8-3 9.7-9.3z"/><path d="M11 9l4 4"/></svg>',
+    deworm:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c2 2.5 2 5 0 7s-2 4.5 0 7"/><path d="M8.5 6.5c1.4 1.4 1.4 3 0 4.5M15.5 6.5c-1.4 1.4-1.4 3 0 4.5"/><circle cx="12" cy="19.5" r="1"/></svg>',
+    neuter:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="6"/><path d="M12 16v5M9 19h6"/></svg>'
+  };
+  var pets=[
+    {
+      name:'哈基米', sex:'♀ 母', sexClr:'#c77fa0', sexBg:'#fbeaf1',
+      breed:'中华田园猫 · 橘 · 6个月', fur:'none', avBg:'radial-gradient(circle at 50% 38%,#f3c590,#e2954f 76%)',
+      face:{eyes:'happy',mouth:'smile'},
+      tags:['3.5 kg','已驱虫','未绝育'],
+      stats:[['6','个月','年龄'],['3.5','kg','体重'],['12','','健康记录'],['28','天','陪伴']],
+      recCount:12,
+      care:[
+        {ic:'vac',c1:'疫苗',c2:'猫三联 3/3 针 · 下次加强 6/28',s:'done',st:'已完成',t:'疫苗 · 已打 3 针,下次加强 6/28 提醒你'},
+        {ic:'deworm',c1:'驱虫',c2:'体内外 · 上次 6/1',s:'due',st:'本月待做',t:'体内驱虫 · 上次 6/1,建议每月一次'},
+        {ic:'neuter',c1:'绝育',c2:'6–8 月龄可咨询医生',s:'no',st:'未安排',t:'绝育 · 还没做,一般 6–8 月龄可咨询医生'}
+      ],
+      tl:[
+        {d:'g',r1:'打喷嚏几声,精神食欲都正常',tag:['g','绿档 · 先观察'],src:'分诊',when:'今天 08:12',t:'打喷嚏几声,精神食欲都正常 · 绿档先观察'},
+        {d:'b',r1:'问了「幼猫驱虫多久做一次?」',src:'问答',when:'昨天 21:30',t:'问答:幼猫驱虫多久做一次?'},
+        {d:'y',r1:'软便两次,精神还可以',tag:['y','黄档 · 留意'],src:'分诊',when:'3 天前',t:'软便两次,精神尚可 · 黄档留意'},
+        {d:'b',r1:'完成猫三联第 3 针',src:'疫苗',when:'5 天前',t:'完成猫三联第 3 针'}
+      ]
+    },
+    {
+      name:'奶豆', sex:'♂ 公', sexClr:'#5a90c2', sexBg:'#e6f0f8',
+      breed:'中华田园猫 · 狸花 · 1岁2个月', fur:'saturate(.3) brightness(1.06)', avBg:'radial-gradient(circle at 50% 38%,#d8cfc2,#9c9488 78%)',
+      face:{eyes:'open',mouth:'tiny'},
+      tags:['4.8 kg','已驱虫','已绝育'],
+      stats:[['1.2','岁','年龄'],['4.8','kg','体重'],['20','','健康记录'],['96','天','陪伴']],
+      recCount:20,
+      care:[
+        {ic:'vac',c1:'疫苗',c2:'猫三联 + 狂犬 · 已年检',s:'done',st:'已完成',t:'疫苗 · 已完成年度加强'},
+        {ic:'deworm',c1:'驱虫',c2:'体内外 · 上次 6/10',s:'done',st:'已完成',t:'驱虫 · 本月已做'},
+        {ic:'neuter',c1:'绝育',c2:'已于 8 月龄完成',s:'done',st:'已完成',t:'绝育 · 已完成'}
+      ],
+      tl:[
+        {d:'b',r1:'问了「猫总在夜里跑酷正常吗?」',src:'问答',when:'今天 00:40',t:'问答:猫夜里跑酷正常吗?'},
+        {d:'g',r1:'体检一切正常,牙口良好',tag:['g','绿档 · 健康'],src:'记录',when:'6 天前',t:'体检正常,牙口良好'},
+        {d:'b',r1:'完成年度疫苗加强',src:'疫苗',when:'2 周前',t:'完成年度疫苗加强'}
+      ]
+    }
+  ];
+  var active=0;
+
+  function faceSVG(p){ return window.CatIllus.cat({eyes:window.CatIllus.EYE[p.face.eyes], mouth:window.CatIllus.MOU[p.face.mouth]}); }
+
+  function renderSwitcher(){
+    var sw=document.getElementById('switcher'); sw.innerHTML='';
+    pets.forEach(function(p,i){
+      var chip=document.createElement('div'); chip.className='pchip'+(i===active?' on':'');
+      chip.innerHTML='<span class="pa" style="background:'+p.avBg+'"><span style="filter:'+p.fur+';display:flex">'+faceSVG(p)+'</span></span><span class="pn">'+p.name+'</span>';
+      chip.onclick=function(){ if(active!==i){ active=i; render(); } };
+      sw.appendChild(chip);
+    });
+    var add=document.createElement('div'); add.className='padd';
+    add.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>';
+    add.onclick=function(){ location.href=EDIT+'?add=1'; };
+    sw.appendChild(add);
+  }
+
+  function render(){
+    var p=pets[active];
+    // avatar
+    document.getElementById('avslot').style.background=p.avBg;
+    var hero=document.getElementById('catHero'); hero.innerHTML=faceSVG(p); hero.style.filter=p.fur;
+    // meta
+    document.getElementById('pName').innerHTML=p.name+' <span class="sex" id="pSex">'+p.sex+'</span>';
+    var sx=document.getElementById('pSex'); sx.style.color=p.sexClr; sx.style.background=p.sexBg;
+    document.getElementById('pBreed').textContent=p.breed;
+    document.getElementById('pTags').innerHTML=p.tags.map(function(t){return '<span>'+t+'</span>';}).join('');
+    // stats
+    document.getElementById('statRow').innerHTML=p.stats.map(function(s){return '<div class="st"><div class="v">'+s[0]+(s[1]?'<small>'+s[1]+'</small>':'')+'</div><div class="k">'+s[2]+'</div></div>';}).join('');
+    // care
+    document.getElementById('careList').innerHTML=p.care.map(function(c){
+      return '<div class="crow" data-t="'+c.t+'"><span class="ci">'+ICON[c.ic]+'</span><div class="cc"><div class="c1">'+c.c1+'</div><div class="c2">'+c.c2+'</div></div><span class="cs '+c.s+'">'+c.st+'</span></div>';
+    }).join('');
+    // timeline
+    document.getElementById('tlList').innerHTML=p.tl.map(function(it){
+      var tag=it.tag?'<span class="tag '+it.tag[0]+'">'+it.tag[1]+'</span><span>·</span>':'';
+      return '<div class="ti"><div class="rail"><span class="dot '+it.d+'"></span></div><div class="tc" data-t="'+it.t+'"><div class="r1">'+it.r1+'</div><div class="r2">'+tag+'<span class="src">'+it.src+'</span><span>·</span><span>'+it.when+'</span></div></div></div>';
+    }).join('');
+    document.getElementById('moreRec').textContent='全部 '+p.recCount+' 条';
+    // rebind taps
+    document.querySelectorAll('#careList .crow, #tlList .tc').forEach(function(el){ el.onclick=function(){ showToast(el.dataset.t); }; });
+    renderSwitcher();
+  }
+
+  render();
+
+  document.querySelectorAll('[data-go]').forEach(function(t){t.onclick=function(){location.href=t.dataset.go==='triage'?TRIAGE:(t.dataset.go==='ask'?ASK:HOME);};});
+  document.getElementById('editBtn').onclick=function(){location.href=EDIT+'?pet='+active;};
+  document.getElementById('cameraBtn').onclick=function(){location.href=EDIT+'?pet='+active;};
+  document.getElementById('moreCare').onclick=function(){showToast('管理疫苗 / 驱虫 / 绝育计划');};
+  document.getElementById('moreRec').onclick=function(){showToast('查看全部健康记录');};
+  document.getElementById('addRec').onclick=function(){showToast('手动记录一次状态 / 用药 / 体重');};
+</script>
+</body>
+</html>

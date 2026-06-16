@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小猫怎么了 · 首页(引导版)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="variations/shared.css">
+<style>
+  body{background:radial-gradient(130% 90% at 50% 0%,#f0ece4,#e4e0d7);display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;}
+  .device-wrap{transform-origin:center center;}
+  .device{width:390px;height:844px;border-radius:46px;background:#111014;padding:11px;box-shadow:0 44px 90px -34px rgba(45,35,25,.55),0 0 0 1px rgba(0,0,0,.5);position:relative;}
+  .device::before{content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#111014;border-radius:0 0 18px 18px;z-index:50;}
+
+  .phone{border-radius:36px;background:linear-gradient(180deg,#f5e6d6,#f1dcc6 40%,var(--bg) 70%);}
+  .statusbar{position:absolute;top:0;left:0;right:0;}
+
+  .stage{position:relative;flex:1;overflow:hidden;}
+  .yard{position:absolute;inset:0;width:100%;height:100%;border-radius:0;box-shadow:none;background:linear-gradient(180deg,#f6e8d8 0%,#f1dcc6 50%);}
+  .yard .floor{height:34%;}
+  .yard .window{top:78px;left:150px;width:96px;height:108px;}
+
+  .float-greet{position:absolute;top:58px;left:20px;z-index:8;display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.5);-webkit-backdrop-filter:blur(10px) saturate(1.3);backdrop-filter:blur(10px) saturate(1.3);padding:7px 14px 7px 8px;border-radius:30px;box-shadow:0 6px 16px rgba(120,90,60,.14),inset 0 0 0 1px rgba(255,255,255,.6);}
+  .float-greet .avatar{width:38px;height:38px;box-shadow:inset 0 0 0 2px #fff;}
+  .float-greet .fg-t .hi{font-family:var(--serif);font-weight:600;font-size:15px;letter-spacing:.2px;line-height:1.1;}
+  .float-greet .fg-t .meta{font-size:11px;color:var(--ink-soft);margin-top:1px;}
+
+  /* help + pills column, top-right */
+  .help-btn{position:absolute;top:58px;right:18px;z-index:9;width:34px;height:34px;border-radius:50%;cursor:pointer;background:rgba(255,255,255,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 4px 12px rgba(120,90,60,.16),inset 0 0 0 1px rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;color:var(--terra);font-family:var(--serif);font-weight:700;font-size:16px;transition:transform .14s ease;}
+  .help-btn:active{transform:scale(.9);}
+  .pills{position:absolute;top:102px;right:18px;z-index:8;flex-direction:column;align-items:flex-end;}
+  .bubble{left:116px;bottom:222px;max-width:168px;}
+  .cat-walk{bottom:150px;left:130px;z-index:6;cursor:pointer;}
+
+  .care-float{position:absolute;left:20px;bottom:118px;z-index:7;display:flex;gap:10px;}
+  .care-float .care-item{width:52px;height:52px;border-radius:15px;}
+  .care-float .care-item svg{transform:scale(.86);}
+
+  .sheet{position:relative;z-index:9;flex:none;margin-top:-30px;background:var(--bg);border-radius:28px 28px 0 0;padding:16px 20px 6px;box-shadow:0 -10px 30px rgba(60,45,30,.1);}
+  .sheet .grab{width:38px;height:4px;border-radius:3px;background:#e0dcd2;margin:0 auto 14px;}
+  .cta{width:100%;border:none;cursor:pointer;background:linear-gradient(180deg,#bd6258,var(--terra) 42%,var(--terra-deep));color:#fff;border-radius:20px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 12px 26px rgba(176,90,80,.34),inset 0 1px 0 rgba(255,255,255,.22);transition:transform .15s ease;font-family:var(--sans);}
+  .cta:active{transform:translateY(1px) scale(.992);}
+  .cta .cta-l{display:flex;align-items:center;gap:12px;}
+  .cta .ico{width:38px;height:38px;border-radius:12px;flex:none;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;}
+  .cta .tt{text-align:left;}
+  .cta .tt .t1{font-family:var(--serif);font-weight:600;font-size:18px;letter-spacing:.5px;}
+  .cta .tt .t2{display:flex;align-items:center;gap:7px;font-size:11.5px;opacity:.9;margin-top:3px;letter-spacing:.3px;}
+  .cta .tt .t2 .rgy i{width:7px;height:7px;box-shadow:0 0 0 2px rgba(255,255,255,.25);}
+  .record{margin-top:12px;background:var(--card);box-shadow:var(--soft-sm);cursor:pointer;}
+  /* secondary 问答 entry */
+  .ask{width:100%;margin-top:10px;border:none;cursor:pointer;background:var(--card);color:var(--ink);border-radius:18px;padding:12px 15px;display:flex;align-items:center;gap:11px;box-shadow:var(--soft-sm);transition:transform .15s ease;font-family:var(--sans);}
+  .ask:active{transform:scale(.99);}
+  .ask .aico{width:36px;height:36px;border-radius:12px;flex:none;background:var(--terra-tint);display:flex;align-items:center;justify-content:center;color:var(--terra);}
+  .ask .atx{flex:1;text-align:left;min-width:0;}
+  .ask .atx .a1{font-weight:600;font-size:14.5px;letter-spacing:.3px;}
+  .ask .atx .a2{font-size:11px;color:var(--ink-faint);margin-top:2px;letter-spacing:.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ask .ach{color:var(--ink-faint);flex:none;}
+
+  /* ===== Toast ===== */
+  .toast{position:absolute;left:50%;bottom:200px;transform:translateX(-50%) translateY(8px);z-index:60;background:rgba(26,26,24,.92);color:#fff;font-size:13px;letter-spacing:.3px;padding:11px 18px;border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .22s ease,transform .22s ease;max-width:280px;text-align:center;line-height:1.5;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ===== Onboarding overlay ===== */
+  .ob{position:absolute;inset:0;z-index:70;display:none;}
+  .ob.on{display:block;}
+
+  /* welcome card */
+  .welcome{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:0 26px;background:rgba(40,28,18,.34);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);}
+  .wc{background:var(--card);border-radius:28px;padding:30px 26px 24px;text-align:center;box-shadow:0 30px 70px -20px rgba(40,28,18,.5);width:100%;max-width:320px;opacity:1;animation:pop .42s cubic-bezier(.2,.9,.3,1.2);}
+  @keyframes pop{from{transform:scale(.92) translateY(10px);}to{transform:none;}}
+  .wc .mark{width:72px;height:72px;border-radius:24px;margin:0 auto 16px;background:radial-gradient(circle at 50% 38%,#f3c590,#e09b56 72%);position:relative;box-shadow:0 10px 24px -8px rgba(200,140,80,.6);overflow:hidden;}
+  .wc .mark .avatar{position:absolute;inset:9px;width:auto;height:auto;background:transparent;box-shadow:none;}
+  .wc .mark .avatar .a-face{background:#e8975170;}
+  .wc h2{font-family:var(--serif);font-weight:700;font-size:24px;letter-spacing:2px;}
+  .wc .tag{font-size:12.5px;color:var(--terra);font-weight:600;margin-top:7px;letter-spacing:.4px;}
+  .wc .desc{font-size:13.5px;color:var(--ink-soft);line-height:1.75;margin-top:14px;text-wrap:pretty;}
+  .wc .rgyrow{display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 4px;font-size:12px;color:var(--ink-faint);}
+  .wc .rgyrow .rgy i{width:8px;height:8px;}
+  .wc .acts{margin-top:18px;display:flex;flex-direction:column;gap:10px;}
+  .wc .b1{border:none;cursor:pointer;background:linear-gradient(180deg,#bd6258,var(--terra) 45%,var(--terra-deep));color:#fff;font-family:var(--sans);font-weight:600;font-size:15px;letter-spacing:1px;padding:14px;border-radius:16px;box-shadow:0 10px 22px rgba(176,90,80,.32);transition:transform .14s ease;}
+  .wc .b1:active{transform:scale(.97);}
+  .wc .b2{border:none;background:none;cursor:pointer;color:var(--ink-faint);font-family:var(--sans);font-size:13px;letter-spacing:.4px;padding:4px;}
+
+  /* coach spotlight */
+  .coach{position:absolute;inset:0;display:none;}
+  .coach.on{display:block;}
+  .dim{position:absolute;background:rgba(34,24,16,.6);transition:all .35s cubic-bezier(.3,.8,.3,1);}
+  .spot{position:absolute;border-radius:18px;transition:all .35s cubic-bezier(.3,.8,.3,1);pointer-events:none;}
+  .spot::after{content:"";position:absolute;inset:-3px;border-radius:inherit;border:2px solid rgba(255,255,255,.85);animation:halo 1.6s ease-in-out infinite;}
+  @keyframes halo{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.35);}50%{box-shadow:0 0 0 7px rgba(255,255,255,0);}}
+  .tip{position:absolute;background:var(--card);border-radius:18px;padding:16px 17px 14px;width:248px;box-shadow:0 20px 44px -14px rgba(40,28,18,.5);transition:all .35s cubic-bezier(.3,.8,.3,1);}
+  .tip .tnum{font-size:11px;color:var(--terra);font-weight:700;letter-spacing:1px;}
+  .tip h3{font-family:var(--serif);font-weight:600;font-size:16.5px;margin-top:5px;letter-spacing:.4px;}
+  .tip p{font-size:13px;color:var(--ink-soft);line-height:1.7;margin-top:7px;text-wrap:pretty;}
+  .tip .trow{display:flex;align-items:center;justify-content:space-between;margin-top:15px;}
+  .tip .dots{display:flex;gap:6px;}
+  .tip .dots i{width:6px;height:6px;border-radius:50%;background:#e1ddd3;transition:background .2s,width .2s;}
+  .tip .dots i.on{background:var(--terra);width:16px;border-radius:3px;}
+  .tip .tbtns{display:flex;align-items:center;gap:12px;}
+  .tip .skip{border:none;background:none;cursor:pointer;color:var(--ink-faint);font-size:12.5px;font-family:var(--sans);white-space:nowrap;}
+  .tip .next{border:none;cursor:pointer;background:var(--terra);color:#fff;font-family:var(--sans);font-weight:600;font-size:13.5px;letter-spacing:.5px;padding:9px 16px;border-radius:12px;transition:transform .14s;white-space:nowrap;}
+  .tip .next:active{transform:scale(.95);}
+  .tip .arrow{position:absolute;width:14px;height:14px;background:var(--card);transform:rotate(45deg);}
+</style>
+</head>
+<body>
+  <div class="device-wrap" id="wrap">
+  <div class="device">
+  <div class="phone" data-screen-label="C引导版首页">
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <span class="sb-right">
+        <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#1a1a18"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 11.2 1 4.3a10.6 10.6 0 0 1 15 0L8.5 11.2Z" fill="#1a1a18"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13"><rect x="1" y="1" width="21" height="11" rx="3.2" fill="none" stroke="#1a1a18" stroke-opacity=".4" stroke-width="1"/><rect x="2.6" y="2.6" width="16" height="7.8" rx="2" fill="#1a1a18"/><rect x="23.4" y="4" width="1.8" height="5" rx="1" fill="#1a1a18" fill-opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="stage">
+      <div class="yard">
+        <div class="sun"></div>
+        <div class="window"><span class="cloud"></span></div>
+        <div class="floor"></div>
+      </div>
+
+      <div class="float-greet">
+        <div class="avatar"><span class="a-ear l"></span><span class="a-ear r"></span><span class="a-face"></span><span class="a-stripe"></span><span class="a-stripe s2"></span><span class="a-stripe s3"></span><span class="a-eye l"></span><span class="a-eye r"></span><span class="a-nose"></span></div>
+        <div class="fg-t"><div class="hi">早上好,哈基米</div><div class="meta">6个月 · 母 · 橘猫</div></div>
+      </div>
+
+      <div class="help-btn" id="helpBtn">?</div>
+
+      <div class="pills">
+        <div class="pill primary" data-act="看病"><span class="dot"></span>看病</div>
+        <div class="pill alt" data-act="问答"><span class="dot"></span>问答</div>
+        <div class="pill alt" data-act="小知识"><span class="dot"></span>小知识</div>
+      </div>
+
+      <div class="rug" style="bottom:120px;"></div>
+      <div class="bed" style="left:150px;bottom:114px;"></div>
+      <div class="box" style="bottom:124px;"><span class="b-flap l"></span><span class="b-flap r"></span><span class="b-body"></span><span class="b-open"></span></div>
+      <div class="yarn" style="bottom:124px;left:200px;"></div>
+
+      <div class="bubble" id="catBubble">拿不准?直接问我 <span class="go">→</span></div>
+      <div class="cat-walk" id="cat"><div class="cat"><span class="cat-shadow"></span><span class="c-tail"><i class="tstripe t1"></i><i class="tstripe t2"></i><i class="tstripe t3"></i></span><span class="c-leg back"></span><span class="c-leg front"></span><span class="c-body"><i class="bstripe s1"></i><i class="bstripe s2"></i><i class="bstripe s3"></i></span><span class="c-belly"></span><span class="c-head"><span class="c-ear l"><i></i></span><span class="c-ear r"><i></i></span><span class="c-cheek"></span><i class="c-hstripe"></i><i class="c-hstripe h2"></i><i class="c-hstripe h3"></i><span class="c-eye l"></span><span class="c-eye r"></span><span class="c-nose"></span><span class="c-mouth"></span></span></div></div>
+
+      <div class="care-float" id="careRow">
+        <div class="care-item" data-act="梳子"><svg width="30" height="30" viewBox="0 0 32 32" fill="none"><rect x="9" y="3" width="14" height="13" rx="6.5" fill="#e9b27e" stroke="#cf8a4e" stroke-width="1.3"/><g stroke="#b9763c" stroke-width="1.4" stroke-linecap="round"><path d="M12 8v3M16 7.5v3.5M20 8v3"/></g><rect x="14.5" y="15" width="3" height="13" rx="1.5" fill="#d99a5c"/><circle cx="16" cy="25" r="1.6" fill="#fff"/></svg></div>
+        <div class="care-item" data-act="水"><svg width="26" height="30" viewBox="0 0 26 32" fill="none"><rect x="7" y="9" width="12" height="20" rx="3" fill="#d9ecf0" stroke="#a9cdd6" stroke-width="1.3"/><rect x="9.5" y="3.5" width="7" height="6" rx="1.6" fill="#cfe6ec" stroke="#a9cdd6" stroke-width="1.2"/><rect x="8.5" y="16" width="9" height="11" rx="2" fill="#bfe0e8"/></svg></div>
+        <div class="care-item" data-act="逗猫棒"><svg width="28" height="30" viewBox="0 0 30 32" fill="none"><path d="M7 28 L20 8" stroke="#caa06a" stroke-width="2" stroke-linecap="round"/><path d="M20 8c1-3 4-4 6-3-1 2-1 4-3 5M20 8c2-2 2-5 1-6-2 1-3 3-3 5M20 8c-2 0-4 2-4 4 2 0 4-1 5-3" fill="#e08a7e" opacity=".9"/><circle cx="20" cy="8" r="2.2" fill="#b05a50"/></svg></div>
+      </div>
+    </div>
+
+    <div class="sheet">
+      <div class="grab"></div>
+      <button class="cta" id="ctaBtn">
+        <span class="cta-l">
+          <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 3v5a4 4 0 0 0 8 0V3"/><path d="M4.8 3h-1M12.8 3h1"/><path d="M8.8 12v3a5 5 0 0 0 10 0v-2"/><circle cx="18.8" cy="11" r="2.2"/></svg></span>
+          <span class="tt"><span class="t1">猫不对劲?选症状看病</span><span class="t2"><span class="rgy"><i class="r"></i><i class="y"></i><i class="g"></i></span>30 秒红黄绿就医建议</span></span>
+        </span>
+        <span class="arrow"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="ask" id="askBtn" data-act="问答">
+        <span class="aico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10H10l-4 3.2V15.5H4z"/><circle cx="9" cy="10.5" r=".4" fill="currentColor"/><circle cx="12" cy="10.5" r=".4" fill="currentColor"/><circle cx="15" cy="10.5" r=".4" fill="currentColor"/></svg></span>
+        <span class="atx"><span class="a1">问问哈基米</span><span class="a2">喂养 · 习性 · 拿不准的病情,都能问</span></span>
+        <span class="ach"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <div class="record" id="recordRow">
+        <span class="tier g"><i></i></span>
+        <div class="rc">
+          <div class="r1">打喷嚏几声,精神食欲都正常</div>
+          <div class="r2"><span class="tag g">绿档 · 先观察</span><span>·</span><span>今天 08:12</span></div>
+        </div>
+        <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
+
+    <div class="tabbar">
+      <div class="tab on" data-act="首页"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3.5l9 7"/><path d="M5.2 9v10.5h13.6V9"/></svg></span><span>首页</span></div>
+      <div class="tab" data-act="分诊"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5V6h6V3.5"/><path d="M8.5 11h7M8.5 15h4"/></svg></span><span>分诊</span></div>
+      <div class="tab" data-act="问答"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v11H9l-4 3.5v-3.5H4z"/><path d="M8.5 10h7M8.5 13h4"/></svg></span><span>问答</span></div>
+      <div class="tab" data-act="毛孩子"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8.5" r="2"/><circle cx="16" cy="8.5" r="2"/><circle cx="5" cy="13" r="1.7"/><circle cx="19" cy="13" r="1.7"/><path d="M12 12c-2.6 0-4.5 2-4.5 4.2 0 1.5 1.2 2.3 2.6 2.3 .9 0 1.3-.4 1.9-.4s1 .4 1.9.4c1.4 0 2.6-.8 2.6-2.3C16 14 14.6 12 12 12Z"/></svg></span><span>毛孩子</span></div>
+    </div>
+
+    <!-- Onboarding overlay -->
+    <div class="ob" id="ob">
+      <!-- welcome -->
+      <div class="welcome" id="welcome">
+        <div class="wc">
+          <div class="mark"><div class="avatar"><span class="a-ear l"></span><span class="a-ear r"></span><span class="a-face"></span><span class="a-eye l"></span><span class="a-eye r"></span><span class="a-nose"></span></div></div>
+          <h2>小猫怎么了</h2>
+          <div class="tag">猫咪健康分诊 · AI 问答陪伴</div>
+          <p class="desc">猫不对劲?选几个症状,30 秒给你红黄绿就医建议。喂养、习性、拿不准的事,随口问它。平时,它就是陪着你的那只小猫。</p>
+          <div class="rgyrow"><span class="rgy"><i class="r"></i><i class="y"></i><i class="g"></i></span>红黄绿三档 · 从「尽快就医」到「先观察」</div>
+          <div class="acts">
+            <button class="b1" id="tourBtn">看看怎么用</button>
+            <button class="b2" id="skipWelcome">直接开始</button>
+          </div>
+        </div>
+      </div>
+      <!-- coach -->
+      <div class="coach" id="coach">
+        <div class="dim" id="dimT"></div><div class="dim" id="dimB"></div><div class="dim" id="dimL"></div><div class="dim" id="dimR"></div>
+        <div class="spot" id="spot"></div>
+        <div class="tip" id="tip">
+          <div class="tnum" id="tnum">第 1 步 / 共 3 步</div>
+          <h3 id="thead"></h3>
+          <p id="tbody"></p>
+          <div class="trow">
+            <div class="dots" id="dots"><i class="on"></i><i></i><i></i></div>
+            <div class="tbtns"><button class="skip" id="skipTour">跳过</button><button class="next" id="nextStep">下一步</button></div>
+          </div>
+          <div class="arrow" id="tarrow"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+  </div>
+  </div>
+
+<script>
+  // ---- fit device to viewport ----
+  function fit(){
+    var wrap=document.getElementById('wrap');
+    var s=Math.min(1,(window.innerHeight-32)/844,(window.innerWidth-32)/390);
+    wrap.style.transform='scale('+s+')';
+  }
+  window.addEventListener('resize',fit); fit();
+
+  // ---- toast ----
+  var toast=document.getElementById('toast'), toastT;
+  function showToast(msg){
+    toast.textContent=msg; toast.classList.add('show');
+    clearTimeout(toastT); toastT=setTimeout(function(){toast.classList.remove('show');},1900);
+  }
+
+  // ---- demo interactions ----
+  var hints={
+    '看病':'进入分诊 · 选症状,给你红黄绿建议',
+    '聊天':'和哈基米聊天,记录它今天的状态',
+    '小知识':'小知识 · 新手养猫每天该喂多少水?',
+    '梳子':'长按可以把梳子拖给哈基米梳毛',
+    '水':'长按把水拖到碗上,记一次喝水',
+    '逗猫棒':'长按拖动逗猫棒,陪它玩一会儿',
+    '首页':'当前就在首页 · 哈基米的院子',
+    '分诊':'分诊 · 按症状一步步排查',
+    '问答':'问答 · 喂养 / 习性 / 病情都能问哈基米',
+    '毛孩子':'毛孩子 · 哈基米的档案与健康记录'
+  };
+  var TRIAGE='分诊.html', ASK='问答.html', PET='毛孩子.html';
+  var NAV={'看病':TRIAGE,'分诊':TRIAGE,'问答':ASK,'毛孩子':PET};
+  document.querySelectorAll('[data-act]').forEach(function(el){
+    el.addEventListener('click',function(){
+      if(document.getElementById('ob').classList.contains('on'))return;
+      var dest=NAV[el.dataset.act];
+      if(dest){ location.href=dest; return; }
+      showToast(hints[el.dataset.act]||'');
+    });
+  });
+  function chat(){ if(document.getElementById('ob').classList.contains('on'))return; location.href=ASK; }
+  document.getElementById('cat').addEventListener('click',chat);
+  document.getElementById('catBubble').addEventListener('click',chat);
+  document.getElementById('ctaBtn').addEventListener('click',function(){ if(document.getElementById('ob').classList.contains('on'))return; location.href=TRIAGE; });
+  document.getElementById('recordRow').addEventListener('click',function(){ showToast('查看这条记录的详情与建议'); });
+
+  // ---- onboarding ----
+  var KEY='kitten_c_onboarded_v1';
+  var ob=document.getElementById('ob'), welcome=document.getElementById('welcome'), coach=document.getElementById('coach');
+  var spot=document.getElementById('spot'), tip=document.getElementById('tip'), tarrow=document.getElementById('tarrow');
+  var cat=document.getElementById('cat');
+
+  var steps=[
+    {sel:'.cta', title:'拿不准?先做分诊', body:'选几个症状,30 秒给你红 / 黄 / 绿三档建议——该不该去医院,一眼明白。', place:'above'},
+    {sel:'#askBtn', title:'还想多问,就问它', body:'喂养、习性、行为、拿不准的病情都能问哈基米;刚做完的分诊结果,也能带着继续追问。', place:'above'},
+    {sel:'#cat', title:'它一直陪着你', body:'平时哈基米在院子里溜达陪你;身体出现异常,它也会主动在这儿提醒你。', place:'below'}
+  ];
+  var step=0;
+
+  function localRect(el){
+    var phone=document.querySelector('.phone');
+    var pr=phone.getBoundingClientRect();
+    var scale=pr.width/phone.offsetWidth; // accounts for device-wrap scaling
+    var r=el.getBoundingClientRect();
+    return {left:(r.left-pr.left)/scale, top:(r.top-pr.top)/scale, width:r.width/scale, height:r.height/scale};
+  }
+
+  function renderStep(){
+    var st=steps[step];
+    var el=document.querySelector(st.sel);
+    var r=localRect(el);
+    var pad=st.sel==='#cat'?10:8;
+    var sx=Math.max(8,r.left-pad), sy=Math.max(8,r.top-pad);
+    var sw=r.width+pad*2, sh=r.height+pad*2;
+    spot.style.left=sx+'px'; spot.style.top=sy+'px'; spot.style.width=sw+'px'; spot.style.height=sh+'px';
+
+    // 4-panel dim around the spotlight
+    var H=document.querySelector('.phone').offsetHeight, W=390;
+    function setDim(id,l,t,w,h){var e=document.getElementById(id);e.style.left=l+'px';e.style.top=t+'px';e.style.width=Math.max(0,w)+'px';e.style.height=Math.max(0,h)+'px';}
+    setDim('dimT',0,0,W,sy);
+    setDim('dimB',0,sy+sh,W,H-(sy+sh));
+    setDim('dimL',0,sy,sx,sh);
+    setDim('dimR',sx+sw,sy,W-(sx+sw),sh);
+
+    document.getElementById('tnum').textContent='第 '+(step+1)+' 步 / 共 '+steps.length+' 步';
+    document.getElementById('thead').textContent=st.title;
+    document.getElementById('tbody').textContent=st.body;
+    document.querySelectorAll('#dots i').forEach(function(d,i){ d.classList.toggle('on',i===step); });
+    document.getElementById('nextStep').textContent = step===steps.length-1 ? '开始体验' : '下一步';
+
+    // position tip
+    var tipW=248, tipH=tip.offsetHeight||150, margin=14;
+    var cx=sx+sw/2;
+    var tl=Math.min(390-tipW-14, Math.max(14, cx-tipW/2));
+    var tt;
+    if(st.place==='above'){ tt=sy-tipH-margin; tarrow.style.top='auto'; tarrow.style.bottom='-7px'; }
+    else { tt=sy+sh+margin; tarrow.style.bottom='auto'; tarrow.style.top='-7px'; }
+    tip.style.left=tl+'px'; tip.style.top=tt+'px';
+    tarrow.style.left=Math.min(tipW-26, Math.max(14, cx-tl-7))+'px';
+  }
+
+  function startTour(){
+    welcome.style.display='none'; coach.classList.add('on'); ob.classList.add('on');
+    cat.style.animationPlayState='paused';
+    step=0; setTimeout(renderStep,30);
+  }
+  function endOb(){
+    ob.classList.remove('on'); coach.classList.remove('on');
+    cat.style.animationPlayState='running';
+    try{localStorage.setItem(KEY,'1');}catch(e){}
+  }
+  function openWelcome(){
+    welcome.style.display='flex'; coach.classList.remove('on'); ob.classList.add('on');
+    cat.style.animationPlayState='paused';
+  }
+
+  document.getElementById('tourBtn').addEventListener('click',startTour);
+  document.getElementById('skipWelcome').addEventListener('click',endOb);
+  document.getElementById('skipTour').addEventListener('click',endOb);
+  document.getElementById('nextStep').addEventListener('click',function(){
+    if(step<steps.length-1){ step++; renderStep(); } else { endOb(); showToast('随时点右上角的「?」再看一遍'); }
+  });
+  document.getElementById('helpBtn').addEventListener('click',openWelcome);
+  window.addEventListener('resize',function(){ if(coach.classList.contains('on')) renderStep(); });
+
+  // first run
+  var seen=false; try{seen=localStorage.getItem(KEY)==='1';}catch(e){}
+  if(!seen){ cat.style.animationPlayState='paused'; ob.classList.add('on'); }
+  else { ob.classList.remove('on'); }
+</script>
+</body>
+</html>

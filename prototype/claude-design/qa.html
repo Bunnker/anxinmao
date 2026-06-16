@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小猫怎么了 · 问答</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="variations/shared.css">
+<style>
+  body{background:radial-gradient(130% 90% at 50% 0%,#f0ece4,#e4e0d7);display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;}
+  .device-wrap{transform-origin:center center;}
+  .device{width:390px;height:844px;border-radius:46px;background:#111014;padding:11px;box-shadow:0 44px 90px -34px rgba(45,35,25,.55),0 0 0 1px rgba(0,0,0,.5);position:relative;}
+  .device::before{content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#111014;border-radius:0 0 18px 18px;z-index:50;}
+  .phone{border-radius:36px;background:var(--bg);}
+
+  .navbar{flex:none;display:flex;align-items:center;gap:10px;padding:2px 18px 8px;}
+  .navbar .back{width:38px;height:38px;border-radius:50%;background:var(--card);box-shadow:var(--soft-sm);display:flex;align-items:center;justify-content:center;color:var(--ink-soft);cursor:pointer;flex:none;transition:transform .14s;}
+  .navbar .back:active{transform:scale(.92);}
+  .navbar .nb-t{font-family:var(--serif);font-weight:600;font-size:16px;letter-spacing:.5px;}
+  .navbar .nb-pet{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-soft);margin-left:auto;background:var(--card);padding:5px 11px 5px 6px;border-radius:20px;box-shadow:var(--soft-sm);}
+  .navbar .nb-pet .avatar{width:24px;height:24px;}
+
+  .screen{padding:2px 20px 18px;display:flex;flex-direction:column;}
+
+  /* empty state */
+  .empty .es-card{background:var(--card);border-radius:24px;padding:22px 20px;box-shadow:var(--soft);}
+  .empty h1{font-family:var(--serif);font-weight:600;font-size:23px;line-height:1.35;letter-spacing:.4px;text-wrap:pretty;}
+  .empty h1 .q{color:var(--terra);}
+  .empty .scope{font-size:13px;color:var(--ink-soft);line-height:1.7;margin-top:11px;}
+  .empty .disc{font-size:11.5px;color:var(--ink-faint);margin-top:9px;display:flex;align-items:center;gap:6px;}
+
+  .chips{display:flex;gap:8px;margin:18px 0 12px;overflow-x:auto;padding-bottom:2px;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{flex:none;padding:8px 15px;border-radius:20px;font-size:13px;font-weight:500;color:var(--ink-soft);background:var(--card);box-shadow:var(--soft-sm);cursor:pointer;border:1.5px solid transparent;transition:all .14s;}
+  .chip.on{background:var(--terra);color:#fff;border-color:var(--terra);box-shadow:0 6px 14px rgba(176,90,80,.28);}
+
+  .sgroup .glabel{font-size:11.5px;color:var(--ink-faint);letter-spacing:1px;margin:6px 2px 9px;display:flex;align-items:center;gap:7px;}
+  .sg-list{display:flex;flex-direction:column;gap:9px;}
+  .qrow{display:flex;align-items:center;gap:11px;background:var(--card);border-radius:15px;padding:14px 15px;box-shadow:var(--soft-sm);cursor:pointer;transition:transform .14s;}
+  .qrow:active{transform:scale(.99);}
+  .qrow .qtag{font-size:10px;font-weight:600;padding:3px 7px;border-radius:7px;flex:none;letter-spacing:.3px;white-space:nowrap;}
+  .qrow .qtag.health{color:var(--terra);background:var(--terra-tint);}
+  .qrow .qtag.you{color:var(--risk-green);background:#e3f0e8;}
+  .qrow .qt{flex:1;font-size:14px;letter-spacing:.2px;line-height:1.4;}
+  .qrow .qa{color:var(--ink-faint);flex:none;}
+
+  .history{margin-top:18px;}
+  .history .hrow{display:flex;align-items:center;gap:9px;padding:11px 4px;font-size:13px;color:var(--ink-soft);cursor:pointer;border-bottom:1px solid var(--line);}
+  .history .hrow:last-child{border-bottom:none;}
+  .history .hrow .clock{color:var(--ink-faint);flex:none;}
+  .history .hrow .ht{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .history .hrow .when{font-size:11px;color:var(--ink-faint);flex:none;}
+
+  .triage-link{margin-top:18px;display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:16px;padding:14px 16px;box-shadow:var(--soft-sm);cursor:pointer;}
+  .triage-link .tl-l{font-size:13.5px;color:var(--ink-soft);}
+  .triage-link .tl-go{color:var(--terra);font-weight:600;font-size:13.5px;display:flex;align-items:center;gap:5px;}
+
+  /* thread */
+  .thread{display:none;flex-direction:column;gap:14px;padding-bottom:6px;}
+  .ctx{align-self:center;display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-soft);background:var(--card);padding:7px 13px;border-radius:20px;box-shadow:var(--soft-sm);}
+  .ctx .dot{width:7px;height:7px;border-radius:50%;}
+  .ctx .dot.r{background:var(--risk-red);}
+  .bub-u{align-self:flex-end;max-width:80%;background:linear-gradient(180deg,#bd6258,var(--terra));color:#fff;border-radius:18px 18px 6px 18px;padding:12px 15px;font-size:14px;line-height:1.5;box-shadow:0 6px 14px rgba(176,90,80,.24);}
+  .ans{align-self:flex-start;max-width:90%;background:var(--card);border-radius:18px 18px 18px 6px;padding:15px 16px;box-shadow:var(--soft-sm);}
+  .ans .er{display:flex;gap:9px;align-items:flex-start;background:#fdecea;border-radius:12px;padding:11px 12px;margin-bottom:12px;}
+  .ans .er .ei{color:var(--risk-red);flex:none;margin-top:1px;}
+  .ans .er .et b{color:var(--risk-red);font-weight:700;font-size:13.5px;}
+  .ans .er .et p{font-size:12px;color:#8a3a32;margin-top:2px;line-height:1.5;}
+  .ans .er .ego{margin-top:8px;display:inline-flex;align-items:center;gap:5px;background:var(--risk-red);color:#fff;font-size:12px;font-weight:600;padding:7px 12px;border-radius:10px;cursor:pointer;}
+  .ans .lead{font-size:14.5px;font-weight:600;line-height:1.55;letter-spacing:.2px;display:flex;gap:8px;align-items:flex-start;}
+  .ans .lead .lchip{font-size:10px;font-weight:700;color:#fff;padding:3px 7px;border-radius:7px;flex:none;margin-top:2px;}
+  .ans .lead .lchip.g{background:var(--risk-green);}
+  .ans .lead .lchip.y{background:var(--risk-yellow);}
+  .ans .pts{margin-top:11px;display:flex;flex-direction:column;gap:8px;}
+  .ans .pt{font-size:13px;color:var(--ink-soft);line-height:1.6;padding-left:15px;position:relative;}
+  .ans .pt::before{content:"";position:absolute;left:2px;top:8px;width:5px;height:5px;border-radius:50%;background:var(--terra);opacity:.6;}
+  .ans .when{margin-top:11px;font-size:12.5px;color:var(--ink);background:var(--bg);border-radius:11px;padding:10px 12px;line-height:1.55;}
+  .ans .when b{color:var(--risk-red);}
+  .ans .src{margin-top:10px;font-size:10.5px;color:var(--ink-faint);line-height:1.5;}
+  .ans .handoff{margin-top:12px;width:100%;border:none;cursor:pointer;background:var(--terra-tint);color:var(--terra);border-radius:12px;padding:11px;font-family:var(--sans);font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;gap:7px;transition:transform .14s;}
+  .ans .handoff:active{transform:scale(.98);}
+  .typing{align-self:flex-start;background:var(--card);border-radius:16px;padding:14px 17px;box-shadow:var(--soft-sm);display:flex;gap:5px;}
+  .typing i{width:7px;height:7px;border-radius:50%;background:var(--ink-faint);animation:tb 1.2s ease-in-out infinite;}
+  .typing i:nth-child(2){animation-delay:.18s;}
+  .typing i:nth-child(3){animation-delay:.36s;}
+  @keyframes tb{0%,60%,100%{opacity:.3;transform:translateY(0);}30%{opacity:1;transform:translateY(-4px);}}
+
+  /* composer */
+  .composer{flex:none;padding:8px 16px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(180deg,rgba(247,246,243,0),var(--bg) 30%);}
+  .cbar{display:flex;align-items:center;gap:9px;background:var(--card);border-radius:24px;padding:7px 8px 7px 14px;box-shadow:0 6px 18px rgba(60,45,30,.1);}
+  .cbar .ic{width:34px;height:34px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;color:var(--ink-faint);cursor:pointer;}
+  .cbar input{flex:1;border:none;outline:none;background:none;font-family:var(--sans);font-size:14px;color:var(--ink);min-width:0;}
+  .cbar input::placeholder{color:var(--ink-faint);}
+  .cbar .send{width:38px;height:38px;border-radius:50%;flex:none;background:linear-gradient(180deg,#bd6258,var(--terra));display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 10px rgba(176,90,80,.35);transition:transform .14s;}
+  .cbar .send:active{transform:scale(.9);}
+
+  .toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%) translateY(8px);z-index:60;background:rgba(26,26,24,.92);color:#fff;font-size:12.5px;padding:10px 16px;border-radius:13px;opacity:0;pointer-events:none;transition:all .22s;max-width:260px;text-align:center;line-height:1.5;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+  <div class="device-wrap" id="wrap">
+  <div class="device">
+  <div class="phone" data-screen-label="问答页">
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <span class="sb-right">
+        <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#1a1a18"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 11.2 1 4.3a10.6 10.6 0 0 1 15 0L8.5 11.2Z" fill="#1a1a18"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13"><rect x="1" y="1" width="21" height="11" rx="3.2" fill="none" stroke="#1a1a18" stroke-opacity=".4" stroke-width="1"/><rect x="2.6" y="2.6" width="16" height="7.8" rx="2" fill="#1a1a18"/><rect x="23.4" y="4" width="1.8" height="5" rx="1" fill="#1a1a18" fill-opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="navbar">
+      <div class="back" id="backBtn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></div>
+      <div class="nb-t">问哈基米</div>
+      <div class="nb-pet"><span class="avatar"><span class="a-ear l"></span><span class="a-ear r"></span><span class="a-face"></span><span class="a-eye l"></span><span class="a-eye r"></span><span class="a-nose"></span></span>6个月 · 母</div>
+    </div>
+
+    <div class="screen" id="screen">
+      <!-- empty state -->
+      <div class="empty" id="empty">
+        <div class="es-card">
+          <h1>关于哈基米,<span class="q">想问点什么?</span></h1>
+          <div class="scope">生病拿不准、喂养、训练、行为都能问 —— 急症我会直接让你去医院。</div>
+          <div class="disc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.5"/></svg>由 AI 解答,不替代兽医的面诊和检查</div>
+        </div>
+
+        <div class="chips" id="chips">
+          <div class="chip on" data-c="all">推荐</div>
+          <div class="chip" data-c="health">健康</div>
+          <div class="chip" data-c="feed">喂养</div>
+          <div class="chip" data-c="behave">行为</div>
+          <div class="chip" data-c="daily">日常</div>
+        </div>
+
+        <div class="sgroup">
+          <div class="glabel" id="glabel">为哈基米推荐</div>
+          <div class="sg-list" id="sgList"></div>
+        </div>
+
+        <div class="history">
+          <div class="glabel">最近问过</div>
+          <div class="hrow" data-q="幼猫驱虫多久做一次?"><span class="clock"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="ht">幼猫驱虫多久做一次?</span><span class="when">昨天</span></div>
+          <div class="hrow" data-q="猫一直舔毛是正常的吗?"><span class="clock"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="ht">猫一直舔毛是正常的吗?</span><span class="when">3 天前</span></div>
+        </div>
+
+        <div class="triage-link" id="triageLink">
+          <span class="tl-l">想要红黄绿分诊报告?</span>
+          <span class="tl-go">去分诊 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+        </div>
+      </div>
+
+      <!-- thread -->
+      <div class="thread" id="thread"></div>
+    </div>
+
+    <div class="composer">
+      <div class="cbar">
+        <span class="ic" id="camBtn" title="拍照"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h3l1.5-2h7L17 8.5h3v10H4z"/><circle cx="12" cy="13" r="3.2"/></svg></span>
+        <input id="cInput" placeholder="生病、喂养、行为…都能问">
+        <span class="ic" id="micBtn" title="语音"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3"/></svg></span>
+        <span class="send" id="sendBtn"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="tabbar">
+      <div class="tab" data-go="home"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3.5l9 7"/><path d="M5.2 9v10.5h13.6V9"/></svg></span><span>首页</span></div>
+      <div class="tab" data-go="triage"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5V6h6V3.5"/><path d="M8.5 11h7M8.5 15h4"/></svg></span><span>分诊</span></div>
+      <div class="tab on"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v11H9l-4 3.5v-3.5H4z"/><path d="M8.5 10h7M8.5 13h4"/></svg></span><span>问答</span></div>
+      <div class="tab" data-go="pet"><span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8.5" r="2"/><circle cx="16" cy="8.5" r="2"/><circle cx="5" cy="13" r="1.7"/><circle cx="19" cy="13" r="1.7"/><path d="M12 12c-2.6 0-4.5 2-4.5 4.2 0 1.5 1.2 2.3 2.6 2.3 .9 0 1.3-.4 1.9-.4s1 .4 1.9.4c1.4 0 2.6-.8 2.6-2.3C16 14 14.6 12 12 12Z"/></svg></span><span>毛孩子</span></div>
+    </div>
+  </div>
+  </div>
+  </div>
+
+<script>
+  var HOME='小猫怎么了 · 首页(C引导版).html', TRIAGE='分诊.html', PET='毛孩子.html';
+  function fit(){var w=document.getElementById('wrap');var s=Math.min(1,(innerHeight-32)/844,(innerWidth-32)/390);w.style.transform='scale('+s+')';}
+  addEventListener('resize',fit);fit();
+  document.getElementById('backBtn').onclick=function(){location.href=HOME;};
+  document.querySelectorAll('[data-go]').forEach(function(t){t.onclick=function(){var g=t.dataset.go;location.href=g==='triage'?TRIAGE:(g==='pet'?PET:HOME);};});
+  document.getElementById('triageLink').onclick=function(){location.href=TRIAGE;};
+
+  var toast=document.getElementById('toast'),tT;
+  function showToast(m){toast.textContent=m;toast.classList.add('show');clearTimeout(tT);tT=setTimeout(function(){toast.classList.remove('show');},1800);}
+  document.getElementById('camBtn').onclick=function(){showToast('拍下症状照片,我能看得更准');};
+  document.getElementById('micBtn').onclick=function(){showToast('松开说话 · 语音转文字');};
+
+  // suggested questions by category
+  var SUG={
+    health:[['health','打喷嚏好几天了,会自己好吗?','you'],['health','猫不太爱吃饭,要不要去医院?',''],['health','猫一直打喷嚏,要紧吗?','']],
+    feed:[['feed','幼猫一天喂几次、喂多少?',''],['feed','幼猫能不能喝牛奶?','']],
+    behave:[['behave','怎么让猫慢慢接受剪指甲?',''],['behave','猫总抓沙发怎么办?','']],
+    daily:[['daily','多久给猫梳一次毛?',''],['daily','猫砂多久彻底换一次?','']]
+  };
+  var LABS={all:'为哈基米推荐',health:'健康',feed:'喂养',behave:'行为',daily:'日常'};
+  function renderSug(cat){
+    var list=document.getElementById('sgList'); list.innerHTML='';
+    var items = cat==='all' ? [SUG.health[0],SUG.feed[0],SUG.behave[0],SUG.health[1]] : SUG[cat];
+    document.getElementById('glabel').textContent = cat==='all'?'为哈基米推荐':LABS[cat];
+    items.forEach(function(it){
+      var tag = it[2]==='you' ? '<span class="qtag you">和哈基米有关</span>' : (it[0]==='health'?'<span class="qtag health">健康</span>':'');
+      var row=document.createElement('div'); row.className='qrow'; row.dataset.q=it[1];
+      row.innerHTML=tag+'<span class="qt">'+it[1]+'</span><span class="qa"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>';
+      row.onclick=function(){ ask(it[1]); };
+      list.appendChild(row);
+    });
+  }
+  renderSug('all');
+  document.querySelectorAll('.chip').forEach(function(ch){
+    ch.onclick=function(){ document.querySelectorAll('.chip').forEach(function(x){x.classList.remove('on');}); ch.classList.add('on'); renderSug(ch.dataset.c); };
+  });
+  document.querySelectorAll('.hrow').forEach(function(h){ h.onclick=function(){ ask(h.dataset.q); }; });
+
+  // ---- answers ----
+  var ER_WORDS=['呼吸','喘','误食','尿不出','出血','便血','抽搐','倒下','不动','中毒'];
+  var ANS={
+    '打喷嚏好几天了,会自己好吗?':{chip:'g',lead:'单纯打喷嚏、精神食欲都正常,多数会自己好。',pts:['多为环境刺激或轻微上呼吸道,先观察 2–3 天。','保持环境不冷不干,减少粉尘、香薰刺激。','哈基米已免疫,风险更低,但幼猫仍要盯紧。'],when:'出现<b>黄绿色鼻涕、眼屎多、不吃、精神差</b>,或<b>张嘴呼吸</b>,就尽快就医。',handoff:true},
+    '猫不太爱吃饭,要不要去医院?':{chip:'y',lead:'要看「多久没好好吃」和有没有别的异常。',pts:['超过 24 小时几乎不吃,或同时精神差/呕吐 → 建议就医。','换粮、天热、应激也会短暂没胃口,可先观察。','猫长期不吃易得脂肪肝,别拖太久。'],when:'<b>连续 ≥ 24 小时不吃 + 精神差</b>,别等,去医院。',handoff:true},
+    '猫一直打喷嚏,要紧吗?':{chip:'g',lead:'偶尔打喷嚏多半不严重,关键看伴随症状。',pts:['只打喷嚏、能吃能玩 → 先观察。','伴随浓鼻涕、眼睛红、发烧 → 可能猫鼻支,建议就医。'],when:'<b>呼吸急促 / 张嘴喘 / 完全不吃</b> → 立刻就医。',handoff:true},
+    '幼猫一天喂几次、喂多少?':{chip:'',lead:'6 个月以内,少量多次最稳。',pts:['2–4 月龄约一天 4 顿;4–6 月龄 3 顿。','按幼猫粮包装上对应体重的量,别一次喂太多。','干粮可泡软更好消化,全天备好清水。'],when:'喂后反复呕吐 / 腹泻,或连续不吃 → 就医。',handoff:false},
+    '幼猫能不能喝牛奶?':{chip:'',lead:'不建议喝市售牛奶,很多猫乳糖不耐。',pts:['牛奶易致腹泻;要补奶用「猫专用羊奶/代乳」。','断奶后其实只需要干净的水。'],when:'喝奶后腹泻不止、脱水 → 就医。',handoff:false},
+    '怎么让猫慢慢接受剪指甲?':{chip:'',lead:'拆成小步 + 零食奖励,别硬按。',pts:['先只碰爪子给零食 → 轻按露出指甲不剪 → 一次只剪一两个。','挑它困倦放松的时候,剪完马上奖励。','只剪透明部分,避开粉色血线。'],when:'',handoff:false},
+    '猫总抓沙发怎么办?':{chip:'',lead:'不是使坏,是它需要磨爪和标记。',pts:['在沙发旁放猫抓板/柱,材质要它喜欢(剑麻、瓦楞)。','把它的爪印味留到抓板上,引导过去。','别打骂,改用零食奖励正确位置。'],when:'',handoff:false},
+    '多久给猫梳一次毛?':{chip:'',lead:'短毛一周 2–3 次,长毛最好每天。',pts:['换毛季加密,能减少毛球和误吞。','边梳边摸,顺便检查皮肤有没有红点、结痂。'],when:'',handoff:false},
+    '猫砂多久彻底换一次?':{chip:'',lead:'每天铲,整盆换看砂的类型。',pts:['结团砂:勤铲,1–2 周整体换并洗盆。','留意结团大小和颜色,是观察泌尿的好窗口。'],when:'<b>频繁进砂盆却尿不出</b> → 可能尿闭,立刻就医。',handoff:true}
+  };
+  function genericAns(q){
+    return {chip:'',lead:'我可以帮你一起理清这个问题。',pts:['说说哈基米的年龄、持续时间和具体表现,我能答得更准。','如果担心是身体出问题,做个分诊我会给你红黄绿建议。'],when:'',handoff:true};
+  }
+
+  var thread=document.getElementById('thread'), empty=document.getElementById('empty'), screen=document.getElementById('screen');
+  function toThread(){ empty.style.display='none'; thread.style.display='flex'; }
+  function scrollEnd(){ screen.scrollTop=screen.scrollHeight; }
+
+  function ask(q){
+    toThread();
+    var u=document.createElement('div'); u.className='bub-u'; u.textContent=q; thread.appendChild(u); scrollEnd();
+    var ty=document.createElement('div'); ty.className='typing'; ty.innerHTML='<i></i><i></i><i></i>'; thread.appendChild(ty); scrollEnd();
+    setTimeout(function(){ ty.remove(); renderAns(q); scrollEnd(); }, 750);
+  }
+
+  function isEmergency(q){ return ER_WORDS.some(function(w){return q.indexOf(w)>-1;}); }
+
+  function renderAns(q){
+    var a=ANS[q]||genericAns(q);
+    var er = isEmergency(q);
+    var html='<div class="ans">';
+    if(er){
+      html+='<div class="er"><span class="ei"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 9v5M12 17v.5"/></svg></span><span class="et"><b>这可能是急症</b><p>这类情况别在这儿耗时间,建议尽快联系就近的宠物医院 / 急诊。</p><span class="ego" id="erGo">去分诊 / 找医院 →</span></span></div>';
+    }
+    var chip = a.chip? '<span class="lchip '+a.chip+'">'+(a.chip==='g'?'偏绿':'偏黄')+'</span>':'';
+    html+='<div class="lead">'+chip+'<span>'+a.lead+'</span></div>';
+    html+='<div class="pts">'+a.pts.map(function(p){return '<div class="pt">'+p+'</div>';}).join('')+'</div>';
+    if(a.when) html+='<div class="when">什么时候要立刻就医:'+a.when+'</div>';
+    html+='<div class="src">由 AI 结合 Cornell / Merck / VCA 等资料整理,仅供参考,不替代兽医面诊。</div>';
+    if(a.handoff) html+='<button class="handoff" data-go="triage"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M9 3.5V6h6V3.5"/></svg>做个分诊更准 · 30 秒红黄绿 →</button>';
+    html+='</div>';
+    var wrap=document.createElement('div'); wrap.innerHTML=html; var node=wrap.firstChild; thread.appendChild(node);
+    var hb=node.querySelector('.handoff'); if(hb) hb.onclick=function(){location.href=TRIAGE;};
+    var eg=node.querySelector('#erGo'); if(eg) eg.onclick=function(){location.href=TRIAGE;};
+  }
+
+  // composer send
+  function send(){ var v=document.getElementById('cInput').value.trim(); if(!v)return; document.getElementById('cInput').value=''; ask(v); }
+  document.getElementById('sendBtn').onclick=send;
+  document.getElementById('cInput').addEventListener('keydown',function(e){ if(e.key==='Enter') send(); });
+
+  // came from triage with context
+  (function(){
+    var p=new URLSearchParams(location.search);
+    if(p.get('from')==='triage'){
+      var s=p.get('s')||'呼吸怪', t=p.get('t')||'red';
+      var tierTxt = t==='red'?'红档 · 建议尽快就医':(t==='yellow'?'黄档 · 留意':'绿档 · 先观察');
+      toThread();
+      var ctx=document.createElement('div'); ctx.className='ctx'; ctx.innerHTML='<span class="dot '+(t==='red'?'r':'')+'" style="'+(t!=='red'?'background:var(--risk-'+(t==='yellow'?'yellow':'green')+')':'')+'"></span>来自分诊:'+s+' · '+tierTxt; thread.appendChild(ctx);
+      var ty=document.createElement('div'); ty.className='typing'; ty.innerHTML='<i></i><i></i><i></i>'; thread.appendChild(ty); scrollEnd();
+      setTimeout(function(){
+        ty.remove();
+        var node=document.createElement('div'); node.className='ans';
+        node.innerHTML='<div class="lead"><span>关于刚才分诊出的「'+s+'」,你可以接着问我,比如下面这些 ——</span></div>'+
+          '<div class="pts"><div class="pt">在去医院前,我能先做点什么?</div><div class="pt">这种情况大概是什么原因?</div><div class="pt">需要带哪些信息给兽医?</div></div>'+
+          '<div class="src">已带上这次分诊的判级作为上下文,回答会更贴合哈基米的情况。</div>';
+        thread.appendChild(node); scrollEnd();
+      },700);
+    }
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小猫怎么了 · 编辑资料</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="variations/shared.css">
+<style>
+  body{background:radial-gradient(130% 90% at 50% 0%,#f0ece4,#e4e0d7);display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;}
+  .device-wrap{transform-origin:center center;}
+  .device{width:390px;height:844px;border-radius:46px;background:#111014;padding:11px;box-shadow:0 44px 90px -34px rgba(45,35,25,.55),0 0 0 1px rgba(0,0,0,.5);position:relative;}
+  .device::before{content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#111014;border-radius:0 0 18px 18px;z-index:50;}
+  .phone{border-radius:36px;background:var(--bg);}
+
+  .navbar{flex:none;display:flex;align-items:center;justify-content:space-between;padding:4px 20px 10px;}
+  .navbar .nb-side{font-size:15px;letter-spacing:.3px;cursor:pointer;min-width:48px;}
+  .navbar .cancel{color:var(--ink-soft);}
+  .navbar .save{color:var(--terra);font-weight:700;text-align:right;}
+  .navbar .nb-t{font-family:var(--serif);font-weight:600;font-size:17px;letter-spacing:.5px;}
+
+  .screen{padding:4px 20px 30px;}
+
+  /* photo */
+  .photo{display:flex;flex-direction:column;align-items:center;gap:11px;padding:8px 0 22px;}
+  .photo .avbig{position:relative;width:104px;height:104px;border-radius:34px;background:radial-gradient(circle at 50% 38%,#f3c590,#e2954f 76%);box-shadow:0 12px 26px -8px rgba(190,130,70,.55),inset 0 0 0 3px #fff;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .photo .avbig svg{width:86px;height:86px;}
+  .photo .avbig .cam{position:absolute;right:6px;bottom:6px;width:30px;height:30px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;color:var(--terra);box-shadow:0 3px 8px rgba(120,80,40,.34);}
+  .photo .change{font-size:13.5px;color:var(--terra);font-weight:600;cursor:pointer;letter-spacing:.3px;white-space:nowrap;}
+
+  /* form groups */
+  .glabel{font-size:11.5px;color:var(--ink-faint);letter-spacing:1px;margin:18px 4px 9px;}
+  .group{background:var(--card);border-radius:18px;box-shadow:var(--soft-sm);overflow:hidden;}
+  .row{display:flex;align-items:center;gap:12px;padding:0 16px;min-height:54px;border-bottom:1px solid var(--line);}
+  .row:last-child{border-bottom:none;}
+  .row .k{font-size:14.5px;color:var(--ink);flex:none;width:64px;letter-spacing:.3px;}
+  .row .v{flex:1;display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:0;overflow:hidden;}
+  .row input.tin{flex:1;border:none;outline:none;background:none;font-family:var(--sans);font-size:15px;color:var(--ink);text-align:right;min-width:0;}
+  .row input.tin::placeholder{color:var(--ink-faint);}
+  .row .val{font-size:15px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row .chev{color:var(--ink-faint);flex:none;}
+  .row.tap{cursor:pointer;}
+  .row.tap:active{background:rgba(0,0,0,.02);}
+
+  /* segmented */
+  .seg{display:flex;background:#ece7df;border-radius:11px;padding:3px;gap:3px;}
+  .seg button{border:none;cursor:pointer;font-family:var(--sans);font-size:13.5px;font-weight:500;color:var(--ink-soft);background:none;padding:7px 18px;border-radius:8px;transition:all .15s;white-space:nowrap;}
+  .seg button.on{background:#fff;color:var(--terra);font-weight:600;box-shadow:0 2px 6px rgba(60,45,30,.1);}
+
+  /* weight stepper */
+  .step{display:flex;align-items:center;gap:14px;}
+  .step button{width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;background:var(--terra-tint);color:var(--terra);font-size:18px;display:flex;align-items:center;justify-content:center;transition:transform .12s;}
+  .step button:active{transform:scale(.88);}
+  .step .wv{font-family:var(--serif);font-weight:600;font-size:17px;min-width:62px;text-align:center;letter-spacing:.3px;}
+  .step .wv small{font-size:12px;color:var(--ink-soft);font-weight:400;margin-left:1px;}
+
+  /* toggle */
+  .tg{width:46px;height:28px;border-radius:16px;background:#dcd6cb;position:relative;cursor:pointer;transition:background .2s;flex:none;}
+  .tg::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.2);transition:transform .2s;}
+  .tg.on{background:var(--terra);}
+  .tg.on::after{transform:translateX(18px);}
+  .tg.terra.on{background:var(--terra);}
+
+  .row .sub{font-size:11.5px;color:var(--ink-faint);margin-top:2px;}
+  .row .kc{flex:1;min-width:0;}
+  .row .kc .k1{font-size:14.5px;color:var(--ink);letter-spacing:.3px;}
+
+  .danger{margin-top:22px;text-align:center;}
+  .danger button{border:none;background:none;cursor:pointer;color:#b54b3f;font-family:var(--sans);font-size:13.5px;letter-spacing:.3px;padding:8px;}
+
+  /* picker sheet */
+  .scrim{position:absolute;inset:0;z-index:40;background:rgba(40,28,18,.4);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);display:none;align-items:flex-end;}
+  .scrim.on{display:flex;}
+  .sheet{width:100%;background:var(--bg);border-radius:26px 26px 0 0;padding:10px 14px calc(16px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .36s cubic-bezier(.2,.9,.3,1.1);max-height:70%;overflow-y:auto;}
+  .scrim.on .sheet{transform:none;}
+  .sheet::-webkit-scrollbar{display:none;}
+  .sheet .grab{width:38px;height:4px;border-radius:3px;background:#e0dcd2;margin:6px auto 12px;}
+  .sheet .sh-t{text-align:center;font-family:var(--serif);font-weight:600;font-size:15px;margin-bottom:8px;}
+  .opt2{display:flex;align-items:center;justify-content:space-between;padding:14px 14px;border-radius:13px;cursor:pointer;font-size:15px;white-space:nowrap;}
+  .opt2 > span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
+  .opt2:active{background:rgba(0,0,0,.03);}
+  .opt2 .ck{color:var(--terra);display:none;}
+  .opt2.on{font-weight:600;color:var(--terra);}
+  .opt2.on .ck{display:block;}
+
+  .toast{position:absolute;left:50%;bottom:60px;transform:translateX(-50%) translateY(8px);z-index:60;background:rgba(26,26,24,.92);color:#fff;font-size:12.5px;padding:10px 16px;border-radius:13px;opacity:0;pointer-events:none;transition:all .22s;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+  <div class="device-wrap" id="wrap">
+  <div class="device">
+  <div class="phone" data-screen-label="档案编辑页">
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <span class="sb-right">
+        <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#1a1a18"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 11.2 1 4.3a10.6 10.6 0 0 1 15 0L8.5 11.2Z" fill="#1a1a18"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13"><rect x="1" y="1" width="21" height="11" rx="3.2" fill="none" stroke="#1a1a18" stroke-opacity=".4" stroke-width="1"/><rect x="2.6" y="2.6" width="16" height="7.8" rx="2" fill="#1a1a18"/><rect x="23.4" y="4" width="1.8" height="5" rx="1" fill="#1a1a18" fill-opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="navbar">
+      <span class="nb-side cancel" id="cancelBtn">取消</span>
+      <span class="nb-t">编辑资料</span>
+      <span class="nb-side save" id="saveBtn">保存</span>
+    </div>
+
+    <div class="screen">
+      <div class="photo">
+        <div class="avbig"><span id="catHero"></span><span class="cam" id="camBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5h3l1.5-2h7L17 8.5h3v10H4z"/><circle cx="12" cy="13" r="3.2"/></svg></span></div>
+        <span class="change" id="changePhoto">更换照片</span>
+      </div>
+
+      <div class="glabel">基本信息</div>
+      <div class="group">
+        <div class="row">
+          <span class="k">名字</span>
+          <div class="v"><input class="tin" id="nameIn" value="哈基米" maxlength="12"></div>
+        </div>
+        <div class="row">
+          <span class="k">性别</span>
+          <div class="v"><div class="seg" id="sexSeg"><button data-v="公">公 ♂</button><button data-v="母" class="on">母 ♀</button></div></div>
+        </div>
+        <div class="row tap" id="breedRow">
+          <span class="k">品种</span>
+          <div class="v"><span class="val" id="breedVal">中华田园猫 · 橘</span><span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </div>
+        <div class="row tap" id="birthRow">
+          <span class="k">生日</span>
+          <div class="v"><span class="val" id="birthVal">2025-12-18 · 6个月</span><span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span></div>
+        </div>
+        <div class="row">
+          <span class="k">体重</span>
+          <div class="v"><div class="step"><button id="wMinus">−</button><span class="wv"><span id="wVal">3.5</span><small>kg</small></span><button id="wPlus">+</button></div></div>
+        </div>
+        <div class="row">
+          <span class="k">已绝育</span>
+          <div class="v"><div class="tg terra" id="neuterTg"></div></div>
+        </div>
+      </div>
+
+      <div class="glabel">健康提醒</div>
+      <div class="group">
+        <div class="row">
+          <div class="kc"><div class="k1">疫苗加强提醒</div><div class="sub">下次 6/28 · 提前 3 天提醒</div></div>
+          <div class="tg on" id="vacTg"></div>
+        </div>
+        <div class="row">
+          <div class="kc"><div class="k1">每月驱虫提醒</div><div class="sub">每月 1 号提醒一次</div></div>
+          <div class="tg on" id="dewormTg"></div>
+        </div>
+        <div class="row">
+          <div class="kc"><div class="k1">体重记录提醒</div><div class="sub">每两周称一次</div></div>
+          <div class="tg" id="weightTg"></div>
+        </div>
+      </div>
+
+      <div class="danger"><button id="delBtn">移除这只毛孩子</button></div>
+    </div>
+
+    <!-- breed picker -->
+    <div class="scrim" id="breedScrim">
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="sh-t">选择品种</div>
+        <div id="breedList"></div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+  </div>
+  </div>
+
+<script src="cat-illus.js"></script>
+<script>
+  var PET='毛孩子.html';
+  function fit(){var w=document.getElementById('wrap');var s=Math.min(1,(innerHeight-32)/844,(innerWidth-32)/390);w.style.transform='scale('+s+')';}
+  addEventListener('resize',fit);fit();
+
+  // ===== which pet / add mode =====
+  var PETS=[
+    {name:'哈基米',sex:'母',breed:'中华田园猫 · 橘',weight:3.5,neuter:false,face:{eyes:'happy',mouth:'smile'},fur:'none',avBg:'radial-gradient(circle at 50% 38%,#f3c590,#e2954f 76%)',birth:'2025-12-18 · 6个月'},
+    {name:'奶豆',sex:'公',breed:'中华田园猫 · 狸花',weight:4.8,neuter:true,face:{eyes:'open',mouth:'tiny'},fur:'saturate(.3) brightness(1.06)',avBg:'radial-gradient(circle at 50% 38%,#d8cfc2,#9c9488 78%)',birth:'2025-04-10 · 1岁2个月'}
+  ];
+  var qp=new URLSearchParams(location.search);
+  var isAdd=qp.get('add')==='1';
+  var idx=parseInt(qp.get('pet')||'0',10); if(isNaN(idx))idx=0;
+  var PF = isAdd ? {name:'',sex:'母',breed:'',weight:3.0,neuter:false,face:{eyes:'happy',mouth:'tiny'},fur:'none',avBg:'radial-gradient(circle at 50% 38%,#f3c590,#e2954f 76%)',birth:''} : (PETS[idx]||PETS[0]);
+
+  // hero cat per pet
+  var avbig=document.querySelector('.avbig');
+  avbig.style.background=PF.avBg;
+  var hero=document.getElementById('catHero');
+  hero.innerHTML = window.CatIllus.cat({eyes:window.CatIllus.EYE[PF.face.eyes], mouth:window.CatIllus.MOU[PF.face.mouth]});
+  hero.style.filter=PF.fur;
+
+  // prefill fields
+  document.querySelector('.nb-t').textContent = isAdd ? '添加毛孩子' : '编辑资料';
+  document.getElementById('saveBtn').textContent = isAdd ? '添加' : '保存';
+  var nameIn=document.getElementById('nameIn'); nameIn.value=PF.name; nameIn.setAttribute('value',PF.name); nameIn.placeholder='取个名字';
+  document.querySelectorAll('#sexSeg button').forEach(function(b){ b.classList.toggle('on', b.dataset.v===PF.sex); });
+  var breedVal=document.getElementById('breedVal');
+  if(PF.breed){ breedVal.textContent=PF.breed; breedVal.style.color=''; } else { breedVal.textContent='选择品种'; breedVal.style.color='var(--ink-faint)'; }
+  var birthVal=document.getElementById('birthVal');
+  if(PF.birth){ birthVal.textContent=PF.birth; birthVal.style.color=''; } else { birthVal.textContent='选择生日'; birthVal.style.color='var(--ink-faint)'; }
+  document.getElementById('neuterTg').classList.toggle('on', !!PF.neuter);
+
+  var toast=document.getElementById('toast'),tT;
+  function showToast(m){toast.textContent=m;toast.classList.add('show');clearTimeout(tT);tT=setTimeout(function(){toast.classList.remove('show');},1700);}
+
+  document.getElementById('cancelBtn').onclick=function(){location.href=PET;};
+  document.getElementById('saveBtn').onclick=function(){var nm=(document.getElementById('nameIn').value||'毛孩子').trim();showToast(isAdd?('已添加 '+nm):('已保存 '+nm+' 的资料'));setTimeout(function(){location.href=PET;},700);};
+  document.getElementById('camBtn').onclick=document.getElementById('changePhoto').onclick=function(){showToast('拍张 / 从相册选照片');};
+
+  // sex segmented
+  document.querySelectorAll('#sexSeg button').forEach(function(b){
+    b.onclick=function(){document.querySelectorAll('#sexSeg button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');};
+  });
+
+  // weight stepper
+  var w=PF.weight, wVal=document.getElementById('wVal');
+  function setW(){ wVal.textContent=w.toFixed(1); }
+  setW();
+  document.getElementById('wMinus').onclick=function(){ w=Math.max(0.2,Math.round((w-0.1)*10)/10); setW(); };
+  document.getElementById('wPlus').onclick=function(){ w=Math.min(15,Math.round((w+0.1)*10)/10); setW(); };
+
+  // toggles
+  document.querySelectorAll('.tg').forEach(function(t){ t.onclick=function(){ t.classList.toggle('on'); }; });
+
+  // breed picker
+  var breeds=['中华田园猫 · 橘','中华田园猫 · 狸花','中华田园猫 · 奶牛','英国短毛猫','美国短毛猫','布偶猫','暹罗猫','缅因猫','其它 / 不确定'];
+  var breedList=document.getElementById('breedList'), breedScrim=document.getElementById('breedScrim'), breedVal=document.getElementById('breedVal');
+  breeds.forEach(function(b){
+    var d=document.createElement('div'); d.className='opt2'+(b===breedVal.textContent?' on':'');
+    d.innerHTML='<span>'+b+'</span><span class="ck"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>';
+    d.onclick=function(){ breedVal.textContent=b; document.querySelectorAll('#breedList .opt2').forEach(function(x){x.classList.remove('on');}); d.classList.add('on'); setTimeout(function(){breedScrim.classList.remove('on');},180); };
+    breedList.appendChild(d);
+  });
+  document.getElementById('breedRow').onclick=function(){ breedScrim.classList.add('on'); };
+  breedScrim.onclick=function(e){ if(e.target===breedScrim) breedScrim.classList.remove('on'); };
+
+  document.getElementById('birthRow').onclick=function(){ showToast('选择生日 · 自动算出月龄'); };
+  document.getElementById('delBtn').onclick=function(){ showToast('需二次确认后才会移除'); };
+</script>
+</body>
+</html>

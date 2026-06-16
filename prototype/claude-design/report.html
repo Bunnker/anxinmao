@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小猫怎么了 · 安心报告</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="variations/shared.css">
+<style>
+  body{background:radial-gradient(130% 90% at 50% 0%,#f0ece4,#e4e0d7);display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;}
+  .device-wrap{transform-origin:center center;}
+  .device{width:390px;height:844px;border-radius:46px;background:#111014;padding:11px;box-shadow:0 44px 90px -34px rgba(45,35,25,.55),0 0 0 1px rgba(0,0,0,.5);position:relative;}
+  .device::before{content:"";position:absolute;top:11px;left:50%;transform:translateX(-50%);width:128px;height:30px;background:#111014;border-radius:0 0 18px 18px;z-index:50;}
+  .phone{border-radius:36px;background:var(--bg);}
+
+  .hbar{flex:none;display:flex;align-items:center;padding:2px 18px 8px;}
+  .hbar .av{width:38px;height:38px;border-radius:50%;background:var(--card);box-shadow:var(--soft-sm);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;overflow:hidden;}
+  .hbar .av .avatar{width:32px;height:32px;box-shadow:none;}
+  .hbar .ttl{flex:1;text-align:center;font-size:15px;font-weight:600;letter-spacing:1px;}
+  .hbar .done{font-size:14px;color:var(--terra);font-weight:600;cursor:pointer;flex:none;width:38px;text-align:right;}
+
+  .screen{padding:4px 20px 26px;}
+
+  .hero{position:relative;border-radius:24px;padding:22px 20px;overflow:hidden;}
+  .hero.r{background:#fdecea;}
+  .hero.g{background:#e8f3ec;}
+  .herocat{position:absolute;top:14px;right:14px;width:62px;height:62px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .hero.r .herocat{background:rgba(217,45,32,.08);}
+  .hero.g .herocat{background:rgba(35,129,70,.1);}
+  .herocat svg{width:54px;height:54px;}
+  .badgeline{display:flex;align-items:center;gap:11px;}
+  .hero h1{padding-right:54px;}
+  .bdg{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;flex:none;}
+  .hero.r .bdg{background:var(--risk-red);}
+  .hero.g .bdg{background:var(--risk-green);}
+  .lvl{font-weight:700;font-size:15px;letter-spacing:.5px;}
+  .hero.r .lvl{color:var(--risk-red);}
+  .hero.g .lvl{color:var(--risk-green);}
+  .hero h1{font-family:var(--serif);font-weight:700;font-size:25px;line-height:1.4;letter-spacing:.3px;margin-top:15px;text-wrap:pretty;}
+  .hero .exp{font-size:13.5px;color:var(--ink-soft);line-height:1.75;margin-top:13px;}
+
+  .bigbtn{width:100%;border:none;cursor:pointer;color:#fff;border-radius:18px;padding:18px;display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--sans);font-weight:700;font-size:16.5px;letter-spacing:.5px;margin-top:16px;transition:transform .14s;}
+  .bigbtn:active{transform:scale(.99);}
+  .bigbtn.r{background:var(--risk-red);box-shadow:0 14px 30px rgba(217,45,32,.34);}
+  .bigbtn.g{background:var(--risk-green);box-shadow:0 14px 30px rgba(35,129,70,.3);}
+
+  .trust{margin-top:13px;background:var(--card);border-radius:16px;padding:14px 15px;box-shadow:var(--soft-sm);display:flex;gap:10px;}
+  .trust .sh{color:var(--terra);flex:none;margin-top:1px;}
+  .trust p{font-size:11.5px;color:var(--ink-soft);line-height:1.7;}
+  .trust p b{color:var(--ink);font-weight:600;}
+
+  .ask{margin-top:11px;width:100%;background:var(--card);border:none;cursor:pointer;border-radius:16px;padding:15px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--soft-sm);font-family:var(--sans);transition:transform .14s;}
+  .ask:active{transform:scale(.99);}
+  .ask .al{font-size:14.5px;font-weight:600;color:var(--ink);white-space:nowrap;}
+  .ask .ar{color:var(--ink-faint);}
+
+  .sec{font-size:12px;color:var(--ink-faint);letter-spacing:1px;margin:24px 2px 13px;}
+  .steps{display:flex;flex-direction:column;}
+  .step{display:flex;gap:13px;padding:13px 2px;border-bottom:1px solid var(--line);}
+  .step:last-child{border-bottom:none;}
+  .step .n{width:25px;height:25px;border-radius:50%;border:1.5px solid var(--line);color:var(--ink-soft);font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none;}
+  .step .s{font-size:13.5px;color:var(--ink);line-height:1.65;letter-spacing:.1px;}
+  .step .s b{color:var(--ink);font-weight:700;}
+
+  .why{margin-top:6px;}
+  .why p{font-size:13px;color:var(--ink-soft);line-height:1.8;margin-top:11px;}
+  .why p b{color:var(--ink);font-weight:600;}
+
+  .warn{margin-top:18px;border:1.5px solid;border-radius:18px;padding:16px 17px;}
+  .warn.r{border-color:rgba(217,45,32,.45);background:#fdecea66;}
+  .warn .wt{font-weight:700;font-size:14px;color:var(--risk-red);letter-spacing:.3px;}
+  .warn ul{list-style:none;margin-top:11px;display:flex;flex-direction:column;gap:10px;}
+  .warn li{font-size:13.5px;color:var(--ink);line-height:1.5;padding-left:18px;position:relative;}
+  .warn li::before{content:"";position:absolute;left:2px;top:7px;width:7px;height:7px;border-radius:50%;background:var(--risk-red);}
+
+  .save{margin-top:18px;width:100%;background:var(--card);border:none;cursor:pointer;border-radius:16px;padding:15px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--soft-sm);font-family:var(--sans);}
+  .save .sl{font-size:14px;font-weight:500;color:var(--ink);}
+  .save .sr{color:var(--ink-faint);}
+  .foot{text-align:center;font-size:11px;color:var(--ink-faint);letter-spacing:.5px;margin-top:20px;}
+
+  .toast{position:absolute;left:50%;bottom:40px;transform:translateX(-50%) translateY(8px);z-index:60;background:rgba(26,26,24,.92);color:#fff;font-size:12.5px;padding:10px 16px;border-radius:13px;opacity:0;pointer-events:none;transition:all .22s;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+  <div class="device-wrap" id="wrap">
+  <div class="device">
+  <div class="phone" data-screen-label="安心报告">
+    <div class="statusbar">
+      <span class="time">9:41</span>
+      <span class="sb-right">
+        <svg width="18" height="12" viewBox="0 0 18 12"><g fill="#1a1a18"><rect x="0" y="7" width="3" height="5" rx="1"/><rect x="5" y="4.5" width="3" height="7.5" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M8.5 11.2 1 4.3a10.6 10.6 0 0 1 15 0L8.5 11.2Z" fill="#1a1a18"/></svg>
+        <svg width="26" height="13" viewBox="0 0 26 13"><rect x="1" y="1" width="21" height="11" rx="3.2" fill="none" stroke="#1a1a18" stroke-opacity=".4" stroke-width="1"/><rect x="2.6" y="2.6" width="16" height="7.8" rx="2" fill="#1a1a18"/><rect x="23.4" y="4" width="1.8" height="5" rx="1" fill="#1a1a18" fill-opacity=".4"/></svg>
+      </span>
+    </div>
+
+    <div class="hbar">
+      <span class="av" id="homeAv"><span class="avatar"><span class="a-ear l"></span><span class="a-ear r"></span><span class="a-face"></span><span class="a-eye l"></span><span class="a-eye r"></span><span class="a-nose"></span></span></span>
+      <span class="ttl">安心报告</span>
+      <span class="done" id="doneBtn">完成</span>
+    </div>
+
+    <div class="screen" id="screen"></div>
+    <div class="toast" id="toast"></div>
+  </div>
+  </div>
+  </div>
+
+<script src="cat-illus.js"></script>
+<script>
+  var HOME='小猫怎么了 · 首页(C引导版).html', ASK='问答.html';
+  function fit(){var w=document.getElementById('wrap');var s=Math.min(1,(innerHeight-32)/844,(innerWidth-32)/390);w.style.transform='scale('+s+')';}
+  addEventListener('resize',fit);fit();
+  document.getElementById('homeAv').onclick=function(){location.href=HOME;};
+  document.getElementById('doneBtn').onclick=function(){location.href=HOME;};
+
+  var p=new URLSearchParams(location.search);
+  var t=p.get('t')||'red', sym=decodeURIComponent(p.get('s')||'可能误食');
+
+  var SHIELD='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="m9 12 2 2 4-4"/></svg>';
+  var PIN='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.4"/></svg>';
+  var ARROW='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+  var TRUST='<div class="trust"><span class="sh">'+SHIELD+'</span><p><b>经执业兽医逐条审核 · 权威来源核对</b> —— 判级与建议依据 Cornell、Merck、VCA、iCatCare 等资料整理,判级偏保守。它帮你判断「要不要去看兽医」,<b>但不替代兽医的面诊和检查</b>。</p></div>';
+
+  var DATA={
+    red:{
+      lvl:'红档 · 立刻就医', badge:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg>',
+      h:'怀疑误食有毒物 —— 即使它现在看着没事,也立刻送医。',
+      exp:'哈基米「'+sym+'」—— 这次出现了高度怀疑中毒的信号,或者它真的吃 / 舔到了高危物。这种情况靠观察是不行的。',
+      btn:'找附近的动物医院', btnIco:PIN,
+      stepsTitle:'去医院前 / 路上',
+      steps:[
+        '现在就打电话给最近的动物医院,直说「猫怀疑误食,需要急诊」,告诉他们你怀疑吃了什么。',
+        '把可疑物的包装、剩下的残渣、植物的叶 / 花 / 茎都装个袋子带去 —— 信息越准救命越快。',
+        '<b>绝不要自己给它催吐</b> —— 用双氧水之类的自家催吐,对腐蚀性物质 / 油脂类反而更伤。',
+        '也别给它喂牛奶、人药、任何东西 —— 这些不是解毒剂,反而可能加重。',
+        '记下:大概什么时候吃 / 接触的、量多少、之后有没有呕吐 / 流口水 / 步态不稳 —— 兽医会问。'
+      ],
+      why:['很多猫的中毒在它看起来没事时已经在体内造成损伤:<b>百合极少量(花粉、瓶水都算)</b>就能引发不可逆肾衰;对乙酰氨基酚<b>一片可致命</b>;抗凝血鼠药 <b>3–7 天</b>后才出现内出血。','「等等看再决定」对中毒类问题<b>没有安全窗口</b>。具体是什么物质、要不要催吐 / 洗胃 / 用解毒剂,只能由兽医判断。'],
+      warnTitle:'路上如果出现这些 —— 提示在恶化',
+      warn:['突然抽搐、震颤,或瘫倒、叫不醒','走路晃、站不稳,或前肢 / 后肢失控','呼吸又快又费力,或张口喘','流口水越来越多、呕吐越来越频繁','牙龈或舌头发白、发黄、发紫']
+    },
+    green:{
+      lvl:'绿档 · 先在家观察', badge:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>',
+      h:'没接触到高危物 —— 先放心观察,有变化再行动。',
+      exp:'你确认哈基米没有吃 / 舔到上面那些东西。目前不像急症,但接下来 48 小时多留意它的状态就好。',
+      btn:'设置 48 小时观察提醒', btnIco:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5M9 3h6"/></svg>',
+      stepsTitle:'在家先做这些',
+      steps:[
+        '保持环境安静,备好干净的水和猫砂,让它能安心待着。',
+        '每天记一笔:精神、食欲、排泄有没有变化 —— 这页能帮你记。',
+        '别擅自喂人药或保健品;真有不舒服,先问问哈基米或再做一次分诊。',
+        '<b>48 小时内没好转、或出现新症状</b>,就回来重新分诊或就医。'
+      ],
+      why:['你已经排除了最危险的误食可能,所以这次判为绿档。','观察不是「不管」 —— 而是用一两天看清趋势:多数轻微情况会自己好,真正需要就医的会在这段时间露出更明确的信号。'],
+      warnTitle:'出现这些 —— 别再观察,直接就医',
+      warn:['持续呕吐 / 腹泻,或精神明显变差','超过 24 小时几乎不吃不喝','呼吸急促、张口喘','频繁进砂盆却尿不出']
+    }
+  };
+
+  function render(){
+    var d=DATA[t]||DATA.red, c=(t==='green')?'g':'r';
+    var html='';
+    var heroCat = (t==='green') ? window.CatIllus.MOOD.relieved : window.CatIllus.MOOD.worried;
+    html+='<div class="hero '+c+'"><span class="herocat">'+heroCat+'</span><div class="badgeline"><span class="bdg">'+d.badge+'</span><span class="lvl">'+d.lvl+'</span></div><h1>'+d.h+'</h1><div class="exp">'+d.exp+'</div></div>';
+    html+='<button class="bigbtn '+c+'" id="bigBtn">'+d.btnIco+' '+d.btn+' →</button>';
+    html+=TRUST;
+    html+='<button class="ask" id="askBtn"><span class="al">继续补充问问</span><span class="ar">'+ARROW+'</span></button>';
+    html+='<div class="sec">'+d.stepsTitle+'</div><div class="steps">'+d.steps.map(function(s,i){return '<div class="step"><span class="n">'+(i+1)+'</span><span class="s">'+s+'</span></div>';}).join('')+'</div>';
+    html+='<div class="sec">为什么这么判断</div><div class="why">'+d.why.map(function(w){return '<p>'+w+'</p>';}).join('')+'</div>';
+    html+='<div class="warn r"><div class="wt">'+d.warnTitle+'</div><ul>'+d.warn.map(function(w){return '<li>'+w+'</li>';}).join('')+'</ul></div>';
+    html+='<button class="save" id="saveBtn"><span class="sl">保存报告图片 · 发给家人朋友</span><span class="sr"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg></span></button>';
+    html+='<div class="foot">AI 整理 · 不能替代兽医</div>';
+    document.getElementById('screen').innerHTML=html;
+    document.getElementById('bigBtn').onclick=function(){ showToast(t==='green'?'已设置观察提醒':'正在为你查找最近的动物医院…'); };
+    document.getElementById('askBtn').onclick=function(){ location.href=ASK+'?from=triage&s='+encodeURIComponent(sym)+'&t='+t; };
+    document.getElementById('saveBtn').onclick=function(){ showToast('报告已保存到相册'); };
+  }
+  var toast=document.getElementById('toast'),tT;
+  function showToast(m){toast.textContent=m;toast.classList.add('show');clearTimeout(tT);tT=setTimeout(function(){toast.classList.remove('show');},1900);}
+  render();
+</script>
+</body>
+</html>
