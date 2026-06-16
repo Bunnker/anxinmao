@@ -108,17 +108,17 @@ const YARD_DEPTH = 140;
 const YARD_BASE_W = 345;
 // 家具摆位:bottom = 深度(大=靠后);玩球/喝水动画自带道具,播放时隐藏地面同款
 const YARD_ITEMS = {
-  bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 2, bottom: 58, w: 88 },
+  bed: { src: "/pet/items/bed.webp", alt: "猫窝", left: 0, bottom: 92, w: 88 },
   // 空箱:由 cat-box-0 抠掉猫补绘而成(同 582×520 画布、箱位一致)。在箱帧渲染时直接读
   // 这里的 live 坐标(layout.box)→ 空箱与在箱帧像素级重合,钻进/钻出/拖动箱子都不变样。
   // 猫钻箱/蹦箱时藏掉它,换成在箱帧(见院子渲染)。w 用 BOX_W 常量。
-  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 253, bottom: 49, w: 88 },
-  bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 132, bottom: 26, w: 44 },
-  yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 218, bottom: 8, w: 36 },
+  box: { src: "/pet/items/box.webp", alt: "纸箱", left: 257, bottom: 88, w: 88 },
+  bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 25, bottom: 46, w: 44 },
+  yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 240, bottom: 0, w: 36 },
   // codex 出的新家具(可拖):猫抓板 —— 走过去挠抓
-  scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 88, bottom: 92, w: 78 },
+  scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 124, bottom: 100, w: 78 },
   // 墙角小地毯:垫在地上的「地面物」(渲染 z 压到家具下、猫上 → 猫站毯上),走过去坐下洗脸
-  rug: { src: "/pet/items/rug.webp", alt: "小地毯", left: 96, bottom: 8, w: 104 },
+  rug: { src: "/pet/items/rug.webp", alt: "小地毯", left: 100, bottom: 9, w: 104 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
 // 挠抓板 2 帧(codex 出图、按板右下角对齐切片 → 板不抖):前爪在斜面 高→低 来回=挠。
