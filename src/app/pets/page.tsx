@@ -13,7 +13,14 @@ import { pullHistory } from "@/lib/history-sync";
 import { Disclaimer } from "@/components/Disclaimer";
 import { Welcome } from "@/components/Welcome";
 import { CatFace } from "@/components/CatFace";
-import { ageLabel, companionDays, careStatus } from "@/lib/profile";
+import { WeightSparkline } from "@/components/profile/WeightSparkline";
+import { HealthFootprint } from "@/components/profile/HealthFootprint";
+import {
+  ageLabel,
+  companionDays,
+  careStatus,
+  type CareStatus,
+} from "@/lib/profile";
 import type { Cat, CatRecord, Store } from "@/types/cat";
 
 const MAX_PROFILE_PHOTOS = 6;
@@ -25,6 +32,49 @@ const SEX_VIS: Record<Cat["sex"], { label: string; color: string; bg: string }> 
     雄: { label: "♂ 公", color: "#5a90c2", bg: "#e6f0f8" },
     不确定: { label: "性别未定", color: "#8a6f54", bg: "rgba(255,255,255,0.65)" },
   };
+
+// 护理徽章配色 —— 中性 / 陶土红,绝不取风险三色(红线)。
+const CARE_BADGE: Record<CareStatus, { color: string; bg: string }> = {
+  done: { color: "var(--accent)", bg: "var(--accent-tint)" },
+  due: { color: "#8a6f54", bg: "#f0ebe2" },
+  no: { color: "var(--ink-soft)", bg: "#efece6" },
+};
+
+// 护理项图标(疫苗 / 驱虫 / 绝育)—— 描边 SVG。
+function CareIcon({ type }: { type: "vaccine" | "deworm" | "neuter" }) {
+  const common = {
+    width: 22,
+    height: 22,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.7,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  };
+  if (type === "vaccine")
+    return (
+      <svg {...common}>
+        <path d="M16 3l5 5M18.5 5.5 9 15l-3 .8.8-3 9.7-9.3z" />
+        <path d="M11 9l4 4" />
+      </svg>
+    );
+  if (type === "deworm")
+    return (
+      <svg {...common}>
+        <path d="M12 3c2 2.5 2 5 0 7s-2 4.5 0 7" />
+        <path d="M8.5 6.5c1.4 1.4 1.4 3 0 4.5M15.5 6.5c-1.4 1.4-1.4 3 0 4.5" />
+        <circle cx="12" cy="19.5" r="1" />
+      </svg>
+    );
+  return (
+    <svg {...common}>
+      <circle cx="12" cy="10" r="6" />
+      <path d="M12 16v5M9 19h6" />
+    </svg>
+  );
+}
 
 // 头像:优先 AI 生成图 cat.avatar,无则 CatFace 通用猫脸(许可范围:身份/陪伴)。
 function Avatar({ cat, size }: { cat: Cat; size: number }) {
@@ -457,6 +507,108 @@ export default function PetsPage() {
             最多 6 张 · 仅本地展示,不参与分诊判断
           </p>
         )}
+
+        {/* 健康档案(疫苗/驱虫/绝育)—— 徽章中性/陶土红,不碰风险三色 */}
+        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
+          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+            健康档案
+          </span>
+          <Link href={editHref} className="text-[12.5px] text-ink-faint">
+            管理 ›
+          </Link>
+        </div>
+        <div className="flex flex-col gap-2.5">
+          {(
+            [
+              ["vaccine", "疫苗", care.vaccine],
+              ["deworm", "驱虫", care.deworm],
+              ["neuter", "绝育", care.neuter],
+            ] as const
+          ).map(([type, title, item]) => {
+            const badge = CARE_BADGE[item.status];
+            return (
+              <Link
+                key={type}
+                href={editHref}
+                className="flex items-center gap-3 rounded-2xl bg-surface px-[15px] py-3.5 shadow-[var(--shadow-control)] transition active:scale-[0.99]"
+              >
+                <span className="grid size-[42px] flex-none place-items-center rounded-[13px] bg-[var(--accent-tint)] text-accent">
+                  <CareIcon type={type} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14.5px] font-semibold tracking-wide text-ink">
+                    {title}
+                  </span>
+                  <span className="mt-0.5 block text-[12px] text-ink-faint">
+                    {item.sub}
+                  </span>
+                </span>
+                <span
+                  className="flex-none rounded-full px-2.5 py-[5px] text-[11.5px] font-semibold whitespace-nowrap"
+                  style={{ color: badge.color, background: badge.bg }}
+                >
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* 体重曲线 */}
+        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
+          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+            体重
+          </span>
+          <Link href={editHref} className="text-[12.5px] text-ink-faint">
+            记一笔 ›
+          </Link>
+        </div>
+        {cat.weightLog && cat.weightLog.length >= 2 ? (
+          <WeightSparkline log={cat.weightLog} />
+        ) : (
+          <div className="rounded-2xl bg-surface px-4 py-4 text-[13px] leading-relaxed text-ink-soft shadow-[var(--shadow-control)]">
+            当前 {cat.weight} kg —— 记满 2 次称重就会长出体重曲线。
+          </div>
+        )}
+
+        {/* 健康背景 */}
+        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
+          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+            健康背景
+          </span>
+          <Link href={editHref} className="text-[12.5px] text-ink-faint">
+            编辑 ›
+          </Link>
+        </div>
+        <div className="overflow-hidden rounded-2xl bg-surface shadow-[var(--shadow-control)]">
+          {(
+            [
+              ["慢性病史", cat.chronicConditions, "未填 —— 填了分诊和问答会替它考虑"],
+              ["过敏史", cat.allergies, "未填"],
+              ["其它备注", cat.notes, "未填"],
+            ] as const
+          ).map(([k, v, empty], i) => (
+            <div
+              key={k}
+              className={
+                "flex gap-3 px-[15px] py-3 " +
+                (i < 2 ? "border-b border-[var(--line)]" : "")
+              }
+            >
+              <span className="w-[62px] flex-none text-[13px] text-ink-soft">
+                {k}
+              </span>
+              <span
+                className={
+                  "flex-1 text-[13.5px] leading-relaxed " +
+                  (v ? "text-ink" : "text-ink-faint")
+                }
+              >
+                {v || empty}
+              </span>
+            </div>
+          ))}
+        </div>
 
         <Disclaimer />
       </div>
