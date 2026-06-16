@@ -45,6 +45,17 @@ export function ageLabel(months: number): string {
   return m ? `${y} 岁 ${m} 个月` : `${y} 岁`;
 }
 
+// 生日 → 月龄(整数,最少 0)。非法日期返回 null,调用方用现有 ageMonths 兜底。
+export function ageMonthsFromBirthday(birthday: string): number | null {
+  if (!birthday) return null;
+  const b = new Date(birthday);
+  if (Number.isNaN(b.getTime())) return null;
+  const now = new Date();
+  let m = (now.getFullYear() - b.getFullYear()) * 12 + (now.getMonth() - b.getMonth());
+  if (now.getDate() < b.getDate()) m -= 1; // 没满整月不算
+  return Math.max(0, m);
+}
+
 // 陪伴天数:今天 − homeDate(无 / 非法日期返回 0)。
 export function companionDays(homeDate: string): number {
   if (!homeDate) return 0;

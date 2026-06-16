@@ -30,6 +30,9 @@ export interface Cat {
   // 体重记录 —— 在档案里保存体重时自动追加(同日覆盖,最多 60 条)。
   // 体重变化是最普适的健康复访信号,曲线展示在「毛孩子」档案页。
   weightLog?: { date: string; kg: number }[];
+  // 生日(ISO yyyy-mm-dd)。编辑页用日期选择器填,月龄 ageMonths 由它派生(更准、不随时间过期)。
+  // 老数据可能没有 birthday、只有 ageMonths —— 读取时以 birthday 优先、缺失则用 ageMonths 兜底。
+  birthday?: string;
   // 健康提醒偏好(编辑页开关存这里,随猫走云同步)。仅存偏好,本批不接真实推送。
   // 默认 vaccine/deworm 开、weight 关(读取时用 ?? 兜底,见 onboarding 提醒开关)。
   reminders?: { vaccine: boolean; deworm: boolean; weight: boolean };
