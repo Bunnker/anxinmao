@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import {
   loadStore,
@@ -15,6 +15,8 @@ import { Welcome } from "@/components/Welcome";
 import { CatFace } from "@/components/CatFace";
 import { ageLabel, companionDays, careStatus } from "@/lib/profile";
 import type { Cat, CatRecord, Store } from "@/types/cat";
+
+const MAX_PROFILE_PHOTOS = 6;
 
 // 性别 chip 装饰色 —— 内联常量,绝不进 :root 风险 token(不碰红黄绿)。
 const SEX_VIS: Record<Cat["sex"], { label: string; color: string; bg: string }> =
@@ -111,10 +113,67 @@ export default function PetsPage() {
     setRecords([]);
   }
 
+  // ── 生活相册:本地照片墙(≤6 张、单张 ≤5MB)。仅本地橱窗展示,不参与分诊判断(红线)──
+  const [albumEdit, setAlbumEdit] = useState(false);
+  const [sheetIdx, setSheetIdx] = useState<number | null>(null);
+  const replaceIdxRef = useRef<number | null>(null);
+  const replaceInputRef = useRef<HTMLInputElement | null>(null);
+
+  function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result as string);
+      r.onerror = reject;
+      r.readAsDataURL(file);
+    });
+  }
+  async function onAlbumUpload(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!cat || !files.length) return;
+    const usable = files
+      .filter((f) => f.size <= 5 * 1024 * 1024)
+      .slice(0, MAX_PROFILE_PHOTOS);
+    const urls = await Promise.all(usable.map(fileToDataUrl));
+    persistCat({
+      ...cat,
+      photos: [...(cat.photos ?? []), ...urls].slice(0, MAX_PROFILE_PHOTOS),
+    });
+  }
+  function removeAlbumPhoto(i: number) {
+    if (!cat) return;
+    const photos = cat.photos ?? [];
+    const removed = photos[i];
+    // 删的是当前主图则一并清掉 avatar(回落 CatFace)
+    const avatar = cat.avatar === removed ? undefined : cat.avatar;
+    persistCat({ ...cat, avatar, photos: photos.filter((_, idx) => idx !== i) });
+    setSheetIdx(null);
+  }
+  function setCover(photo: string) {
+    if (cat) persistCat({ ...cat, avatar: photo });
+    setSheetIdx(null);
+  }
+  async function onReplace(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    const idx = replaceIdxRef.current;
+    replaceIdxRef.current = null;
+    if (!cat || !file || idx === null || file.size > 5 * 1024 * 1024) return;
+    const url = await fileToDataUrl(file);
+    const old = (cat.photos ?? [])[idx];
+    persistCat({
+      ...cat,
+      avatar: cat.avatar === old ? url : cat.avatar,
+      photos: (cat.photos ?? []).map((p, i) => (i === idx ? url : p)),
+    });
+    setSheetIdx(null);
+  }
+
   if (!loaded) return <main className="min-h-dvh" aria-hidden="true" />;
   if (!cat) return <Welcome onUseTemplate={useTemplate} />;
 
   const cats = store?.cats ?? [cat];
+  const photos = cat.photos ?? [];
   const sex = SEX_VIS[cat.sex];
   const care = careStatus(cat);
   const breedLine = [cat.breed, cat.coat, ageLabel(cat.ageMonths)]
@@ -303,10 +362,155 @@ export default function PetsPage() {
         </div>
       </section>
 
-      {/* body 各区(生活相册 / 健康档案 / 体重 / 健康背景 / 健康记录)在后续任务插入 */}
       <div className="px-5">
+        {/* 生活相册(照片墙 · 可单独编辑) */}
+        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
+          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+            生活相册
+          </span>
+          {(photos.length > 0 || albumEdit) && (
+            <button
+              type="button"
+              onClick={() => setAlbumEdit((v) => !v)}
+              className="text-[12.5px] font-semibold text-accent"
+            >
+              {albumEdit ? "完成" : "编辑 ›"}
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {photos.map((p, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => albumEdit && setSheetIdx(i)}
+              aria-label={albumEdit ? "编辑这张照片" : "生活照"}
+              className="relative aspect-square overflow-hidden rounded-2xl shadow-[var(--shadow-control)]"
+              style={{
+                background: "var(--accent-tint)",
+                cursor: albumEdit ? "pointer" : "default",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={p}
+                alt=""
+                draggable={false}
+                className="h-full w-full object-cover"
+              />
+              {cat.avatar === p && (
+                <span className="absolute top-1.5 left-1.5 rounded-lg bg-accent/90 px-1.5 py-0.5 text-[9.5px] font-semibold tracking-wide text-white">
+                  主图
+                </span>
+              )}
+              {albumEdit && (
+                <span className="absolute inset-0 grid place-items-center bg-black/30 text-white">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.9"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M14 4l6 6M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z" />
+                  </svg>
+                </span>
+              )}
+            </button>
+          ))}
+          {photos.length < MAX_PROFILE_PHOTOS && (
+            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-[1.5px] border-dashed border-[#d9d2c6] bg-white/45 text-[11.5px] text-ink-faint">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              添加
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={onAlbumUpload}
+              />
+            </label>
+          )}
+        </div>
+        {photos.length === 0 && !albumEdit ? (
+          <p className="mt-2 px-0.5 text-[12px] leading-relaxed text-ink-faint">
+            还没有生活照 —— 点上面添加。仅本地展示,不参与分诊判断。
+          </p>
+        ) : (
+          <p className="mt-2.5 px-0.5 text-[11px] tracking-wide text-ink-faint">
+            最多 6 张 · 仅本地展示,不参与分诊判断
+          </p>
+        )}
+
         <Disclaimer />
       </div>
+
+      {/* 隐藏「替换」文件选择 */}
+      <input
+        ref={replaceInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={onReplace}
+      />
+
+      {/* 单格编辑 bottom-sheet */}
+      {sheetIdx !== null && photos[sheetIdx] && (
+        <div
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 backdrop-blur-[2px]"
+          onClick={() => setSheetIdx(null)}
+        >
+          <div
+            className="w-full max-w-[460px] rounded-t-[26px] bg-paper px-3.5 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[#e0dcd2]" />
+            <button
+              type="button"
+              onClick={() => setCover(photos[sheetIdx])}
+              className="flex w-full items-center justify-between rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+            >
+              设为主图(作头像)
+              {cat.avatar === photos[sheetIdx] && (
+                <span className="text-[13px] text-accent">当前主图</span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                replaceIdxRef.current = sheetIdx;
+                replaceInputRef.current?.click();
+              }}
+              className="flex w-full items-center rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+            >
+              替换这张
+            </button>
+            <button
+              type="button"
+              onClick={() => removeAlbumPhoto(sheetIdx)}
+              className="flex w-full items-center rounded-[13px] px-3.5 py-3.5 text-[15px] text-[#b54b3f] active:bg-black/5"
+            >
+              删除
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
