@@ -83,7 +83,10 @@ function findFollowupTarget(records: CatRecord[]): CatRecord | null {
 // 首页桌宠主动气泡(nudge)—— 没有待回访时,小猫偶尔冒一个「可点」的气泡:
 // 优先护理提醒(称重 / 驱虫 / 疫苗,据日期派生),否则随机搭话引导去分诊 / 问答。
 // 红线:文案不焦虑、不诊断、不碰风险三色装饰;只是温柔提醒 / 邀请。
-type Nudge = { text: string; href: string; sprite: PetSpriteState };
+// text=猫语(第一人称喵语 + 颜文字);cta=猫爪按钮文案(可点跳转);sprite 见 ⚠ 下。
+// ⚠ sprite 暂用现有态(review/waving),待卖萌新帧(翻肚皮/撒娇等)出图后替换 ——
+//   见 docs/superpowers/specs/2026-06-17-nudge-cute-actions-handoff.md。
+type Nudge = { text: string; cta: string; href: string; sprite: PetSpriteState };
 
 // 据日期派生的护理提醒(确定性,按优先级):称重 >14 天 / 驱虫超期 / 没记疫苗。都没有 → null。
 function careNudge(cat: Cat): Nudge | null {
@@ -94,20 +97,61 @@ function careNudge(cat: Cat): Nudge | null {
     ? (Date.now() - new Date(last.date).getTime()) / 86400000
     : Infinity;
   if (weighDays > 14)
-    return { text: `好久没给${cat.name}称体重啦,记一笔?`, href: edit, sprite: "review" };
+    return {
+      text: "喵呜~(好久没量体重啦,帮我记一笔嘛 ｡•ᴗ•｡)",
+      cta: "去记一笔",
+      href: edit,
+      sprite: "review",
+    };
   const care = careStatus(cat);
   if (care.deworm.status === "due")
-    return { text: `该给${cat.name}做驱虫啦 ~`, href: edit, sprite: "review" };
+    return {
+      text: "喵喵~(该做驱虫啦,别忘了我哦 =^‥^=)",
+      cta: "去记一笔",
+      href: edit,
+      sprite: "review",
+    };
   if (care.vaccine.status === "no")
-    return { text: `还没记${cat.name}的疫苗,补一下?`, href: edit, sprite: "review" };
+    return {
+      text: "喵~(还没记我的疫苗呢,补一下嘛 ˘ω˘)",
+      cta: "去记一笔",
+      href: edit,
+      sprite: "review",
+    };
   return null;
 }
 
-// 闲时搭话引导(随机一条)—— 哪里不对劲来分诊 / 拿不准就问。
+// 闲时搭话引导(随机一条)—— 哪里不对劲来分诊 / 拿不准就问(喵语)。
 const CHAT_NUDGES: Nudge[] = [
-  { text: "拿不准?喂养、习性都能问我 →", href: "/behavior", sprite: "waving" },
-  { text: "哪里不对劲?来做个分诊吧 →", href: "/symptoms", sprite: "waving" },
+  {
+    text: "喵~(拿不准的事都能问我哦 ·ω·)",
+    cta: "去问问",
+    href: "/behavior",
+    sprite: "waving",
+  },
+  {
+    text: "喵呜?(哪儿不对劲就带我去分诊呀 ฅ•ﻌ•ฅ)",
+    cta: "去分诊",
+    href: "/symptoms",
+    sprite: "waving",
+  },
 ];
+
+// 醒目的猫爪按钮 —— 提示气泡可点跳转(陶土红实心 + 猫爪 + 文案)。
+function PawCta({ label }: { label: string }) {
+  return (
+    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-[12.5px] font-semibold text-accent-fg shadow-[var(--shadow-accent)]">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <ellipse cx="12" cy="15.5" rx="4.6" ry="3.7" />
+        <circle cx="6.3" cy="10.5" r="1.9" />
+        <circle cx="9.9" cy="7.6" r="1.9" />
+        <circle cx="14.1" cy="7.6" r="1.9" />
+        <circle cx="17.7" cy="10.5" r="1.9" />
+      </svg>
+      {label}
+    </span>
+  );
+}
 
 // 小猫陪伴提醒 —— 把分诊跟进 / 驱虫疫苗 / 新手引导统一成「猫在跟你说话」的气泡。
 // 一次只说一件事,优先级:跟进回执 > 分诊跟进 > 护理提醒 > 零记录引导;没事不出现。
@@ -1539,9 +1583,9 @@ function PetNudge({
                 {followupNote.href && (
                   <Link
                     href={followupNote.href}
-                    className="mt-1.5 inline-block text-[13.5px] font-medium text-accent"
+                    className="block transition active:opacity-70"
                   >
-                    {followupNote.label}
+                    <PawCta label={followupNote.label ?? "去看看"} />
                   </Link>
                 )}
               </>
@@ -1579,12 +1623,15 @@ function PetNudge({
                 </div>
               </>
             ) : showNudge && nudge ? (
-              // 主动气泡:整条可点 —— 护理提醒跳编辑记一笔 / 搭话邀请跳分诊·问答
+              // 主动气泡:整条可点 —— 喵语文案 + 醒目猫爪按钮(护理→记一笔 / 搭话→分诊·问答)
               <Link
                 href={nudge.href}
-                className="block text-[14px] leading-relaxed text-ink transition active:opacity-70"
+                className="block transition active:opacity-70"
               >
-                {nudge.text}
+                <p className="text-[14px] leading-relaxed text-ink">
+                  {nudge.text}
+                </p>
+                <PawCta label={nudge.cta} />
               </Link>
             ) : (
               <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
