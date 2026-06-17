@@ -231,12 +231,14 @@ const BRUSH_ALIGN: Record<string, { w: number; dx: number; dy: number }> = {
   back: { w: 124, dx: 0, dy: -4 },
   belly: { w: 150, dx: 0, dy: -14 },
 };
-// 逗猫棒「扑抓」2 帧(codex 专门画的「猫举爪扑头顶羽毛」,非复用蹦跶):来回切 = 扑打。
+// 逗猫棒「扑抓」3 变体各 6 帧(codex 专门画:swat 拍打 / grab 抓咬 / carry 叼走),随机选一套顺播。
 // 在猫实时位置盖帧、藏掉实时精灵(同梳毛盖帧)。帧里猫身体偏左、棒在右上,DX 右移对齐猫身体。
-const CAT_WAND_FRAMES = [
-  "/pet/items/cat-wand-0.webp",
-  "/pet/items/cat-wand-1.webp",
-];
+const WAND_SEQS: Record<string, string[]> = {
+  swat: ["/pet/items/cat-wand-swat-0.webp","/pet/items/cat-wand-swat-1.webp","/pet/items/cat-wand-swat-2.webp","/pet/items/cat-wand-swat-3.webp","/pet/items/cat-wand-swat-4.webp","/pet/items/cat-wand-swat-5.webp"],
+  grab: ["/pet/items/cat-wand-grab-0.webp","/pet/items/cat-wand-grab-1.webp","/pet/items/cat-wand-grab-2.webp","/pet/items/cat-wand-grab-3.webp","/pet/items/cat-wand-grab-4.webp","/pet/items/cat-wand-grab-5.webp"],
+  carry:["/pet/items/cat-wand-carry-0.webp","/pet/items/cat-wand-carry-1.webp","/pet/items/cat-wand-carry-2.webp","/pet/items/cat-wand-carry-3.webp","/pet/items/cat-wand-carry-4.webp","/pet/items/cat-wand-carry-5.webp"],
+};
+const WAND_VARIANTS = ["swat", "grab", "carry"] as const;
 const WAND_W = 156;
 const WAND_DX = 16;
 const WAND_DY = -4;
@@ -485,6 +487,8 @@ function PetNudge({
     brushVariant?: string;
     // 洗脸动作变体(paw 舔爪抹脸 / hindleg 举旗杆……),决定盖帧序列
     washVariant?: string;
+    // 逗猫棒扑抓变体(swat 拍打 / grab 抓咬 / carry 叼走),决定盖帧序列
+    pounceVariant?: string;
   }>({ kind: "sit", x: 4, y: 58, facing: "right", dur: 0 });
   // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
   const [calm, setCalm] = useState(false);
@@ -706,19 +710,24 @@ function PetNudge({
     return () => clearInterval(id);
   }, [roam.kind, roam.brushVariant]);
 
-  // 逗猫棒扑抓:pounce 期间 0↔1 来回切(举爪扑羽毛),~260ms 一拍
+  // 逗猫棒:pounce 期间按变体序列顺播 loop(swat 拍打 / grab 抓咬 / carry 叼走),~300ms 一拍
   const [pounceFrame, setPounceFrame] = useState(0);
   useEffect(() => {
-    if (roam.kind !== "pounce") {
+    if (roam.kind !== "pounce" || calm) {
       setPounceFrame(0);
       return;
     }
-    const id = window.setInterval(
-      () => setPounceFrame((f) => (f === 0 ? 1 : 0)),
-      260,
-    );
+    const seq = WAND_SEQS[roam.pounceVariant ?? "swat"] ?? WAND_SEQS.swat;
+    const n = seq.length;
+    if (n < 2) { setPounceFrame(0); return; }
+    let i = 0;
+    setPounceFrame(0);
+    const id = window.setInterval(() => {
+      i = (i + 1) % n;
+      setPounceFrame(i);
+    }, 300);
     return () => clearInterval(id);
-  }, [roam.kind]);
+  }, [roam.kind, roam.pounceVariant, calm]);
 
   // 洗脸:自定义播放序列——舔爪 core(2-5)循环 4 轮(舔好几下) + 擦脸(6-11)。
   const [washFrame, setWashFrame] = useState(0);
@@ -866,6 +875,7 @@ function PetNudge({
 
   // 逗猫棒拖到猫身上:就地停下原地扑跳捕猎(jumping 帧),~2.4s 后坐回说句捕猎猫语
   function pounceForWand() {
+    const variant = WAND_VARIANTS[Math.floor(Math.random() * WAND_VARIANTS.length)];
     setRoam((r) => {
       if (r.kind === "stroll") {
         const cur = readCatXY({ x: r.x, y: r.y });
@@ -875,9 +885,10 @@ function PetNudge({
           y: Math.round(cur.y),
           facing: r.facing,
           dur: 0,
+          pounceVariant: variant,
         };
       }
-      return { ...r, kind: "pounce", dur: 0 };
+      return { ...r, kind: "pounce", dur: 0, pounceVariant: variant };
     });
   }
 
@@ -1524,7 +1535,9 @@ function PetNudge({
           (() => {
             const s = scaleOf(roam.y);
             const w = Math.round(WAND_W * s);
-            const src = CAT_WAND_FRAMES[pounceFrame] ?? CAT_WAND_FRAMES[0];
+            const wandVariant = roam.pounceVariant ?? "swat";
+            const wandSeq = WAND_SEQS[wandVariant] ?? WAND_SEQS.swat;
+            const src = wandSeq[pounceFrame] ?? wandSeq[0];
             const rawLeft = roam.x + 42 - w / 2 + WAND_DX * s;
             const left = Math.round(
               Math.max(4, Math.min(YARD_BASE_W - w - 4, rawLeft)),
