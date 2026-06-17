@@ -332,16 +332,6 @@ function OnboardingForm() {
     );
   }
 
-  // 健康提醒偏好 —— 默认 vaccine/deworm 开、weight 关。仅存偏好,本批不真推送。
-  const reminders = draft.reminders ?? {
-    vaccine: true,
-    deworm: true,
-    weight: false,
-  };
-  function setReminder(key: "vaccine" | "deworm" | "weight", val: boolean) {
-    setDraft((d) => (d ? { ...d, reminders: { ...reminders, [key]: val } } : d));
-  }
-
   const ready = draft.name.trim().length > 0;
 
   async function generateAvatar() {
@@ -485,21 +475,13 @@ function OnboardingForm() {
   return (
     <main
       className="relative mx-auto flex min-h-dvh max-w-[430px] flex-col px-6 pb-24"
-      style={{
-        background: "var(--gradient-page)",
-        paddingTop: "calc(1.25rem + env(safe-area-inset-top, 0px))",
-      }}
+      style={{ background: "var(--gradient-page)" }}
     >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-56"
-        style={{
-          background:
-            "radial-gradient(ellipse 85% 60% at 50% 0%, rgba(176,90,80,0.11) 0%, transparent 100%)",
-        }}
-        aria-hidden="true"
-      />
-      {/* 顶栏:取消 / 标题 / 完成 —— 保存移到右上角(iOS 风);编辑回 /pets、首次建档回首页 */}
-      <header className="-mx-6 mb-2 flex items-center justify-between border-b border-[var(--line)] px-6 pb-2.5">
+      {/* 顶栏:取消 / 标题 / 完成 —— 吸顶常驻(滚动时也能随时点完成 / 取消) */}
+      <header
+        className="sticky top-0 z-30 -mx-6 mb-2 flex items-center justify-between border-b border-[var(--line)] bg-paper px-6 pb-2.5"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)" }}
+      >
         <button
           type="button"
           onClick={leaveOnboarding}
@@ -864,55 +846,6 @@ function OnboardingForm() {
         </Field>
         </EditCard>
 
-        {/* 健康提醒 —— 开关存偏好(Cat.reminders),本批不真推送 */}
-        <EditCard id="edit-reminders" title="健康提醒">
-          {(
-            [
-              ["vaccine", "疫苗加强提醒", "到期前提醒一次"],
-              ["deworm", "每月驱虫提醒", "每月提醒一次"],
-              ["weight", "体重记录提醒", "每两周称一次"],
-            ] as const
-          ).map(([key, title, sub], i) => {
-            const on = reminders[key];
-            return (
-              <div
-                key={key}
-                className={
-                  "flex items-center gap-3 py-3 " +
-                  (i < 2 ? "border-b border-[var(--line-soft)]" : "")
-                }
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14.5px] text-ink">{title}</span>
-                  <span className="mt-0.5 block text-[11.5px] text-ink-faint">
-                    {sub}
-                  </span>
-                </span>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={on}
-                  aria-label={title}
-                  onClick={() => setReminder(key, !on)}
-                  className={
-                    "relative h-7 w-[46px] flex-none rounded-full transition-colors " +
-                    (on ? "bg-accent" : "bg-[var(--surface-2)]")
-                  }
-                >
-                  <span
-                    className={
-                      "absolute top-[3px] size-[22px] rounded-full bg-white shadow transition-all " +
-                      (on ? "left-[21px]" : "left-[3px]")
-                    }
-                  />
-                </button>
-              </div>
-            );
-          })}
-          <p className="mt-1 text-[11px] leading-relaxed text-ink-faint">
-            本地提醒偏好,暂不发推送通知。
-          </p>
-        </EditCard>
       </div>
 
       {/* 保存已移到右上角「完成」;名字未填时给个提示 */}
