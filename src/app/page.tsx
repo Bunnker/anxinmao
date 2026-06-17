@@ -244,12 +244,22 @@ const WAND_DY = -4;
 // 同梳毛盖帧机制:藏实时精灵、在猫位置盖帧、2 帧 ping-pong。先上 paw(舔爪抹脸)+ hindleg(举旗杆),
 // 后补 ear(抹耳后)/scratch(后腿挠耳)。
 const WASH_SEQS: Record<string, string[]> = {
-  paw: ["/pet/items/cat-wash-paw-0.webp", "/pet/items/cat-wash-paw-1.webp"],
+  paw: [
+    "/pet/items/cat-wash-lick-0.webp", "/pet/items/cat-wash-lick-1.webp",
+    "/pet/items/cat-wash-lick-2.webp", "/pet/items/cat-wash-lick-3.webp",
+    "/pet/items/cat-wash-lick-4.webp", "/pet/items/cat-wash-lick-5.webp",
+    "/pet/items/cat-wash-wipe-0.webp", "/pet/items/cat-wash-wipe-1.webp",
+    "/pet/items/cat-wash-wipe-2.webp", "/pet/items/cat-wash-wipe-3.webp",
+    "/pet/items/cat-wash-wipe-4.webp", "/pet/items/cat-wash-wipe-5.webp",
+  ],
 };
 const WASH_VARIANTS = ["paw"] as const;
 const WASH_ALIGN: Record<string, { w: number; dx: number; dy: number }> = {
   paw: { w: 124, dx: 0, dy: -4 },
 };
+// 洗脸自定义播放序列:舔爪 core(2-5)循环 4 轮(舔好几下) + 擦脸(6-11)。
+const WASH_ORDER = [0, 1, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+const WASH_DURS = [420, 340, 300, 300, 300, 320, 300, 300, 300, 320, 300, 300, 300, 320, 300, 300, 300, 320, 440, 440, 460, 460, 480, 560];
 const WASH_TALK = [
   "舔舔~(先把爪子舔湿再抹脸 ´ω`)",
   "呼噜~(脸要洗得香香的 =^‥^=)",
@@ -710,19 +720,25 @@ function PetNudge({
     return () => clearInterval(id);
   }, [roam.kind]);
 
-  // 洗脸:washing 期间 0↔1 来回切(局部动作:舔爪抹脸/抬后腿),~240ms 一拍
+  // 洗脸:自定义播放序列——舔爪 core(2-5)循环 4 轮(舔好几下) + 擦脸(6-11)。
   const [washFrame, setWashFrame] = useState(0);
   useEffect(() => {
-    if (roam.kind !== "washing") {
+    if (roam.kind !== "washing" || calm) {
       setWashFrame(0);
       return;
     }
-    const id = window.setInterval(
-      () => setWashFrame((f) => (f === 0 ? 1 : 0)),
-      620,
-    );
-    return () => clearInterval(id);
-  }, [roam.kind]);
+    let k = 0;
+    let t: number;
+    const tick = () => {
+      setWashFrame(WASH_ORDER[k]);
+      t = window.setTimeout(() => {
+        k = (k + 1) % WASH_ORDER.length;
+        tick();
+      }, WASH_DURS[k]);
+    };
+    tick();
+    return () => clearTimeout(t);
+  }, [roam.kind, calm]);
 
   useEffect(() => {
     const el = yardRef.current;
