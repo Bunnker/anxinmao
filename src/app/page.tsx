@@ -16,7 +16,7 @@ import {
 } from "@/lib/storage";
 import { pullHistory } from "@/lib/history-sync";
 import { readPersisted, writePersisted } from "@/lib/persist";
-import { recordHref } from "@/lib/profile";
+import { recordHref, careStatus } from "@/lib/profile";
 import { Disclaimer } from "@/components/Disclaimer";
 import { Welcome } from "@/components/Welcome";
 import { Guide } from "@/components/Guide";
@@ -79,6 +79,35 @@ function findFollowupTarget(records: CatRecord[]): CatRecord | null {
   const age = Date.now() - t;
   return age >= FOLLOWUP_MIN_AGE && age <= FOLLOWUP_MAX_AGE ? latest : null;
 }
+
+// 首页桌宠主动气泡(nudge)—— 没有待回访时,小猫偶尔冒一个「可点」的气泡:
+// 优先护理提醒(称重 / 驱虫 / 疫苗,据日期派生),否则随机搭话引导去分诊 / 问答。
+// 红线:文案不焦虑、不诊断、不碰风险三色装饰;只是温柔提醒 / 邀请。
+type Nudge = { text: string; href: string; sprite: PetSpriteState };
+
+// 据日期派生的护理提醒(确定性,按优先级):称重 >14 天 / 驱虫超期 / 没记疫苗。都没有 → null。
+function careNudge(cat: Cat): Nudge | null {
+  const edit = `/onboarding?pet=${cat.id}`;
+  const wl = cat.weightLog ?? [];
+  const last = wl[wl.length - 1];
+  const weighDays = last
+    ? (Date.now() - new Date(last.date).getTime()) / 86400000
+    : Infinity;
+  if (weighDays > 14)
+    return { text: `好久没给${cat.name}称体重啦,记一笔?`, href: edit, sprite: "review" };
+  const care = careStatus(cat);
+  if (care.deworm.status === "due")
+    return { text: `该给${cat.name}做驱虫啦 ~`, href: edit, sprite: "review" };
+  if (care.vaccine.status === "no")
+    return { text: `还没记${cat.name}的疫苗,补一下?`, href: edit, sprite: "review" };
+  return null;
+}
+
+// 闲时搭话引导(随机一条)—— 哪里不对劲来分诊 / 拿不准就问。
+const CHAT_NUDGES: Nudge[] = [
+  { text: "拿不准?喂养、习性都能问我 →", href: "/behavior", sprite: "waving" },
+  { text: "哪里不对劲?来做个分诊吧 →", href: "/symptoms", sprite: "waving" },
+];
 
 // 小猫陪伴提醒 —— 把分诊跟进 / 驱虫疫苗 / 新手引导统一成「猫在跟你说话」的气泡。
 // 一次只说一件事,优先级:跟进回执 > 分诊跟进 > 护理提醒 > 零记录引导;没事不出现。
@@ -333,6 +362,16 @@ function PetNudge({
   const talkTimer = useRef<number | null>(null);
   // 分诊跟进:进首页遛达一会儿后,小猫坐下用气泡主动问(asking=true 时冒「问+三选」泡)。
   const [asking, setAsking] = useState(false);
+  // 主动气泡(护理提醒 / 闲时搭话):没有待回访时偶尔冒一个可点的气泡。
+  const [nudge, setNudge] = useState<Nudge | null>(null);
+  const nudgeShownRef = useRef(false);
+  const nudgeTimer = useRef<number | null>(null);
+  // 读最新 cat 的 ref —— nudge 定时器不依赖 cat,避免 store 更新(云同步/并行写)
+  // 频繁改 cat 身份把 7s 定时器反复清掉,导致气泡永不出现。
+  const latestCatRef = useRef(cat);
+  useEffect(() => {
+    latestCatRef.current = cat;
+  }, [cat]);
 
   // ── 院子漫游(仅无事可说的 idle 场景):坐着 → 随机散步/洗脸/打盹 ──
   // x 是猫在院子里的横向位置,散步用 CSS transition 匀速走过去。
@@ -853,11 +892,45 @@ function PetNudge({
     return () => clearTimeout(t);
   }, [followupTarget, followupNote]);
 
+  // 没有待回访时:进首页遛 ~7s,小猫坐下冒一个主动气泡(护理提醒优先,否则 60% 概率随机搭话)。
+  // 一次访问只主动冒一次(nudgeShownRef),~12s 后自动收起继续遛达,不打扰。
+  useEffect(() => {
+    if (followupTarget || followupNote || nudgeShownRef.current) return;
+    const t = window.setTimeout(() => {
+      const pick =
+        careNudge(latestCatRef.current) ??
+        (Math.random() < 0.6
+          ? CHAT_NUDGES[Math.floor(Math.random() * CHAT_NUDGES.length)]
+          : null);
+      if (!pick) return;
+      nudgeShownRef.current = true;
+      setRoam((r) => {
+        const cur =
+          r.kind === "stroll"
+            ? readCatXY({ x: r.x, y: r.y })
+            : { x: r.x, y: r.y };
+        return {
+          kind: "sit",
+          x: Math.round(cur.x),
+          y: Math.round(cur.y),
+          facing: r.facing,
+          dur: 0,
+        };
+      });
+      setNudge(pick);
+      nudgeTimer.current = window.setTimeout(() => setNudge(null), 12000);
+    }, 200);
+    return () => {
+      clearTimeout(t);
+      if (nudgeTimer.current) clearTimeout(nudgeTimer.current);
+    };
+  }, [followupTarget, followupNote]);
+
   // 院子行为调度:坐 12-26s 后掷骰子 —— 50% 散步(约 35px/s 匀速)/
   // 25% 洗脸 / 25% 打盹(9-15s);摸猫说话 / 问跟进时暂停,完事从坐姿重新计时。
   // 院子是常驻沉浸 stage,猫始终鲜活;分诊跟进改由小猫气泡主动问(asking / followupNote 时调度暂停)。
   useEffect(() => {
-    if (calm || talk || asking || followupNote) return;
+    if (calm || talk || asking || followupNote || nudge) return;
     let t: number;
     // 院子真实宽度同步(场景切进 idle 后 ref 才挂上)
     const live = yardRef.current?.offsetWidth;
@@ -1040,7 +1113,7 @@ function PetNudge({
       );
     }
     return () => clearTimeout(t);
-  }, [calm, talk, asking, followupNote, roam, yardW, waterLevel]);
+  }, [calm, talk, asking, followupNote, nudge, roam, yardW, waterLevel]);
 
   // ── 院子始终是沉浸 stage:小猫在院子里生活,气泡跟着猫走。
   //    回访/护理/新用户引导等内容改由 HomePage 底部 sheet 承载(不再返回小气泡卡)。 ──
@@ -1054,7 +1127,9 @@ function PetNudge({
           : "jumping"
       : asking && !talk
         ? "review" // 歪头端详:比 waiting 的「举手放下」更可爱的关心式询问动作
-        : null;
+        : nudge && !talk
+          ? nudge.sprite // 护理提醒=歪头端详 / 搭话邀请=招手
+          : null;
     const yardSprite: PetSpriteState = followFace
       ? followFace
       : talk
@@ -1087,7 +1162,10 @@ function PetNudge({
     // 摸猫说话才冒对话泡 —— 气泡跟随小猫:贴着猫身体边缘的左/右侧,按边界选边
     const showFollowAsk = asking && !!followupTarget && !followupNote;
     const showFollowNote = !!followupNote;
-    const showBubble = talk !== null || showFollowAsk || showFollowNote;
+    const showNudge =
+      !!nudge && !showFollowAsk && !showFollowNote && talk === null;
+    const showBubble =
+      talk !== null || showFollowAsk || showFollowNote || showNudge;
     // 猫的视觉范围:容器锚在 roam.x,精灵宽 84、底中心缩放(按深度 scaleOf)
     const catScale = scaleOf(roam.y);
     const catCenterX = roam.x + 42;
@@ -1500,6 +1578,14 @@ function PetNudge({
                   ))}
                 </div>
               </>
+            ) : showNudge && nudge ? (
+              // 主动气泡:整条可点 —— 护理提醒跳编辑记一笔 / 搭话邀请跳分诊·问答
+              <Link
+                href={nudge.href}
+                className="block text-[14px] leading-relaxed text-ink transition active:opacity-70"
+              >
+                {nudge.text}
+              </Link>
             ) : (
               <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
             )}
