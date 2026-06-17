@@ -17,6 +17,11 @@ import {
 import { pullHistory } from "@/lib/history-sync";
 import { readPersisted, writePersisted } from "@/lib/persist";
 import { recordHref, careStatus } from "@/lib/profile";
+import {
+  isReminderSnoozed,
+  snoozeReminder,
+  type ReminderKind,
+} from "@/lib/reminder-snooze";
 import { Disclaimer } from "@/components/Disclaimer";
 import { Welcome } from "@/components/Welcome";
 import { Guide } from "@/components/Guide";
@@ -86,9 +91,17 @@ function findFollowupTarget(records: CatRecord[]): CatRecord | null {
 // text=猫语(第一人称喵语 + 颜文字);cta=猫爪按钮文案(可点跳转);sprite 见 ⚠ 下。
 // ⚠ sprite 暂用现有态(review/waving),待卖萌新帧(翻肚皮/撒娇等)出图后替换 ——
 //   见 docs/superpowers/specs/2026-06-17-nudge-cute-actions-handoff.md。
-type Nudge = { text: string; cta: string; href: string; sprite: PetSpriteState };
+type Nudge = {
+  text: string;
+  cta: string;
+  href: string;
+  sprite: PetSpriteState;
+  // 护理提醒带类型 → 点「去记一笔」按猫+类型 snooze,切回首页不再唠叨;搭话气泡不带。
+  snoozeKey?: ReminderKind;
+};
 
-// 据日期派生的护理提醒(确定性,按优先级):称重 >14 天 / 驱虫超期 / 没记疫苗。都没有 → null。
+// 据日期派生的护理提醒(确定性,按优先级):称重 >14 天 / 驱虫超期 / 没记疫苗。
+// 点过「去记一笔」的(snooze 期内)跳过 → 落到下一条或 null,避免切回首页反复唠叨同一条。
 function careNudge(cat: Cat): Nudge | null {
   const edit = `/onboarding?pet=${cat.id}`;
   const wl = cat.weightLog ?? [];
@@ -96,27 +109,30 @@ function careNudge(cat: Cat): Nudge | null {
   const weighDays = last
     ? (Date.now() - new Date(last.date).getTime()) / 86400000
     : Infinity;
-  if (weighDays > 14)
+  if (weighDays > 14 && !isReminderSnoozed(cat.id, "weigh"))
     return {
       text: "喵呜~(好久没量体重啦,帮我记一笔嘛 ｡•ᴗ•｡)",
       cta: "去记一笔",
       href: edit,
       sprite: "review",
+      snoozeKey: "weigh",
     };
   const care = careStatus(cat);
-  if (care.deworm.status === "due")
+  if (care.deworm.status === "due" && !isReminderSnoozed(cat.id, "deworm"))
     return {
       text: "喵喵~(该做驱虫啦,别忘了我哦 =^‥^=)",
       cta: "去记一笔",
       href: edit,
       sprite: "review",
+      snoozeKey: "deworm",
     };
-  if (care.vaccine.status === "no")
+  if (care.vaccine.status === "no" && !isReminderSnoozed(cat.id, "vaccine"))
     return {
       text: "喵~(还没记我的疫苗呢,补一下嘛 ˘ω˘)",
       cta: "去记一笔",
       href: edit,
       sprite: "review",
+      snoozeKey: "vaccine",
     };
   return null;
 }
@@ -747,33 +763,39 @@ function PetNudge({
     return () => clearInterval(id);
   }, [roam.kind, roam.pounceVariant, roam.carryPhase, calm]);
 
-  // carry(叼走换地方咬)阶段编排:catch(扑叼原位 0.9s)→ walk(叼着平移 1.3s)→ bite(到位咬 1s)→ sit
+  // carry(叼走换地方咬)整条编排:进入 carry 启动一次完整链 catch→walk→bite→sit。
+  // 关键:deps 不含 carryPhase——链内 setRoam 改 carryPhase 不触发本 effect 重跑,
+  // 否则阶段推进会让 effect 重跑+cleanup 清断链 → 表现为"叼跑咬后又重复一次"。
   useEffect(() => {
     if (roam.kind !== "pounce" || roam.pounceVariant !== "carry" || calm) return;
-    const phase = roam.carryPhase;
-    if (phase === "catch") {
-      const t = window.setTimeout(() => {
-        setRoam((r) => {
-          const maxX = Math.max(0, YARD_BASE_W - 84);
-          const dir = r.x < maxX / 2 ? 1 : -1; // 朝空地挪
-          const tx = Math.max(0, Math.min(maxX, r.x + dir * 74));
-          return { ...r, x: tx, facing: dir > 0 ? "right" : "left", carryPhase: "walk", dur: 1300 };
-        });
-      }, 900);
-      return () => clearTimeout(t);
-    }
-    if (phase === "walk") {
-      const t = window.setTimeout(() => setRoam((r) => ({ ...r, carryPhase: "bite" })), 1300);
-      return () => clearTimeout(t);
-    }
-    if (phase === "bite") {
-      const t = window.setTimeout(() => {
-        setRoam((r) => ({ ...r, kind: "sit", carryPhase: undefined }));
-        sayLine("play");
-      }, 1000);
-      return () => clearTimeout(t);
-    }
-  }, [roam.kind, roam.pounceVariant, roam.carryPhase, calm]);
+    const maxX = Math.max(0, YARD_BASE_W - 84);
+    const t1 = window.setTimeout(() => {
+      setRoam((r) => {
+        const dir = r.x < maxX / 2 ? 1 : -1; // 朝空地一侧叼着跑(左/右都可能)
+        const tx = Math.max(0, Math.min(maxX, r.x + dir * 120)); // 跑远点
+        return {
+          ...r,
+          x: tx,
+          facing: dir > 0 ? "right" : "left",
+          carryPhase: "walk",
+          dur: 1400,
+        };
+      });
+    }, 900);
+    const t2 = window.setTimeout(
+      () => setRoam((r) => ({ ...r, carryPhase: "bite" })),
+      2300,
+    );
+    const t3 = window.setTimeout(() => {
+      setRoam((r) => ({ ...r, kind: "sit", carryPhase: undefined }));
+      sayLine("play");
+    }, 3400);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [roam.kind, roam.pounceVariant, calm]);
 
   // 洗脸:自定义播放序列——舔爪 core(2-5)循环 4 轮(舔好几下) + 擦脸(6-11)。
   const [washFrame, setWashFrame] = useState(0);
@@ -1618,6 +1640,11 @@ function PetNudge({
                       roam.carryPhase === "walk"
                         ? `left ${roam.dur}ms linear`
                         : undefined,
+                    // carry 帧画的是向左叼走;朝右跑时水平镜像。swat/grab 正面坐姿不镜像。
+                    transform:
+                      wandVariant === "carry" && roam.facing === "right"
+                        ? "scaleX(-1)"
+                        : undefined,
                   }}
                 />
               </>
@@ -1717,6 +1744,10 @@ function PetNudge({
               // 主动气泡:整条可点 —— 喵语文案 + 醒目猫爪按钮(护理→记一笔 / 搭话→分诊·问答)
               <Link
                 href={nudge.href}
+                onClick={() => {
+                  // 护理提醒点了就 snooze:切回首页一周内不再唠叨这条(避免重复提醒 bug)。
+                  if (nudge.snoozeKey) snoozeReminder(cat.id, nudge.snoozeKey);
+                }}
                 className="block transition active:opacity-70"
               >
                 <p className="text-[14px] leading-relaxed text-ink">
