@@ -1053,7 +1053,7 @@ function PetNudge({
           ? "review"
           : "jumping"
       : asking && !talk
-        ? "waiting"
+        ? "review" // 歪头端详:比 waiting 的「举手放下」更可爱的关心式询问动作
         : null;
     const yardSprite: PetSpriteState = followFace
       ? followFace
