@@ -22,6 +22,19 @@ export function recordHref(record: CatRecord): string | null {
   return null;
 }
 
+// 时分:HH:mm(非法日期返回空)。
+export function timeHM(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+// 记录时间(带时分):相对日期 + 时间,如「今天 08:12」「6 月 12 日 14:05」。
+export function recordWhen(iso: string): string {
+  const t = timeHM(iso);
+  return t ? `${relativeDate(iso)} ${t}` : relativeDate(iso);
+}
+
 // 相对日期:今天 / 昨天 / N 天前 / M 月 D 日。
 export function relativeDate(iso: string): string {
   const d = new Date(iso);

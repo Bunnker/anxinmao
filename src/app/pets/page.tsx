@@ -20,7 +20,7 @@ import {
   companionDays,
   careStatus,
   recordHref,
-  relativeDate,
+  recordWhen,
   type CareStatus,
 } from "@/lib/profile";
 import type { Cat, CatRecord, Store } from "@/types/cat";
@@ -176,7 +176,6 @@ export default function PetsPage() {
     setRecords([]);
   }
 
-  const [showAllRecords, setShowAllRecords] = useState(false);
 
   // ── 生活相册:本地照片墙(≤6 张、单张 ≤5MB)。仅本地橱窗展示,不参与分诊判断(红线)──
   const [albumEdit, setAlbumEdit] = useState(false);
@@ -618,25 +617,24 @@ export default function PetsPage() {
           ))}
         </div>
 
-        {/* 健康记录:健康足迹(合规三色统计)+ timeline + 查看全部 */}
+        {/* 健康记录:健康足迹(合规三色统计)+ 最近 5 条 timeline + 跳全部记录/报表页 */}
         <div className="mt-[22px] mb-1 flex items-baseline justify-between px-0.5">
           <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
             健康记录
           </span>
-          {records.length > 6 && (
-            <button
-              type="button"
-              onClick={() => setShowAllRecords((v) => !v)}
+          {records.length > 0 && (
+            <Link
+              href="/pets/records"
               className="text-[12.5px] font-semibold text-accent"
             >
-              {showAllRecords ? "收起" : `全部 ${records.length} 条 ›`}
-            </button>
+              全部 {records.length} 条 · 报表 ›
+            </Link>
           )}
         </div>
         <HealthFootprint records={records} />
         {records.length > 0 && (
           <div className="relative mt-3.5 pl-1.5">
-            {(showAllRecords ? records : records.slice(0, 6)).map(
+            {records.slice(0, 5).map(
               (r, i, arr) => {
                 const tv =
                   r.kind === "triage" && r.tier ? TIER_TL[r.tier] : null;
@@ -661,7 +659,7 @@ export default function PetsPage() {
                       )}
                       <span>{r.kind === "triage" ? "分诊" : "问答"}</span>
                       <span>·</span>
-                      <span>{relativeDate(r.date)}</span>
+                      <span>{recordWhen(r.date)}</span>
                     </p>
                   </div>
                 );
