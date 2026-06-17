@@ -308,9 +308,20 @@ const TOOLBAR_ITEMS: Record<
 function PetNudge({
   cat,
   onOpenGuide,
+  followupTarget,
+  followupNote,
+  onPick,
 }: {
   cat: Cat;
   onOpenGuide: () => void;
+  followupTarget: CatRecord | null;
+  followupNote: {
+    text: string;
+    href?: string;
+    label?: string;
+    face?: PetFace;
+  } | null;
+  onPick: (rec: CatRecord, oc: NonNullable<CatRecord["outcome"]>) => void;
 }) {
   // 摸猫彩蛋:随机「眯眼享受 / 洗脸」+ 临时说一句猫语(盖过当前气泡 4.2s,
   // 给慢节奏动作留足播完+定格回味的时间);n 递增让连续摸每次都从头重播动作
@@ -320,6 +331,8 @@ function PetNudge({
     n: number;
   } | null>(null);
   const talkTimer = useRef<number | null>(null);
+  // 分诊跟进:进首页遛达一会儿后,小猫坐下用气泡主动问(asking=true 时冒「问+三选」泡)。
+  const [asking, setAsking] = useState(false);
 
   // ── 院子漫游(仅无事可说的 idle 场景):坐着 → 随机散步/洗脸/打盹 ──
   // x 是猫在院子里的横向位置,散步用 CSS transition 匀速走过去。
@@ -820,11 +833,31 @@ function PetNudge({
     }
   }
 
-  // 院子行为调度:坐 12-26s 后掷骰子 —— 50% 散步(约 35px/s 匀速)/
-  // 25% 洗脸 / 25% 打盹(9-15s);摸猫说话时暂停,说完从坐姿重新计时。
-  // 院子是常驻沉浸 stage,猫始终鲜活(回访/护理等改由 HomePage 底部 sheet 承载)。
+  // 进首页遛达 ~5s 后:若有待回访的分诊记录且尚未回执,小猫就地坐下、冒跟进气泡主动问。
   useEffect(() => {
-    if (calm || talk) return;
+    if (!followupTarget || followupNote) return;
+    const t = window.setTimeout(() => {
+      setRoam((r) => {
+        const cur =
+          r.kind === "stroll" ? readCatXY({ x: r.x, y: r.y }) : { x: r.x, y: r.y };
+        return {
+          kind: "sit",
+          x: Math.round(cur.x),
+          y: Math.round(cur.y),
+          facing: r.facing,
+          dur: 0,
+        };
+      });
+      setAsking(true);
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [followupTarget, followupNote]);
+
+  // 院子行为调度:坐 12-26s 后掷骰子 —— 50% 散步(约 35px/s 匀速)/
+  // 25% 洗脸 / 25% 打盹(9-15s);摸猫说话 / 问跟进时暂停,完事从坐姿重新计时。
+  // 院子是常驻沉浸 stage,猫始终鲜活;分诊跟进改由小猫气泡主动问(asking / followupNote 时调度暂停)。
+  useEffect(() => {
+    if (calm || talk || asking || followupNote) return;
     let t: number;
     // 院子真实宽度同步(场景切进 idle 后 ref 才挂上)
     const live = yardRef.current?.offsetWidth;
@@ -1007,12 +1040,24 @@ function PetNudge({
       );
     }
     return () => clearTimeout(t);
-  }, [calm, talk, roam, yardW, waterLevel]);
+  }, [calm, talk, asking, followupNote, roam, yardW, waterLevel]);
 
   // ── 院子始终是沉浸 stage:小猫在院子里生活,气泡跟着猫走。
   //    回访/护理/新用户引导等内容改由 HomePage 底部 sheet 承载(不再返回小气泡卡)。 ──
   {
-    const yardSprite: PetSpriteState = talk
+    // 跟进态优先:答完按回执表情(好转/已就医=开心,担心=耷耳,引导=端详),问时=期待。
+    const followFace: PetSpriteState | null = followupNote
+      ? followupNote.face === "worry"
+        ? "failed"
+        : followupNote.face === "curious"
+          ? "review"
+          : "jumping"
+      : asking && !talk
+        ? "waiting"
+        : null;
+    const yardSprite: PetSpriteState = followFace
+      ? followFace
+      : talk
       ? (touch?.action ?? "idle")
       : roam.kind === "stroll"
         ? roam.facing === "right"
@@ -1040,7 +1085,9 @@ function PetNudge({
                           ? "failed"
                           : "idle";
     // 摸猫说话才冒对话泡 —— 气泡跟随小猫:贴着猫身体边缘的左/右侧,按边界选边
-    const showBubble = talk !== null;
+    const showFollowAsk = asking && !!followupTarget && !followupNote;
+    const showFollowNote = !!followupNote;
+    const showBubble = talk !== null || showFollowAsk || showFollowNote;
     // 猫的视觉范围:容器锚在 roam.x,精灵宽 84、底中心缩放(按深度 scaleOf)
     const catScale = scaleOf(roam.y);
     const catCenterX = roam.x + 42;
@@ -1405,7 +1452,57 @@ function PetNudge({
             }
             style={{ ...bubbleStyle, bottom: bubbleBottom, zIndex: 200 }}
           >
-            <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
+            {showFollowNote && followupNote ? (
+              // 答完:致谢 / 引导(「还没好」带再分诊链接)
+              <>
+                <p className="text-[14px] leading-relaxed text-ink">
+                  {followupNote.text}
+                </p>
+                {followupNote.href && (
+                  <Link
+                    href={followupNote.href}
+                    className="mt-1.5 inline-block text-[13.5px] font-medium text-accent"
+                  >
+                    {followupNote.label}
+                  </Link>
+                )}
+              </>
+            ) : showFollowAsk && followupTarget ? (
+              // 问:上次某症状之后好点了吗 + 三选一(陶土红/中性,不碰风险色)
+              <>
+                <p className="text-[14px] leading-relaxed text-ink">
+                  上次「{followupTarget.summary}」之后,{cat.name}好点了吗?
+                </p>
+                <div className="mt-2.5 flex gap-1.5">
+                  {(
+                    [
+                      ["好多了", "在家好转", true],
+                      ["已就医", "已就医", false],
+                      ["还没好", "未跟进", false],
+                    ] as const
+                  ).map(([label, oc, primary]) => (
+                    <button
+                      key={oc}
+                      type="button"
+                      onClick={() => {
+                        onPick(followupTarget, oc);
+                        setAsking(false);
+                      }}
+                      className={
+                        "flex-1 rounded-full px-1.5 py-2 text-[12.5px] font-semibold transition-transform active:scale-[0.96] " +
+                        (primary
+                          ? "bg-[var(--accent-tint)] text-accent"
+                          : "bg-[var(--surface-2)] text-ink shadow-[var(--shadow-control)]")
+                      }
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
+            )}
           </div>
         )}
         </div>
@@ -1692,6 +1789,8 @@ export default function HomePage() {
         label: "再分诊一次 →",
         face: urgent ? "worry" : "curious",
       });
+      // 气泡多停一会儿(留时间点「再分诊」),之后淡出,小猫继续遛。
+      setTimeout(() => setFollowupNote(null), 6000);
     }
   }
 
@@ -1717,7 +1816,13 @@ export default function HomePage() {
         style={{ background: "var(--paper)" }}
       >
         {/* 全屏 stage:沉浸院子 —— 浮动问候 / 小知识💡 / 「?」/ floor 道具栏 / 搭话泡全在 PetNudge 内 */}
-        <PetNudge cat={cat} onOpenGuide={() => setShowGuide(true)} />
+        <PetNudge
+          cat={cat}
+          onOpenGuide={() => setShowGuide(true)}
+          followupTarget={followupTarget}
+          followupNote={followupNote}
+          onPick={pickOutcome}
+        />
 
         {/* 底部上拉 sheet:盖院子下沿、圆角顶、上向阴影 —— 回访(如有)+ 看病 CTA + 问问 + 最近 */}
         <div
@@ -1733,46 +1838,7 @@ export default function HomePage() {
             aria-hidden="true"
           />
 
-          {/* 回访闭环(从院子小卡迁来):待回访记录 → 问一句 + 三选一回执;回执后转致谢 note */}
-          {followupNote ? (
-            <div className="mb-2.5 rounded-[18px] bg-surface px-4 py-3 shadow-[var(--shadow-card)]">
-              <p className="text-[14px] leading-relaxed text-ink">
-                {followupNote.text}
-              </p>
-              {followupNote.href && (
-                <Link
-                  href={followupNote.href}
-                  className="mt-1.5 inline-block text-[13.5px] font-medium text-accent"
-                >
-                  {followupNote.label}
-                </Link>
-              )}
-            </div>
-          ) : followupTarget ? (
-            <div className="mb-2.5 rounded-[18px] bg-surface px-4 py-3 shadow-[var(--shadow-card)]">
-              <p className="text-[14px] leading-relaxed text-ink">
-                上次「{followupTarget.summary}」之后,{cat.name}好点了吗?
-              </p>
-              <div className="mt-2.5 flex gap-2">
-                {(
-                  [
-                    ["好多了", "在家好转"],
-                    ["已就医", "已就医"],
-                    ["还没好", "未跟进"],
-                  ] as const
-                ).map(([label, oc]) => (
-                  <button
-                    key={oc}
-                    type="button"
-                    onClick={() => pickOutcome(followupTarget, oc)}
-                    className="flex-1 rounded-full bg-[var(--surface-2)] px-2 py-2 text-[13px] font-medium text-ink shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
+          {/* 分诊跟进已改由院子小猫主动用气泡问(见 PetNudge),不再在 sheet 弹卡。 */}
 
           {/* 看病 CTA —— 页面级主入口(陶土红渐变 + 内嵌 rgy + 30 秒红黄绿) */}
           <Link
