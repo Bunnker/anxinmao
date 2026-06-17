@@ -489,6 +489,8 @@ function PetNudge({
     washVariant?: string;
     // 逗猫棒扑抓变体(swat 拍打 / grab 抓咬 / carry 叼走),决定盖帧序列
     pounceVariant?: string;
+    // carry(叼走)阶段:catch 扑叼原位 / walk 叼着平移 / bite 到位咬
+    carryPhase?: "catch" | "walk" | "bite";
   }>({ kind: "sit", x: 4, y: 58, facing: "right", dur: 0 });
   // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
   const [calm, setCalm] = useState(false);
@@ -717,17 +719,61 @@ function PetNudge({
       setPounceFrame(0);
       return;
     }
+    // carry:按阶段播——catch 0→1→2 / walk 3↔4 步态循环 / bite 停在 5
+    if (roam.pounceVariant === "carry") {
+      const phase = roam.carryPhase;
+      if (phase === "walk") {
+        let i = 3;
+        setPounceFrame(3);
+        const id = window.setInterval(() => { i = i === 3 ? 4 : 3; setPounceFrame(i); }, 260);
+        return () => clearInterval(id);
+      }
+      if (phase === "bite") {
+        setPounceFrame(5);
+        return;
+      }
+      let i = 0; // catch
+      setPounceFrame(0);
+      const id = window.setInterval(() => { i = Math.min(i + 1, 2); setPounceFrame(i); }, 300);
+      return () => clearInterval(id);
+    }
+    // swat/grab:变长顺播 loop
     const seq = WAND_SEQS[roam.pounceVariant ?? "swat"] ?? WAND_SEQS.swat;
     const n = seq.length;
     if (n < 2) { setPounceFrame(0); return; }
     let i = 0;
     setPounceFrame(0);
-    const id = window.setInterval(() => {
-      i = (i + 1) % n;
-      setPounceFrame(i);
-    }, 300);
+    const id = window.setInterval(() => { i = (i + 1) % n; setPounceFrame(i); }, 300);
     return () => clearInterval(id);
-  }, [roam.kind, roam.pounceVariant, calm]);
+  }, [roam.kind, roam.pounceVariant, roam.carryPhase, calm]);
+
+  // carry(叼走换地方咬)阶段编排:catch(扑叼原位 0.9s)→ walk(叼着平移 1.3s)→ bite(到位咬 1s)→ sit
+  useEffect(() => {
+    if (roam.kind !== "pounce" || roam.pounceVariant !== "carry" || calm) return;
+    const phase = roam.carryPhase;
+    if (phase === "catch") {
+      const t = window.setTimeout(() => {
+        setRoam((r) => {
+          const maxX = Math.max(0, YARD_BASE_W - 84);
+          const dir = r.x < maxX / 2 ? 1 : -1; // 朝空地挪
+          const tx = Math.max(0, Math.min(maxX, r.x + dir * 74));
+          return { ...r, x: tx, facing: dir > 0 ? "right" : "left", carryPhase: "walk", dur: 1300 };
+        });
+      }, 900);
+      return () => clearTimeout(t);
+    }
+    if (phase === "walk") {
+      const t = window.setTimeout(() => setRoam((r) => ({ ...r, carryPhase: "bite" })), 1300);
+      return () => clearTimeout(t);
+    }
+    if (phase === "bite") {
+      const t = window.setTimeout(() => {
+        setRoam((r) => ({ ...r, kind: "sit", carryPhase: undefined }));
+        sayLine("play");
+      }, 1000);
+      return () => clearTimeout(t);
+    }
+  }, [roam.kind, roam.pounceVariant, roam.carryPhase, calm]);
 
   // 洗脸:自定义播放序列——舔爪 core(2-5)循环 4 轮(舔好几下) + 擦脸(6-11)。
   const [washFrame, setWashFrame] = useState(0);
@@ -886,9 +932,16 @@ function PetNudge({
           facing: r.facing,
           dur: 0,
           pounceVariant: variant,
+          carryPhase: variant === "carry" ? "catch" : undefined,
         };
       }
-      return { ...r, kind: "pounce", dur: 0, pounceVariant: variant };
+      return {
+        ...r,
+        kind: "pounce",
+        dur: 0,
+        pounceVariant: variant,
+        carryPhase: variant === "carry" ? "catch" : undefined,
+      };
     });
   }
 
@@ -1116,11 +1169,15 @@ function PetNudge({
         sayText(WASH_TALK[Math.floor(Math.random() * WASH_TALK.length)]);
       }, 3600);
     } else if (roam.kind === "pounce") {
-      // 逗猫棒:原地扑跳捕猎 ~2.4s 后坐回,说句捕猎猫语(复用 play 捕猎语)
-      t = window.setTimeout(() => {
-        setRoam((r) => ({ ...r, kind: "sit" }));
-        sayLine("play");
-      }, 2400);
+      if (roam.pounceVariant === "carry") {
+        // carry 由专门的 carry 编排 effect 推进 catch→walk→bite→sit,这里不设通用退出
+      } else {
+        // swat/grab:原地扑 ~2.4s 后坐回,说句捕猎猫语
+        t = window.setTimeout(() => {
+          setRoam((r) => ({ ...r, kind: "sit" }));
+          sayLine("play");
+        }, 2400);
+      }
     } else if (roam.kind === "sunbathe") {
       // 晒太阳:趴在阳光里眯眼 ~6s 后坐起,说句晒太阳猫语
       t = window.setTimeout(() => {
@@ -1394,7 +1451,8 @@ function PetNudge({
               transform: `translate(${roam.x}px, ${-roam.y}px) scale(${scaleOf(roam.y).toFixed(3)})`,
               transformOrigin: "50% 100%",
               transition:
-                roam.kind === "stroll"
+                roam.kind === "stroll" ||
+                (roam.kind === "pounce" && roam.carryPhase === "walk")
                   ? `transform ${roam.dur}ms linear`
                   : "none",
               willChange: roam.kind === "stroll" ? "transform" : undefined,
@@ -1556,6 +1614,10 @@ function PetNudge({
                     bottom: Math.round(roam.y + WAND_DY * s),
                     width: w,
                     zIndex: Math.max(zOf(roam.y), 150) + 1,
+                    transition:
+                      roam.carryPhase === "walk"
+                        ? `left ${roam.dur}ms linear`
+                        : undefined,
                   }}
                 />
               </>
