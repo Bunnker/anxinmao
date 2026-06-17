@@ -150,14 +150,16 @@ export default function PetSprite({
   idleFlourish?: boolean;
 }) {
   const height = (width * CELL_H) / CELL_W;
-  const [frame, setFrame] = useState(0);
+  const [frameState, setFrameState] = useState({ key: "", frame: 0 });
   const [ready, setReady] = useState(sheetStatus === true);
   const [still, setStill] = useState(false);
   const [paused, setPaused] = useState(false);
   // idle 时小猫偶尔自己洗个脸 —— 活物不会一动不动
   const [flourish, setFlourish] = useState<PetSpriteState | null>(null);
 
-  const shown: PetSpriteState = flourish ?? state;
+  const shown: PetSpriteState = state === "idle" && flourish ? flourish : state;
+  const animationKey = `${shown}:${String(playKey ?? "")}:${ready ? "1" : "0"}:${still ? "1" : "0"}:${paused ? "1" : "0"}`;
+  const frame = frameState.key === animationKey ? frameState.frame : 0;
 
   useEffect(() => {
     let alive = true;
@@ -186,7 +188,8 @@ export default function PetSprite({
 
   // 场景或重播信号变化时,放下手头的小动作,有正事说事
   useEffect(() => {
-    setFlourish(null);
+    const t = window.setTimeout(() => setFlourish(null), 0);
+    return () => clearTimeout(t);
   }, [state, playKey]);
 
   // 闲着时随机安排一次洗脸
@@ -202,7 +205,6 @@ export default function PetSprite({
 
   // 逐帧步进:loop 循环 / hold 播到定格帧停;状态切换从第 0 帧重来
   useEffect(() => {
-    setFrame(0);
     if (!ready || still || paused) return;
     const cfg = ROWS[shown];
     const end =
@@ -219,13 +221,13 @@ export default function PetSprite({
       }
       timer = window.setTimeout(() => {
         i = end >= 0 ? i + 1 : (i + 1) % cfg.durations.length;
-        setFrame(i);
+        setFrameState({ key: animationKey, frame: i });
         step();
       }, cfg.durations[i]);
     };
     step();
     return () => clearTimeout(timer);
-  }, [shown, ready, still, paused, playKey, flourish]);
+  }, [shown, ready, still, paused, playKey, flourish, animationKey]);
 
   if (!ready) {
     if (!fallbackSrc) {

@@ -9,8 +9,10 @@ import { SYMPTOM_LABELS } from "@/lib/triage";
 import { loadTriageHandoff, saveTriageHandoff } from "@/lib/triage-handoff";
 import { Disclaimer } from "@/components/Disclaimer";
 import { ReviewedNotice } from "@/components/ReviewedNotice";
+import { CaseSummaryPanel } from "@/components/CaseSummaryPanel";
 import { CatAvatar } from "@/components/CatAvatar";
 import { ShareReportButton } from "@/components/ShareReportButton";
+import type { CaseSummaryCat } from "@/lib/case-summary";
 import type { RiskTier, Store } from "@/types/cat";
 
 // 报告文案、护理步骤、升级清单依据 docs/product/分诊证据-草稿-v0.2.md
@@ -1294,6 +1296,7 @@ function ReportContent() {
     [claimIds, symptom, tier],
   );
   const handoffId = queryHandoffId || generatedHandoffId;
+  const triageHandoff = useMemo(() => loadTriageHandoff(handoffId), [handoffId]);
   const cat = store?.cats.find((c) => c.id === store.activeCatId) ?? store?.cats[0];
   const catName = cat?.name || "它";
   const catAvatar = cat?.avatar;
@@ -1316,6 +1319,37 @@ function ReportContent() {
     .filter(Boolean)
     .join(" ")
     .slice(0, 300);
+  const caseSummaryCat = (cat
+    ? {
+        name: cat.name,
+        ageMonths: cat.ageMonths,
+        sex: cat.sex,
+        breed: cat.breed,
+        weight: cat.weight,
+        neutered: cat.neutered,
+        vaccines: cat.vaccines,
+        deworm: cat.deworm,
+        chronicConditions: cat.chronicConditions,
+        allergies: cat.allergies,
+        notes: cat.notes,
+      }
+    : { name: catName }) satisfies CaseSummaryCat;
+  const caseSummaryPayload = {
+    cat: caseSummaryCat,
+    medical: {
+      symptom,
+      symptomLabel,
+      tier: shownTier,
+      claimIds,
+      report: reportSummary,
+      qa: triageHandoff?.qa,
+    },
+    conversation: {
+      messages: [],
+    },
+  };
+  const caseSummaryLabel =
+    shownTier === "green" ? "整理观察要点" : "整理病情说明";
   const askParams = new URLSearchParams({ tier: shownTier });
   if (symptom) askParams.set("symptom", symptom);
   if (claimIds.length > 0) askParams.set("claims", claimIds.join(","));
@@ -1404,17 +1438,6 @@ function ReportContent() {
       {/* 兽医审阅与不替代面诊提示,紧跟分级结论。 */}
       <ReviewedNotice className="mt-3" />
 
-      <Link
-        href={askHref}
-        onClick={saveAskHandoff}
-        className="mt-3 flex items-center justify-between rounded-[28px] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)]"
-      >
-        <span>继续补充问问</span>
-        <span className="text-ink-faint" aria-hidden="true">
-          →
-        </span>
-      </Link>
-
       {/* 现在做什么 */}
       <section className="mt-8">
         <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-faint">
@@ -1478,6 +1501,30 @@ function ReportContent() {
         escalateTitle={info.escalateTitle}
         escalateItems={info.escalateItems}
       />
+
+      <div className="mt-3">
+        <Link
+          href={askHref}
+          onClick={saveAskHandoff}
+          className="flex items-center justify-between rounded-[28px] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)]"
+        >
+          <span>继续补充问问</span>
+          <span className="text-ink-faint" aria-hidden="true">
+            →
+          </span>
+        </Link>
+
+        <CaseSummaryPanel
+          source="report"
+          label={caseSummaryLabel}
+          payload={caseSummaryPayload}
+          tier={shownTier}
+          symptom={symptom}
+          hasCatProfile={Boolean(cat)}
+          hasTriageContext={true}
+          variant="action"
+        />
+      </div>
 
       <div className="flex-1" />
       <Disclaimer />
