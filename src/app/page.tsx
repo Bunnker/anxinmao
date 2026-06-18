@@ -16,12 +16,9 @@ import {
 } from "@/lib/storage";
 import { pullHistory } from "@/lib/history-sync";
 import { readPersisted, writePersisted } from "@/lib/persist";
-import { recordHref, careStatus } from "@/lib/profile";
-import {
-  isReminderSnoozed,
-  snoozeReminder,
-  type ReminderKind,
-} from "@/lib/reminder-snooze";
+import { recordHref } from "@/lib/profile";
+import { snoozeReminder } from "@/lib/reminder-snooze";
+import { idleNudge, type Nudge } from "@/lib/pet-nudge";
 import { Disclaimer } from "@/components/Disclaimer";
 import { Welcome } from "@/components/Welcome";
 import { Guide } from "@/components/Guide";
@@ -85,73 +82,10 @@ function findFollowupTarget(records: CatRecord[]): CatRecord | null {
   return age >= FOLLOWUP_MIN_AGE && age <= FOLLOWUP_MAX_AGE ? latest : null;
 }
 
-// 首页桌宠主动气泡(nudge)—— 没有待回访时,小猫偶尔冒一个「可点」的气泡:
-// 优先护理提醒(称重 / 驱虫 / 疫苗,据日期派生),否则随机搭话引导去分诊 / 问答。
-// 红线:文案不焦虑、不诊断、不碰风险三色装饰;只是温柔提醒 / 邀请。
-// text=猫语(第一人称喵语 + 颜文字);cta=猫爪按钮文案(可点跳转);sprite 见 ⚠ 下。
-// ⚠ sprite 暂用现有态(review/waving),待卖萌新帧(翻肚皮/撒娇等)出图后替换 ——
-//   见 docs/superpowers/specs/2026-06-17-nudge-cute-actions-handoff.md。
-type Nudge = {
-  text: string;
-  cta: string;
-  href: string;
-  sprite: PetSpriteState;
-  // 护理提醒带类型 → 点「去记一笔」按猫+类型 snooze,切回首页不再唠叨;搭话气泡不带。
-  snoozeKey?: ReminderKind;
-};
-
-// 据日期派生的护理提醒(确定性,按优先级):称重 >14 天 / 驱虫超期 / 没记疫苗。
-// 点过「去记一笔」的(snooze 期内)跳过 → 落到下一条或 null,避免切回首页反复唠叨同一条。
-function careNudge(cat: Cat): Nudge | null {
-  const edit = `/onboarding?pet=${cat.id}`;
-  const wl = cat.weightLog ?? [];
-  const last = wl[wl.length - 1];
-  const weighDays = last
-    ? (Date.now() - new Date(last.date).getTime()) / 86400000
-    : Infinity;
-  if (weighDays > 14 && !isReminderSnoozed(cat.id, "weigh"))
-    return {
-      text: "喵呜~(好久没量体重啦,帮我记一笔嘛 ｡•ᴗ•｡)",
-      cta: "去记一笔",
-      href: edit,
-      sprite: "review",
-      snoozeKey: "weigh",
-    };
-  const care = careStatus(cat);
-  if (care.deworm.status === "due" && !isReminderSnoozed(cat.id, "deworm"))
-    return {
-      text: "喵喵~(该做驱虫啦,别忘了我哦 =^‥^=)",
-      cta: "去记一笔",
-      href: edit,
-      sprite: "review",
-      snoozeKey: "deworm",
-    };
-  if (care.vaccine.status === "no" && !isReminderSnoozed(cat.id, "vaccine"))
-    return {
-      text: "喵~(还没记我的疫苗呢,补一下嘛 ˘ω˘)",
-      cta: "去记一笔",
-      href: edit,
-      sprite: "review",
-      snoozeKey: "vaccine",
-    };
-  return null;
-}
-
-// 闲时搭话引导(随机一条)—— 哪里不对劲来分诊 / 拿不准就问(喵语)。
-const CHAT_NUDGES: Nudge[] = [
-  {
-    text: "喵~(拿不准的事都能问我哦 ·ω·)",
-    cta: "去问问",
-    href: "/behavior",
-    sprite: "waving",
-  },
-  {
-    text: "喵呜?(哪儿不对劲就带我去分诊呀 ฅ•ﻌ•ฅ)",
-    cta: "去分诊",
-    href: "/symptoms",
-    sprite: "waving",
-  },
-];
+// 桌宠闲时气泡(nudge)—— 内容 + 挑选逻辑(idleNudge / Nudge 类型 / 闲聊词库 / 护理提醒)
+// 抽到 lib/pet-nudge.ts:约 80% 纯闲聊(不可点)+ 约 20% 提一嘴(护理 / 分诊 / 问答可点)。
+// 红线:文案不焦虑、不诊断、不碰风险三色;闲聊纯陪伴。sprite 暂用现有态(review/waving),
+// 待卖萌新帧出图后替换(见 docs/superpowers/specs/2026-06-17-nudge-cute-actions-handoff.md)。
 
 // 醒目的猫爪按钮 —— 提示气泡可点跳转(陶土红实心 + 猫爪 + 文案)。
 function PawCta({ label }: { label: string }) {
@@ -251,9 +185,24 @@ const BRUSH_ALIGN: Record<string, { w: number; dx: number; dy: number }> = {
 // 在猫实时位置盖帧、藏掉实时精灵(同梳毛盖帧)。帧里猫身体偏左、棒在右上,DX 右移对齐猫身体。
 const WAND_SEQS: Record<string, string[]> = {
   swat: ["/pet/items/cat-wand-swat-0.webp","/pet/items/cat-wand-swat-1.webp","/pet/items/cat-wand-swat-2.webp","/pet/items/cat-wand-swat-3.webp","/pet/items/cat-wand-swat-4.webp","/pet/items/cat-wand-swat-5.webp"],
-  grab: ["/pet/items/cat-wand-grab-0.webp","/pet/items/cat-wand-grab-1.webp","/pet/items/cat-wand-grab-2.webp","/pet/items/cat-wand-grab-3.webp","/pet/items/cat-wand-grab-4.webp","/pet/items/cat-wand-grab-5.webp"],
-  carry:["/pet/items/cat-wand-carry-0.webp","/pet/items/cat-wand-carry-1.webp","/pet/items/cat-wand-carry-2.webp","/pet/items/cat-wand-carry-3.webp","/pet/items/cat-wand-carry-4.webp","/pet/items/cat-wand-carry-5.webp"],
+  grab: ["/pet/items/cat-wand-grab-0.webp","/pet/items/cat-wand-grab-1.webp","/pet/items/cat-wand-grab-2.webp","/pet/items/cat-wand-grab-3.webp","/pet/items/cat-wand-grab-4.webp","/pet/items/cat-wand-grab-5.webp","/pet/items/cat-wand-grab-6.webp","/pet/items/cat-wand-grab-7.webp"],
+  carry:["/pet/items/cat-wand-carry-0.webp","/pet/items/cat-wand-carry-1.webp","/pet/items/cat-wand-carry-2.webp","/pet/items/cat-wand-carry-3.webp","/pet/items/cat-wand-carry-4.webp","/pet/items/cat-wand-carry-5.webp","/pet/items/cat-wand-carry-6.webp","/pet/items/cat-wand-carry-7.webp"],
 };
+// 叼着逗猫棒走路:参考日常 running 步态,左右各一套独立真帧(非镜像),循环 5 帧。
+const WAND_CARRY_WALK: Record<"left" | "right", string[]> = {
+  left: [0, 1, 2, 3, 4].map((i) => `/pet/items/cat-wand-walk-l-${i}.webp`),
+  right: [0, 1, 2, 3, 4].map((i) => `/pet/items/cat-wand-walk-r-${i}.webp`),
+};
+const WAND_CARRY_WALK_LEN = 5;
+// 到位后的动态扑咬:兔子踢翻滚抱啃羽毛 5 帧循环(替代旧的静态趴咬/躺咬)。
+const WAND_CARRY_BITE = [0, 1, 2, 3, 4].map((i) => `/pet/items/cat-wand-bite-${i}.webp`);
+const WAND_CARRY_BITE_LEN = 5;
+// 走路/扑咬帧的猫填满整格(同原型雪碧图),按原型显示宽 84 渲染;其余 carry 帧含逗猫棒长杆,用 WAND_W=156。
+const WAND_WALK_W = 84;
+// grab(扯下来玩)玩耍编排:帧序 + 各帧时长 —— 看→够→抓拉→啃(3↔4 快速啃几下)→拍走(5抬爪→6挥拍→7拍飞),只播一遍不循环。
+const GRAB_SEQ = [0, 1, 2, 3, 4, 3, 4, 3, 4, 5, 6, 7];
+const GRAB_DURS = [450, 320, 320, 220, 220, 220, 220, 220, 220, 220, 120, 300];
+const GRAB_TOTAL = GRAB_DURS.reduce((a, b) => a + b, 0); // ≈ 3.05s 演完坐回(拍飞 5→6→7 快收)
 const WAND_VARIANTS = ["swat", "grab", "carry"] as const;
 const WAND_W = 156;
 const WAND_DX = 16;
@@ -735,25 +684,48 @@ function PetNudge({
       setPounceFrame(0);
       return;
     }
-    // carry:按阶段播——catch 0→1→2 / walk 3↔4 步态循环 / bite 停在 5
+    // carry:按阶段播——catch 0→1→2(扑叼)/ walk 5帧步态循环(按 facing 选左右真帧)/ bite 兔子踢 5帧循环。
     if (roam.pounceVariant === "carry") {
       const phase = roam.carryPhase;
       if (phase === "walk") {
-        let i = 3;
-        setPounceFrame(3);
-        const id = window.setInterval(() => { i = i === 3 ? 4 : 3; setPounceFrame(i); }, 260);
+        // 叼着走:循环播放 5 帧走路步态(参考日常 running 步态,左右各一套真帧,见 WAND_CARRY_WALK)。
+        // 这里 pounceFrame 0..4 是走路序列下标(渲染处按 facing 选左/右那套);位移仍靠 CSS left 平移。
+        let i = 0;
+        setPounceFrame(0);
+        const id = window.setInterval(() => {
+          i = (i + 1) % WAND_CARRY_WALK_LEN;
+          setPounceFrame(i);
+        }, 120);
         return () => clearInterval(id);
       }
       if (phase === "bite") {
-        setPounceFrame(5);
-        return;
+        // 到位后的动态扑咬:兔子踢翻滚抱啃 5 帧循环(0..4),160ms/帧。
+        let i = 0;
+        setPounceFrame(0);
+        const id = window.setInterval(() => {
+          i = (i + 1) % WAND_CARRY_BITE_LEN;
+          setPounceFrame(i);
+        }, 160);
+        return () => clearInterval(id);
       }
       let i = 0; // catch
       setPounceFrame(0);
       const id = window.setInterval(() => { i = Math.min(i + 1, 2); setPounceFrame(i); }, 300);
       return () => clearInterval(id);
     }
-    // swat/grab:变长顺播 loop
+    // grab(扯下来玩)玩耍编排:按 GRAB_SEQ/GRAB_DURS 顺播一遍(中段 3↔4 快速啃几下),停在末帧拍开,不循环。
+    if (roam.pounceVariant === "grab") {
+      let k = 0;
+      setPounceFrame(GRAB_SEQ[0]);
+      let timer = window.setTimeout(function step() {
+        k += 1;
+        if (k >= GRAB_SEQ.length) return; // 播完停在末帧(拍开),不回头循环
+        setPounceFrame(GRAB_SEQ[k]);
+        timer = window.setTimeout(step, GRAB_DURS[k]);
+      }, GRAB_DURS[0]);
+      return () => clearTimeout(timer);
+    }
+    // swat(挠):变长顺播 loop
     const seq = WAND_SEQS[roam.pounceVariant ?? "swat"] ?? WAND_SEQS.swat;
     const n = seq.length;
     if (n < 2) { setPounceFrame(0); return; }
@@ -763,39 +735,57 @@ function PetNudge({
     return () => clearInterval(id);
   }, [roam.kind, roam.pounceVariant, roam.carryPhase, calm]);
 
-  // carry(叼走换地方咬)整条编排:进入 carry 启动一次完整链 catch→walk→bite→sit。
-  // 关键:deps 不含 carryPhase——链内 setRoam 改 carryPhase 不触发本 effect 重跑,
-  // 否则阶段推进会让 effect 重跑+cleanup 清断链 → 表现为"叼跑咬后又重复一次"。
+  // carry(叼走换地方咬)链式编排:① 扑咬 catch(0.9s) → ② 叼着走 walk(左右随机 + 距离随机 + 斜向纵深、
+  // 撞墙反向、时长按 2D 距离自适应) → ③ 到位兔子踢动态扑咬 bite(~5s)→ 坐回。
+  // 链式 setTimeout(walk 距离随机→walkDur 动态,后续段嵌套在前段回调里 schedule)。
+  // 防重入:仅 carryPhase==="catch"(入口)启动 + runId 守卫(再拖作废旧链、切走停);timers 不在 cleanup 清。
+  const carryRunId = useRef(0);
   useEffect(() => {
-    if (roam.kind !== "pounce" || roam.pounceVariant !== "carry" || calm) return;
+    if (calm || roam.kind !== "pounce" || roam.pounceVariant !== "carry") return;
+    if (roam.carryPhase !== "catch") return; // 仅入口启动,杜绝重入
+    const myRun = ++carryRunId.current;
+    const ok = () => carryRunId.current === myRun;
     const maxX = Math.max(0, YARD_BASE_W - 84);
-    const t1 = window.setTimeout(() => {
-      setRoam((r) => {
-        const dir = r.x < maxX / 2 ? 1 : -1; // 朝空地一侧叼着跑(左/右都可能)
-        const tx = Math.max(0, Math.min(maxX, r.x + dir * 120)); // 跑远点
-        return {
-          ...r,
-          x: tx,
-          facing: dir > 0 ? "right" : "left",
-          carryPhase: "walk",
-          dur: 1400,
-        };
-      });
+    const BITE_MS = 5000; // 随机只演一种咬(趴 或 躺),单种演 ~5s(久)
+    // ① catch(扑咬 0.9s) → ② walk(叼着走:左右随机 + 距离随机,走远则久)
+    window.setTimeout(() => {
+      if (!ok()) return;
+      // tx/dir/walkDur 在 setRoam 外用 roam.x(catch 时位置)同步算好:否则在 updater 内改 walkDur 是
+      // stale 闭包,下面 setTimeout 拿到的还是初始值 → biteDown 提前切 → 走没走完就躺咬(边走边躺咬)。
+      let dir = Math.random() < 0.5 ? 1 : -1; // 随机左右
+      const dist = 150 + Math.round(Math.random() * 150); // 随机走多远 150~300(走远点)
+      let tx = roam.x + dir * dist;
+      if (tx < 0 || tx > maxX) { dir = -dir; tx = roam.x + dir * dist; } // 撞墙反向
+      tx = Math.max(0, Math.min(maxX, tx));
+      // 斜向走:叠一个纵深随机分量,叼着走也用满院子(同样只 L/R 侧面帧,斜着走不穿帮)。
+      const dxAbs = Math.abs(tx - roam.x);
+      const maxDy = Math.max(40, dxAbs);
+      const ty = Math.max(0, Math.min(YARD_DEPTH, roam.y + Math.round((Math.random() * 2 - 1) * maxDy)));
+      const walkDur = Math.max(900, Math.round(Math.hypot(tx - roam.x, ty - roam.y) / 0.08)); // 0.08px/ms
+      setRoam((r) =>
+        r.kind === "pounce" && r.pounceVariant === "carry"
+          ? { ...r, x: tx, y: ty, facing: dir > 0 ? "right" : "left", carryPhase: "walk", dur: walkDur }
+          : r,
+      );
+      // ③ walk 走完 → 到位后动态扑咬(兔子踢翻滚抱啃 5 帧循环),~5s
+      window.setTimeout(() => {
+        if (!ok()) return;
+        setRoam((r) =>
+          r.kind === "pounce" && r.pounceVariant === "carry" ? { ...r, carryPhase: "bite" } : r,
+        );
+        // ④ 咬完 → 坐回
+        window.setTimeout(() => {
+          if (!ok()) return;
+          setRoam((r) =>
+            r.kind === "pounce" && r.pounceVariant === "carry"
+              ? { ...r, kind: "sit", carryPhase: undefined }
+              : r,
+          );
+          sayLine("play");
+        }, BITE_MS);
+      }, walkDur + 150);
     }, 900);
-    const t2 = window.setTimeout(
-      () => setRoam((r) => ({ ...r, carryPhase: "bite" })),
-      2300,
-    );
-    const t3 = window.setTimeout(() => {
-      setRoam((r) => ({ ...r, kind: "sit", carryPhase: undefined }));
-      sayLine("play");
-    }, 3400);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
-  }, [roam.kind, roam.pounceVariant, calm]);
+  }, [roam.kind, roam.pounceVariant, roam.carryPhase, calm]);
 
   // 洗脸:自定义播放序列——舔爪 core(2-5)循环 4 轮(舔好几下) + 擦脸(6-11)。
   const [washFrame, setWashFrame] = useState(0);
@@ -1038,16 +1028,12 @@ function PetNudge({
     return () => clearTimeout(t);
   }, [followupTarget, followupNote]);
 
-  // 没有待回访时:进首页遛 ~7s,小猫坐下冒一个主动气泡(护理提醒优先,否则 60% 概率随机搭话)。
-  // 一次访问只主动冒一次(nudgeShownRef),~12s 后自动收起继续遛达,不打扰。
+  // 没有待回访时:进首页遛一会儿,小猫坐下冒一个气泡 —— 约 80% 纯闲聊(不可点)、
+  // 约 20% 提一嘴(护理 / 分诊 / 问答可点)。一次访问只冒一次(nudgeShownRef),~12s 后自动收起。
   useEffect(() => {
     if (followupTarget || followupNote || nudgeShownRef.current) return;
     const t = window.setTimeout(() => {
-      const pick =
-        careNudge(latestCatRef.current) ??
-        (Math.random() < 0.6
-          ? CHAT_NUDGES[Math.floor(Math.random() * CHAT_NUDGES.length)]
-          : null);
+      const pick = idleNudge(latestCatRef.current);
       if (!pick) return;
       nudgeShownRef.current = true;
       setRoam((r) => {
@@ -1091,8 +1077,8 @@ function PetNudge({
           if (roll < 0.35 && maxX > 120) {
             const tx = Math.round(Math.random() * maxX);
             const dxAbs = Math.abs(tx - roam.x);
-            // 斜率约束:横向分量必须主导 —— 侧面猫做纯纵向移动会穿帮
-            const maxDy = Math.max(8, Math.round(dxAbs / 2));
+            // 放开斜率:允许约 45° 斜向跑、用满院子纵深(只有 L/R 侧面帧,纯纵向才穿帮,斜向 OK)。
+            const maxDy = Math.max(50, dxAbs);
             const ty = Math.max(
               0,
               Math.min(
@@ -1194,11 +1180,12 @@ function PetNudge({
       if (roam.pounceVariant === "carry") {
         // carry 由专门的 carry 编排 effect 推进 catch→walk→bite→sit,这里不设通用退出
       } else {
-        // swat/grab:原地扑 ~2.4s 后坐回,说句捕猎猫语
+        // swat/grab:原地扑后坐回。grab(扯下来玩)按 GRAB_SEQ 顺播一遍(~4s,中段快啃几下)不循环;swat 短演。
+        const dur = roam.pounceVariant === "grab" ? GRAB_TOTAL : 2400;
         t = window.setTimeout(() => {
           setRoam((r) => ({ ...r, kind: "sit" }));
           sayLine("play");
-        }, 2400);
+        }, dur);
       }
     } else if (roam.kind === "sunbathe") {
       // 晒太阳:趴在阳光里眯眼 ~6s 后坐起,说句晒太阳猫语
@@ -1614,9 +1601,21 @@ function PetNudge({
         {roam.kind === "pounce" &&
           (() => {
             const s = scaleOf(roam.y);
-            const w = Math.round(WAND_W * s);
             const wandVariant = roam.pounceVariant ?? "swat";
-            const wandSeq = WAND_SEQS[wandVariant] ?? WAND_SEQS.swat;
+            // 叼着走用左右走路真帧;到位扑咬用兔子踢帧;catch 仍用 WAND_SEQS.carry(含逗猫棒杆)。
+            const isCarryWalk =
+              wandVariant === "carry" && roam.carryPhase === "walk";
+            const isCarryBite =
+              wandVariant === "carry" && roam.carryPhase === "bite";
+            // 走路/扑咬帧猫满格,按原型宽 84;含杆的 catch 帧用 156(否则猫被放大近 2 倍)。
+            const w = Math.round(
+              (isCarryWalk || isCarryBite ? WAND_WALK_W : WAND_W) * s,
+            );
+            const wandSeq = isCarryWalk
+              ? WAND_CARRY_WALK[roam.facing === "right" ? "right" : "left"]
+              : isCarryBite
+                ? WAND_CARRY_BITE
+                : WAND_SEQS[wandVariant] ?? WAND_SEQS.swat;
             const src = wandSeq[pounceFrame] ?? wandSeq[0];
             const rawLeft = roam.x + 42 - w / 2 + WAND_DX * s;
             const left = Math.round(
@@ -1637,12 +1636,14 @@ function PetNudge({
                     width: w,
                     zIndex: Math.max(zOf(roam.y), 150) + 1,
                     transition:
-                      roam.carryPhase === "walk"
-                        ? `left ${roam.dur}ms linear`
-                        : undefined,
-                    // carry 帧画的是向左叼走;朝右跑时水平镜像。swat/grab 正面坐姿不镜像。
+                      wandVariant === "carry"
+                        ? `left ${roam.dur ?? 0}ms linear, bottom ${roam.dur ?? 0}ms linear` // carry 全程挂 left+bottom transition(斜向走平滑);否则
+                        : undefined, // catch→walk 同帧设 transition+改 left/bottom,浏览器不 animate → 瞬移
+                    // carry 的 catch/咬 帧画的是向左,朝右时镜像;走路阶段已有左右真帧,不镜像。
                     transform:
-                      wandVariant === "carry" && roam.facing === "right"
+                      wandVariant === "carry" &&
+                      roam.carryPhase !== "walk" &&
+                      roam.facing === "right"
                         ? "scaleX(-1)"
                         : undefined,
                   }}
@@ -1741,20 +1742,27 @@ function PetNudge({
                 </div>
               </>
             ) : showNudge && nudge ? (
-              // 主动气泡:整条可点 —— 喵语文案 + 醒目猫爪按钮(护理→记一笔 / 搭话→分诊·问答)
-              <Link
-                href={nudge.href}
-                onClick={() => {
-                  // 护理提醒点了就 snooze:切回首页一周内不再唠叨这条(避免重复提醒 bug)。
-                  if (nudge.snoozeKey) snoozeReminder(cat.id, nudge.snoozeKey);
-                }}
-                className="block transition active:opacity-70"
-              >
+              nudge.href ? (
+                // 提一嘴:整条可点 —— 喵语文案 + 猫爪按钮(护理→记一笔 / 搭话→分诊·问答)
+                <Link
+                  href={nudge.href}
+                  onClick={() => {
+                    // 护理提醒点了就 snooze:切回首页一周内不再唠叨这条(避免重复提醒 bug)。
+                    if (nudge.snoozeKey) snoozeReminder(cat.id, nudge.snoozeKey);
+                  }}
+                  className="block transition active:opacity-70"
+                >
+                  <p className="text-[14px] leading-relaxed text-ink">
+                    {nudge.text}
+                  </p>
+                  {nudge.cta && <PawCta label={nudge.cta} />}
+                </Link>
+              ) : (
+                // 闲聊:纯卖萌文字,不可点、不用理,12s 自己飘走
                 <p className="text-[14px] leading-relaxed text-ink">
                   {nudge.text}
                 </p>
-                <PawCta label={nudge.cta} />
-              </Link>
+              )
             ) : (
               <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
             )}
