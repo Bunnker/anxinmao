@@ -185,7 +185,7 @@ const BRUSH_ALIGN: Record<string, { w: number; dx: number; dy: number }> = {
 // 在猫实时位置盖帧、藏掉实时精灵(同梳毛盖帧)。帧里猫身体偏左、棒在右上,DX 右移对齐猫身体。
 const WAND_SEQS: Record<string, string[]> = {
   swat: ["/pet/items/cat-wand-swat-0.webp","/pet/items/cat-wand-swat-1.webp","/pet/items/cat-wand-swat-2.webp","/pet/items/cat-wand-swat-3.webp","/pet/items/cat-wand-swat-4.webp","/pet/items/cat-wand-swat-5.webp"],
-  grab: ["/pet/items/cat-wand-grab-0.webp","/pet/items/cat-wand-grab-1.webp","/pet/items/cat-wand-grab-2.webp","/pet/items/cat-wand-grab-3.webp","/pet/items/cat-wand-grab-4.webp","/pet/items/cat-wand-grab-5.webp","/pet/items/cat-wand-grab-6.webp","/pet/items/cat-wand-grab-7.webp"],
+  grab: ["/pet/items/cat-wand-grab-0.webp","/pet/items/cat-wand-grab-1.webp","/pet/items/cat-wand-grab-2.webp","/pet/items/cat-wand-grab-3.webp","/pet/items/cat-wand-grab-4.webp"],
   carry:["/pet/items/cat-wand-carry-0.webp","/pet/items/cat-wand-carry-1.webp","/pet/items/cat-wand-carry-2.webp","/pet/items/cat-wand-carry-3.webp","/pet/items/cat-wand-carry-4.webp","/pet/items/cat-wand-carry-5.webp","/pet/items/cat-wand-carry-6.webp","/pet/items/cat-wand-carry-7.webp"],
 };
 // 叼着逗猫棒走路:参考日常 running 步态,左右各一套独立真帧(非镜像),循环 5 帧。
@@ -199,10 +199,10 @@ const WAND_CARRY_BITE = [0, 1, 2, 3, 4].map((i) => `/pet/items/cat-wand-bite-${i
 const WAND_CARRY_BITE_LEN = 5;
 // 走路/扑咬帧的猫填满整格(同原型雪碧图),按原型显示宽 84 渲染;其余 carry 帧含逗猫棒长杆,用 WAND_W=156。
 const WAND_WALK_W = 84;
-// grab(扯下来玩)玩耍编排:帧序 + 各帧时长 —— 看→够→抓拉→啃(3↔4 快速啃几下)→拍走(5抬爪→6挥拍→7拍飞),只播一遍不循环。
-const GRAB_SEQ = [0, 1, 2, 3, 4, 3, 4, 3, 4, 5, 6, 7];
-const GRAB_DURS = [450, 320, 320, 220, 220, 220, 220, 220, 220, 220, 120, 300];
-const GRAB_TOTAL = GRAB_DURS.reduce((a, b) => a + b, 0); // ≈ 3.05s 演完坐回(拍飞 5→6→7 快收)
+// grab(扯下来玩)玩耍编排:帧序 + 各帧时长 —— 看→够→抓拉→啃(3↔4 啃几下)→乖乖坐回,无拍走,只播一遍不循环。
+const GRAB_SEQ = [0, 1, 2, 3, 4, 3, 4, 3];
+const GRAB_DURS = [450, 320, 320, 220, 220, 220, 220, 320];
+const GRAB_TOTAL = GRAB_DURS.reduce((a, b) => a + b, 0); // ≈ 2.3s 演完坐回
 const WAND_VARIANTS = ["swat", "grab", "carry"] as const;
 const WAND_W = 156;
 const WAND_DX = 16;
@@ -713,7 +713,7 @@ function PetNudge({
       const id = window.setInterval(() => { i = Math.min(i + 1, 2); setPounceFrame(i); }, 300);
       return () => clearInterval(id);
     }
-    // grab(扯下来玩)玩耍编排:按 GRAB_SEQ/GRAB_DURS 顺播一遍(中段 3↔4 快速啃几下),停在末帧拍开,不循环。
+    // grab(扯下来玩)玩耍编排:按 GRAB_SEQ/GRAB_DURS 顺播一遍(看→够→拉→3↔4 啃几下),啃完停末帧、等退出乖乖坐回,不循环。
     if (roam.pounceVariant === "grab") {
       let k = 0;
       setPounceFrame(GRAB_SEQ[0]);
@@ -1180,7 +1180,7 @@ function PetNudge({
       if (roam.pounceVariant === "carry") {
         // carry 由专门的 carry 编排 effect 推进 catch→walk→bite→sit,这里不设通用退出
       } else {
-        // swat/grab:原地扑后坐回。grab(扯下来玩)按 GRAB_SEQ 顺播一遍(~4s,中段快啃几下)不循环;swat 短演。
+        // swat/grab:原地扑后坐回。grab(扯下来玩)按 GRAB_SEQ 顺播一遍(~2.3s,看→够→拉→啃几下→坐回)不循环;swat 短演。
         const dur = roam.pounceVariant === "grab" ? GRAB_TOTAL : 2400;
         t = window.setTimeout(() => {
           setRoam((r) => ({ ...r, kind: "sit" }));
