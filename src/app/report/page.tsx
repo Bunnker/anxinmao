@@ -59,10 +59,17 @@ import type { RiskTier, Store } from "@/types/cat";
 //   · ingest(可能误食):v0.2 §3.2 —— 黄档尽快就医;「确实没吃到」可判绿。
 //   · general(精神差 / 其它):保守的通用文案,作为兜底。
 
+// 红档「为什么等不得」一条:危险机制 / 时限 + 权威出处(让用户看懂危险性、且可信)
+type DangerItem = { text: string; source: string };
+
 type TierInfo = {
   badge: string;
   headline: string;
   leadTpl: string; // {name} {symptom} 占位
+  // 仅红档:在「现在做什么」之前醒目展示「为什么等不得」(危险性 + 时限 + 出处),
+  // 全部从权威资料提炼(docs/medical/source · 证据-*.md),解决「红档只说去医院=不靠谱」。
+  dangerTitle?: string;
+  danger?: DangerItem[];
   stepsTitle: string;
   steps: string[];
   why: string[];
@@ -203,6 +210,21 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
       headline: "吐 / 拉得严重 —— 立刻送医,别拖。",
       leadTpl:
         "{name}「{symptom}」 —— 这次出现了需要兽医马上看的信号。反复呕吐+腹泻容易快速脱水,也可能是中毒、肠梗阻、严重感染,或者(幼猫常见的)猫瘟。",
+      dangerTitle: "为什么等不得",
+      danger: [
+        {
+          text: "吐血或血便是消化道出血的信号,伴脱水时需立刻补液,否则可能进展到组织灌注不足、休克。",
+          source: "Merck / VCA",
+        },
+        {
+          text: "线状异物(绳 / 线 / 丝带)会在肠道里「锯切」,即使看不到血,也可能在 24–48 小时内急性恶化、需紧急手术。",
+          source: "VCA 线性异物",
+        },
+        {
+          text: "反复呕吐 + 脱水会打乱电解质(低钾、低氯),影响器官灌注,可发展为危及生命的并发症。",
+          source: "Merck",
+        },
+      ],
       stepsTitle: "去医院前 / 路上",
       steps: [
         "现在就打电话给最近的动物医院,直说「猫严重呕吐 / 腹泻,需要急诊」。",
@@ -285,6 +307,21 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
       badge: "红档 · 立刻就医",
       headline: "出血严重 —— 立刻送医,边走边护理。",
       leadTpl: "{name}「{symptom}」 —— 这次的出血需要兽医马上看。",
+      dangerTitle: "为什么等不得",
+      danger: [
+        {
+          text: "按压十几分钟仍止不住、或喷射状出血,说明血管已断裂,继续拖会进展到失血性休克。",
+          source: "VCA",
+        },
+        {
+          text: "内出血常看不见血迹,却能在数小时内恶化;牙龈发白 + 虚弱 + 呼吸浅快就是休克开始。",
+          source: "VCA / Anicira",
+        },
+        {
+          text: "怀疑吃过抗凝血鼠药,即使没出血也算急症——那种出血在体内、几天后才显现,越早处理越好。",
+          source: "VCA 鼠药中毒",
+        },
+      ],
       stepsTitle: "去医院前 / 路上",
       steps: [
         "打电话给最近的动物医院,直说「猫出血严重需急诊」,说清楚部位和大概量(像一咖啡杯?还是更多?)。",
@@ -989,6 +1026,21 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
       headline: "怀疑误食有毒物 —— 即使它现在看着没事,也立刻送医。",
       leadTpl:
         "{name}「{symptom}」 —— 这次出现了高度怀疑中毒的信号,或者它真的吃 / 舔到了高危物。这种情况靠观察是不行的。",
+      dangerTitle: "为什么等不得",
+      danger: [
+        {
+          text: "中毒不一定马上发作——很多毒物有吸收期,等到呕吐、流口水、抽搐时往往已经吸收、更难处理;不能因为「现在没事」就在家等。",
+          source: "Cornell",
+        },
+        {
+          text: "猫对很多东西极敏感:对乙酰氨基酚等人用退烧 / 止痛药对猫可致命;百合即便极少量(花粉、花瓶水)也可能造成严重肾损伤。",
+          source: "FDA / Merck / ASPCA",
+        },
+        {
+          text: "线状异物(绳 / 线 / 丝带)会在肠道里切割,导致穿孔和腹膜炎,常拖到重症才被发现。",
+          source: "VCA 线性异物",
+        },
+      ],
       stepsTitle: "去医院前 / 路上",
       steps: [
         "现在就打电话给最近的动物医院,直说「猫怀疑误食,需要急诊」,告诉他们你怀疑吃了什么。",
@@ -1070,6 +1122,17 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
       headline: "现在就带它去看兽医 —— 尿道阻塞拖不得。",
       leadTpl:
         "{name}「{symptom}」 —— 完全排不出尿,公猫尤其危险,几天内可致命。立刻动身。",
+      dangerTitle: "为什么等不得",
+      danger: [
+        {
+          text: "完全堵住后,膀胱排不出 → 毒素回流、高血钾 → 心律失常 / 肾衰;明确「不治疗 2–3 天内可致命」。",
+          source: "iCatCare / Cornell / Merck",
+        },
+        {
+          text: "反复进猫砂盆却尿不出、或只滴几滴,是尿道阻塞最典型的急症信号;公猫(含绝育)尿道细长,进展更快。",
+          source: "iCatCare / Cornell",
+        },
+      ],
       stepsTitle: "去医院前 / 路上",
       steps: [
         "马上给附近的动物医院打电话,直说「公猫疑似尿道阻塞,需要急诊」,问他们能不能马上接。",
@@ -1125,6 +1188,21 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
       headline: "猫呼吸不对 —— 直接送医,不在家等。",
       leadTpl:
         "{name}「{symptom}」 —— 猫的呼吸困难一旦看出来,往往已经不轻了。立刻动身。",
+      dangerTitle: "为什么等不得",
+      danger: [
+        {
+          text: "呼吸困难进展极快,几小时内就可能恶化甚至死亡,没有「在家观察一会儿」的安全窗口。",
+          source: "Cornell / VCA",
+        },
+        {
+          text: "张口喘、嘴唇 / 舌头发紫,说明已经严重缺氧、在代偿边缘。",
+          source: "Cornell / VCA",
+        },
+        {
+          text: "病因很多(哮喘急性发作、心衰、胸腔积液、气道异物),家里无法排查,只有兽医能定位。",
+          source: "Cornell",
+        },
+      ],
       stepsTitle: "去医院前 / 路上",
       steps: [
         "马上给最近的动物医院打电话,直说「猫呼吸困难,需要急诊」,问能不能马上接。",
@@ -1379,6 +1457,31 @@ function ReportContent() {
         <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">{lead}</p>
       </div>
 
+      {/* 为什么等不得 —— 红档:危险机制 + 时限 + 权威出处,先于操作展示,让用户看懂危险性、且可信 */}
+      {shownTier === "red" && info.danger && info.danger.length > 0 && (
+        <section
+          className="mt-4 rounded-[28px] border p-4 shadow-[var(--shadow-control)]"
+          style={{ background: "var(--red-bg)", borderColor: "var(--red)" }}
+        >
+          <p
+            className="text-[13px] font-semibold leading-snug"
+            style={{ color: "var(--red-ink)" }}
+          >
+            {info.dangerTitle ?? "为什么等不得"}
+          </p>
+          <ul className="mt-3 flex flex-col gap-3">
+            {info.danger.map((d, i) => (
+              <li key={i} className="flex flex-col gap-1">
+                <span className="text-[13.5px] leading-relaxed text-ink">
+                  {d.text}
+                </span>
+                <span className="text-[11px] text-ink-faint">据 {d.source}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* 找医院(地图深链,不自建医院库) */}
       {info.mapAction && (
         <a
@@ -1427,19 +1530,21 @@ function ReportContent() {
         </div>
       </section>
 
-      {/* 为什么这么判断 */}
-      <section className="mt-8">
-        <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-faint">
-          为什么这么判断
-        </p>
-        <div className="mt-2.5 flex flex-col gap-2">
-          {info.why.map((w, i) => (
-            <p key={i} className="text-[14px] leading-relaxed text-ink-soft">
-              {w}
-            </p>
-          ))}
-        </div>
-      </section>
+      {/* 为什么这么判断 —— 红档已有「为什么等不得」(danger)时隐藏本段,避免重复 */}
+      {!(shownTier === "red" && info.danger && info.danger.length > 0) && (
+        <section className="mt-8">
+          <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-faint">
+            为什么这么判断
+          </p>
+          <div className="mt-2.5 flex flex-col gap-2">
+            {info.why.map((w, i) => (
+              <p key={i} className="text-[14px] leading-relaxed text-ink-soft">
+                {w}
+              </p>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 升级清单 —— 黄/红档是红线,绿档是温和提醒 */}
       <div
