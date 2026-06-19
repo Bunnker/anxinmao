@@ -145,12 +145,14 @@ const YARD_ITEMS = {
   rug: { src: "/pet/items/rug.webp", alt: "小地毯", left: 100, bottom: 9, w: 104 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
-// 挠抓板 2 帧(codex 出图、按板右下角对齐切片 → 板不抖):前爪在斜面 高→低 来回=挠。
-// 画布 908×520,板占宽 0.58、板中 0.68;显示时让板与静态 scratch.webp 重合(见院子渲染)。
-const CAT_SCRATCH_FRAMES = [
-  "/pet/items/cat-scratch-0.webp",
-  "/pet/items/cat-scratch-1.webp",
-];
+// 挠抓板 8 帧逐帧(查证真实磨爪:身体锁死、前爪沿斜面从顶端单调滑到底端 + 爪后拖痕逐帧加长)。
+// 单条 strip 出图,经 scr_fit2 按板高中位数全局缩放 + 板右下角锚定切片 → 板与静态 scratch.webp 重合不抖。
+const CAT_SCRATCH_FRAMES = [0, 1, 2, 3, 4, 5, 6, 7].map(
+  (i) => `/pet/items/cat-scratch-${i}.webp`,
+);
+// 播放序:0→7 下挠到底,再 6→1 抬回顶 = ping-pong 连续上下挠(身体稳,只爪上下滑)。
+const SCRATCH_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1];
+const SCRATCH_MS = 110;
 // 显示宽 134 → 板=78(=scratch.webp.w);相对板原点偏移(猫在板左):
 const SCRATCH_W = 134;
 const SCRATCH_DX = -52; // 帧 left = layout.scratch.left + DX
@@ -651,17 +653,20 @@ function PetNudge({
     setJumpFrame(0);
   }, [roam.kind]);
 
-  // 挠抓板:scratch 期间 0↔1 来回切(前爪在斜面上下挠),~220ms 一拍
+  // 挠抓板:scratch 期间按 SCRATCH_ORDER 循环播 8 帧(前爪沿斜面从顶到底再抬回 = 连续上下挠)。
+  // scratchFrame = 帧号(0-7),渲染处取 CAT_SCRATCH_FRAMES[scratchFrame]。
   const [scratchFrame, setScratchFrame] = useState(0);
   useEffect(() => {
     if (roam.kind !== "scratch") {
       setScratchFrame(0);
       return;
     }
-    const id = window.setInterval(
-      () => setScratchFrame((f) => (f === 0 ? 1 : 0)),
-      220,
-    );
+    let k = 0;
+    setScratchFrame(SCRATCH_ORDER[0]);
+    const id = window.setInterval(() => {
+      k = (k + 1) % SCRATCH_ORDER.length;
+      setScratchFrame(SCRATCH_ORDER[k]);
+    }, SCRATCH_MS);
     return () => clearInterval(id);
   }, [roam.kind]);
 
