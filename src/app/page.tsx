@@ -185,7 +185,7 @@ const BRUSH_ALIGN: Record<string, { w: number; dx: number; dy: number }> = {
 // 在猫实时位置盖帧、藏掉实时精灵(同梳毛盖帧)。帧里猫身体偏左、棒在右上,DX 右移对齐猫身体。
 const WAND_SEQS: Record<string, string[]> = {
   swat: ["/pet/items/cat-wand-swat-0.webp","/pet/items/cat-wand-swat-1.webp","/pet/items/cat-wand-swat-2.webp","/pet/items/cat-wand-swat-3.webp","/pet/items/cat-wand-swat-4.webp","/pet/items/cat-wand-swat-5.webp"],
-  grab: ["/pet/items/cat-wand-grab-0.webp","/pet/items/cat-wand-grab-1.webp","/pet/items/cat-wand-grab-2.webp","/pet/items/cat-wand-grab-3.webp","/pet/items/cat-wand-grab-4.webp"],
+  grab: Array.from({ length: 11 }, (_, i) => `/pet/items/cat-wand-grab-${i}.webp`),
   carry:["/pet/items/cat-wand-carry-0.webp","/pet/items/cat-wand-carry-1.webp","/pet/items/cat-wand-carry-2.webp","/pet/items/cat-wand-carry-3.webp","/pet/items/cat-wand-carry-4.webp","/pet/items/cat-wand-carry-5.webp","/pet/items/cat-wand-carry-6.webp","/pet/items/cat-wand-carry-7.webp"],
 };
 // 叼着逗猫棒走路:参考日常 running 步态,左右各一套独立真帧(非镜像),循环 5 帧。
@@ -199,10 +199,17 @@ const WAND_CARRY_BITE = [0, 1, 2, 3, 4].map((i) => `/pet/items/cat-wand-bite-${i
 const WAND_CARRY_BITE_LEN = 5;
 // 走路/扑咬帧的猫填满整格(同原型雪碧图),按原型显示宽 84 渲染;其余 carry 帧含逗猫棒长杆,用 WAND_W=156。
 const WAND_WALK_W = 84;
-// grab(扯下来玩)玩耍编排:帧序 + 各帧时长 —— 看→够→抓拉→啃(3↔4 啃几下)→乖乖坐回,无拍走,只播一遍不循环。
-const GRAB_SEQ = [0, 1, 2, 3, 4, 3, 4, 3];
-const GRAB_DURS = [450, 320, 320, 220, 220, 220, 220, 320];
-const GRAB_TOTAL = GRAB_DURS.reduce((a, b) => a + b, 0); // ≈ 2.3s 演完坐回
+// grab 真实捕猎序列帧:猫在格内偏小(含上方悬杆+扑跳留高),按 195 显示宽放大到原型尺寸(扑帧高也不裁)。
+const WAND_GRAB_W = 195;
+// grab 帧的猫已居中(切片时锚 cx=96),用 dx=0 让猫心对齐 roam.x+42 = 坐姿精灵的位置;
+// 否则沿用 WAND_DX=16 会让盖帧整体右移、咬完切回坐姿时猫横跳 16px(衔接僵硬)。
+const WAND_GRAB_DX = 0;
+// grab(扯下来玩)玩耍编排:真实捕猎序列 11 帧(2 条 strip 拼接)——
+// 0伏低 1蹲coil 2起 3立够 4抓 5拉下 / 6咬 7甩左 8甩右 9啃 10收。
+// 扑抓段(2-5)逐帧快切=顺滑跃起;咬定后 7↔8 甩头两轮;演完乖乖坐回,只播一遍不循环。
+const GRAB_SEQ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 8, 9, 10];
+const GRAB_DURS = [450, 280, 120, 120, 150, 200, 240, 150, 150, 150, 150, 200, 110];
+const GRAB_TOTAL = GRAB_DURS.reduce((a, b) => a + b, 0); // ≈ 2.5s 演完坐回(末帧 收 一闪即坐回)
 const WAND_VARIANTS = ["swat", "grab", "carry"] as const;
 const WAND_W = 156;
 const WAND_DX = 16;
@@ -1607,9 +1614,13 @@ function PetNudge({
               wandVariant === "carry" && roam.carryPhase === "walk";
             const isCarryBite =
               wandVariant === "carry" && roam.carryPhase === "bite";
-            // 走路/扑咬帧猫满格,按原型宽 84;含杆的 catch 帧用 156(否则猫被放大近 2 倍)。
+            // 走路/扑咬帧猫满格→按原型宽 84;grab 真实序列猫偏小→用 195 放大;含杆 catch/swat 帧→156。
             const w = Math.round(
-              (isCarryWalk || isCarryBite ? WAND_WALK_W : WAND_W) * s,
+              (isCarryWalk || isCarryBite
+                ? WAND_WALK_W
+                : wandVariant === "grab"
+                  ? WAND_GRAB_W
+                  : WAND_W) * s,
             );
             const wandSeq = isCarryWalk
               ? WAND_CARRY_WALK[roam.facing === "right" ? "right" : "left"]
@@ -1617,7 +1628,9 @@ function PetNudge({
                 ? WAND_CARRY_BITE
                 : WAND_SEQS[wandVariant] ?? WAND_SEQS.swat;
             const src = wandSeq[pounceFrame] ?? wandSeq[0];
-            const rawLeft = roam.x + 42 - w / 2 + WAND_DX * s;
+            // grab 帧已居中→dx=0 对齐坐姿位置(消除切回坐姿时横跳);swat/carry 仍用 WAND_DX。
+            const wandDx = wandVariant === "grab" ? WAND_GRAB_DX : WAND_DX;
+            const rawLeft = roam.x + 42 - w / 2 + wandDx * s;
             const left = Math.round(
               Math.max(4, Math.min(YARD_BASE_W - w - 4, rawLeft)),
             );
@@ -1632,7 +1645,10 @@ function PetNudge({
                   className="absolute"
                   style={{
                     left,
-                    bottom: Math.round(roam.y + WAND_DY * s),
+                    // grab 帧脚底压到地面(dy=-9)对齐坐姿精灵,消除切回时下沉;swat/carry 用 WAND_DY。
+                    bottom: Math.round(
+                      roam.y + (wandVariant === "grab" ? -9 : WAND_DY) * s,
+                    ),
                     width: w,
                     zIndex: Math.max(zOf(roam.y), 150) + 1,
                     transition:
