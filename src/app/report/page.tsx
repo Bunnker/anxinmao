@@ -60,14 +60,14 @@ import type { RiskTier, Store } from "@/types/cat";
 //   · general(精神差 / 其它):保守的通用文案,作为兜底。
 
 // 红档「为什么等不得」一条:危险机制 / 时限 + 权威出处(让用户看懂危险性、且可信)。
-// when?: 联动用 —— 仅当用户分诊选中的 claim 命中其中之一才显示;无 when = 该急症基线危险,总显示。
-type DangerItem = { text: string; source: string; when?: string[] };
+type DangerItem = { text: string; source: string };
 
 type TierInfo = {
   badge: string;
   headline: string;
   leadTpl: string; // {name} {symptom} 占位
-  // 仅红档:在「现在做什么」之前醒目展示「为什么等不得」(危险性 + 时限 + 出处),
+  // 仅红档:「为什么等不得」的【组级基线危险】(该急症不管选什么都该提醒的核心危险)。
+  // 渲染时会再叠加 DANGER_BY_CLAIM 里、用户分诊实际选中的 claim 对应危险(联动),去重后展示。
   // 全部从权威资料提炼(docs/medical/source · 证据-*.md),解决「红档只说去医院=不靠谱」。
   dangerTitle?: string;
   danger?: DangerItem[];
@@ -199,6 +199,96 @@ const GROUP_OF: Record<string, Group> = {
   other: "general",
 };
 
+// 红档「为什么等不得」按用户分诊选择联动:claim_id → 危险性解释(危险机制/后果 + 权威出处)。
+// 渲染时取「组级基线(TierInfo.danger)+ 用户实际选中的 claimIds 命中的条目」,去重后展示。
+// 全部从 docs/medical/source + 证据-*.md 逐条提炼 + 对抗安全校验(删了无源/夸大/越界措辞)。
+// 覆盖 16 个分诊流的所有「医学上令人担心」的选项;良性/低危选项不入表(红卡不显示无谓内容)。
+const DANGER_BY_CLAIM: Record<string, DangerItem> = {
+  ano_005: { text: "不吃伴精神差、呕吐或腹泻等症状提示潜在系统性疾病(肠胃炎、肾病、传染病等),这些都需紧急诊断排查。", source: "Cornell / VCA / iCatCare" },
+  ano_006: { text: "靠近食物但流口水、干呕或咬不动,说明猫想吃但因口腔疼痛、吞咽困难或牙齿问题吃不了,需兽医检查排除口腔溃疡、牙周病或其他疼痛源。", source: "VCA / iCatCare" },
+  beh_006: { text: "之前温顺、现在被摸某部位就嚎叫/咬/抓或躲闪,提示该部位可能有局部疼痛,需兽医就医排除疼痛原因。", source: "Merck / Cornell" },
+  beh_007: { text: "疼痛猫会在被触碰或移动患处时嘶叫、咬或抓以避免疼痛,不及时就医会加重问题。", source: "Cornell" },
+  beh_008: { text: "行为变化同时出现不吃、呕吐、腹泻、张口喘等躯体症状,提示全身性问题,需立即就医评估。", source: "Merck" },
+  beh_009: { text: "突然走路不稳、转圈、撞东西或意识异常是神经系统急症信号,需立即就医。", source: "VCA" },
+  beh_010: { text: "完全拒食、躲起来一动不动、看着痛苦是综合性恶化信号,需立即就医评估。", source: "VCA" },
+  beh_017: { text: "老年猫(>10岁)的行为变化应优先排除认知功能障碍、甲亢和高血压,延误诊断会影响生活质量。", source: "Merck" },
+  bld_001: { text: "外部看不到血不代表安全——内部胸腹出血可能正在发生却察觉不到,车祸/高处坠落后更要警惕。", source: "VCA" },
+  bld_002: { text: "牙龈苍白或发白提示失血过多或休克,呼吸快、虚弱说明循环系统已在代偿,延迟就医可能致命。", source: "VCA / Anicira" },
+  bld_004: { text: "出血按压 10-15 分钟还止不住,说明伤口在家处理不了,继续出血会导致失血性休克。", source: "VCA" },
+  bld_005: { text: "深插的异物会刺激血管和脏器,贸然拔出可能引起大出血和内部器官穿孔,家庭无法处理。", source: "VCA" },
+  bld_006: { text: "内部出血无法靠按压止住,血液积在胸腔或腹腔会压迫器官、阻碍呼吸,危及生命。", source: "VCA" },
+  bld_010: { text: "抗凝鼠药的出血可延迟 3-7 天才明显,且常为隐性内出血,看似没事但已在危险边缘。", source: "VCA" },
+  bld_011: { text: "抗凝鼠药中毒要靠兽医专门处理、严重时需住院支持;在家催吐或自行止血都代替不了,只会拖延。", source: "VCA" },
+  bre_004: { text: "牙龈、舌头或黏膜发紫发蓝(发绀)是危及生命的信号,需要立即急诊。", source: "Cornell / VCA" },
+  dia_004: { text: "严重频繁水样腹泻伴呕吐或全身症状(精神差、虚弱、脱水),可能是感染、寄生虫、肠炎或中毒,会快速脱水失电解质,需急诊。", source: "Cornell / VCA / iCatCare" },
+  dia_005: { text: "腹痛(肚子一碰就叫、弓背)或明显脱水(皮肤回弹慢、眼窝陷)伴腹泻,提示严重肠道病变或代谢危机,需立即评估。", source: "VCA / iCatCare" },
+  dia_006: { text: "黑色柏油样便提示上消化道出血,大量或反复鲜血便提示下消化道严重出血,可能是溃疡、肿瘤、凝血异常或中毒,需立刻联系兽医。", source: "iCatCare / VCA" },
+  ear_001: { text: "黑色咖啡渣样耳垢可能是耳螨,延误可进展到外耳炎甚至中耳/内耳炎,影响平衡和听力。", source: "Cornell" },
+  ear_004: { text: "耳朵疼、肿说明外耳道有活跃炎症,长期不治可破坏鼓膜和中耳结构、造成不可逆损伤。", source: "Merck" },
+  ear_009: { text: "头歪、走路转圈、眼球左右摆动提示中耳/内耳失衡,这种神经损伤可能不可逆,要尽快诊断阻止恶化。", source: "Merck" },
+  emg_002: { text: "呼吸困难的猫可能安静躲藏、而非明显挣扎,容易被误判没急症,实际缺氧仍在进展。", source: "Anicira" },
+  emg_003: { text: "大量失血或内出血(吐血、便血、尿血)会导致循环衰竭、器官灌流不足,需要急诊处理。", source: "Anicira / VCA" },
+  emg_004: { text: "外部出血持续按压 10-15 分钟仍止不住,需要急诊处理。", source: "VCA" },
+  emg_005: { text: "反复抽搐、或持续较久的抽搐,提示中枢神经系统严重异常,是急诊信号。", source: "Anicira" },
+  emg_006: { text: "无法站立、瘫倒意味着可能涉及心肺脑循环问题,是真正的急症。", source: "Anicira" },
+  emg_009: { text: "牙龈苍白/发黄/发紫、或皮肤回弹极慢/眼窝凹陷,反映循环异常或严重脱水,需立即就医。", source: "Anicira" },
+  emg_010: { text: "后腿突然瘫软/拖行伴疼痛叫喊,可能是血栓或脊髓问题,需立刻急诊。", source: "Anicira" },
+  eye_005: { text: "角膜发白、发蓝或发浑提示角膜损伤或溃疡,进展可致角膜穿孔、失明甚至失去眼球,需立即就医。", source: "Cornell" },
+  eye_008: { text: "持续眯眼、揉眼、怕光表示眼部严重疼痛和炎症,通常需要兽医眼科检查确认是否有角膜缺损。", source: "Cornell" },
+  leth_001: { text: "猫很会藏病;外观、精力、社交、被毛、食欲、猫砂盆、呼吸或分泌物的突然变化都提示要重视。", source: "VCA" },
+  leth_003: { text: "不正常进食达到约 24 小时就该立即就医;不吃的猫容易发生肝脂肪变性(脂肪肝)。", source: "VCA" },
+  leth_004: { text: "皮肤回弹延迟、眼窝凹陷提示脱水,需要尽快处理。", source: "VCA / Anicira" },
+  leth_005: { text: "牙龈、皮肤或眼睛发白、发黄、发蓝等异常颜色,可能是严重疾病信号,需立即就医评估。", source: "VCA / PetMD" },
+  leth_006: { text: "无法站立、塌软或叫不醒,可能涉及心肺脑或循环问题,应立即就医。", source: "Anicira" },
+  leth_007: { text: "张口喘、呼吸费力可能是呼吸系统问题;呼吸困难的猫可能安静躲起来、显得「平稳」。", source: "Anicira" },
+  leth_008: { text: "尿道阻塞后期猫会非常嗜睡甚至无法移动;尿不出要急诊。", source: "Anicira" },
+  leth_009: { text: "猫瘟高度传染且常致命,幼猫尤其严重;5 月龄以下死亡风险更高,多猫/救助环境风险更高。", source: "Merck / iCatCare" },
+  leth_010: { text: "猫瘟可表现为发热、精神沉郁、食欲下降、呕吐、腹泻和快速脱水,可继发感染、快速恶化。", source: "Merck / iCatCare" },
+  leth_011: { text: "猫瘟病毒在环境可存活数年,未免疫猫/幼猫/多猫或救助环境风险极高,感染猫恢复后 6 周内仍排毒。", source: "Merck / iCatCare" },
+  limp_007: { text: "跛行伴发热、食欲下降、精神萎靡,提示系统性感染或免疫性关节问题,应尽快兽医评估。", source: "Merck" },
+  limp_011: { text: "主动脉血栓(ATE)患猫常有基础心脏病,很多发作前无任何征兆;ATE 是需立即处理的急症。", source: "VCA" },
+  limp_012: { text: "创伤(坠落、车祸、打架、被门夹或踩到)可造成骨折、脱位、韧带断裂或软组织损伤,即使还能走也要排除内伤。", source: "Merck / VCA" },
+  oral_002: { text: "牙周炎一旦发展不可逆,会致牙根外露、牙松动脱落,严重时形成脓肿流脓,细菌还可能入血影响心肝肾。", source: "Cornell / VCA" },
+  oral_003: { text: "牙吸收很常见、疼痛明显,可致牙齿缺损或脱落,通常需要兽医处理。", source: "Cornell" },
+  oral_004: { text: "流口水、口水带血、掉食、吞咽困难或食欲下降都是隐藏口腔疼痛的信号,往往意味着已有显著牙病。", source: "Cornell / VCA / Merck" },
+  oral_005: { text: "牙龈炎可由 FeLV、FIV、杯状病毒、肾病、糖尿病等全身病引发,需兽医排除这些隐藏问题。", source: "Cornell" },
+  oral_006: { text: "严重慢性牙龈口炎(FCGS)进食极度疼痛,拖延效果差;猫常在默默忍受巨大痛苦。", source: "Merck" },
+  oral_007: { text: "看到食物却叫唤跳开,说明进食时剧痛、开口或吞咽都激发尖叫,是严重疼痛和吞咽困难的信号。", source: "Merck" },
+  oral_010: { text: "线、绳或异物卡在舌底会持续流口水、拒食,绝不能自行拉扯,否则会造成舌、食道严重损伤。", source: "Merck" },
+  oral_011: { text: "电伤会造成口腔烧伤并可能波及咽喉,部分情况危及生命;化学品或热烫接触嘴巴同样引起严重灼伤。", source: "Merck" },
+  oral_012: { text: "颌下或咽喉肿块(如唾液囊肿)可阻塞气道、致呼吸或吞咽困难,是危及生命的急症,不可自行挤压挑破。", source: "Merck" },
+  oral_013: { text: "猫口腔肿瘤多为恶性,易溃疡出血、面部肿胀,预后较差,延误会错过治疗窗口。", source: "Merck" },
+  oral_014: { text: "未免疫猫突发大量流口水、又有流浪动物撕咬接触史,最严重要排除狂犬病——需立即隔离、防护并就医,也关乎人的健康。", source: "Merck" },
+  oral_016: { text: "幼猫出牙期牙龈红、少量渗血是正常的,但超出出牙期(2-7 月)持续不退,可能是病理性幼年牙龈炎,需评估。", source: "VCA" },
+  oral_020: { text: "没有红旗时也要结合年龄(老年猫肿瘤风险升)、慢病(肾病/糖尿病/FIV/FeLV)和持续时间判断,别延误。", source: "VCA" },
+  oral_021: { text: "颌下或颈部缓慢增大的肿块可能是囊肿、脓肿或肿瘤,需兽医鉴别,自行挤压会加重感染或扩散。", source: "Merck" },
+  oral_025: { text: "牙菌斑 24-48 小时内矿化成牙结石,促进细菌、引发牙龈炎和疼痛,变硬后刷牙去不掉、需兽医洁牙。", source: "VCA" },
+  oral_029: { text: "抓嘴、甩头、牙齿打颤、掉食、吞咽困难或过度流口水,都是常被忽视的口腔疼痛信号,提示已有显著牙病。", source: "VCA / Cornell / Merck" },
+  oral_030: { text: "牙吸收的牙龈线缺损非常疼,猫可能不愿吃、流口水、偏头吃饭,通常需要牙片判断处理。", source: "Cornell / VCA" },
+  oral_031: { text: "严重牙周病导致的颌骨脓肿可形成面部/下巴流脓通道,细菌入血与心肝肾病变相关,伴吞咽困难时可危及气道。", source: "VCA / Cornell" },
+  oral_032: { text: "严重 FCGS 累及上咽喉,张嘴、打哈欠或叼食时痛叫跳开,说明疼痛已影响吞咽和呼吸,需立即评估。", source: "Merck" },
+  oral_033: { text: "真菌性口炎虽少见,但可表现为口腔溃疡、白膜或出血,常与长期抗生素、免疫抑制或慢病相关,需兽医鉴别。", source: "Merck" },
+  oral_034: { text: "口干让猫想吃又转开、进食咂嘴伸舌、菌斑厚积,老年肾衰猫风险更高,可能是脱水或肾功能恶化的信号。", source: "Merck" },
+  skin_017: { text: "严重过敏可引发气道肿胀、呕吐腹泻甚至休克;皮肤症状伴呼吸异常或瘫软,意味着过敏已波及全身。", source: "VCA" },
+  tox_001: { text: "猫中毒常见表现:嗜睡、步态不稳、流口水、呼吸重、腹泻、抽搐、突然呕吐等。", source: "Cornell" },
+  tox_003: { text: "对乙酰氨基酚(扑热息痛)等退烧药对猫有特殊毒性,会损伤血红蛋白和肝脏,猫绝对不能用。", source: "Merck" },
+  tox_004: { text: "NSAID/人用止痛药可造成猫胃肠、肾、肝严重损伤,猫对它们特别敏感,绝不能自行给猫用人药。", source: "FDA / Merck" },
+  tox_005: { text: "百合对猫特别危险,极少量接触或误食(含花粉、花瓶水)也可能造成严重肾损伤,需立即就医。", source: "Cornell / ASPCA" },
+  tox_006: { text: "巧克力及咖啡因类可导致心律异常、震颤、抽搐甚至死亡。", source: "ASPCA / Merck" },
+  tox_007: { text: "洋葱、大蒜等 Allium 类会刺激肠胃、损伤红细胞致贫血,猫更易受影响。", source: "ASPCA / Cornell" },
+  tox_008: { text: "木糖醇可致急性低血糖和肝损伤,需要快速专业处理,肝损伤可在 12-24 小时内发生。", source: "ASPCA / FDA" },
+  tox_010: { text: "清洁剂、洗衣凝珠等可造成胃肠刺激、口腔食道灼伤或严重中毒症状。", source: "ASPCA / Cornell" },
+  tox_011: { text: "线状异物会导致肠道皱缩、穿孔和腹膜炎,常见呕吐、厌食、脱水;勿自行拉扯。", source: "VCA" },
+  uo_001: { text: "反复蹲砂却几乎尿不出、或只有几滴,是尿道完全或近乎完全阻塞的典型表现,可在数小时到数天内引发肾衰、危及生命。", source: "iCatCare / Cornell / Merck" },
+  uo_003: { text: "排尿时嚎叫或疼痛大叫,表示剧烈疼痛和尿道高度刺激,提示已对膀胱和尿道造成明显炎症、痉挛或压迫。", source: "iCatCare / Merck" },
+  uo_005: { text: "公猫(含绝育公猫)尿道细长易梗阻,同样的尿量减少在公猫身上意味着阻塞风险显著更高,不能用同一标准判断。", source: "iCatCare / Cornell" },
+  uri_008: { text: "黄绿色分泌物或眼部表现提示继发感染,可能涉及支原体、衣原体等需治疗的病原,需兽医确认。", source: "Cornell / Merck" },
+  uri_009: { text: "超过 24 小时不吃是需要重视、就医的信号;幼猫更要缩短观察窗口,肥胖猫不吃尤其警惕肝脂肪变性。", source: "Cornell / iCatCare" },
+  vom_005: { text: "呕吐伴精神沉郁/虚弱、不吃、腹痛或脱水等全身症状,可能是严重感染、代谢紊乱、脏器损伤或中毒,需立即就医。", source: "Merck / VCA" },
+  vom_006: { text: "肚子鼓胀或一碰就叫伴呕吐,可能是肠梗阻、腹膜炎等腹腔急症,严重脱水会致电解质和酸碱异常,需急诊。", source: "VCA / Merck" },
+  vom_009: { text: "吞食线状异物(线、绳、丝带)危险性极高,可能造成肠道绞窄、穿孔;即使暂时没明显症状,确知吞了就该立刻就医,别自行拉扯。", source: "VCA" },
+};
+
 // 覆盖文案 —— 只写与通用基档不同的格子;其余回落到 REPORT。
 const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
   // 呕吐 / 腹泻 —— v0.2 §1.1 / §1.2 + §3.3 红旗 + 证据-cat-panleukopenia-猫瘟.md。
@@ -214,18 +304,8 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
       dangerTitle: "为什么等不得",
       danger: [
         {
-          text: "吐血或血便是消化道出血的信号,伴脱水时需立刻补液,否则可能进展到组织灌注不足、休克。",
+          text: "反复呕吐 / 腹泻会快速脱水、打乱电解质,影响器官灌注,可发展为危及生命的并发症;也可能是中毒、肠梗阻或严重感染。",
           source: "Merck / VCA",
-          when: ["emg_003", "bld_012"],
-        },
-        {
-          text: "线状异物(绳 / 线 / 丝带)会在肠道里「锯切」,即使看不到血,也可能在 24–48 小时内急性恶化、需紧急手术。",
-          source: "VCA 线性异物",
-          when: ["vom_009"],
-        },
-        {
-          text: "反复呕吐 + 脱水会打乱电解质(低钾、低氯),影响器官灌注,可发展为危及生命的并发症。",
-          source: "Merck",
         },
       ],
       stepsTitle: "去医院前 / 路上",
@@ -313,18 +393,8 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
       dangerTitle: "为什么等不得",
       danger: [
         {
-          text: "按压十几分钟仍止不住、或喷射状出血,说明血管已断裂,继续拖会进展到失血性休克。",
-          source: "VCA",
-        },
-        {
-          text: "内出血常看不见血迹,却能在数小时内恶化;牙龈发白 + 虚弱 + 呼吸浅快就是休克开始。",
+          text: "大出血或内出血都可能快速进展到失血性休克;伤口深浅、出血量,新手很难判断。",
           source: "VCA / Anicira",
-          when: ["bld_001", "bld_002", "bld_006", "emg_006", "emg_009"],
-        },
-        {
-          text: "怀疑吃过抗凝血鼠药,即使没出血也算急症——那种出血在体内、几天后才显现,越早处理越好。",
-          source: "VCA 鼠药中毒",
-          when: ["bld_010", "bld_011", "emg_008"],
         },
       ],
       stepsTitle: "去医院前 / 路上",
@@ -1037,16 +1107,6 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
           text: "中毒不一定马上发作——很多毒物有吸收期,等到呕吐、流口水、抽搐时往往已经吸收、更难处理;不能因为「现在没事」就在家等。",
           source: "Cornell",
         },
-        {
-          text: "猫对很多东西极敏感:对乙酰氨基酚等人用退烧 / 止痛药对猫可致命;百合即便极少量(花粉、花瓶水)也可能造成严重肾损伤。",
-          source: "FDA / Merck / ASPCA",
-          when: ["tox_003", "tox_004", "tox_005"],
-        },
-        {
-          text: "线状异物(绳 / 线 / 丝带)会在肠道里切割,导致穿孔和腹膜炎,常拖到重症才被发现。",
-          source: "VCA 线性异物",
-          when: ["tox_011"],
-        },
       ],
       stepsTitle: "去医院前 / 路上",
       steps: [
@@ -1132,12 +1192,8 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
       dangerTitle: "为什么等不得",
       danger: [
         {
-          text: "完全堵住后,膀胱排不出 → 毒素回流、高血钾 → 心律失常 / 肾衰;明确「不治疗 2–3 天内可致命」。",
+          text: "尿闭是急症 —— 膀胱排不出,毒素和钾在体内积聚,可在数小时到数天内引发肾衰、高血钾,危及生命。",
           source: "iCatCare / Cornell / Merck",
-        },
-        {
-          text: "反复进猫砂盆却尿不出、或只滴几滴,是尿道阻塞最典型的急症信号;公猫(含绝育)尿道细长,进展更快。",
-          source: "iCatCare / Cornell",
         },
       ],
       stepsTitle: "去医院前 / 路上",
@@ -1198,17 +1254,8 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
       dangerTitle: "为什么等不得",
       danger: [
         {
-          text: "呼吸困难进展极快,几小时内就可能恶化甚至死亡,没有「在家观察一会儿」的安全窗口。",
+          text: "呼吸困难进展极快,几小时内就可能恶化甚至死亡,没有「在家观察一会儿」的安全窗口;病因很多、家里无法排查,只有兽医能定位。",
           source: "Cornell / VCA",
-        },
-        {
-          text: "张口喘、嘴唇 / 舌头发紫,说明已经严重缺氧、在代偿边缘。",
-          source: "Cornell / VCA",
-          when: ["bre_001", "bre_004", "emg_001"],
-        },
-        {
-          text: "病因很多(哮喘急性发作、心衰、胸腔积液、气道异物),家里无法排查,只有兽医能定位。",
-          source: "Cornell",
         },
       ],
       stepsTitle: "去医院前 / 路上",
@@ -1393,6 +1440,22 @@ function ReportContent() {
     .replace("{name}", catName)
     .replace("{symptom}", symptomLabel);
   const alarm = shownTier !== "green";
+  // 红档「为什么等不得」:组级基线危险(info.danger)+ 用户分诊实际选中的 claim 命中的危险
+  // (DANGER_BY_CLAIM),按文本去重、最多 6 条。这样红卡随每一种选择联动、不再千篇一律。
+  const redDanger: DangerItem[] = (() => {
+    if (shownTier !== "red") return [];
+    const seen = new Set<string>();
+    const out: DangerItem[] = [];
+    for (const d of [
+      ...(info.danger ?? []),
+      ...claimIds.map((c) => DANGER_BY_CLAIM[c]).filter((x): x is DangerItem => Boolean(x)),
+    ]) {
+      if (seen.has(d.text)) continue;
+      seen.add(d.text);
+      out.push(d);
+    }
+    return out.slice(0, 6);
+  })();
   // 带给问诊的分诊结论摘要 —— 让 AI 知道刚才判了什么档、为什么,别从头重复问。
   const reportSummary = [
     `${info.badge} · ${symptomLabel}`,
@@ -1467,38 +1530,29 @@ function ReportContent() {
 
       {/* 为什么等不得 —— 红档:危险机制 + 时限 + 权威出处,先于操作展示,让用户看懂危险性、且可信。
           按用户分诊选中的 claim 联动:基线危险(无 when)总显示,带 when 的只在命中相关选择时显示。 */}
-      {shownTier === "red" &&
-        info.danger &&
-        info.danger.length > 0 &&
-        (() => {
-          const shownDanger = info.danger.filter(
-            (d) => !d.when || d.when.some((c) => claimIds.includes(c)),
-          );
-          if (shownDanger.length === 0) return null;
-          return (
-            <section
-              className="mt-4 rounded-[28px] border p-4 shadow-[var(--shadow-control)]"
-              style={{ background: "var(--red-bg)", borderColor: "var(--red)" }}
-            >
-              <p
-                className="text-[13px] font-semibold leading-snug"
-                style={{ color: "var(--red-ink)" }}
-              >
-                {info.dangerTitle ?? "为什么等不得"}
-              </p>
-              <ul className="mt-3 flex flex-col gap-3">
-                {shownDanger.map((d, i) => (
-                  <li key={i} className="flex flex-col gap-1">
-                    <span className="text-[13.5px] leading-relaxed text-ink">
-                      {d.text}
-                    </span>
-                    <span className="text-[11px] text-ink-faint">据 {d.source}</span>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          );
-        })()}
+      {redDanger.length > 0 && (
+        <section
+          className="mt-4 rounded-[28px] border p-4 shadow-[var(--shadow-control)]"
+          style={{ background: "var(--red-bg)", borderColor: "var(--red)" }}
+        >
+          <p
+            className="text-[13px] font-semibold leading-snug"
+            style={{ color: "var(--red-ink)" }}
+          >
+            {info.dangerTitle ?? "为什么等不得"}
+          </p>
+          <ul className="mt-3 flex flex-col gap-3">
+            {redDanger.map((d, i) => (
+              <li key={i} className="flex flex-col gap-1">
+                <span className="text-[13.5px] leading-relaxed text-ink">
+                  {d.text}
+                </span>
+                <span className="text-[11px] text-ink-faint">据 {d.source}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* 找医院(地图深链,不自建医院库) */}
       {info.mapAction && (
@@ -1548,8 +1602,8 @@ function ReportContent() {
         </div>
       </section>
 
-      {/* 为什么这么判断 —— 红档已有「为什么等不得」(danger)时隐藏本段,避免重复 */}
-      {!(shownTier === "red" && info.danger && info.danger.length > 0) && (
+      {/* 为什么这么判断 —— 红档已显示「为什么等不得」(redDanger)时隐藏本段,避免重复 */}
+      {redDanger.length === 0 && (
         <section className="mt-8">
           <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-faint">
             为什么这么判断
