@@ -264,9 +264,11 @@ const BOX_VARIANTS: Record<string, string[]> = {
   scratch: [0, 1, 2, 3].map((i) => `/pet/items/cat-box-scratch-${i}.webp`),
 };
 const BOX_VARIANT_KEYS = ["peek", "curl", "scratch"] as const;
-// 各变体播放序列 + 帧速:peek/scratch 往返;curl 多停在睡帧(慢)。
+// 各变体播放序列 + 帧速:
+//  peek 大部分时间只露眼(0)躲着,一个循环才探头(1)一次=探头频率低;不用 2/3(双爪搭沿太露)。
+//  curl 多停在睡帧(慢);scratch 往返抓咬。
 const BOX_ANIM: Record<string, { order: number[]; ms: number }> = {
-  peek: { order: [0, 1, 2, 3, 2, 1], ms: 360 },
+  peek: { order: [0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0], ms: 620 },
   curl: { order: [0, 1, 2, 3, 3, 2, 3, 3], ms: 620 },
   scratch: { order: [0, 1, 2, 3, 2, 1], ms: 320 },
 };
