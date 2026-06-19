@@ -148,14 +148,16 @@ type ItemKey = keyof typeof YARD_ITEMS;
 // 挠抓板 3 变体(查证真实抓挠:全身伸展、竖抓往下耙、趴卧蹭):各 4 帧猫+楔板合成图,
 // 经 scratch_fit 按板右缘高+右下角对齐到与原 cat-scratch 同款 908×719 框(板与 scratch.webp 重合)。
 const SCRATCH_VARIANTS: Record<string, string[]> = {
-  rake: [0, 1, 2, 3].map((i) => `/pet/items/cat-scratch-rake-${i}.webp`),
+  // rake 是 6 帧连贯:爪从斜面顶端逐帧滑到底端(身体稳住),ping-pong 播=连续上下耙
+  rake: [0, 1, 2, 3, 4, 5].map((i) => `/pet/items/cat-scratch-rake-${i}.webp`),
   lounge: [0, 1, 2, 3].map((i) => `/pet/items/cat-scratch-lounge-${i}.webp`),
   stretch: [0, 1, 2, 3].map((i) => `/pet/items/cat-scratch-stretch-${i}.webp`),
 };
 const SCRATCH_VARIANT_KEYS = ["rake", "lounge", "stretch"] as const;
-// 各变体播放序列 + 帧速:rake/stretch 往返耙(快);lounge 多停在趴卧帧(慢)。
+// 各变体播放序列 + 帧速:rake 6 帧顶↔底 ping-pong 快速上下耙(像真在挠);
+// lounge 多停在趴卧帧(慢);stretch 竖向伸展往返。
 const SCRATCH_ANIM: Record<string, { order: number[]; ms: number }> = {
-  rake: { order: [0, 1, 2, 3, 2, 1], ms: 240 },
+  rake: { order: [0, 1, 2, 3, 4, 5, 4, 3, 2, 1], ms: 135 },
   lounge: { order: [0, 1, 2, 3, 3, 2, 3, 3], ms: 640 },
   stretch: { order: [0, 1, 2, 3, 2, 1], ms: 300 },
 };
