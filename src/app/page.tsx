@@ -248,13 +248,13 @@ const WASH_TALK = [
   "喵嗯~(一抹一抹好认真呀 ˘ω˘)",
   "喵呜~(脸蛋抹干净最舒服 ฅ^•ﻌ•^ฅ)",
 ];
-// 钻箱 4 帧(gpt-image-2 一次生成、按箱底中心对齐切片 → 箱子帧间锁死):
-// 0 低头探 → 1 探头扒沿 → 2 坐 → 3 抬头坐。hopin 顺序播 0→3 = 猫从箱里由低升起=跳进去。
+// 进/出箱 4 帧(写实「爬过箱沿」:0 前爪搭沿上身翻起 → 1 趴上箱沿 → 2 头先探进 → 3 落入箱中蹲低)。
+// hopin 正放 0→3 = 爬过沿进箱;hopout 倒放 3→0 = 头抬起→上沿→前爪翻出沿(前向爬出),随后切回精灵走开。
 const CAT_JUMP_FRAMES = [
-  "/pet/items/cat-box-0.webp",
-  "/pet/items/cat-box-1.webp",
-  "/pet/items/cat-box-2.webp",
-  "/pet/items/cat-box-3.webp",
+  "/pet/items/cat-box-enter-0.webp",
+  "/pet/items/cat-box-enter-1.webp",
+  "/pet/items/cat-box-enter-2.webp",
+  "/pet/items/cat-box-enter-3.webp",
 ];
 // 钻箱 3 变体(查证真实猫玩箱:伏击窥探 / 蜷睡 / 扒咬纸板)。各 4 帧猫+箱合成图,
 // 同 hatch/box-fit 流程 fit 到与 cat-box 同款箱框(582×520、箱翼跨宽)。进箱时随机选一种循环播。
@@ -641,7 +641,7 @@ function PetNudge({
       let i = last;
       setJumpFrame(i);
       const id = window.setInterval(() => {
-        i = Math.max(i - 1, 1);
+        i = Math.max(i - 1, 0); // 倒放到 0 = 完整爬出箱沿
         setJumpFrame(i);
       }, 200);
       return () => clearInterval(id);
@@ -1245,13 +1245,12 @@ function PetNudge({
         );
       }, 2200);
     } else if (roam.kind === "hopin") {
-      // 蹦进箱子:0→3 升起播完(~900ms)再落进箱里
-      // 落进箱里:随机选一种钻箱变体(伏击/蜷睡/扒咬)循环演
+      // 爬过箱沿进箱:enter 0→3 播完(4 帧 ~920ms)落入箱中,再随机选一种钻箱变体循环演
       const bv =
         BOX_VARIANT_KEYS[Math.floor(Math.random() * BOX_VARIANT_KEYS.length)];
       t = window.setTimeout(
         () => setRoam((r) => ({ ...r, kind: "box", boxVariant: bv })),
-        850,
+        950,
       );
     } else if (roam.kind === "box") {
       // 钻箱:在箱里蹲 10-15s,到点先爬出来(hopout)
@@ -1259,12 +1258,12 @@ function PetNudge({
         () => setRoam((r) => ({ ...r, kind: "hopout" })),
         10000 + Math.random() * 5000,
       );
+      // 爬出箱子:enter 倒放 3→0(头抬起→上沿→翻出沿,4 帧 ~700ms)后落地坐下、说句猫语
     } else if (roam.kind === "hopout") {
-      // 爬出箱子:3→1 扒着箱沿探出去(~800ms)后落地坐下、说句猫语
       t = window.setTimeout(() => {
         setRoam((r) => ({ ...r, kind: "sit" }));
         sayLine("box");
-      }, 480);
+      }, 720);
     } else {
       // 打盹 18-32s —— 睡够了随机演一个起床动作(伸懒腰/打哈欠/弓背)再坐起
       t = window.setTimeout(
@@ -1524,7 +1523,8 @@ function PetNudge({
           );
         })()}
 
-        {/* 钻箱动画:hopin 播 0→3(跳进去)/ hopout 播 3→1(爬出来),整张盖在箱位、箱帧间锁死。 */}
+        {/* 进/出箱动画:hopin 播 enter 0→3(爬过沿进箱)/ hopout 倒放 3→0(爬出沿),整张盖在箱位。
+            帧本身已表现爬沿动作,不再叠 box-hop 的 CSS 位移/挤压(否则双重运动穿帮)。 */}
         {(roam.kind === "hopin" || roam.kind === "hopout") && (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1533,10 +1533,7 @@ function PetNudge({
               alt=""
               aria-hidden="true"
               draggable={false}
-              className={
-                "absolute " +
-                (roam.kind === "hopin" ? "box-hop-in" : "box-hop-out")
-              }
+              className="absolute"
               style={{
                 left: layout.box.left,
                 bottom: layout.box.bottom,
