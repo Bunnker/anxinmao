@@ -217,26 +217,31 @@ const WAND_VARIANTS = ["swat", "grab", "carry"] as const;
 const WAND_W = 144; // carry-catch(carry-0/1/2 含杆)显示宽 → 体量≈雪碧图(原 156 偏大,且让 catch→walk 更顺)
 const WAND_DX = 16;
 const WAND_DY = -4;
-// 洗脸动作 → 帧序列(codex 专门画的「洗脸/理毛」盖帧,非复用 groom row;点地毯随机演一组)。
-// 同梳毛盖帧机制:藏实时精灵、在猫位置盖帧、2 帧 ping-pong。先上 paw(舔爪抹脸)+ hindleg(举旗杆),
-// 后补 ear(抹耳后)/scratch(后腿挠耳)。
+// 洗脸/理毛盖帧 —— 写实理毛 3 变体(查证真实猫理毛顺序;各 6 帧):
+//   face 舔爪抹脸耳 / body 舔肩胁 / belly 蜷身舔胸腹。闲时随机就地演一种(不绑地毯)。
+// 机制:藏实时精灵、在猫位置盖帧、ping-pong 循环。
 const WASH_SEQS: Record<string, string[]> = {
-  paw: [
-    "/pet/items/cat-wash-lick-0.webp", "/pet/items/cat-wash-lick-1.webp",
-    "/pet/items/cat-wash-lick-2.webp", "/pet/items/cat-wash-lick-3.webp",
-    "/pet/items/cat-wash-lick-4.webp", "/pet/items/cat-wash-lick-5.webp",
-    "/pet/items/cat-wash-wipe-0.webp", "/pet/items/cat-wash-wipe-1.webp",
-    "/pet/items/cat-wash-wipe-2.webp", "/pet/items/cat-wash-wipe-3.webp",
-    "/pet/items/cat-wash-wipe-4.webp", "/pet/items/cat-wash-wipe-5.webp",
-  ],
+  face: [0, 1, 2, 3, 4, 5].map((i) => `/pet/items/cat-wash-face-${i}.webp`),
+  body: [0, 1, 2, 3, 4, 5].map((i) => `/pet/items/cat-wash-body-${i}.webp`),
+  belly: [0, 1, 2, 3, 4, 5].map((i) => `/pet/items/cat-wash-belly-${i}.webp`),
 };
-const WASH_VARIANTS = ["paw"] as const;
+const WASH_VARIANTS = ["face", "body", "belly"] as const;
+// 显示宽按「猫体面积」统一到屏上 ~3600(同其它动作,做任何动作不变大变小)。
 const WASH_ALIGN: Record<string, { w: number; dx: number; dy: number }> = {
-  paw: { w: 124, dx: 0, dy: -4 },
+  face: { w: 94, dx: 0, dy: -4 },
+  body: { w: 88, dx: 0, dy: -4 },
+  belly: { w: 90, dx: 0, dy: -4 },
 };
-// 洗脸自定义播放序列:舔爪 core(2-5)循环 4 轮(舔好几下) + 擦脸(6-11)。
-const WASH_ORDER = [0, 1, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const WASH_DURS = [420, 340, 300, 300, 300, 320, 300, 300, 300, 320, 300, 300, 300, 320, 300, 300, 300, 320, 440, 440, 460, 460, 480, 560];
+// 各变体专属播放序列(均匀帧速=流畅):
+//  face 0-5 全是「爪子贴脸洗」帧 → 整条 ping-pong;
+//  body/belly 的 0、5 是中性坐姿(非舔)→ 只在「低头舔」的 1-4 帧里往返循环,
+//  否则 …4→5→4… 会把「舔→抬头正脸→舔」切成「左看右看」。
+const WASH_ORDERS: Record<string, number[]> = {
+  face: [0, 1, 2, 3, 4, 5, 4, 3, 2, 1],
+  body: [1, 2, 3, 4, 3, 2],
+  belly: [1, 2, 3, 4, 3, 2],
+};
+const WASH_FRAME_MS = 420;
 const WASH_TALK = [
   "舔舔~(先把爪子舔湿再抹脸 ´ω`)",
   "呼噜~(脸要洗得香香的 =^‥^=)",
@@ -397,6 +402,8 @@ function PetNudge({
   const [nudge, setNudge] = useState<Nudge | null>(null);
   const nudgeShownRef = useRef(false);
   const nudgeTimer = useRef<number | null>(null);
+  // 「去小地毯」手动触发洗脸时,循环切下一个变体(脸→身→胸腹),方便逐个测试
+  const washCycleRef = useRef(0);
   // 读最新 cat 的 ref —— nudge 定时器不依赖 cat,避免 store 更新(云同步/并行写)
   // 频繁改 cat 身份把 7s 定时器反复清掉,导致气泡永不出现。
   const latestCatRef = useRef(cat);
@@ -804,18 +811,19 @@ function PetNudge({
       setWashFrame(0);
       return;
     }
+    const order = WASH_ORDERS[roam.washVariant ?? "face"] ?? WASH_ORDERS.face;
     let k = 0;
     let t: number;
     const tick = () => {
-      setWashFrame(WASH_ORDER[k]);
+      setWashFrame(order[k]);
       t = window.setTimeout(() => {
-        k = (k + 1) % WASH_ORDER.length;
+        k = (k + 1) % order.length;
         tick();
-      }, WASH_DURS[k]);
+      }, WASH_FRAME_MS);
     };
     tick();
     return () => clearTimeout(t);
-  }, [roam.kind, calm]);
+  }, [roam.kind, roam.washVariant, calm]);
 
   useEffect(() => {
     const el = yardRef.current;
@@ -1109,7 +1117,10 @@ function PetNudge({
             }
           }
           if (roll < 0.46) {
-            setRoam((r) => ({ ...r, kind: "groom", dur: 0 }));
+            // 闲时随机就地洗澡理毛:盖帧 3 变体随机一种(洗脸/舔身/舔胸腹),不必走到地毯
+            const wv =
+              WASH_VARIANTS[Math.floor(Math.random() * WASH_VARIANTS.length)];
+            setRoam((r) => ({ ...r, kind: "washing", washVariant: wv, dur: 0 }));
             return;
           }
           if (roll < 0.54) {
@@ -1176,16 +1187,17 @@ function PetNudge({
         sayLine("scratch");
       }, 3200);
     } else if (roam.kind === "rug") {
-      // 到地毯:随机选一组洗脸动作,立即转 washing(codex 专属洗脸盖帧)
-      const v =
-        WASH_VARIANTS[Math.floor(Math.random() * WASH_VARIANTS.length)];
-      setRoam((r) => ({ ...r, kind: "washing", washVariant: v }));
+      // 「去小地毯」手动触发洗脸,且每次循环切下一个变体(脸→身→胸腹)方便逐个测试。
+      // (洗脸也在随机池里就地触发;地毯这条是给你按需复现/调速度用,以后可改派别的动作。)
+      const wv = WASH_VARIANTS[washCycleRef.current % WASH_VARIANTS.length];
+      washCycleRef.current += 1;
+      setRoam((r) => ({ ...r, kind: "washing", washVariant: wv }));
     } else if (roam.kind === "washing") {
-      // 洗脸:盖帧演 ~3.4s 后坐回,说句洗脸猫语
+      // 洗脸/理毛:盖帧 ping-pong 演 ~5.1s(均匀舔速、流畅一轮多)后坐回,说句洗脸猫语
       t = window.setTimeout(() => {
         setRoam((r) => ({ ...r, kind: "sit" }));
         sayText(WASH_TALK[Math.floor(Math.random() * WASH_TALK.length)]);
-      }, 3600);
+      }, 5100);
     } else if (roam.kind === "pounce") {
       if (roam.pounceVariant === "carry") {
         // carry 由专门的 carry 编排 effect 推进 catch→walk→bite→sit,这里不设通用退出
@@ -1676,11 +1688,11 @@ function PetNudge({
         {/* 洗脸:washing 期间藏实时精灵,在猫位置盖 codex 专属洗脸帧(随机一组)2 帧来回切。 */}
         {roam.kind === "washing" &&
           (() => {
-            const variant = roam.washVariant ?? "paw";
-            const align = WASH_ALIGN[variant] ?? WASH_ALIGN.paw;
+            const variant = roam.washVariant ?? "face";
+            const align = WASH_ALIGN[variant] ?? WASH_ALIGN.face;
             const s = scaleOf(roam.y);
             const w = Math.round(align.w * s);
-            const seq = WASH_SEQS[variant] ?? WASH_SEQS.paw;
+            const seq = WASH_SEQS[variant] ?? WASH_SEQS.face;
             const src = seq[washFrame] ?? seq[0];
             const rawLeft = roam.x + 42 - w / 2 + align.dx * s;
             const left = Math.round(
