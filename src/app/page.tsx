@@ -197,10 +197,12 @@ const WAND_CARRY_WALK_LEN = 5;
 // 到位后的动态扑咬:兔子踢翻滚抱啃羽毛 5 帧循环(替代旧的静态趴咬/躺咬)。
 const WAND_CARRY_BITE = [0, 1, 2, 3, 4].map((i) => `/pet/items/cat-wand-bite-${i}.webp`);
 const WAND_CARRY_BITE_LEN = 5;
-// 走路/扑咬帧的猫填满整格(同原型雪碧图),按原型显示宽 84 渲染;其余 carry 帧含逗猫棒长杆,用 WAND_W=156。
+// 各盖帧动作显示宽:统一让「猫体面积」≈ 雪碧图猫(屏上 ~3600),做任何动作都不变大变小。
+// (面积是最不受姿势影响的体量指标;按宽/高对齐会因姿势差把立姿/坐姿压扁或放大。)
+// walk/bite 帧猫满格→宽 84(面积 3426);grab 145(3576);swat 116(3605);carry-catch=WAND_W 144(3613)。
 const WAND_WALK_W = 84;
-// grab 真实捕猎序列帧:猫在格内偏小(含上方悬杆+扑跳留高),按 195 显示宽放大到原型尺寸(扑帧高也不裁)。
-const WAND_GRAB_W = 195;
+const WAND_GRAB_W = 145; // grab 真实捕猎序列:猫在格内偏小+扑跳留高,145 让体量≈雪碧图,扑帧也不裁
+const WAND_SWAT_W = 116; // swat 挠:116 让体量≈雪碧图(原 156 太大、100 又太小)
 // grab 帧的猫已居中(切片时锚 cx=96),用 dx=0 让猫心对齐 roam.x+42 = 坐姿精灵的位置;
 // 否则沿用 WAND_DX=16 会让盖帧整体右移、咬完切回坐姿时猫横跳 16px(衔接僵硬)。
 const WAND_GRAB_DX = 0;
@@ -208,10 +210,11 @@ const WAND_GRAB_DX = 0;
 // 0伏低 1蹲coil 2起 3立够 4抓 5拉下 / 6咬 7甩左 8甩右 9啃 10收。
 // 扑抓段(2-5)逐帧快切=顺滑跃起;咬定后 7↔8 甩头两轮;演完乖乖坐回,只播一遍不循环。
 const GRAB_SEQ = [0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 8, 9, 10];
-const GRAB_DURS = [450, 280, 120, 120, 150, 200, 240, 150, 150, 150, 150, 200, 110];
-const GRAB_TOTAL = GRAB_DURS.reduce((a, b) => a + b, 0); // ≈ 2.5s 演完坐回(末帧 收 一闪即坐回)
+// 接近/扑抓快(2-5),咬段放慢更从容(6-9),末帧 收 停 0.5s 再坐回。
+const GRAB_DURS = [450, 280, 120, 120, 150, 200, 300, 220, 220, 220, 220, 300, 500];
+const GRAB_TOTAL = GRAB_DURS.reduce((a, b) => a + b, 0); // ≈ 3.3s 演完坐回
 const WAND_VARIANTS = ["swat", "grab", "carry"] as const;
-const WAND_W = 156;
+const WAND_W = 144; // carry-catch(carry-0/1/2 含杆)显示宽 → 体量≈雪碧图(原 156 偏大,且让 catch→walk 更顺)
 const WAND_DX = 16;
 const WAND_DY = -4;
 // 洗脸动作 → 帧序列(codex 专门画的「洗脸/理毛」盖帧,非复用 groom row;点地毯随机演一组)。
@@ -1614,13 +1617,15 @@ function PetNudge({
               wandVariant === "carry" && roam.carryPhase === "walk";
             const isCarryBite =
               wandVariant === "carry" && roam.carryPhase === "bite";
-            // 走路/扑咬帧猫满格→按原型宽 84;grab 真实序列猫偏小→用 195 放大;含杆 catch/swat 帧→156。
+            // 走路/扑咬帧猫满格→宽84;grab→145、swat→100(都对齐坐姿63px);carry catch 含杆→156。
             const w = Math.round(
               (isCarryWalk || isCarryBite
                 ? WAND_WALK_W
                 : wandVariant === "grab"
                   ? WAND_GRAB_W
-                  : WAND_W) * s,
+                  : wandVariant === "swat"
+                    ? WAND_SWAT_W
+                    : WAND_W) * s,
             );
             const wandSeq = isCarryWalk
               ? WAND_CARRY_WALK[roam.facing === "right" ? "right" : "left"]
@@ -1645,9 +1650,9 @@ function PetNudge({
                   className="absolute"
                   style={{
                     left,
-                    // grab 帧脚底压到地面(dy=-9)对齐坐姿精灵,消除切回时下沉;swat/carry 用 WAND_DY。
+                    // grab 帧脚底压到地面(dy=-7,随宽 145)对齐坐姿精灵,消除切回时下沉;swat/carry 用 WAND_DY。
                     bottom: Math.round(
-                      roam.y + (wandVariant === "grab" ? -9 : WAND_DY) * s,
+                      roam.y + (wandVariant === "grab" ? -7 : WAND_DY) * s,
                     ),
                     width: w,
                     zIndex: Math.max(zOf(roam.y), 150) + 1,
