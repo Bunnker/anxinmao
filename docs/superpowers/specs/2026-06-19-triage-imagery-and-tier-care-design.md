@@ -78,7 +78,9 @@ type TierInfo = {
   monitorTitle?: string;    monitors?: string[];            // 黄档:观察要点
   // 升级条件复用现有 escalateTitle/escalateItems(黄档也展示)
 };
-type DangerItem = { text: string; source?: string };        // text=危险性解释; source=权威出处(如 "Cornell FLUTD")
+type DangerItem = { text: string; source?: string; when?: string[] };  // text=危险性解释; source=权威出处; when=联动:命中用户选中的 claim 才显示,无 when=基线危险总显示
+// 联动:红档 danger 按用户分诊选中的 claimIds(URL ?claims=)过滤——选了「呕吐物带血」(emg_003)才显示血吐危险、
+// 选了「吞了线」(vom_009)才显示线状异物危险;每组至少 1 条基线(无 when)保底不空。
 ```
 渲染:在「为什么这么判断」section 之后、「升级清单」之前插入(均为可选,有才渲染):
 - 红档:`shownTier==="red" && info.transports` → 「送医前 / 路上能做的」步骤列表(复用 `Step` 组件)

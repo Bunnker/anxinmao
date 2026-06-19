@@ -59,8 +59,9 @@ import type { RiskTier, Store } from "@/types/cat";
 //   · ingest(可能误食):v0.2 §3.2 —— 黄档尽快就医;「确实没吃到」可判绿。
 //   · general(精神差 / 其它):保守的通用文案,作为兜底。
 
-// 红档「为什么等不得」一条:危险机制 / 时限 + 权威出处(让用户看懂危险性、且可信)
-type DangerItem = { text: string; source: string };
+// 红档「为什么等不得」一条:危险机制 / 时限 + 权威出处(让用户看懂危险性、且可信)。
+// when?: 联动用 —— 仅当用户分诊选中的 claim 命中其中之一才显示;无 when = 该急症基线危险,总显示。
+type DangerItem = { text: string; source: string; when?: string[] };
 
 type TierInfo = {
   badge: string;
@@ -215,10 +216,12 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
         {
           text: "吐血或血便是消化道出血的信号,伴脱水时需立刻补液,否则可能进展到组织灌注不足、休克。",
           source: "Merck / VCA",
+          when: ["emg_003", "bld_012"],
         },
         {
           text: "线状异物(绳 / 线 / 丝带)会在肠道里「锯切」,即使看不到血,也可能在 24–48 小时内急性恶化、需紧急手术。",
           source: "VCA 线性异物",
+          when: ["vom_009"],
         },
         {
           text: "反复呕吐 + 脱水会打乱电解质(低钾、低氯),影响器官灌注,可发展为危及生命的并发症。",
@@ -316,10 +319,12 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
         {
           text: "内出血常看不见血迹,却能在数小时内恶化;牙龈发白 + 虚弱 + 呼吸浅快就是休克开始。",
           source: "VCA / Anicira",
+          when: ["bld_001", "bld_002", "bld_006", "emg_006", "emg_009"],
         },
         {
           text: "怀疑吃过抗凝血鼠药,即使没出血也算急症——那种出血在体内、几天后才显现,越早处理越好。",
           source: "VCA 鼠药中毒",
+          when: ["bld_010", "bld_011", "emg_008"],
         },
       ],
       stepsTitle: "去医院前 / 路上",
@@ -1035,10 +1040,12 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
         {
           text: "猫对很多东西极敏感:对乙酰氨基酚等人用退烧 / 止痛药对猫可致命;百合即便极少量(花粉、花瓶水)也可能造成严重肾损伤。",
           source: "FDA / Merck / ASPCA",
+          when: ["tox_003", "tox_004", "tox_005"],
         },
         {
           text: "线状异物(绳 / 线 / 丝带)会在肠道里切割,导致穿孔和腹膜炎,常拖到重症才被发现。",
           source: "VCA 线性异物",
+          when: ["tox_011"],
         },
       ],
       stepsTitle: "去医院前 / 路上",
@@ -1197,6 +1204,7 @@ const OVERRIDE: Partial<Record<Group, Partial<Record<RiskTier, TierInfo>>>> = {
         {
           text: "张口喘、嘴唇 / 舌头发紫,说明已经严重缺氧、在代偿边缘。",
           source: "Cornell / VCA",
+          when: ["bre_001", "bre_004", "emg_001"],
         },
         {
           text: "病因很多(哮喘急性发作、心衰、胸腔积液、气道异物),家里无法排查,只有兽医能定位。",
@@ -1457,30 +1465,40 @@ function ReportContent() {
         <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">{lead}</p>
       </div>
 
-      {/* 为什么等不得 —— 红档:危险机制 + 时限 + 权威出处,先于操作展示,让用户看懂危险性、且可信 */}
-      {shownTier === "red" && info.danger && info.danger.length > 0 && (
-        <section
-          className="mt-4 rounded-[28px] border p-4 shadow-[var(--shadow-control)]"
-          style={{ background: "var(--red-bg)", borderColor: "var(--red)" }}
-        >
-          <p
-            className="text-[13px] font-semibold leading-snug"
-            style={{ color: "var(--red-ink)" }}
-          >
-            {info.dangerTitle ?? "为什么等不得"}
-          </p>
-          <ul className="mt-3 flex flex-col gap-3">
-            {info.danger.map((d, i) => (
-              <li key={i} className="flex flex-col gap-1">
-                <span className="text-[13.5px] leading-relaxed text-ink">
-                  {d.text}
-                </span>
-                <span className="text-[11px] text-ink-faint">据 {d.source}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {/* 为什么等不得 —— 红档:危险机制 + 时限 + 权威出处,先于操作展示,让用户看懂危险性、且可信。
+          按用户分诊选中的 claim 联动:基线危险(无 when)总显示,带 when 的只在命中相关选择时显示。 */}
+      {shownTier === "red" &&
+        info.danger &&
+        info.danger.length > 0 &&
+        (() => {
+          const shownDanger = info.danger.filter(
+            (d) => !d.when || d.when.some((c) => claimIds.includes(c)),
+          );
+          if (shownDanger.length === 0) return null;
+          return (
+            <section
+              className="mt-4 rounded-[28px] border p-4 shadow-[var(--shadow-control)]"
+              style={{ background: "var(--red-bg)", borderColor: "var(--red)" }}
+            >
+              <p
+                className="text-[13px] font-semibold leading-snug"
+                style={{ color: "var(--red-ink)" }}
+              >
+                {info.dangerTitle ?? "为什么等不得"}
+              </p>
+              <ul className="mt-3 flex flex-col gap-3">
+                {shownDanger.map((d, i) => (
+                  <li key={i} className="flex flex-col gap-1">
+                    <span className="text-[13.5px] leading-relaxed text-ink">
+                      {d.text}
+                    </span>
+                    <span className="text-[11px] text-ink-faint">据 {d.source}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          );
+        })()}
 
       {/* 找医院(地图深链,不自建医院库) */}
       {info.mapAction && (
