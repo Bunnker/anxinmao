@@ -256,14 +256,20 @@ const CAT_JUMP_FRAMES = [
   "/pet/items/cat-box-2.webp",
   "/pet/items/cat-box-3.webp",
 ];
-// 在箱里随机循环:复用同 4 帧当姿势(抬头坐/探头/躲低/坐),同次生成箱一致、绝不错层。
-// [0]=帧3,正好接上 hopin 落定那帧 → 无缝。
-const CAT_IN_BOX_POSES = [
-  "/pet/items/cat-box-3.webp",
-  "/pet/items/cat-box-1.webp",
-  "/pet/items/cat-box-0.webp",
-  "/pet/items/cat-box-2.webp",
-];
+// 钻箱 3 变体(查证真实猫玩箱:伏击窥探 / 蜷睡 / 扒咬纸板)。各 4 帧猫+箱合成图,
+// 同 hatch/box-fit 流程 fit 到与 cat-box 同款箱框(582×520、箱翼跨宽)。进箱时随机选一种循环播。
+const BOX_VARIANTS: Record<string, string[]> = {
+  peek: [0, 1, 2, 3].map((i) => `/pet/items/cat-box-peek-${i}.webp`),
+  curl: [0, 1, 2, 3].map((i) => `/pet/items/cat-box-curl-${i}.webp`),
+  scratch: [0, 1, 2, 3].map((i) => `/pet/items/cat-box-scratch-${i}.webp`),
+};
+const BOX_VARIANT_KEYS = ["peek", "curl", "scratch"] as const;
+// 各变体播放序列 + 帧速:peek/scratch 往返;curl 多停在睡帧(慢)。
+const BOX_ANIM: Record<string, { order: number[]; ms: number }> = {
+  peek: { order: [0, 1, 2, 3, 2, 1], ms: 360 },
+  curl: { order: [0, 1, 2, 3, 3, 2, 3, 3], ms: 620 },
+  scratch: { order: [0, 1, 2, 3, 2, 1], ms: 320 },
+};
 // 跳帧 + 姿势共用一套显示:新帧画布 582×520、箱翼跨满整帧 → BOX_W 即箱翼显示宽 88px
 //(=猫窝大小)。在箱帧的 left/bottom 直接用 live 的 layout.box(空箱坐标)→ 拖动箱子时
 // 在箱帧/钻入帧跟着箱子走、像素级重合。
@@ -469,6 +475,7 @@ function PetNudge({
     brushVariant?: string;
     // 洗脸动作变体(paw 舔爪抹脸 / hindleg 举旗杆……),决定盖帧序列
     washVariant?: string;
+    boxVariant?: string; // 钻箱变体(peek 伏击 / curl 蜷睡 / scratch 扒咬),进箱时随机定
     // 逗猫棒扑抓变体(swat 拍打 / grab 抓咬 / carry 叼走),决定盖帧序列
     pounceVariant?: string;
     // carry(叼走)阶段:catch 扑叼原位 / walk 叼着平移 / bite 到位咬
@@ -598,30 +605,23 @@ function PetNudge({
     }
   }
 
-  // 钻箱里东张西望:roam==="box" 时每 2-4s 随机切一张姿势(只 ① 一张时不切;减弱动效不切)
+  // 在箱里:按进箱时选定的变体(peek/curl/scratch)循环播该变体的 4 帧动画。
+  // boxPose = 变体序列里的帧号(0-3),渲染处取 BOX_VARIANTS[variant][boxPose]。
   const [boxPose, setBoxPose] = useState(0);
   useEffect(() => {
-    if (roam.kind !== "box" || calm || CAT_IN_BOX_POSES.length < 2) {
+    if (roam.kind !== "box" || calm) {
       setBoxPose(0);
       return;
     }
-    let t: number;
-    const tick = () => {
-      t = window.setTimeout(
-        () => {
-          setBoxPose((p) => {
-            let n = Math.floor(Math.random() * CAT_IN_BOX_POSES.length);
-            if (n === p) n = (n + 1) % CAT_IN_BOX_POSES.length;
-            return n;
-          });
-          tick();
-        },
-        5000 + Math.random() * 3000,
-      );
-    };
-    tick();
-    return () => clearTimeout(t);
-  }, [roam.kind, calm]);
+    const anim = BOX_ANIM[roam.boxVariant ?? "peek"] ?? BOX_ANIM.peek;
+    let k = 0;
+    setBoxPose(anim.order[0]);
+    const id = window.setInterval(() => {
+      k = (k + 1) % anim.order.length;
+      setBoxPose(anim.order[k]);
+    }, anim.ms);
+    return () => clearInterval(id);
+  }, [roam.kind, roam.boxVariant, calm]);
 
   // 钻箱帧序:hopin 顺序播 0→3(猫从箱里由低升起=跳进去);
   // hopout 倒着播 3→1(坐起 → 扒到箱沿探出去=爬出来),停在 1,随后切回漫游精灵走开。
@@ -1246,7 +1246,13 @@ function PetNudge({
       }, 2200);
     } else if (roam.kind === "hopin") {
       // 蹦进箱子:0→3 升起播完(~900ms)再落进箱里
-      t = window.setTimeout(() => setRoam((r) => ({ ...r, kind: "box" })), 850);
+      // 落进箱里:随机选一种钻箱变体(伏击/蜷睡/扒咬)循环演
+      const bv =
+        BOX_VARIANT_KEYS[Math.floor(Math.random() * BOX_VARIANT_KEYS.length)];
+      t = window.setTimeout(
+        () => setRoam((r) => ({ ...r, kind: "box", boxVariant: bv })),
+        850,
+      );
     } else if (roam.kind === "box") {
       // 钻箱:在箱里蹲 10-15s,到点先爬出来(hopout)
       t = window.setTimeout(
@@ -1547,7 +1553,11 @@ function PetNudge({
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={CAT_IN_BOX_POSES[boxPose] ?? CAT_IN_BOX_POSES[0]}
+              src={
+                (BOX_VARIANTS[roam.boxVariant ?? "peek"] ?? BOX_VARIANTS.peek)[
+                  boxPose
+                ] ?? BOX_VARIANTS.peek[0]
+              }
               alt=""
               aria-hidden="true"
               draggable={false}
