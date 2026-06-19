@@ -145,13 +145,21 @@ const YARD_ITEMS = {
   rug: { src: "/pet/items/rug.webp", alt: "小地毯", left: 100, bottom: 9, w: 104 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
-// 挠抓板 2 帧(codex 出图、按板右下角对齐切片 → 板不抖):前爪在斜面 高→低 来回=挠。
-// 画布 908×520,板占宽 0.58、板中 0.68;显示时让板与静态 scratch.webp 重合(见院子渲染)。
-const CAT_SCRATCH_FRAMES = [
-  "/pet/items/cat-scratch-0.webp",
-  "/pet/items/cat-scratch-1.webp",
-];
-// 显示宽 134 → 板=78(=scratch.webp.w);相对板原点偏移(猫在板左):
+// 挠抓板 3 变体(查证真实抓挠:全身伸展、竖抓往下耙、趴卧蹭):各 4 帧猫+楔板合成图,
+// 经 scratch_fit 按板右缘高+右下角对齐到与原 cat-scratch 同款 908×719 框(板与 scratch.webp 重合)。
+const SCRATCH_VARIANTS: Record<string, string[]> = {
+  rake: [0, 1, 2, 3].map((i) => `/pet/items/cat-scratch-rake-${i}.webp`),
+  lounge: [0, 1, 2, 3].map((i) => `/pet/items/cat-scratch-lounge-${i}.webp`),
+  stretch: [0, 1, 2, 3].map((i) => `/pet/items/cat-scratch-stretch-${i}.webp`),
+};
+const SCRATCH_VARIANT_KEYS = ["rake", "lounge", "stretch"] as const;
+// 各变体播放序列 + 帧速:rake/stretch 往返耙(快);lounge 多停在趴卧帧(慢)。
+const SCRATCH_ANIM: Record<string, { order: number[]; ms: number }> = {
+  rake: { order: [0, 1, 2, 3, 2, 1], ms: 240 },
+  lounge: { order: [0, 1, 2, 3, 3, 2, 3, 3], ms: 640 },
+  stretch: { order: [0, 1, 2, 3, 2, 1], ms: 300 },
+};
+// 显示宽 134(板=78=scratch.webp.w);相对板原点偏移(猫在板左),3 变体同框共用:
 const SCRATCH_W = 134;
 const SCRATCH_DX = -52; // 帧 left = layout.scratch.left + DX
 const SCRATCH_DY = -18; // 帧 bottom = layout.scratch.bottom + DY
@@ -322,6 +330,15 @@ function walkTo(
       y: a.y,
       facing: r.facing,
       dur: 0,
+      // 已在板边直接挠:这里也得随机挑变体(否则跳过 stroll→then 的挑选,永远默认 rake)
+      ...(then === "scratch"
+        ? {
+            scratchVariant:
+              SCRATCH_VARIANT_KEYS[
+                Math.floor(Math.random() * SCRATCH_VARIANT_KEYS.length)
+              ],
+          }
+        : {}),
     } as const;
   return {
     kind: "stroll" as const,
@@ -478,6 +495,7 @@ function PetNudge({
     // 洗脸动作变体(paw 舔爪抹脸 / hindleg 举旗杆……),决定盖帧序列
     washVariant?: string;
     boxVariant?: string; // 钻箱变体(peek 伏击 / curl 蜷睡 / scratch 扒咬),进箱时随机定
+    scratchVariant?: string; // 挠板变体(rake 挠耙 / lounge 趴卧 / stretch 伸展),到板时随机定
     // 逗猫棒扑抓变体(swat 拍打 / grab 抓咬 / carry 叼走),决定盖帧序列
     pounceVariant?: string;
     // carry(叼走)阶段:catch 扑叼原位 / walk 叼着平移 / bite 到位咬
@@ -651,19 +669,23 @@ function PetNudge({
     setJumpFrame(0);
   }, [roam.kind]);
 
-  // 挠抓板:scratch 期间 0↔1 来回切(前爪在斜面上下挠),~220ms 一拍
+  // 挠抓板:按到板时选定的变体(rake/lounge/stretch)循环播其 4 帧动画。
+  // scratchFrame = 变体序列里的帧号(0-3),渲染处取 SCRATCH_VARIANTS[variant][scratchFrame]。
   const [scratchFrame, setScratchFrame] = useState(0);
   useEffect(() => {
     if (roam.kind !== "scratch") {
       setScratchFrame(0);
       return;
     }
-    const id = window.setInterval(
-      () => setScratchFrame((f) => (f === 0 ? 1 : 0)),
-      220,
-    );
+    const anim = SCRATCH_ANIM[roam.scratchVariant ?? "rake"] ?? SCRATCH_ANIM.rake;
+    let k = 0;
+    setScratchFrame(anim.order[0]);
+    const id = window.setInterval(() => {
+      k = (k + 1) % anim.order.length;
+      setScratchFrame(anim.order[k]);
+    }, anim.ms);
     return () => clearInterval(id);
-  }, [roam.kind]);
+  }, [roam.kind, roam.scratchVariant]);
 
   // 梳毛:brushing 期间帧序列来回播(ping-pong)——从头顺到尾再回头 = 明显的顺毛长梳。
   // 帧数随梳毛动作(brushVariant)对应的序列长度变化,2 帧时退化为 0↔1。
@@ -1167,7 +1189,14 @@ function PetNudge({
                 : r.then === "box"
                   ? "hopin"
                   : (r.then ?? "sit");
-            return { ...r, kind: next, then: undefined, dur: 0 };
+            // 到抓板:随机选一种挠板变体(挠耙/趴卧/伸展)循环演
+            const sv =
+              next === "scratch"
+                ? SCRATCH_VARIANT_KEYS[
+                    Math.floor(Math.random() * SCRATCH_VARIANT_KEYS.length)
+                  ]
+                : r.scratchVariant;
+            return { ...r, kind: next, then: undefined, dur: 0, scratchVariant: sv };
           }),
         roam.dur + 80,
       );
@@ -1571,13 +1600,16 @@ function PetNudge({
           </>
         )}
 
-        {/* 挠抓板:scratch 期间隐掉静态板 + 实时精灵,换成 codex「猫挠板」2 帧来回切,
-            帧里的板与静态板重合(SCRATCH_DX/DY/W 算好),猫在板左侧前爪上下挠。 */}
+        {/* 挠抓板:scratch 期间隐掉静态板 + 实时精灵,换成 codex「猫挠板」按变体(挠耙/趴卧/
+            伸展)循环播 4 帧,帧里的板与静态板重合(SCRATCH_DX/DY/W 算好),猫在板左侧。 */}
         {roam.kind === "scratch" && (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={CAT_SCRATCH_FRAMES[scratchFrame] ?? CAT_SCRATCH_FRAMES[0]}
+              src={
+                (SCRATCH_VARIANTS[roam.scratchVariant ?? "rake"] ??
+                  SCRATCH_VARIANTS.rake)[scratchFrame] ?? SCRATCH_VARIANTS.rake[0]
+              }
               alt=""
               aria-hidden="true"
               draggable={false}
