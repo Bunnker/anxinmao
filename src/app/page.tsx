@@ -121,6 +121,13 @@ const PET_TALK = [
   "噜噜噜~(被你摸最幸福 ≧▽≦)",
   "咕噜咕噜……(最喜欢你了 =´∇`=)",
 ];
+// 进入首页的问候泡:小猫歪头看着你打个招呼,几秒后自然消失再开始活动(不一进来就重复动作/不停搭话)。
+const ENTRY_GREET = [
+  "你回来啦~(歪着头看你 ´ω`)",
+  "喵~(你今天还好吗 =^‥^=)",
+  "噜~(等你好久啦 ฅ^•ﻌ•^ฅ)",
+  "咕噜~(看到你就安心 ˘ω˘)",
+];
 // 闲话已并入「思考泡」功能入口区;摸猫时才说猫语(PET_TALK)。
 
 // ── 2.5D 地板:院子有纵深(bottom 0~YARD_DEPTH 的深度带)──
@@ -406,6 +413,8 @@ function PetNudge({
     n: number;
   } | null>(null);
   const talkTimer = useRef<number | null>(null);
+  // 进入态:刚进首页时小猫歪头看你 + 冒一句问候泡,几秒后自然消失再开始活动。
+  const [intro, setIntro] = useState(true);
   // 分诊跟进:进首页遛达一会儿后,小猫坐下用气泡主动问(asking=true 时冒「问+三选」泡)。
   const [asking, setAsking] = useState(false);
   // 主动气泡(护理提醒 / 闲时搭话):没有待回访时偶尔冒一个可点的气泡。
@@ -420,6 +429,18 @@ function PetNudge({
   useEffect(() => {
     latestCatRef.current = cat;
   }, [cat]);
+
+  // 进入首页:小猫歪头看你 + 冒一句问候泡,~5s 后自然消失,再交给漫游调度开始活动。
+  // (替代过去「一进来就重复动作 + 不停搭话」;问候期间 intro=true 让调度暂停、姿势=歪头端详。)
+  useEffect(() => {
+    const line = ENTRY_GREET[Math.floor(Math.random() * ENTRY_GREET.length)];
+    setTalk(line);
+    const t = window.setTimeout(() => {
+      setTalk((cur) => (cur === line ? null : cur));
+      setIntro(false);
+    }, 5500);
+    return () => clearTimeout(t);
+  }, []);
 
   // ── 院子漫游(仅无事可说的 idle 场景):坐着 → 随机散步/洗脸/打盹 ──
   // x 是猫在院子里的横向位置,散步用 CSS transition 匀速走过去。
@@ -1053,8 +1074,9 @@ function PetNudge({
     return () => clearTimeout(t);
   }, [followupTarget, followupNote]);
 
-  // 没有待回访时:进首页遛一会儿,小猫坐下冒一个气泡 —— 约 80% 纯闲聊(不可点)、
-  // 约 20% 提一嘴(护理 / 分诊 / 问答可点)。一次访问只冒一次(nudgeShownRef),~12s 后自动收起。
+  // 没有待回访时:进首页先看问候(intro)再自在活动一阵,~28s 后小猫坐下冒一个护理/闲聊气泡
+  // —— 约 80% 纯闲聊(不可点)、约 20% 提一嘴(护理 / 分诊 / 问答可点)。一次访问只冒一次
+  // (nudgeShownRef),~12s 后自动收起。延后到入口之外,避免「一进来就不停搭话」。
   useEffect(() => {
     if (followupTarget || followupNote || nudgeShownRef.current) return;
     const t = window.setTimeout(() => {
@@ -1076,7 +1098,7 @@ function PetNudge({
       });
       setNudge(pick);
       nudgeTimer.current = window.setTimeout(() => setNudge(null), 12000);
-    }, 200);
+    }, 28000);
     return () => {
       clearTimeout(t);
       if (nudgeTimer.current) clearTimeout(nudgeTimer.current);
@@ -1087,7 +1109,7 @@ function PetNudge({
   // 25% 洗脸 / 25% 打盹(9-15s);摸猫说话 / 问跟进时暂停,完事从坐姿重新计时。
   // 院子是常驻沉浸 stage,猫始终鲜活;分诊跟进改由小猫气泡主动问(asking / followupNote 时调度暂停)。
   useEffect(() => {
-    if (calm || talk || asking || followupNote || nudge) return;
+    if (calm || talk || asking || followupNote || nudge || intro) return;
     let t: number;
     // 院子真实宽度同步(场景切进 idle 后 ref 才挂上)
     const live = yardRef.current?.offsetWidth;
@@ -1284,13 +1306,15 @@ function PetNudge({
       );
     }
     return () => clearTimeout(t);
-  }, [calm, talk, asking, followupNote, nudge, roam, yardW, waterLevel]);
+  }, [calm, talk, asking, followupNote, nudge, intro, roam, yardW, waterLevel]);
 
   // ── 院子始终是沉浸 stage:小猫在院子里生活,气泡跟着猫走。
   //    回访/护理/新用户引导等内容改由 HomePage 底部 sheet 承载(不再返回小气泡卡)。 ──
   {
     // 跟进态优先:答完按回执表情(好转/已就医=开心,担心=耷耳,引导=端详),问时=期待。
-    const followFace: PetSpriteState | null = followupNote
+    const followFace: PetSpriteState | null = intro
+      ? "review" // 进入态:歪头端详看着你(不重复动作、不招手),配问候泡
+      : followupNote
       ? followupNote.face === "worry"
         ? "failed"
         : followupNote.face === "curious"
