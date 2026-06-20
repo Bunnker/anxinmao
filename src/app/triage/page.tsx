@@ -12,7 +12,7 @@ import {
   SYMPTOM_LABELS,
 } from "@/lib/triage";
 import { createTriageHandoffId, saveTriageHandoff } from "@/lib/triage-handoff";
-import { SymptomIcon } from "@/lib/triage-icons";
+import { SymptomIcon, iconForOption } from "@/lib/triage-icons";
 import { loadStore, saveStore } from "@/lib/storage";
 import type { CatRecord, RiskTier } from "@/types/cat";
 
@@ -190,6 +190,7 @@ function TriageSession({ symptom }: { symptom: string }) {
       <div className="mt-6 flex flex-col gap-2.5">
         {q.options.map((opt, i) => {
           const on = selected.includes(i);
+          const optIcon = iconForOption(opt.label);
           return (
             <button
               key={i}
@@ -202,6 +203,13 @@ function TriageSession({ symptom }: { symptom: string }) {
                   : "border-[var(--line)] bg-surface")
               }
             >
+              {optIcon && (
+                <SymptomIcon
+                  id={optIcon}
+                  size={20}
+                  className={on ? "shrink-0 text-accent" : "shrink-0 text-ink/40"}
+                />
+              )}
               <span className="flex-1 text-[15.5px] text-ink">{opt.label}</span>
               <span
                 className={

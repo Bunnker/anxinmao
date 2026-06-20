@@ -56,7 +56,54 @@ const PATHS: Record<string, string> = {
   // 其它 —— 三点
   other:
     '<circle cx="6" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.4" fill="currentColor" stroke="none"/>',
+  // —— 以下为「分诊选项体征」补充图标(配 iconForOption 用)——
+  // 抽搐 / 站不稳 / 意识不清 —— 闪电(神经急症)
+  seizure: '<path d="M13 3 6 13h5l-2 8 9-12h-6Z"/>',
+  // 瘫软 / 倒地 / 叫不醒 —— 向下到地面
+  collapse:
+    '<path d="M12 4v9"/><path d="M8 10l4 4 4-4"/><path d="M5 19h14"/>',
+  // 牙龈 / 舌头发白发紫 —— 口 + 舌(看黏膜色)
+  pale:
+    '<path d="M5 9a7 5 0 0 0 14 0"/><path d="M5 9h14"/><path d="M9 9.5v1.5a3 2 0 0 0 6 0V9.5"/>',
+  // 肚子鼓胀 / 腹痛 —— 圆腹 + 外胀
+  belly:
+    '<circle cx="12" cy="13" r="6.5"/><path d="M1.5 13h2M20.5 13h2M12 2.5v2"/>',
+  // 线 / 绳 / 丝带异物 —— 双波纹(线)
+  string:
+    '<path d="M4 8c2.5 0 2.5 3.5 5 3.5S11.5 8 14 8s2.5 3.5 5 3.5"/><path d="M4 14c2.5 0 2.5 3.5 5 3.5S11.5 14 14 14s2.5 3.5 5 3.5"/>',
+  // 发热 —— 温度计
+  fever:
+    '<rect x="10" y="3" width="4" height="11" rx="2"/><circle cx="12" cy="17.5" r="3"/><path d="M12 8.5v6"/>',
 };
+
+// 按选项「字面」映射体征图标(关键词,顺序=优先级:更急/更特异在前)。
+// 只给描述具体体征的选项配图;次数 / 时长 / 「都没有」这类抽象项匹配不到 → 不配图(返回 null)。
+export function iconForOption(label: string): string | null {
+  const RULES: [RegExp, string][] = [
+    [/抽搐|痉挛|站不稳|意识|转圈|乱撞/, "seizure"],
+    [/瘫|倒地|叫不醒|站不起|塌软|昏/, "collapse"],
+    [/牙龈|舌头|发白|发紫|发蓝|苍白|发黄|黏膜/, "pale"],
+    [/喘|呼吸|张口|张嘴|憋气/, "breath"],
+    [/血/, "blood"],
+    [/线|绳|丝带|橡皮筋|异物/, "string"],
+    [/发热|发烧|体温/, "fever"],
+    [/萎靡|没精神|没什么精神|发蔫|没力气|嗜睡|蔫/, "lethargy"],
+    [/不吃|没胃口|食欲|拒食/, "noeat"],
+    // 注意:diarrhea(拉肚)须在 belly(肚子)之前 —— 否则「拉肚子」含「肚子」会被误判为鼓胀
+    [/拉肚|腹泻|软便|水样|拉稀/, "diarrhea"],
+    [/鼓胀|肚子|腹部|膨大|发硬/, "belly"],
+    [/呕吐|吐了|干呕/, "vomit"],
+    [/误食|中毒|舔到|吃了|吃下|啃/, "eat"],
+    [/尿/, "urine"],
+    [/挠耳|甩头|耳道|耳朵/, "ear"],
+    [/眼|流泪|眯眼|怕光/, "eye"],
+    [/口水|口臭|流涎|牙|口腔/, "mouth"],
+    [/痒|掉毛|皮屑|皮肤|脱毛|结痂/, "skin"],
+    [/瘸|跛|拖行|走路|负重|瘫腿/, "limp"],
+  ];
+  for (const [re, id] of RULES) if (re.test(label)) return id;
+  return null;
+}
 
 export function SymptomIcon({
   id,
