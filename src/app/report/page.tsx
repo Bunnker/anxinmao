@@ -1612,6 +1612,43 @@ function ReportContent() {
           >
             {info.dangerTitle ?? "为什么等不得"}
           </p>
+          {/* 中性图解:时间→危险 上升示意,一眼传达「越拖越危险」(不含具体时数=不引入无源时限,也不画病征) */}
+          <div className="mt-3">
+            <svg
+              viewBox="0 0 280 50"
+              className="w-full"
+              preserveAspectRatio="none"
+              style={{ height: "44px" }}
+              aria-hidden="true"
+            >
+              <line
+                x1="6"
+                y1="44"
+                x2="274"
+                y2="44"
+                stroke="var(--red)"
+                strokeOpacity="0.2"
+              />
+              <path
+                d="M8 43 C 110 43 150 37 198 26 C 232 17 254 11 270 7 L270 44 L8 44 Z"
+                fill="var(--red)"
+                fillOpacity="0.1"
+              />
+              <path
+                d="M8 43 C 110 43 150 37 198 26 C 232 17 254 11 270 7"
+                fill="none"
+                stroke="var(--red)"
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <circle cx="8" cy="43" r="3" fill="var(--red)" />
+              <circle cx="270" cy="7" r="3" fill="var(--red)" />
+            </svg>
+            <div className="mt-1 flex justify-between text-[10.5px] text-ink-faint">
+              <span>现在就去 · 最好处理时机</span>
+              <span>拖得越久 · 越危险</span>
+            </div>
+          </div>
           <ul className="mt-3 flex flex-col gap-3">
             {redDanger.map((d, i) => (
               <li key={i} className="flex flex-col gap-1">
