@@ -122,7 +122,11 @@ type DangerItem = { text: string; source: string };  // text=危险性解释; so
 - **批 1**:红档「为什么不能等」+ 转运急救(Part C)。TierInfo 扩 `danger[]`+`transports[]` + 渲染 +
   5–6 红线组文案。**危险性解释从官方资料提炼、标注出处**;转运急救对接急救卡。解决"红档单薄/甩锅/不靠谱"
   核心痛点。先看红档观感。(图解可选,留到效果确认后再议。)
-- **批 2**:黄档居家缓解/观察/升级(Part D)。TierInfo 扩 `mitigations[]/monitors[]` + 渲染 + 各组文案。
+- **批 2 ✅**(commit 见下):黄档加「观察要点」组成安心闭环。实现简化:黄档 `steps`(现在这样做)本就是
+  居家护理=mitigations,无需另加;新增 `YELLOW_MONITORS: Partial<Record<Group,string[]>>` 组级映射(同
+  DANGER_BY_CLAIM 模式,不改 TierInfo),渲染「在家盯这几点」插在 steps 与「为什么」之间;升级条件复用
+  现有 escalateItems。闭环=现在这样做 → 在家盯这几点 → 出现这些立刻就医。13 组从源稿观察段提炼+校验
+  (删了脱水自检无源/疼痛测试有害/把红旗当观察项的);behavior 全被否→回落 general 通用盯点。
 - **批 3**:图标基建(`triage-icons.ts` + `Icon` 组件)+ 17 症状卡图文化(Part A)。
 - **批 4**:分诊选项图标(Part B),高频流(vomit/diarrhea/noeat/breath)先行,其余迭代。
 - 每批:`npm run triage:check` + `npm run medical:validate` + `npx tsc --noEmit` 全绿 + 移动端截图。
