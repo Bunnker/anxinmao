@@ -79,7 +79,9 @@ const ROWS: Record<PetSpriteState, RowConfig> = {
   },
   waiting: { row: 6, durations: [150, 150, 150, 150, 150, 260], mode: "loop" },
   working: { row: 7, durations: [120, 120, 120, 120, 120, 220], mode: "loop" },
-  review: { row: 8, durations: [150, 150, 150, 150, 150, 280], mode: "loop" },
+  // 歪头端详:慢慢歪过头看,停在端详的表情上 —— 不反复歪个不停(进入态 / 等用户点选 /
+  // 跟进回执 / 护理提醒都用它,循环会显得忙乱;改 hold 定格成「歪头不动看着你」)。
+  review: { row: 8, durations: [220, 240, 260, 280, 320, 360], mode: "hold" },
   // 被摸享受:慢慢眯眼蹭过去,停在满足的表情上 —— 真猫节奏,每个姿势细品
   petted: {
     row: 9,
