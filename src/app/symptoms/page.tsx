@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Disclaimer } from "@/components/Disclaimer";
 import { ReviewedNotice } from "@/components/ReviewedNotice";
+import { SymptomIcon } from "@/lib/triage-icons";
 
 type Symptom = {
   id: string;
@@ -36,7 +37,7 @@ function SymptomCard({ s }: { s: Symptom }) {
   return (
     <Link
       href={`/triage?symptom=${s.id}`}
-      className="relative flex flex-col gap-1 rounded-[22px] bg-surface px-4 py-3.5 shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.985]"
+      className="relative flex items-center gap-3 rounded-[22px] bg-surface px-4 py-3.5 shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.985]"
     >
       {urgent && (
         <span
@@ -44,8 +45,17 @@ function SymptomCard({ s }: { s: Symptom }) {
           aria-hidden="true"
         />
       )}
-      <span className="text-[15px] font-medium leading-snug text-ink">{s.label}</span>
-      <span className="text-[11.5px] leading-snug text-ink-faint">{s.sub}</span>
+      <SymptomIcon
+        id={s.id}
+        size={26}
+        className={urgent ? "shrink-0 text-[var(--red)]/70" : "shrink-0 text-ink/45"}
+      />
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-[15px] font-medium leading-snug text-ink">
+          {s.label}
+        </span>
+        <span className="text-[11.5px] leading-snug text-ink-faint">{s.sub}</span>
+      </span>
     </Link>
   );
 }

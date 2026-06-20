@@ -12,6 +12,7 @@ import {
   SYMPTOM_LABELS,
 } from "@/lib/triage";
 import { createTriageHandoffId, saveTriageHandoff } from "@/lib/triage-handoff";
+import { SymptomIcon } from "@/lib/triage-icons";
 import { loadStore, saveStore } from "@/lib/storage";
 import type { CatRecord, RiskTier } from "@/types/cat";
 
@@ -165,7 +166,7 @@ function TriageSession({ symptom }: { symptom: string }) {
       {/* 症状锚点 */}
       <div className="mt-6">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[12px] text-ink-soft shadow-[var(--shadow-control)]">
-          <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
+          <SymptomIcon id={flow.symptom} size={15} className="text-accent" />
           症状 · {SYMPTOM_LABELS[flow.symptom]}
         </span>
       </div>
