@@ -161,8 +161,11 @@ const CAT_SCRATCH_FRAMES = [0, 1, 2, 3, 4, 5, 6, 7].map(
 const SCRATCH_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1];
 const SCRATCH_MS = 110;
 // 显示宽 134 → 板=78(=scratch.webp.w);相对板原点偏移(猫在板左):
-const SCRATCH_W = 134;
-const SCRATCH_DX = -52; // 帧 left = layout.scratch.left + DX
+// 134→170:旧版挠板猫显著小于常态(idle 猫显示 84×91,猫头 ~50px;@134 时合成图里猫头仅 ~40px,
+// 整只「缩小一圈」)。挠板是直立侧身瘦姿、idle 是圆胖正脸坐姿——按「同一只猫=头一样大」对齐:
+// W=170 时实测挠板猫头 ~47px ≈ idle 猫头 ~50px,体量与常态一致(preview 真机截图核过)。
+const SCRATCH_W = 170;
+const SCRATCH_DX = -70; // 帧 left = layout.scratch.left + DX(放大后补偿,保持内容水平居中在板位)
 const SCRATCH_DY = -18; // 帧 bottom = layout.scratch.bottom + DY
 // 梳毛 2 帧(codex 专门画的「疏毛动作」,非复用素材):针梳贴后背 上↔下 来回梳。
 // 梳毛在猫的实时位置发生(不是固定家具),所以盖在 roam.x/roam.y 上、藏掉实时精灵。
