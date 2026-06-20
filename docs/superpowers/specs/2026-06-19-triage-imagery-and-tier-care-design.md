@@ -127,8 +127,11 @@ type DangerItem = { text: string; source: string };  // text=危险性解释; so
   DANGER_BY_CLAIM 模式,不改 TierInfo),渲染「在家盯这几点」插在 steps 与「为什么」之间;升级条件复用
   现有 escalateItems。闭环=现在这样做 → 在家盯这几点 → 出现这些立刻就医。13 组从源稿观察段提炼+校验
   (删了脱水自检无源/疼痛测试有害/把红旗当观察项的);behavior 全被否→回落 general 通用盯点。
-- **批 3**:图标基建(`triage-icons.ts` + `Icon` 组件)+ 17 症状卡图文化(Part A)。
-- **批 4**:分诊选项图标(Part B),高频流(vomit/diarrhea/noeat/breath)先行,其余迭代。
+- **批 3 ✅**:图标基建(`src/lib/triage-icons.tsx` + `SymptomIcon`)+ 17 症状卡 + 分诊页头图文化(Part A)。
+  自绘中性线性 SVG,非家猫卡通非第三方库。(选项级图标暂按住:多数选项抽象=次数/时长/是否,塞图标是噪音。)
+- **批 4(信任杠杆,源自市场调研)**:① 绿档复用「在家盯这几点」凑成安心闭环(可以这样做 → 盯这几点 →
+  变化再评估,不补去医院);② 全档加「我够不到的地方」诚实边界声明(摸不到肚子/查不了脱水/不知既往病
+  → 拿不准直接找兽医),承认局限反增信任。
 - 每批:`npm run triage:check` + `npm run medical:validate` + `npx tsc --noEmit` 全绿 + 移动端截图。
 
 ## §6 验收

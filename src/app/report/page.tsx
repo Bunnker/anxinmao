@@ -1521,9 +1521,10 @@ function ReportContent() {
     }
     return out.slice(0, 6);
   })();
-  // 黄档「在家盯这几点」:按组取观察要点(behavior 等未列的回落 general 通用盯点)。
-  const yellowMonitors: string[] =
-    shownTier === "yellow"
+  // 「在家盯这几点」:黄档 + 绿档都展示(绿档=在家留意就好,这些正是要留意的,凑成安心闭环)。
+  // 按组取观察要点(behavior 等未列的回落 general 通用盯点)。
+  const careMonitors: string[] =
+    shownTier === "yellow" || shownTier === "green"
       ? YELLOW_MONITORS[group] ?? YELLOW_MONITORS.general ?? []
       : [];
   // 带给问诊的分诊结论摘要 —— 让 AI 知道刚才判了什么档、为什么,别从头重复问。
@@ -1672,14 +1673,14 @@ function ReportContent() {
         </div>
       </section>
 
-      {/* 黄档「在家盯这几点」—— 观察要点,组成「在家做 → 盯这几点 → 何时升级」安心闭环 */}
-      {yellowMonitors.length > 0 && (
+      {/* 「在家盯这几点」—— 观察要点(黄/绿档),组成「在家做 → 盯这几点 → 变化再评估」安心闭环 */}
+      {careMonitors.length > 0 && (
         <section className="mt-8">
           <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-faint">
             在家盯这几点
           </p>
           <ul className="mt-2.5 flex flex-col gap-2">
-            {yellowMonitors.map((m, i) => (
+            {careMonitors.map((m, i) => (
               <li
                 key={i}
                 className="flex gap-2.5 text-[13.5px] leading-snug text-ink"
@@ -1737,6 +1738,14 @@ function ReportContent() {
             </li>
           ))}
         </ul>
+      </div>
+
+      {/* 诚实边界:明说 AI 够不到的地方 —— 承认局限反而增强可信(市场调研:信任杠杆) */}
+      <div className="mt-7 rounded-[28px] bg-surface px-4 py-3.5 shadow-[var(--shadow-control)]">
+        <p className="text-[12.5px] font-semibold text-ink">我够不到的地方</p>
+        <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">
+          我只能照你的描述判断 —— 摸不到它的肚子、查不了脱水、看不到牙龈和体温,也不知道它的既往病和最近用药。所以拿不准、或它看着比你说的更糟时,直接找兽医最稳。
+        </p>
       </div>
 
       {/* 保存成图片 —— 发群里问朋友 / 给家人看;图上自带免责与域名 */}
