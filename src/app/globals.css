@@ -147,6 +147,19 @@ button[class*="bg-surface"] {
   display: none; /* WebKit:Chrome / Safari / 新 Edge */
 }
 
+/* 桌宠院子内有可拖拽图片道具。移动端浏览器会在长按图片时弹出
+   保存/查看/复制图片菜单,这里把原生图片 callout 关掉,手势交给应用拖拽。 */
+.pet-yard-no-callout,
+.pet-yard-no-callout * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.pet-yard-no-callout img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
 /* 小猫陪伴提醒(PetNudge)—— 头像轻微呼吸感,克制的"它活着"信号 */
 @keyframes pet-breath {
   0%,
