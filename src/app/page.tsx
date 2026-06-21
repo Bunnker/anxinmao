@@ -288,6 +288,23 @@ const BOX_ANIM: Record<string, { order: number[]; ms: number }> = {
 //(=猫窝大小)。在箱帧的 left/bottom 直接用 live 的 layout.box(空箱坐标)→ 拖动箱子时
 // 在箱帧/钻入帧跟着箱子走、像素级重合。
 const BOX_W = 88;
+// 桌宠所有「靠切 <img>.src 轮播的动作盖帧」URL 汇总 —— 用于挂载时一次性预加载 + 预解码。
+// 不预载的话:某动作首次播放时浏览器才逐帧懒加载(实测刚进页面 8 帧挠柱图 0 张在缓存),
+// 110ms 高频换帧期间未就绪的帧会闪/缺(用户反馈「挠到一半另一半消失」)。
+const ALL_ACTION_FRAMES: string[] = Array.from(
+  new Set<string>([
+    ...CAT_SCRATCH_FRAMES,
+    ...CAT_JUMP_FRAMES,
+    ...WAND_CARRY_BITE,
+    ...Object.values(BRUSH_SEQS).flat(),
+    ...Object.values(WAND_SEQS).flat(),
+    ...Object.values(WAND_CARRY_WALK).flat(),
+    ...Object.values(WASH_SEQS).flat(),
+    ...Object.values(BOX_VARIANTS).flat(),
+  ]),
+);
+// 预载出来的 Image 引用留在模块级,防止被 GC 回收(否则缓存可能被释放、又得重载)。
+const preloadedActionImgs: HTMLImageElement[] = [];
 type InteractKind = "nap" | "play" | "drink" | "box" | "scratch" | "rug";
 // 家具可拖拽:left/bottom 抽成 layout state(见 PetNudge 内),w/src/alt 仍是常量。
 // 院子布局存档(全局一份,院子是共享的家,不分猫)+ 默认值(=各家具初始坐标)。
@@ -676,6 +693,18 @@ function PetNudge({
     }
     setJumpFrame(0);
   }, [roam.kind]);
+
+  // 进首页时一次性预加载 + 预解码所有动作盖帧:任一动作(挠柱/梳毛/洗澡/钻箱/逗猫棒)
+  // 首次播放前帧就已进缓存并解码好,消除「首播逐帧懒加载 → 110ms 换帧闪烁/缺帧」(挠到一半消失)。
+  useEffect(() => {
+    if (preloadedActionImgs.length) return; // 全局只载一次
+    for (const src of ALL_ACTION_FRAMES) {
+      const img = new window.Image();
+      img.src = src;
+      void img.decode?.().catch(() => {});
+      preloadedActionImgs.push(img);
+    }
+  }, []);
 
   // 挠抓板:scratch 期间按 SCRATCH_ORDER 循环播 8 帧(前爪沿斜面从顶到底再抬回 = 连续上下挠)。
   // scratchFrame = 帧号(0-7),渲染处取 CAT_SCRATCH_FRAMES[scratchFrame]。
