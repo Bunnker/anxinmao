@@ -129,16 +129,18 @@ function EditCard({
   id,
   title,
   hint,
+  guideTarget,
   children,
 }: {
   id: string;
   title: string;
   hint?: string;
+  guideTarget?: string;
   children: ReactNode;
 }) {
   // 与 IGroup 同款外观(灰小标题在外 + rounded-18 白卡),保证编辑页各分组一致。
   return (
-    <div id={id} className="scroll-mt-20">
+    <div id={id} className="scroll-mt-20" data-guide-target={guideTarget}>
       <p className="mb-2.5 ml-1 text-[11.5px] tracking-[0.08em] text-ink-faint">
         {title}
       </p>
@@ -158,14 +160,16 @@ function EditCard({
 function IGroup({
   id,
   label,
+  guideTarget,
   children,
 }: {
   id?: string;
   label: string;
+  guideTarget?: string;
   children: ReactNode;
 }) {
   return (
-    <div id={id} className="scroll-mt-20">
+    <div id={id} className="scroll-mt-20" data-guide-target={guideTarget}>
       <p className="mb-2.5 ml-1 text-[11.5px] tracking-[0.08em] text-ink-faint">
         {label}
       </p>
@@ -558,7 +562,11 @@ function OnboardingForm() {
 
       {/* 编辑表单 —— iOS 设置风分组 */}
       <div className="flex flex-col gap-5">
-        <IGroup id="edit-basic" label="基本信息">
+        <IGroup
+          id="edit-basic"
+          label="基本信息"
+          guideTarget="guide-profile-edit-basic"
+        >
           <IRow label="名字">
             <input
               value={draft.name}
@@ -695,6 +703,7 @@ function OnboardingForm() {
           id="edit-health"
           title="健康记录"
           hint="之后随时能补 —— 记了之后,档案页会有体重曲线和驱虫提醒"
+          guideTarget="guide-profile-edit-health"
         >
         <Field label="到家日期">
           <input

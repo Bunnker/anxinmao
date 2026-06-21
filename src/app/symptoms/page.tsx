@@ -63,14 +63,16 @@ function SymptomCard({ s }: { s: Symptom }) {
 function Group({
   eyebrow,
   urgent,
+  guideTarget,
   children,
 }: {
   eyebrow: string;
   urgent?: boolean;
+  guideTarget?: string;
   children: ReactNode;
 }) {
   return (
-    <section className="mt-7">
+    <section className="mt-7" data-guide-target={guideTarget}>
       <p
         className={
           "mb-2.5 text-[11px] font-semibold tracking-[0.2em] " +
@@ -132,7 +134,7 @@ export default function SymptomsPage() {
         </div>
       </section>
 
-      <Group eyebrow="可能要急的" urgent>
+      <Group eyebrow="可能要急的" urgent guideTarget="guide-symptom-picker">
         {urgent.map((s) => (
           <SymptomCard key={s.id} s={s} />
         ))}

@@ -12,6 +12,7 @@
     "harness:cat-context": "node scripts/harness-cat-profile-context.mjs",
     "harness:medicine-policy": "node scripts/harness-medicine-policy.mjs",
     "harness:behavior-style": "node scripts/harness-behavior-style.mjs",
+    "harness:guide": "node scripts/harness-guide.mjs",
     "harness:avatar-prompt": "node scripts/harness-avatar-prompt.mjs",
     "harness:behavior-intent": "node scripts/harness-behavior-intent.mjs",
     "harness:behavior-memory": "node scripts/harness-behavior-memory.mjs",

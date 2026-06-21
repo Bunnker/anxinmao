@@ -11,23 +11,18 @@ import Link from "next/link";
 import {
   loadStore,
   saveStoreLocal,
-  seedTemplateStore,
   updateRecordOutcome,
 } from "@/lib/storage";
 import { pullHistory } from "@/lib/history-sync";
-import { readPersisted, writePersisted } from "@/lib/persist";
 import { recordHref } from "@/lib/profile";
 import { snoozeReminder } from "@/lib/reminder-snooze";
 import { idleNudge, type Nudge } from "@/lib/pet-nudge";
 import { Disclaimer } from "@/components/Disclaimer";
 import { Welcome } from "@/components/Welcome";
-import { Guide } from "@/components/Guide";
+import { openGuide } from "@/components/GuideHost";
 import PetSprite, { type PetSpriteState } from "@/components/PetSprite";
 import { CatFace } from "@/components/CatFace";
 import type { Cat, CatRecord, Store } from "@/types/cat";
-
-// 新手教程「看过了」标记 —— 与猫档案分开,首次进入弹一次,首页可重开。
-const GUIDE_SEEN_KEY = "catTriage:guideSeen:v1";
 
 function greeting(): string {
   const h = new Date().getHours();
@@ -594,7 +589,7 @@ function PetNudge({
   const LIFT_MS = 400; // 长按这么久才拿起
   const MOVE_CANCEL = 8; // 拿起前移动超过这个 px 就当滑动、不拿起
   function onItemPointerDown(k: ItemKey, e: ReactPointerEvent<HTMLButtonElement>) {
-    if (talk || pressRef.current) return;
+    if (pressRef.current) return;
     suppressClickRef.current = false;
     const timer = window.setTimeout(() => {
       const pr = pressRef.current;
@@ -1406,6 +1401,10 @@ function PetNudge({
       !!nudge && !showFollowAsk && !showFollowNote && talk === null;
     const showBubble =
       talk !== null || showFollowAsk || showFollowNote || showNudge;
+    const bubbleInteractive =
+      showFollowAsk ||
+      (showFollowNote && !!followupNote?.href) ||
+      (showNudge && !!nudge?.href);
     // 猫的视觉范围:容器锚在 roam.x,精灵宽 84、底中心缩放(按深度 scaleOf)
     const catScale = scaleOf(roam.y);
     const catCenterX = roam.x + 42;
@@ -1438,6 +1437,7 @@ function PetNudge({
       <>
       <section
         ref={yardRef}
+        data-guide-target="guide-home-stage"
         className="pet-yard-no-callout relative isolate min-h-[420px] flex-none overflow-hidden"
         // 桌宠舞台:禁掉移动端「长按图片」的原生菜单(保存/查看/复制/分享图片…),否则长按拖动
         // 家具/道具会被浏览器菜单抢走手势。touch-callout / user-select 继承给子元素,
@@ -1821,6 +1821,7 @@ function PetNudge({
           <div
             className={
               "pet-bubble absolute rounded-[22px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] " +
+              (bubbleInteractive ? "" : "pointer-events-none ") +
               (bubbleOnRight ? "rounded-bl-md" : "rounded-br-md")
             }
             style={{ ...bubbleStyle, bottom: bubbleBottom, zIndex: 200 }}
@@ -1933,6 +1934,7 @@ function PetNudge({
         >
           <Link
             href="/knowledge"
+            data-guide-target="guide-knowledge"
             aria-label="小知识:看着吓人但不必慌的 6 种情况,权威兽医来源"
             className="grid size-9 place-items-center rounded-full bg-white/60 text-accent shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-90"
           >
@@ -1955,6 +1957,7 @@ function PetNudge({
           <button
             type="button"
             onClick={onOpenGuide}
+            data-guide-target="guide-help"
             aria-label="使用说明"
             className="grid size-9 place-items-center rounded-full bg-white/60 font-serif text-[16px] font-bold text-accent shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-90"
           >
@@ -1964,6 +1967,7 @@ function PetNudge({
 
         {/* 道具栏迁到院子 floor(care-float):梳子/水/逗猫棒,长按拖到猫/碗上触发(拖拽逻辑不变) */}
         <div
+          data-guide-target="guide-tools"
           className="absolute left-4 z-20 flex items-end gap-2.5"
           style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 32px)" }}
           aria-label="道具工具栏"
@@ -2080,7 +2084,6 @@ export default function HomePage() {
   const [cat, setCat] = useState<Cat | null>(null);
   const [records, setRecords] = useState<CatRecord[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [showGuide, setShowGuide] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -2095,10 +2098,6 @@ export default function HomePage() {
 
     queueMicrotask(() => {
       if (cancelled) return;
-
-      // 首次进入(没看过教程)自动弹一次。读 persist(Cookie 兜底)——
-      // 微信 webview 不保 localStorage,否则教程会每次都弹。
-      if (!readPersisted(GUIDE_SEEN_KEY)) setShowGuide(true);
 
       const local = loadStore();
       if (local && local.cats.length > 0) {
@@ -2124,17 +2123,12 @@ export default function HomePage() {
     };
   }, []);
 
-  function closeGuide() {
-    setShowGuide(false);
-    // 写 persist(localStorage + Cookie),保证微信里也记得「看过了」。
-    writePersisted(GUIDE_SEEN_KEY, "1");
-  }
-
-  // 用户在欢迎页选「先用默认模版逛逛」—— seed 中性「我的猫」,首页就地重渲染。
-  function useTemplate() {
-    const store = seedTemplateStore();
-    setStore(store);
-    setCat(store.cats[0]);
+  // 新用户在欢迎页建好第一只猫 —— 就地回填状态,首页直接渲染院子(不跳转闪屏)。
+  function onWelcomeCreated(next: Store) {
+    const active =
+      next.cats.find((c) => c.id === next.activeCatId) ?? next.cats[0];
+    setStore(next);
+    setCat(active);
     setRecords([]);
   }
 
@@ -2188,20 +2182,12 @@ export default function HomePage() {
   // localStorage 仅客户端可读:首帧渲染空壳避免水合不一致。
   if (!loaded) return <main className="min-h-dvh" aria-hidden="true" />;
 
-  const guide = showGuide ? <Guide onClose={closeGuide} /> : null;
-
-  // 无档案(新用户首次进入):欢迎页,不再直接甩进表单、不再 seed 豆豆。
-  if (!cat)
-    return (
-      <>
-        {guide}
-        <Welcome onUseTemplate={useTemplate} />
-      </>
-    );
+  // 无档案(新用户首次进入):只显欢迎/建档屏。院子导览(guide)等建完猫
+  // 落进院子后再出 —— 它讲的是「摸小猫、点家具」,没猫没院子时不该压在欢迎页上。
+  if (!cat) return <Welcome onCreated={onWelcomeCreated} />;
 
   return (
     <>
-      {guide}
       <main
         className="relative mx-auto flex min-h-dvh max-w-[430px] flex-col overflow-x-hidden"
         style={{ background: "var(--paper)" }}
@@ -2209,7 +2195,7 @@ export default function HomePage() {
         {/* 全屏 stage:沉浸院子 —— 浮动问候 / 小知识💡 / 「?」/ floor 道具栏 / 搭话泡全在 PetNudge 内 */}
         <PetNudge
           cat={cat}
-          onOpenGuide={() => setShowGuide(true)}
+          onOpenGuide={openGuide}
           followupTarget={followupTarget}
           followupNote={followupNote}
           onPick={pickOutcome}
@@ -2234,6 +2220,7 @@ export default function HomePage() {
           {/* 看病 CTA —— 页面级主入口(陶土红渐变 + 内嵌 rgy + 30 秒红黄绿) */}
           <Link
             href="/symptoms"
+            data-guide-target="guide-triage"
             aria-label="看病:选症状做分诊,30 秒红黄绿就医建议"
             className="flex items-center justify-between rounded-[20px] px-5 py-4 text-white transition-transform active:scale-[0.99]"
             style={{
@@ -2295,6 +2282,7 @@ export default function HomePage() {
           {/* 问问哈基米 —— 行为问答入口 */}
           <Link
             href="/behavior"
+            data-guide-target="guide-behavior"
             aria-label={`问问${cat.name}:喂养 / 习性 / 拿不准的病情都能问`}
             className="mt-2.5 flex items-center gap-3 rounded-[18px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] transition-transform active:scale-[0.99]"
           >

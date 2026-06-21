@@ -187,7 +187,10 @@ function TriageSession({ symptom }: { symptom: string }) {
       </div>
 
       {/* 选项 */}
-      <div className="mt-6 flex flex-col gap-2.5">
+      <div
+        className="mt-6 flex flex-col gap-2.5"
+        data-guide-target="guide-triage-questions"
+      >
         {q.options.map((opt, i) => {
           const on = selected.includes(i);
           const optIcon = iconForOption(opt.label);

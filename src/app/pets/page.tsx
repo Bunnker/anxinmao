@@ -6,7 +6,6 @@ import {
   loadStore,
   saveStore,
   saveStoreLocal,
-  seedTemplateStore,
   setActiveCat as storeSetActiveCat,
 } from "@/lib/storage";
 import { pullHistory } from "@/lib/history-sync";
@@ -169,11 +168,13 @@ export default function PetsPage() {
     setCat(nextCat);
   }
 
-  function useTemplate() {
-    const s = seedTemplateStore();
-    setStore(s);
-    setCat(s.cats[0]);
-    setRecords([]);
+  // 新用户在欢迎页建好第一只猫 —— 就地回填状态(不跳转)。
+  function onWelcomeCreated(next: Store) {
+    const active =
+      next.cats.find((c) => c.id === next.activeCatId) ?? next.cats[0];
+    setStore(next);
+    setCat(active);
+    setRecords(next.records.filter((r) => r.catId === active.id));
   }
 
 
@@ -237,7 +238,7 @@ export default function PetsPage() {
   }
 
   if (!loaded) return <main className="min-h-dvh" aria-hidden="true" />;
-  if (!cat) return <Welcome onUseTemplate={useTemplate} />;
+  if (!cat) return <Welcome onCreated={onWelcomeCreated} />;
 
   const cats = store?.cats ?? [cat];
   const photos = cat.photos ?? [];
@@ -387,7 +388,10 @@ export default function PetsPage() {
         </div>
 
         {/* 四宫格 */}
-        <div className="mt-[18px] flex gap-px overflow-hidden rounded-2xl bg-white/50 shadow-[var(--shadow-control)]">
+        <div
+          className="mt-[18px] flex gap-px overflow-hidden rounded-2xl bg-white/50 shadow-[var(--shadow-control)]"
+          data-guide-target="guide-profile-summary"
+        >
           {(
             [
               [ageLabel(cat.ageMonths).split(" ")[0], ageLabel(cat.ageMonths).split(" ").slice(1).join(""), "年龄"],
@@ -518,7 +522,7 @@ export default function PetsPage() {
             管理 ›
           </Link>
         </div>
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2.5" data-guide-target="guide-profile-health">
           {(
             [
               ["vaccine", "疫苗", care.vaccine],
