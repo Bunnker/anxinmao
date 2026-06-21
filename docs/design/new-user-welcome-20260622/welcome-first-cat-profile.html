@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>新用户欢迎 - 建第一只猫档案</title>
+    <style>
+      :root {
+        --page: #f7f6f3;
+        --card: #fff;
+        --ink: #1a1a18;
+        --muted: #6b6865;
+        --line: rgba(26, 26, 24, 0.08);
+        --line-strong: rgba(26, 26, 24, 0.14);
+        --terracotta: #b05a50;
+        --terracotta-deep: #95483f;
+        --cream: #fbf2e4;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--page);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+      }
+
+      .screen {
+        position: relative;
+        width: 390px;
+        height: 844px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 50% -20%, rgba(176, 90, 80, 0.08), transparent 36%),
+          var(--page);
+      }
+
+      .hero {
+        position: relative;
+        height: 250px;
+        overflow: hidden;
+        background: #f8eddc;
+      }
+
+      .hero::after {
+        position: absolute;
+        inset: auto 0 0;
+        height: 72px;
+        background: linear-gradient(180deg, rgba(247, 246, 243, 0), var(--page));
+        content: "";
+      }
+
+      .hero img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 51% 45%;
+        display: block;
+      }
+
+      .brand {
+        position: absolute;
+        top: 18px;
+        left: 0;
+        right: 0;
+        z-index: 2;
+        text-align: center;
+        color: rgba(26, 26, 24, 0.66);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0;
+      }
+
+      .card {
+        position: relative;
+        z-index: 1;
+        margin: -28px 16px 0;
+        padding: 25px 20px 18px;
+        border: 1px solid rgba(255, 255, 255, 0.76);
+        border-radius: 28px;
+        background: var(--card);
+        box-shadow:
+          0 26px 62px rgba(54, 43, 35, 0.1),
+          0 1px 0 rgba(255, 255, 255, 0.9) inset;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: "Songti SC", "Noto Serif CJK SC", "STSong", serif;
+        font-size: 29px;
+        font-weight: 700;
+        line-height: 1.18;
+        letter-spacing: 0;
+      }
+
+      .subtitle {
+        margin: 12px 0 20px;
+        color: var(--muted);
+        font-size: 14.5px;
+        line-height: 1.58;
+        letter-spacing: 0;
+      }
+
+      .avatar-row {
+        display: grid;
+        grid-template-columns: 82px 1fr;
+        gap: 14px;
+        align-items: center;
+        margin-bottom: 19px;
+      }
+
+      .avatar {
+        position: relative;
+        width: 82px;
+        height: 82px;
+        border: 1.5px dashed rgba(176, 90, 80, 0.5);
+        border-radius: 50%;
+        background:
+          linear-gradient(180deg, rgba(255, 246, 232, 0.95), rgba(255, 255, 255, 0.95)),
+          var(--cream);
+        box-shadow: 0 10px 28px rgba(176, 90, 80, 0.1);
+      }
+
+      .camera {
+        position: absolute;
+        top: 27px;
+        left: 25px;
+        width: 31px;
+        height: 24px;
+        border: 2px solid rgba(176, 90, 80, 0.7);
+        border-radius: 8px;
+      }
+
+      .camera::before {
+        position: absolute;
+        top: -6px;
+        left: 8px;
+        width: 11px;
+        height: 6px;
+        border-radius: 5px 5px 0 0;
+        background: rgba(176, 90, 80, 0.7);
+        content: "";
+      }
+
+      .camera::after {
+        position: absolute;
+        top: 6px;
+        left: 10px;
+        width: 7px;
+        height: 7px;
+        border: 2px solid rgba(176, 90, 80, 0.7);
+        border-radius: 50%;
+        content: "";
+      }
+
+      .ai-badge {
+        position: absolute;
+        right: -3px;
+        bottom: 6px;
+        min-width: 29px;
+        height: 24px;
+        border: 2px solid #fff;
+        border-radius: 999px;
+        background: var(--terracotta);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1;
+      }
+
+      .avatar-copy {
+        display: grid;
+        gap: 4px;
+      }
+
+      .avatar-copy strong {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+
+      .avatar-copy span {
+        color: var(--muted);
+        font-size: 12.5px;
+        line-height: 1.45;
+      }
+
+      .field {
+        margin-bottom: 15px;
+      }
+
+      .field-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .required {
+        color: var(--terracotta);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .name-input {
+        height: 54px;
+        border: 1px solid rgba(176, 90, 80, 0.26);
+        border-radius: 18px;
+        background: #fffaf5;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        color: rgba(26, 26, 24, 0.38);
+        font-size: 17px;
+        font-weight: 600;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.8) inset;
+      }
+
+      .segmented {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+        height: 44px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: #f7f6f3;
+      }
+
+      .segment {
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .segment.active {
+        background: #fff;
+        color: var(--terracotta-deep);
+        box-shadow:
+          0 7px 18px rgba(54, 43, 35, 0.08),
+          0 0 0 1px rgba(176, 90, 80, 0.1);
+      }
+
+      .privacy {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-height: 43px;
+        margin: 16px 0 14px;
+        padding: 0 13px;
+        border: 1px solid rgba(176, 90, 80, 0.12);
+        border-radius: 16px;
+        background: #fff8f0;
+        color: #5c5049;
+        font-size: 13px;
+        font-weight: 650;
+      }
+
+      .lock {
+        position: relative;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: rgba(176, 90, 80, 0.12);
+        flex: 0 0 auto;
+      }
+
+      .lock::before {
+        position: absolute;
+        left: 6px;
+        top: 9px;
+        width: 8px;
+        height: 7px;
+        border-radius: 2px;
+        background: var(--terracotta-deep);
+        content: "";
+      }
+
+      .lock::after {
+        position: absolute;
+        left: 7px;
+        top: 5px;
+        width: 6px;
+        height: 7px;
+        border: 1.6px solid var(--terracotta-deep);
+        border-bottom: 0;
+        border-radius: 6px 6px 0 0;
+        content: "";
+      }
+
+      .cta {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 56px;
+        border: 0;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #bd655b, var(--terracotta));
+        color: #fff;
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: 0;
+        box-shadow:
+          0 18px 36px rgba(176, 90, 80, 0.27),
+          0 1px 0 rgba(255, 255, 255, 0.2) inset;
+      }
+
+      .footer-note {
+        max-width: 300px;
+        margin: 14px auto 0;
+        color: rgba(107, 104, 101, 0.82);
+        text-align: center;
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .home-indicator {
+        position: absolute;
+        left: 128px;
+        right: 128px;
+        bottom: 8px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(26, 26, 24, 0.18);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="screen" aria-label="新用户欢迎页设计稿">
+      <section class="hero" aria-hidden="true">
+        <div class="brand">小猫怎么了 · 安心猫</div>
+        <img src="./guardian-cat-header.png" alt="" />
+      </section>
+
+      <section class="card">
+        <h1>先给它建个小档案</h1>
+        <p class="subtitle">
+          它不对劲时，我陪你 30 秒看红黄绿就医建议 —— 建了档案，分诊更懂它
+        </p>
+
+        <div class="avatar-row">
+          <div class="avatar" aria-hidden="true">
+            <span class="camera"></span>
+            <span class="ai-badge">AI</span>
+          </div>
+          <div class="avatar-copy">
+            <strong>加张照片</strong>
+            <span>可选，也能 AI 生成卡通头像</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">
+            <span>它叫什么？</span>
+            <span class="required">唯一必填</span>
+          </div>
+          <div class="name-input">输入猫咪名字</div>
+        </div>
+
+        <div class="segmented" aria-label="性别快选">
+          <div class="segment active">雌</div>
+          <div class="segment">雄</div>
+          <div class="segment">还不确定</div>
+        </div>
+
+        <div class="privacy">
+          <span class="lock" aria-hidden="true"></span>
+          <span>不用登录 · 资料只存在你手机里</span>
+        </div>
+
+        <button class="cta" type="button">开始照顾它</button>
+
+        <p class="footer-note">
+          品种 · 生日 · 体重 · 疫苗病史 —— 进去之后随时补
+        </p>
+      </section>
+
+      <div class="home-indicator" aria-hidden="true"></div>
+    </main>
+  </body>
+</html>
