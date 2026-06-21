@@ -921,6 +921,8 @@ function PetNudge({
   // 点家具:让猫走过去互动(说话/被摸中不接单)
   function goInteract(target: InteractKind) {
     if (talk) return;
+    // 点家具=不闲聊了,去玩:收起 nudge 气泡,免得它跟着走 + 把走路态又压回坐姿歪头
+    if (nudge) setNudge(null);
     setRoam((r) => {
       const cur =
         r.kind === "stroll"
@@ -1328,14 +1330,18 @@ function PetNudge({
         : nudge && !talk
           ? nudge.sprite // 护理提醒=歪头端详 / 搭话邀请=招手
           : null;
-    const yardSprite: PetSpriteState = followFace
-      ? followFace
-      : talk
-      ? (touch?.action ?? "idle")
-      : roam.kind === "stroll"
+    // 走路(stroll)优先级最高:猫在位移就必须播走路动画,压过 followFace / talk —
+    // 否则说话泡 / 护理 nudge 在显示时点家具,猫会保持坐姿歪头被 CSS transition 滑过去
+    //(「坐着平移」)。走路态不需要表情让位,落座后再恢复 followFace。
+    const yardSprite: PetSpriteState =
+      roam.kind === "stroll"
         ? roam.facing === "right"
           ? "running-right"
           : "running-left"
+        : followFace
+        ? followFace
+        : talk
+        ? (touch?.action ?? "idle")
         : roam.kind === "groom" || roam.kind === "rug"
           ? "groom"
           : roam.kind === "scratch"
