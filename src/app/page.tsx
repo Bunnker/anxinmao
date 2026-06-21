@@ -1089,6 +1089,10 @@ function PetNudge({
       if (!pick) return;
       nudgeShownRef.current = true;
       setRoam((r) => {
+        // 别打断正在进行的动作(挠柱/玩球/喝水/钻箱/洗澡…):硬切 sit 会让动作合成图
+        // 突然消失(用户反馈「挠的时候另一半消失」)。只在闲态(sit/stroll)才停下坐好,
+        // 动作中保持原样、等其自然结束;气泡照常冒(飘在猫旁,不打断)。
+        if (r.kind !== "sit" && r.kind !== "stroll") return r;
         const cur =
           r.kind === "stroll"
             ? readCatXY({ x: r.x, y: r.y })
