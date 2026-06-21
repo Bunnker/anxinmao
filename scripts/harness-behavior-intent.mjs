@@ -154,6 +154,60 @@ async function main() {
   }
 
   {
+    const data = await dryRun("疫苗补打", "猫三联上次打完快一年了,加强针和狂犬要怎么安排?");
+    expectIntent(data, "daily_care", "疫苗补打");
+    expectNoMedicalRecall(data, "疫苗补打");
+    assert((data.careKnowledgePreview ?? "").includes("care-vaccine-schedule-reactions"), "疫苗补打:缺少疫苗资料", data.careKnowledgePreview);
+    assert((data.careKnowledgePreview ?? "").includes("风险评估"), "疫苗补打:资料没有风险评估边界", data.careKnowledgePreview);
+    console.log("  ✓ 疫苗补打:daily_care + care-vaccine-schedule-reactions");
+  }
+
+  {
+    const data = await dryRun("抓沙发", "猫一直抓沙发和抓墙,抓板不怎么用怎么办?");
+    expectIntent(data, "daily_care", "抓沙发");
+    expectNoMedicalRecall(data, "抓沙发");
+    assert((data.careKnowledgePreview ?? "").includes("care-scratching-furniture"), "抓沙发:缺少抓家具资料", data.careKnowledgePreview);
+    assert((data.careKnowledgePreview ?? "").includes("正常需求"), "抓沙发:资料没有抓挠正常需求边界", data.careKnowledgePreview);
+    console.log("  ✓ 抓沙发:daily_care + care-scratching-furniture");
+  }
+
+  {
+    const data = await dryRun("多猫哈气", "新猫和原住民一见面就哈气追咬,怎么慢慢介绍?");
+    expectIntent(data, "daily_care", "多猫哈气");
+    expectNoMedicalRecall(data, "多猫哈气");
+    assert((data.careKnowledgePreview ?? "").includes("care-intercat-introduction-tension"), "多猫哈气:缺少多猫关系资料", data.careKnowledgePreview);
+    assert((data.careKnowledgePreview ?? "").includes("安全房"), "多猫哈气:资料没有分步引入建议", data.careKnowledgePreview);
+    console.log("  ✓ 多猫哈气:daily_care + care-intercat-introduction-tension");
+  }
+
+  {
+    const data = await dryRun("慢病复查", "老年猫肾病和高血压,平时在家要记录哪些东西方便复查?");
+    expectIntent(data, "daily_care", "慢病复查");
+    expectNoMedicalRecall(data, "慢病复查");
+    assert((data.careKnowledgePreview ?? "").includes("care-chronic-kidney-endocrine-monitoring"), "慢病复查:缺少慢病专项资料", data.careKnowledgePreview);
+    assert((data.careKnowledgePreview ?? "").includes("复诊准备"), "慢病复查:资料没有复诊准备边界", data.careKnowledgePreview);
+    console.log("  ✓ 慢病复查:daily_care + care-chronic-kidney-endocrine-monitoring");
+  }
+
+  {
+    const data = await dryRun("关节行动", "老猫最近跳不上沙发,猫砂盆也不太愿意进去,家里怎么调整?");
+    expectIntent(data, "daily_care", "关节行动");
+    expectNoMedicalRecall(data, "关节行动");
+    assert((data.careKnowledgePreview ?? "").includes("care-mobility-arthritis-home"), "关节行动:缺少行动能力资料", data.careKnowledgePreview);
+    assert((data.careKnowledgePreview ?? "").includes("低入口"), "关节行动:资料没有环境改造建议", data.careKnowledgePreview);
+    console.log("  ✓ 关节行动:daily_care + care-mobility-arthritis-home");
+  }
+
+  {
+    const data = await dryRun("新生奶猫", "捡到一只新生奶猫,不会吃奶,手养需要注意什么?");
+    expectIntent(data, "daily_care", "新生奶猫");
+    expectNoMedicalRecall(data, "新生奶猫");
+    assert((data.careKnowledgePreview ?? "").includes("care-reproduction-neonatal-kitten"), "新生奶猫:缺少繁殖/新生幼猫资料", data.careKnowledgePreview);
+    assert((data.careKnowledgePreview ?? "").includes("体重"), "新生奶猫:资料没有体重记录边界", data.careKnowledgePreview);
+    console.log("  ✓ 新生奶猫:daily_care + care-reproduction-neonatal-kitten");
+  }
+
+  {
     const data = await dryRun("打喷嚏", "猫一直打喷嚏,眼屎有点多,要紧吗?");
     expectIntent(data, "medical_general", "打喷嚏");
     const local = tool(data, "local_medical_recall");
@@ -161,6 +215,17 @@ async function main() {
     assert((data.agentRetrievalPreview ?? "").includes("cat-uri"), "打喷嚏:应命中 URI 医学资料", data.agentRetrievalPreview);
     expectNoWebSearch(data, "打喷嚏");
     console.log("  ✓ 打喷嚏:medical_general + 本地医学资料");
+  }
+
+  {
+    const data = await dryRun("不爱吃饭去医院", "猫不太爱吃饭,要不要去医院?");
+    expectIntent(data, "medical_general", "不爱吃饭去医院");
+    const local = tool(data, "local_medical_recall");
+    assert(local?.status === "used", "不爱吃饭去医院:应走医学本地召回", JSON.stringify(local, null, 2));
+    assert((data.agentRetrievalPreview ?? "").includes("cat-anorexia"), "不爱吃饭去医院:应命中食欲下降医学资料", data.agentRetrievalPreview);
+    assert(data.posterAttachmentPreview?.id === "cat-anorexia", "不爱吃饭去医院:图解应命中 cat-anorexia", JSON.stringify(data.posterAttachmentPreview, null, 2));
+    assert(!(data.careCardIds ?? []).includes("care-carrier-vet-visit"), "不爱吃饭去医院:不应被去医院带偏到猫包训练", JSON.stringify(data.careCardIds));
+    console.log("  ✓ 不爱吃饭去医院:medical_general + cat-anorexia poster");
   }
 
   {
@@ -187,6 +252,22 @@ async function main() {
     expectNoWebSearch(data, "张口喘");
     assert((data.intentPreview?.instruction ?? "").includes("立刻"), "张口喘:急症意图缺少急停指令", JSON.stringify(data.intentPreview, null, 2));
     console.log("  ✓ 张口喘:emergency + 不联网");
+  }
+
+  {
+    const data = await dryRun("车撞外伤", "猫被车撞了,现在站不起来还有出血,我可以先包扎观察吗?");
+    expectIntent(data, "emergency", "车撞外伤");
+    expectNoWebSearch(data, "车撞外伤");
+    assert((data.intentPreview?.instruction ?? "").includes("立刻"), "车撞外伤:急症意图缺少急停指令", JSON.stringify(data.intentPreview, null, 2));
+    console.log("  ✓ 车撞外伤:emergency + 不联网");
+  }
+
+  {
+    const data = await dryRun("抽搐发作", "猫刚刚抽搐三分钟,现在有点叫不醒,怎么办?");
+    expectIntent(data, "emergency", "抽搐发作");
+    expectNoWebSearch(data, "抽搐发作");
+    assert((data.intentPreview?.instruction ?? "").includes("立刻"), "抽搐发作:急症意图缺少急停指令", JSON.stringify(data.intentPreview, null, 2));
+    console.log("  ✓ 抽搐发作:emergency + 不联网");
   }
 
   console.log("\n✅ 通过 —— 行为问答已按意图分流到日常资料 / 医学资料 / 产品边界 / 急症急停。");

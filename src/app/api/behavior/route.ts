@@ -221,7 +221,7 @@ export async function POST(req: Request): Promise<Response> {
   // 把上游分诊判级作为强信号注入,防止 LLM 自主软化为更轻档(I-001 修复)
   const upstreamTier = parseRiskTier(nestedMedical.tier ?? b.tier);
   const posterAttachment = selectKnowledgePosterAttachment({
-    medicalCardIds: medical.cardIds,
+    medicalCardIds: [...medical.cardIds, ...agent.medicalCardIds],
     careCardIds: agent.careCardIds,
     tier: upstreamTier,
     intent: intent.intent,
@@ -313,6 +313,7 @@ export async function POST(req: Request): Promise<Response> {
       memoryRecallPreview: memoryRecall ?? "",
       careKnowledgePreview: agent.carePrompt.slice(0, 4000),
       careCardIds: agent.careCardIds,
+      medicalCardIds: [...medical.cardIds, ...agent.medicalCardIds],
       posterAttachmentPreview: posterAttachment,
       evidence: {
         claimIds: medical.claimIds,

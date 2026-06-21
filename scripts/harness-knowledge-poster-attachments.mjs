@@ -176,6 +176,23 @@ function assertSelectorBehavior() {
     JSON.stringify(local),
   );
 
+  const fallbackPoster = selectorExports.selectKnowledgePosterFromItems(
+    [
+      {
+        id: "care-carrier-vet-visit",
+        title: "猫包/去医院训练",
+        image: "/knowledge-posters/generated-style/care-carrier-vet-visit-xhs-style-v1.png",
+        generationMode: "local-scrapbook-fallback",
+      },
+    ],
+    { intent: "daily_care", careCardIds: ["care-carrier-vet-visit"] },
+  );
+  assert(
+    fallbackPoster === undefined,
+    "pure selector should not return local fallback poster art",
+    JSON.stringify(fallbackPoster),
+  );
+
   const expectedItems = [
     {
       id: "cat-emergency-red-flags",
@@ -191,6 +208,11 @@ function assertSelectorBehavior() {
       id: "cat-vomiting",
       title: "猫呕吐",
       image: "/knowledge-posters/generated-style/cat-vomiting-xhs-style-v1.png",
+    },
+    {
+      id: "cat-anorexia",
+      title: "猫不吃/食欲下降",
+      image: "/knowledge-posters/generated-style/cat-anorexia-xhs-style-v1.png",
     },
     {
       id: "care-nail-trimming",
@@ -223,6 +245,22 @@ function assertSelectorBehavior() {
     JSON.stringify(yellow),
   );
 
+  const medicalGeneral = selectorExports.selectKnowledgePosterFromItems(
+    expectedItems,
+    {
+      intent: "medical_general",
+      medicalCardIds: ["cat-anorexia", "cat-vomiting"],
+      careCardIds: ["care-nail-trimming"],
+    },
+  );
+  assert(
+    medicalGeneral?.id === "cat-anorexia" &&
+      medicalGeneral.displayMode === "preview" &&
+      medicalGeneral.riskTone === "yellow",
+    "pure selector should prefer medical recall posters for medical_general questions",
+    JSON.stringify(medicalGeneral),
+  );
+
   const care = selectorExports.selectKnowledgePosterFromItems(expectedItems, {
     intent: "daily_care",
     careCardIds: ["care-nail-trimming"],
@@ -247,8 +285,13 @@ function main() {
   for (const item of manifest.items) {
     assert(item.id && item.title && item.image, "manifest item missing id/title/image", JSON.stringify(item));
     assert(fs.existsSync(path.join(ROOT, "public", item.image)), `poster file missing for ${item.id}`, item.image);
+    assert(
+      item.generationMode === "ai-imagegen",
+      `poster manifest should not expose fallback art for ${item.id}`,
+      JSON.stringify({ id: item.id, generationMode: item.generationMode }),
+    );
   }
-  console.log("  ✓ manifest has 43 bound poster images");
+  console.log("  ✓ manifest has 43 bound ai-imagegen poster images");
 
   const typeSource = read("src/types/knowledge-poster.ts");
   assertIncludes(typeSource, 'KnowledgePosterDisplayMode = "inline" | "preview" | "collapsed"', "shared poster type");

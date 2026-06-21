@@ -18,6 +18,7 @@ const MANIFEST_PATH = path.join(
 const PUBLIC_DIR = path.join(process.cwd(), "public");
 const HEADER_LIMIT = 2048;
 const EMERGENCY_CARD_ID = "cat-emergency-red-flags";
+const PRODUCTION_GENERATION_MODE = "ai-imagegen";
 
 const RED_PRIORITY = [
   "cat-emergency-red-flags",
@@ -37,6 +38,7 @@ export type KnowledgePosterManifestItem = {
   kind?: string;
   priority?: number;
   sourceDocs?: string[];
+  generationMode?: string;
 };
 
 type IntentLike =
@@ -79,6 +81,7 @@ function normalizePosterItem(raw: unknown): KnowledgePosterManifestItem | null {
     kind?: unknown;
     priority?: unknown;
     sourceDocs?: unknown;
+    generationMode?: unknown;
   };
   if (
     typeof value.id !== "string" ||
@@ -101,7 +104,16 @@ function normalizePosterItem(raw: unknown): KnowledgePosterManifestItem | null {
     kind: typeof value.kind === "string" ? value.kind : undefined,
     priority: typeof value.priority === "number" ? value.priority : undefined,
     sourceDocs,
+    generationMode:
+      typeof value.generationMode === "string" ? value.generationMode : undefined,
   };
+}
+
+function isDisplayablePosterItem(item: KnowledgePosterManifestItem): boolean {
+  return (
+    item.generationMode === undefined ||
+    item.generationMode === PRODUCTION_GENERATION_MODE
+  );
 }
 
 function safePublicFilePath(publicPath: string): string | null {
@@ -168,6 +180,7 @@ function loadPosterManifest(): KnowledgePosterManifestItem[] {
     manifestCache = items
       .map(normalizePosterItem)
       .filter((item): item is KnowledgePosterManifestItem => Boolean(item))
+      .filter(isDisplayablePosterItem)
       .filter((item) => imageExistsUnderPublic(item.image));
   } catch {
     manifestCache = [];
@@ -230,6 +243,10 @@ function selectNonRedMedicalCandidate(
   return candidates.find((candidate) => candidate.item.id !== EMERGENCY_CARD_ID);
 }
 
+function isMedicalPosterIntent(intent: string | undefined): boolean {
+  return intent === "medical_general" || intent === "triage_followup";
+}
+
 function attachmentFromItem(
   item: KnowledgePosterManifestItem,
   displayMode: KnowledgePosterDisplayMode,
@@ -256,7 +273,8 @@ export function selectKnowledgePosterFromItems(
 ): KnowledgePosterAttachment | undefined {
   const normalizedItems = items
     .map(normalizePosterItem)
-    .filter((item): item is KnowledgePosterManifestItem => Boolean(item));
+    .filter((item): item is KnowledgePosterManifestItem => Boolean(item))
+    .filter(isDisplayablePosterItem);
   const itemsById = new Map(normalizedItems.map((item) => [item.id, item]));
   const medicalCardIds = collectIds(
     input.medicalCardIds,
@@ -288,6 +306,14 @@ export function selectKnowledgePosterFromItems(
       selectNonRedMedicalCandidate(medicalCandidates) ?? careCandidates[0];
     return candidate
       ? attachmentFromItem(candidate.item, "collapsed", "green", "green_tier")
+      : undefined;
+  }
+
+  if (isMedicalPosterIntent(intent)) {
+    const candidate =
+      selectNonRedMedicalCandidate(medicalCandidates) ?? medicalCandidates[0];
+    return candidate
+      ? attachmentFromItem(candidate.item, "preview", "yellow", "medical_recall")
       : undefined;
   }
 

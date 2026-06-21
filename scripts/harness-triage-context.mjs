@@ -11,7 +11,7 @@ const BASE = process.env.HARNESS_BASE || "http://localhost:3000";
 
 const CASES = [
   {
-    name: "绿档其它情况:低风险精神差上下文",
+    name: "绿档其它情况:通用分诊 + 低风险精神差上下文",
     body: {
       symptom: "other",
       tier: "green",
@@ -19,12 +19,12 @@ const CASES = [
       question: "它刚刚有点蔫,但现在精神还可以。",
       dryRun: true,
     },
-    expectCards: ["cat-emergency-red-flags", "cat-lethargy"],
+    expectCards: ["cat-emergency-red-flags", "cat-general-triage", "cat-lethargy"],
     expectClaims: ["leth_001", "leth_013"],
     expectPrompt: ["current_tier: green", "cat-lethargy", "leth_001"],
   },
   {
-    name: "红档呼吸异常:通用急症 + 精神差",
+    name: "红档呼吸异常:通用急症 + 通用分诊 + 精神差",
     body: {
       symptom: "other",
       tier: "red",
@@ -32,9 +32,61 @@ const CASES = [
       question: "它刚才张口喘,呼吸很费力。",
       dryRun: true,
     },
-    expectCards: ["cat-emergency-red-flags", "cat-lethargy"],
+    expectCards: ["cat-emergency-red-flags", "cat-general-triage", "cat-lethargy"],
     expectClaims: ["leth_007", "emg_001"],
     expectPrompt: ["current_tier: red", "cat-emergency-red-flags", "emg_001"],
+  },
+  {
+    name: "高温风险:通用入口 + 高温卡",
+    body: {
+      symptom: "other",
+      tier: "red",
+      claimIds: ["heat_001", "emg_006"],
+      question: "它在阳台晒了很久,现在站不稳。",
+      dryRun: true,
+    },
+    expectCards: ["cat-emergency-red-flags", "cat-general-triage", "cat-heatstroke-weather-hazard"],
+    expectClaims: ["heat_001", "emg_006"],
+    expectPrompt: ["cat-heatstroke-weather-hazard", "heat_001", "current_tier: red"],
+  },
+  {
+    name: "便秘排便用力:通用入口 + 便秘卡",
+    body: {
+      symptom: "other",
+      tier: "yellow",
+      claimIds: ["con_001", "uo_001"],
+      question: "它一直蹲猫砂盆,不知道是拉不出还是尿不出。",
+      dryRun: true,
+    },
+    expectCards: ["cat-emergency-red-flags", "cat-general-triage", "cat-constipation-straining", "cat-urethral-obstruction"],
+    expectClaims: ["con_001", "uo_001"],
+    expectPrompt: ["cat-constipation-straining", "con_001"],
+  },
+  {
+    name: "创伤急救:通用入口 + 创伤卡",
+    body: {
+      symptom: "other",
+      tier: "red",
+      claimIds: ["tra_003", "emg_005"],
+      question: "猫坠楼后站不起来。",
+      dryRun: true,
+    },
+    expectCards: ["cat-emergency-red-flags", "cat-general-triage", "cat-trauma-first-aid"],
+    expectClaims: ["tra_003", "emg_005"],
+    expectPrompt: ["cat-trauma-first-aid", "tra_003", "current_tier: red"],
+  },
+  {
+    name: "抽搐神经急症:通用入口 + 神经卡",
+    body: {
+      symptom: "other",
+      tier: "red",
+      claimIds: ["neu_001", "emg_005"],
+      question: "它抽搐超过 5 分钟了。",
+      dryRun: true,
+    },
+    expectCards: ["cat-emergency-red-flags", "cat-general-triage", "cat-seizure-neurologic-emergency"],
+    expectClaims: ["neu_001", "emg_005"],
+    expectPrompt: ["cat-seizure-neurologic-emergency", "neu_001", "current_tier: red"],
   },
   {
     name: "误食百合:中毒卡 + 急症卡",

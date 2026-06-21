@@ -1,0 +1,1318 @@
+{
+  "version": "2026-06-17-detailed-mobile-svg",
+  "format": "svg",
+  "width": 1080,
+  "height": 1920,
+  "generatedAt": "2026-06-17T06:34:34.640Z",
+  "count": 43,
+  "posters": [
+    {
+      "id": "care-nail-trimming",
+      "kind": "care",
+      "priority": 1,
+      "title": "剪指甲训练",
+      "subtitle": "先脱敏,只剪透明尖尖",
+      "asset": "/knowledge-posters/detailed/care-nail-trimming.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-nail-trimming.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-nail-trimming.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "icatcare",
+          "name": "International Cat Care",
+          "url": "https://icatcare.org/advice/"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        },
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-nail-trimming.care-card.md"
+      ]
+    },
+    {
+      "id": "cat-dyspnea",
+      "kind": "medical",
+      "priority": 1,
+      "title": "呼吸异常",
+      "subtitle": "猫张口喘不是普通累了",
+      "asset": "/knowledge-posters/detailed/cat-dyspnea.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-dyspnea.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-dyspnea.ai-card.md",
+        "docs/medical/source/cat-dyspnea.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        },
+        {
+          "id": "avma",
+          "name": "AVMA Pet First Aid",
+          "url": "https://www.avma.org/resources-tools/pet-owners/emergencycare/first-aid-tips-pet-owners"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-dyspnea.ai-card.md",
+        "docs/medical/source/cat-dyspnea.source.md"
+      ]
+    },
+    {
+      "id": "cat-emergency-red-flags",
+      "kind": "medical",
+      "priority": 1,
+      "title": "通用急诊红旗",
+      "subtitle": "命中这些信号,不要继续在家观察",
+      "asset": "/knowledge-posters/detailed/cat-emergency-red-flags.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-emergency-red-flags.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-emergency-red-flags.ai-card.md",
+        "docs/medical/source/cat-emergency-red-flags.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "avma",
+          "name": "AVMA Pet First Aid",
+          "url": "https://www.avma.org/resources-tools/pet-owners/emergencycare/first-aid-tips-pet-owners"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-emergency-red-flags.ai-card.md",
+        "docs/medical/source/cat-emergency-red-flags.source.md"
+      ]
+    },
+    {
+      "id": "cat-general-triage",
+      "kind": "medical",
+      "priority": 1,
+      "title": "通用分诊入口",
+      "subtitle": "先排急症,再转具体症状或日常护理",
+      "asset": "/knowledge-posters/detailed/cat-general-triage.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-general-triage.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-general-triage.ai-card.md",
+        "docs/medical/source/cat-general-triage.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        },
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "aahaVax",
+          "name": "AAHA/AAFP Feline Vaccination Guidelines",
+          "url": "https://www.aaha.org/resources/2020-aahaaafp-feline-vaccination-guidelines/"
+        },
+        {
+          "id": "wsava",
+          "name": "WSAVA Global Guidelines",
+          "url": "https://wsava.org/global-guidelines/"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-general-triage.ai-card.md",
+        "docs/medical/source/cat-general-triage.source.md"
+      ]
+    },
+    {
+      "id": "cat-seizure-neurologic-emergency",
+      "kind": "medical",
+      "priority": 1,
+      "title": "抽搐/神经急症",
+      "subtitle": "保护安全,记录时间,别伸手进嘴",
+      "asset": "/knowledge-posters/detailed/cat-seizure-neurologic-emergency.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-seizure-neurologic-emergency.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-seizure-neurologic-emergency.ai-card.md",
+        "docs/medical/source/cat-seizure-neurologic-emergency.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-seizure-neurologic-emergency.ai-card.md",
+        "docs/medical/source/cat-seizure-neurologic-emergency.source.md"
+      ]
+    },
+    {
+      "id": "cat-toxin-ingestion",
+      "kind": "medical",
+      "priority": 1,
+      "title": "误食/中毒风险",
+      "subtitle": "先收集信息,不要自行处理",
+      "asset": "/knowledge-posters/detailed/cat-toxin-ingestion.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-toxin-ingestion.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-toxin-ingestion.ai-card.md",
+        "docs/medical/source/cat-toxin-ingestion.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "aspca",
+          "name": "ASPCA Animal Poison Control",
+          "url": "https://www.aspca.org/pet-care/animal-poison-control"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        },
+        {
+          "id": "fda",
+          "name": "FDA animal health literacy",
+          "url": "https://www.fda.gov/animal-veterinary/animal-health-literacy"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-toxin-ingestion.ai-card.md",
+        "docs/medical/source/cat-toxin-ingestion.source.md"
+      ]
+    },
+    {
+      "id": "cat-trauma-first-aid",
+      "kind": "medical",
+      "priority": 1,
+      "title": "创伤急救与转运",
+      "subtitle": "止血、少搬动、尽快联系医院",
+      "asset": "/knowledge-posters/detailed/cat-trauma-first-aid.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-trauma-first-aid.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-trauma-first-aid.ai-card.md",
+        "docs/medical/source/cat-trauma-first-aid.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "avma",
+          "name": "AVMA Pet First Aid",
+          "url": "https://www.avma.org/resources-tools/pet-owners/emergencycare/first-aid-tips-pet-owners"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-trauma-first-aid.ai-card.md",
+        "docs/medical/source/cat-trauma-first-aid.source.md"
+      ]
+    },
+    {
+      "id": "cat-urethral-obstruction",
+      "kind": "medical",
+      "priority": 1,
+      "title": "尿不出硬急症",
+      "subtitle": "频繁蹲砂但没尿,优先排尿闭",
+      "asset": "/knowledge-posters/detailed/cat-urethral-obstruction.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-urethral-obstruction.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-urethral-obstruction.ai-card.md",
+        "docs/medical/source/cat-urethral-obstruction.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "icatcare",
+          "name": "International Cat Care",
+          "url": "https://icatcare.org/advice/"
+        },
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-urethral-obstruction.ai-card.md",
+        "docs/medical/source/cat-urethral-obstruction.source.md"
+      ]
+    },
+    {
+      "id": "cat-anorexia",
+      "kind": "medical",
+      "priority": 2,
+      "title": "猫不吃/食欲下降",
+      "subtitle": "看时长、年龄和是否想吃但吃不了",
+      "asset": "/knowledge-posters/detailed/cat-anorexia.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-anorexia.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-anorexia.ai-card.md",
+        "docs/medical/source/cat-anorexia.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        },
+        {
+          "id": "icatcare",
+          "name": "International Cat Care",
+          "url": "https://icatcare.org/advice/"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-anorexia.ai-card.md",
+        "docs/medical/source/cat-anorexia.source.md"
+      ]
+    },
+    {
+      "id": "cat-bleeding",
+      "kind": "medical",
+      "priority": 2,
+      "title": "看到血/出血",
+      "subtitle": "先止血,再判断来源和休克",
+      "asset": "/knowledge-posters/detailed/cat-bleeding.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-bleeding.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-bleeding.ai-card.md",
+        "docs/medical/source/cat-bleeding.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-bleeding.ai-card.md",
+        "docs/medical/source/cat-bleeding.source.md"
+      ]
+    },
+    {
+      "id": "cat-constipation-straining",
+      "kind": "medical",
+      "priority": 2,
+      "title": "便秘/排便用力",
+      "subtitle": "先分清尿不出还是拉不出",
+      "asset": "/knowledge-posters/detailed/cat-constipation-straining.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-constipation-straining.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-constipation-straining.ai-card.md",
+        "docs/medical/source/cat-constipation-straining.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-constipation-straining.ai-card.md",
+        "docs/medical/source/cat-constipation-straining.source.md"
+      ]
+    },
+    {
+      "id": "cat-diarrhea",
+      "kind": "medical",
+      "priority": 2,
+      "title": "猫腹泻",
+      "subtitle": "便便形态 + 精神食欲一起看",
+      "asset": "/knowledge-posters/detailed/cat-diarrhea.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-diarrhea.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-diarrhea.ai-card.md",
+        "docs/medical/source/cat-diarrhea.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "icatcare",
+          "name": "International Cat Care",
+          "url": "https://icatcare.org/advice/"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-diarrhea.ai-card.md",
+        "docs/medical/source/cat-diarrhea.source.md"
+      ]
+    },
+    {
+      "id": "cat-ear-problem",
+      "kind": "medical",
+      "priority": 2,
+      "title": "耳朵问题",
+      "subtitle": "先排头歪走不稳,再谈清洁",
+      "asset": "/knowledge-posters/detailed/cat-ear-problem.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-ear-problem.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-ear-problem.ai-card.md",
+        "docs/medical/source/cat-ear-problem.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-ear-problem.ai-card.md",
+        "docs/medical/source/cat-ear-problem.source.md"
+      ]
+    },
+    {
+      "id": "cat-eye-problem",
+      "kind": "medical",
+      "priority": 2,
+      "title": "眼睛问题",
+      "subtitle": "疼痛、外伤、浑浊优先当天处理",
+      "asset": "/knowledge-posters/detailed/cat-eye-problem.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-eye-problem.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-eye-problem.ai-card.md",
+        "docs/medical/source/cat-eye-problem.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-eye-problem.ai-card.md",
+        "docs/medical/source/cat-eye-problem.source.md"
+      ]
+    },
+    {
+      "id": "cat-heatstroke-weather-hazard",
+      "kind": "medical",
+      "priority": 2,
+      "title": "高温/中暑风险",
+      "subtitle": "先降温通风,同时联系医院",
+      "asset": "/knowledge-posters/detailed/cat-heatstroke-weather-hazard.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-heatstroke-weather-hazard.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-heatstroke-weather-hazard.ai-card.md",
+        "docs/medical/source/cat-heatstroke-weather-hazard.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-heatstroke-weather-hazard.ai-card.md",
+        "docs/medical/source/cat-heatstroke-weather-hazard.source.md"
+      ]
+    },
+    {
+      "id": "cat-lethargy",
+      "kind": "medical",
+      "priority": 2,
+      "title": "精神差/嗜睡",
+      "subtitle": "系统性风险入口,先排硬红旗",
+      "asset": "/knowledge-posters/detailed/cat-lethargy.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-lethargy.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-lethargy.ai-card.md",
+        "docs/medical/source/cat-lethargy.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        },
+        {
+          "id": "icatcare",
+          "name": "International Cat Care",
+          "url": "https://icatcare.org/advice/"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-lethargy.ai-card.md",
+        "docs/medical/source/cat-lethargy.source.md"
+      ]
+    },
+    {
+      "id": "cat-uri",
+      "kind": "medical",
+      "priority": 2,
+      "title": "打喷嚏/流鼻涕",
+      "subtitle": "轻症观察,呼吸和不吃要升级",
+      "asset": "/knowledge-posters/detailed/cat-uri.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-uri.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-uri.ai-card.md",
+        "docs/medical/source/cat-uri.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-uri.ai-card.md",
+        "docs/medical/source/cat-uri.source.md"
+      ]
+    },
+    {
+      "id": "cat-vomiting",
+      "kind": "medical",
+      "priority": 2,
+      "title": "猫呕吐",
+      "subtitle": "频率和伴随症状决定急不急",
+      "asset": "/knowledge-posters/detailed/cat-vomiting.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-vomiting.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-vomiting.ai-card.md",
+        "docs/medical/source/cat-vomiting.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-vomiting.ai-card.md",
+        "docs/medical/source/cat-vomiting.source.md"
+      ]
+    },
+    {
+      "id": "care-kitten-feeding",
+      "kind": "care",
+      "priority": 3,
+      "title": "幼猫喂养频率",
+      "subtitle": "按年龄阶段,看体重和便便",
+      "asset": "/knowledge-posters/detailed/care-kitten-feeding.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-kitten-feeding.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-kitten-feeding.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "icatcare",
+          "name": "International Cat Care",
+          "url": "https://icatcare.org/advice/"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        },
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-kitten-feeding.care-card.md"
+      ]
+    },
+    {
+      "id": "care-nutrition-weight-bcs",
+      "kind": "care",
+      "priority": 3,
+      "title": "营养/体重/体况",
+      "subtitle": "别只问几克,要看体况和热量",
+      "asset": "/knowledge-posters/detailed/care-nutrition-weight-bcs.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-nutrition-weight-bcs.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-nutrition-weight-bcs.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "wsava",
+          "name": "WSAVA Global Guidelines",
+          "url": "https://wsava.org/global-guidelines/"
+        },
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-nutrition-weight-bcs.care-card.md"
+      ]
+    },
+    {
+      "id": "care-parasite-prevention-zoonosis",
+      "kind": "care",
+      "priority": 3,
+      "title": "驱虫/寄生虫预防",
+      "subtitle": "按猫和家庭风险,不要自行混药",
+      "asset": "/knowledge-posters/detailed/care-parasite-prevention-zoonosis.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-parasite-prevention-zoonosis.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-parasite-prevention-zoonosis.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "capc",
+          "name": "CAPC Parasite Guidelines",
+          "url": "https://capcvet.org/guidelines/"
+        },
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-parasite-prevention-zoonosis.care-card.md"
+      ]
+    },
+    {
+      "id": "care-reproduction-neonatal-kitten",
+      "kind": "care",
+      "priority": 3,
+      "title": "怀孕分娩/新生幼猫",
+      "subtitle": "繁殖和手养奶猫要保守处理",
+      "asset": "/knowledge-posters/detailed/care-reproduction-neonatal-kitten.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-reproduction-neonatal-kitten.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-reproduction-neonatal-kitten.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        },
+        {
+          "id": "icatcare",
+          "name": "International Cat Care",
+          "url": "https://icatcare.org/advice/"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-reproduction-neonatal-kitten.care-card.md"
+      ]
+    },
+    {
+      "id": "care-toothbrushing-training",
+      "kind": "care",
+      "priority": 3,
+      "title": "刷牙训练",
+      "subtitle": "健康口腔训练,不是疼痛时硬刷",
+      "asset": "/knowledge-posters/detailed/care-toothbrushing-training.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-toothbrushing-training.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-toothbrushing-training.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        },
+        {
+          "id": "vohc",
+          "name": "Veterinary Oral Health Council",
+          "url": "https://vohc.org/accepted-products/"
+        },
+        {
+          "id": "wsava",
+          "name": "WSAVA Global Guidelines",
+          "url": "https://wsava.org/global-guidelines/"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-toothbrushing-training.care-card.md"
+      ]
+    },
+    {
+      "id": "care-vaccine-schedule-reactions",
+      "kind": "care",
+      "priority": 3,
+      "title": "疫苗与疫苗后观察",
+      "subtitle": "不是固定答案,按风险评估",
+      "asset": "/knowledge-posters/detailed/care-vaccine-schedule-reactions.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-vaccine-schedule-reactions.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-vaccine-schedule-reactions.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aahaVax",
+          "name": "AAHA/AAFP Feline Vaccination Guidelines",
+          "url": "https://www.aaha.org/resources/2020-aahaaafp-feline-vaccination-guidelines/"
+        },
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-vaccine-schedule-reactions.care-card.md"
+      ]
+    },
+    {
+      "id": "cat-behavior-change",
+      "kind": "medical",
+      "priority": 3,
+      "title": "行为突然变化",
+      "subtitle": "先排疼痛和身体病,再谈行为训练",
+      "asset": "/knowledge-posters/detailed/cat-behavior-change.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-behavior-change.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-behavior-change.ai-card.md",
+        "docs/medical/source/cat-behavior-change.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        },
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-behavior-change.ai-card.md",
+        "docs/medical/source/cat-behavior-change.source.md"
+      ]
+    },
+    {
+      "id": "cat-limping",
+      "kind": "medical",
+      "priority": 3,
+      "title": "跛行/走路异常",
+      "subtitle": "从小伤到硬急症,先排后腿瘫软",
+      "asset": "/knowledge-posters/detailed/cat-limping.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-limping.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-limping.ai-card.md",
+        "docs/medical/source/cat-limping.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-limping.ai-card.md",
+        "docs/medical/source/cat-limping.source.md"
+      ]
+    },
+    {
+      "id": "cat-oral-problem",
+      "kind": "medical",
+      "priority": 3,
+      "title": "口腔问题",
+      "subtitle": "疼痛口腔不靠刷牙解决",
+      "asset": "/knowledge-posters/detailed/cat-oral-problem.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-oral-problem.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-oral-problem.ai-card.md",
+        "docs/medical/source/cat-oral-problem.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        },
+        {
+          "id": "vohc",
+          "name": "Veterinary Oral Health Council",
+          "url": "https://vohc.org/accepted-products/"
+        },
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        },
+        {
+          "id": "wsava",
+          "name": "WSAVA Global Guidelines",
+          "url": "https://wsava.org/global-guidelines/"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-oral-problem.ai-card.md",
+        "docs/medical/source/cat-oral-problem.source.md"
+      ]
+    },
+    {
+      "id": "cat-skin-problem",
+      "kind": "medical",
+      "priority": 3,
+      "title": "皮肤痒/掉毛/猫癣疑似",
+      "subtitle": "会传染给人,但先让兽医确诊",
+      "asset": "/knowledge-posters/detailed/cat-skin-problem.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/cat-skin-problem.png",
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-skin-problem.ai-card.md",
+        "docs/medical/source/cat-skin-problem.source.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        }
+      ],
+      "bindTargets": [
+        "docs/medical/ai-cards/cat-skin-problem.ai-card.md",
+        "docs/medical/source/cat-skin-problem.source.md"
+      ]
+    },
+    {
+      "id": "care-carrier-vet-visit",
+      "kind": "care",
+      "priority": 4,
+      "title": "猫包/去医院训练",
+      "subtitle": "平时打开猫包,别只在看病日出现",
+      "asset": "/knowledge-posters/detailed/care-carrier-vet-visit.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-carrier-vet-visit.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-carrier-vet-visit.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aafpEnv",
+          "name": "AAFP/ISFM Environmental Needs Guidelines",
+          "url": "https://catvets.com/guidelines/practice-guidelines/environmental-needs-guidelines"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-carrier-vet-visit.care-card.md"
+      ]
+    },
+    {
+      "id": "care-chronic-kidney-endocrine-monitoring",
+      "kind": "care",
+      "priority": 4,
+      "title": "肾病/糖尿病/甲亢/高血压记录",
+      "subtitle": "不能靠聊天诊断,但能把记录做好",
+      "asset": "/knowledge-posters/detailed/care-chronic-kidney-endocrine-monitoring.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-chronic-kidney-endocrine-monitoring.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-chronic-kidney-endocrine-monitoring.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-chronic-kidney-endocrine-monitoring.care-card.md"
+      ]
+    },
+    {
+      "id": "care-enrichment-play",
+      "kind": "care",
+      "priority": 4,
+      "title": "玩耍/环境丰容",
+      "subtitle": "短而稳定,让猫抓到“猎物”",
+      "asset": "/knowledge-posters/detailed/care-enrichment-play.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-enrichment-play.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-enrichment-play.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aafpEnv",
+          "name": "AAFP/ISFM Environmental Needs Guidelines",
+          "url": "https://catvets.com/guidelines/practice-guidelines/environmental-needs-guidelines"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-enrichment-play.care-card.md"
+      ]
+    },
+    {
+      "id": "care-food-transition-picky-eating",
+      "kind": "care",
+      "priority": 4,
+      "title": "挑食/换粮",
+      "subtitle": "先排不舒服,再稳定过渡",
+      "asset": "/knowledge-posters/detailed/care-food-transition-picky-eating.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-food-transition-picky-eating.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-food-transition-picky-eating.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "wsava",
+          "name": "WSAVA Global Guidelines",
+          "url": "https://wsava.org/global-guidelines/"
+        },
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-food-transition-picky-eating.care-card.md"
+      ]
+    },
+    {
+      "id": "care-grooming-hairballs",
+      "kind": "care",
+      "priority": 4,
+      "title": "梳毛/掉毛/毛球",
+      "subtitle": "少量多次,别用洗澡解决掉毛",
+      "asset": "/knowledge-posters/detailed/care-grooming-hairballs.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-grooming-hairballs.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-grooming-hairballs.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "icatcare",
+          "name": "International Cat Care",
+          "url": "https://icatcare.org/advice/"
+        },
+        {
+          "id": "aafpEnv",
+          "name": "AAFP/ISFM Environmental Needs Guidelines",
+          "url": "https://catvets.com/guidelines/practice-guidelines/environmental-needs-guidelines"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-grooming-hairballs.care-card.md"
+      ]
+    },
+    {
+      "id": "care-intercat-introduction-tension",
+      "kind": "care",
+      "priority": 4,
+      "title": "多猫关系/新猫引入",
+      "subtitle": "隔离、气味交换、资源分散",
+      "asset": "/knowledge-posters/detailed/care-intercat-introduction-tension.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-intercat-introduction-tension.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-intercat-introduction-tension.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aafpIntercat",
+          "name": "2024 AAFP Intercat Tension Guidelines",
+          "url": "https://catvets.com/guidelines/practice-guidelines/intercat-tension-guidelines"
+        },
+        {
+          "id": "aafpEnv",
+          "name": "AAFP/ISFM Environmental Needs Guidelines",
+          "url": "https://catvets.com/guidelines/practice-guidelines/environmental-needs-guidelines"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-intercat-introduction-tension.care-card.md"
+      ]
+    },
+    {
+      "id": "care-litter-box-habits",
+      "kind": "care",
+      "priority": 4,
+      "title": "猫砂盆习惯",
+      "subtitle": "先把环境做好,再判断医疗信号",
+      "asset": "/knowledge-posters/detailed/care-litter-box-habits.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-litter-box-habits.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-litter-box-habits.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aafpEnv",
+          "name": "AAFP/ISFM Environmental Needs Guidelines",
+          "url": "https://catvets.com/guidelines/practice-guidelines/environmental-needs-guidelines"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-litter-box-habits.care-card.md"
+      ]
+    },
+    {
+      "id": "care-mobility-arthritis-home",
+      "kind": "care",
+      "priority": 4,
+      "title": "关节/行动变慢",
+      "subtitle": "老猫懒得动,可能是疼",
+      "asset": "/knowledge-posters/detailed/care-mobility-arthritis-home.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-mobility-arthritis-home.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-mobility-arthritis-home.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "icatcare",
+          "name": "International Cat Care",
+          "url": "https://icatcare.org/advice/"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-mobility-arthritis-home.care-card.md"
+      ]
+    },
+    {
+      "id": "care-new-home-hiding",
+      "kind": "care",
+      "priority": 4,
+      "title": "新猫到家躲藏",
+      "subtitle": "这是确认安全,不是不喜欢你",
+      "asset": "/knowledge-posters/detailed/care-new-home-hiding.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-new-home-hiding.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-new-home-hiding.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aafpEnv",
+          "name": "AAFP/ISFM Environmental Needs Guidelines",
+          "url": "https://catvets.com/guidelines/practice-guidelines/environmental-needs-guidelines"
+        },
+        {
+          "id": "icatcare",
+          "name": "International Cat Care",
+          "url": "https://icatcare.org/advice/"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-new-home-hiding.care-card.md"
+      ]
+    },
+    {
+      "id": "care-night-vocalization",
+      "kind": "care",
+      "priority": 4,
+      "title": "夜间叫/半夜扒门",
+      "subtitle": "先排健康问题,再调作息",
+      "asset": "/knowledge-posters/detailed/care-night-vocalization.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-night-vocalization.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-night-vocalization.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aafpEnv",
+          "name": "AAFP/ISFM Environmental Needs Guidelines",
+          "url": "https://catvets.com/guidelines/practice-guidelines/environmental-needs-guidelines"
+        },
+        {
+          "id": "merck",
+          "name": "Merck Veterinary Manual",
+          "url": "https://www.merckvetmanual.com/cat-owners"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-night-vocalization.care-card.md"
+      ]
+    },
+    {
+      "id": "care-play-biting",
+      "kind": "care",
+      "priority": 4,
+      "title": "咬手/扑腿",
+      "subtitle": "手只负责抚摸,猎物交给玩具",
+      "asset": "/knowledge-posters/detailed/care-play-biting.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-play-biting.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-play-biting.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aafpEnv",
+          "name": "AAFP/ISFM Environmental Needs Guidelines",
+          "url": "https://catvets.com/guidelines/practice-guidelines/environmental-needs-guidelines"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        },
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-play-biting.care-card.md"
+      ]
+    },
+    {
+      "id": "care-scratching-furniture",
+      "kind": "care",
+      "priority": 4,
+      "title": "抓家具/抓沙发",
+      "subtitle": "这是正常需求,给替代物",
+      "asset": "/knowledge-posters/detailed/care-scratching-furniture.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-scratching-furniture.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-scratching-furniture.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aafpEnv",
+          "name": "AAFP/ISFM Environmental Needs Guidelines",
+          "url": "https://catvets.com/guidelines/practice-guidelines/environmental-needs-guidelines"
+        },
+        {
+          "id": "aafpIntercat",
+          "name": "2024 AAFP Intercat Tension Guidelines",
+          "url": "https://catvets.com/guidelines/practice-guidelines/intercat-tension-guidelines"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-scratching-furniture.care-card.md"
+      ]
+    },
+    {
+      "id": "care-senior-chronic-monitoring",
+      "kind": "care",
+      "priority": 4,
+      "title": "老年猫/慢病监测",
+      "subtitle": "记录变化,复诊前整理清楚",
+      "asset": "/knowledge-posters/detailed/care-senior-chronic-monitoring.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-senior-chronic-monitoring.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-senior-chronic-monitoring.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        },
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-senior-chronic-monitoring.care-card.md"
+      ]
+    },
+    {
+      "id": "care-spay-neuter-postop-medication",
+      "kind": "care",
+      "priority": 4,
+      "title": "绝育术后/喂药",
+      "subtitle": "执行出院医嘱,观察伤口和精神",
+      "asset": "/knowledge-posters/detailed/care-spay-neuter-postop-medication.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-spay-neuter-postop-medication.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-spay-neuter-postop-medication.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "cornell",
+          "name": "Cornell Feline Health Center",
+          "url": "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center/health-information/feline-health-topics"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-spay-neuter-postop-medication.care-card.md"
+      ]
+    },
+    {
+      "id": "care-vet-summary",
+      "kind": "care",
+      "priority": 5,
+      "title": "整理给医生看的病情说明",
+      "subtitle": "只整理事实,不替医生下诊断",
+      "asset": "/knowledge-posters/detailed/care-vet-summary.svg",
+      "pngAsset": "/knowledge-posters/detailed/png/care-vet-summary.png",
+      "sourceDocs": [
+        "docs/care/ai-cards/care-vet-summary.care-card.md"
+      ],
+      "sourceRefs": [
+        {
+          "id": "aahaLife",
+          "name": "AAHA/AAFP Feline Life Stage Guidelines",
+          "url": "https://www.aaha.org/resources/2021-aaha-aafp-feline-life-stage-guidelines/"
+        },
+        {
+          "id": "vca",
+          "name": "VCA Hospitals",
+          "url": "https://vcahospitals.com/know-your-pet"
+        }
+      ],
+      "bindTargets": [
+        "docs/care/ai-cards/care-vet-summary.care-card.md"
+      ]
+    }
+  ]
+}

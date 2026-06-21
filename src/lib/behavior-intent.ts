@@ -28,7 +28,7 @@ export type BehaviorIntentDecision = {
 };
 
 const EMERGENCY_RE =
-  /张口喘|呼吸困难|喘不过气|舌头.*(紫|蓝)|牙龈.*(白|紫|蓝)|抽搐|尿不出|憋尿|大量出血|止不住血|百合|巧克力|葡萄|人药|鼠药|中毒|瘫软|叫不醒|昏迷|严重外伤/;
+  /张口喘|呼吸困难|喘不过气|舌头.*(紫|蓝)|牙龈.*(白|紫|蓝)|抽搐|癫痫|发作不止|尿不出|憋尿|大量出血|止不住血|百合|巧克力|葡萄|人药|鼠药|中毒|瘫软|叫不醒|昏迷|严重外伤|车撞|坠楼|触电|烧伤|烫伤|噎住|窒息/;
 
 // 用户明确请求「整理一段给医生 / 兽医看的说明」。命中后短路到 daily_care +
 // care_recall,LLM planner 会调 care_recall 召回 vet-summary 卡片并按卡输出。
@@ -47,10 +47,24 @@ const DRUG_PRODUCT_RE =
   /止吐|胃药|尿路药|皮炎平|红霉素|软膏|药|消炎|止痛|抗生素|剂量|用量|处方|食欲刺激剂|布洛芬|对乙酰氨基酚|多西|阿奇|氧氟沙星|氯霉素|妥布霉素/;
 
 const CLEAR_DAILY_CARE_RE =
-  /半夜|夜里|凌晨|扒门|跑酷|咬手|扑腿|抱脚|咬人玩|新猫|到家|躲床底|不亲人|怕人|挑食|换粮|不埋屎|带砂|猫砂盆|梳毛|毛球|毛结|陪玩|玩耍|无聊|剪指甲|刷牙训练/;
+  /半夜|夜里|凌晨|扒门|跑酷|咬手|扑腿|抱脚|咬人玩|新猫|到家|躲床底|不亲人|怕人|挑食|换粮|不埋屎|带砂|猫砂盆|梳毛|毛球|毛结|陪玩|玩耍|无聊|剪指甲|刷牙训练|疫苗|免疫|猫三联|妙三多|狂犬|驱虫|外驱|内驱|跳蚤|寄生虫|减肥|肥胖|体重|体况|生骨肉|自制粮|抓沙发|抓家具|抓墙|猫包|航空箱|去医院|坐车|多猫|哈气|追咬|绝育|术后|戴圈|喂药|老年猫|慢病|复查|肾病|糖尿病|甲亢|高血压|关节炎|行动慢|跳不上|发情|怀孕|生产|分娩|新生|奶猫|手养|孤儿猫/;
+
+const APPETITE_MEDICAL_RE =
+  /完全不吃|拒食|厌食|不想吃|没胃口|胃口差|不(太|怎么|咋|大)?爱吃(饭|东西)?|吃得(很)?少|吃很少|食量(下降|变少|少)|饭量(下降|变少|少)/;
+
+const APPETITE_CARE_CONTEXT_RE =
+  /挑食|换粮|新粮|旧粮|罐头|干粮|冻干|零食|粮/;
+
+const APPETITE_RISK_CONTEXT_RE =
+  /要不要.*(医院|就医|看医生|急诊)|要去(医院|看医生)|去医院|就医|要紧|严重|突然|超过|小时|精神|呕吐|吐|腹泻|拉稀|不喝|体重|消瘦|瘦/;
 
 const MEDICAL_RE =
-  /打喷嚏|鼻涕|眼屎|流泪|咳嗽|呕吐|吐|拉稀|腹泻|软便|便血|黑便|不吃|食欲|精神差|嗜睡|尿频|尿血|尿少|乱尿|排尿|耳朵|甩头|挠耳|眼睛|眯眼|皮肤|掉毛|瘙痒|牙龈|牙齿发黄|口臭|流口水|掉食|跛|瘸|摔|出血|误食|发烧|疼|痛/;
+  /打喷嚏|鼻涕|眼屎|流泪|咳嗽|呕吐|吐|拉稀|腹泻|软便|便血|黑便|不吃|食欲|没胃口|胃口差|拒食|厌食|不想吃|精神差|嗜睡|尿频|尿血|尿少|乱尿|排尿|耳朵|甩头|挠耳|眼睛|眯眼|皮肤|掉毛|瘙痒|牙龈|牙齿发黄|口臭|流口水|掉食|跛|瘸|摔|出血|误食|发烧|疼|痛/;
+
+function isAppetiteMedicalQuestion(query: string): boolean {
+  if (!APPETITE_MEDICAL_RE.test(query)) return false;
+  return !APPETITE_CARE_CONTEXT_RE.test(query) || APPETITE_RISK_CONTEXT_RE.test(query);
+}
 
 function hasStructuredMedicalContext(input: BehaviorIntentInput): boolean {
   return Boolean(
@@ -134,6 +148,20 @@ export function classifyBehaviorIntent(
       allowAuthorityWebSearch: true,
       instruction:
         "用户在问药品、用品、品牌或购买;先使用本地药品/用品边界,资料不足时才允许白名单权威站补充。",
+    };
+  }
+
+  if (isAppetiteMedicalQuestion(query)) {
+    return {
+      intent: "medical_general",
+      confidence: "high",
+      reason: "appetite_loss_health_terms",
+      useCareKnowledge: false,
+      useMedicalKnowledge: false,
+      useMedicalRecall: true,
+      allowAuthorityWebSearch: false,
+      instruction:
+        "用户在问食欲下降/不爱吃是否需要就医;优先召回本地不吃/食欲下降医学资料,询问持续时间、进食量、精神和伴随症状,不要被“去医院”误分到猫包训练。",
     };
   }
 

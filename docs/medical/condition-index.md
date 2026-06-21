@@ -19,8 +19,12 @@
 | `breath` | 呼吸怪 | `cat_dyspnea` | `分诊证据-草稿-v0.2.md` §2.1 + Anicira | `source/cat-dyspnea.source.md` | `ai-cards/cat-dyspnea.ai-card.md` | batch 2 |
 | `blood` | 看到血 | `cat_bleeding` | `分诊证据-草稿-v0.2.md` §2.2 + Anicira | `source/cat-bleeding.source.md` | `ai-cards/cat-bleeding.ai-card.md` | batch 3 |
 | `pee` | 尿不出 | `cat_urethral_obstruction` | `证据-icatcare-尿道阻塞.md` + v0.2 §2.3 | `source/cat-urethral-obstruction.source.md` | `ai-cards/cat-urethral-obstruction.ai-card.md` | batch 1 |
-| `other` | 其它情况 | `cat_general_triage` | 通用红旗 | todo | todo | batch 5 |
+| `other` | 其它情况 | `cat_general_triage` | 通用红旗 + 生命周期/营养/预防边界 | `source/cat-general-triage.source.md` | `ai-cards/cat-general-triage.ai-card.md` | batch 5 |
 | cross-cutting | 通用红旗 | `cat_emergency_red_flags` | `证据-anicira-急诊10信号.md` + v0.2 §3.3 | `source/cat-emergency-red-flags.source.md` | `ai-cards/cat-emergency-red-flags.ai-card.md` | batch 1 |
+| supplemental | 高温 / 天气 / 家庭安全 | `cat_heatstroke_weather_hazard` | Cornell Feline Heat Safety | `source/cat-heatstroke-weather-hazard.source.md` | `ai-cards/cat-heatstroke-weather-hazard.ai-card.md` | batch 5 |
+| supplemental | 便秘 / 排便用力 | `cat_constipation_straining` | Cornell Constipation + 尿闭鉴别 | `source/cat-constipation-straining.source.md` | `ai-cards/cat-constipation-straining.ai-card.md` | batch 5 |
+| supplemental | 创伤 / 急救 / 安全转运 | `cat_trauma_first_aid` | AVMA + Merck + VCA | `source/cat-trauma-first-aid.source.md` | `ai-cards/cat-trauma-first-aid.ai-card.md` | batch 6 |
+| supplemental | 抽搐 / 神经急症 | `cat_seizure_neurologic_emergency` | VCA Seizures + Merck | `source/cat-seizure-neurologic-emergency.source.md` | `ai-cards/cat-seizure-neurologic-emergency.ai-card.md` | batch 6 |
 
 ## 批次建议
 
@@ -28,4 +32,5 @@
 2. `batch 2`:呕吐、腹泻、不吃、误食、呼吸。已生成 source + AI card;仍需兽医审核后进入产品。
 3. `batch 3`:眼、耳、出血、精神差。已生成 source + AI card;覆盖用户高焦虑入口和需要“别乱用药”的入口。
 4. `batch 4`:皮肤、口腔、行为、跛行。已生成 source + AI card;覆盖慢性/专科判断和长期护理。
-5. `batch 5`:其它情况与总控 prompt。把通用红旗和宿主风险画像接入所有问诊。
+5. `batch 5`:其它情况与总控 prompt。把通用红旗和宿主风险画像接入所有问诊;本轮已补 `cat_general_triage`、`cat_heatstroke_weather_hazard`、`cat_constipation_straining` 作为其它入口和补充召回资料。
+6. `batch 6`:创伤急救、抽搐/神经急症。用于补齐“摔伤、车撞、烧烫伤、触电、噎住、抽搐”等高风险但不属于单一器官入口的问题。

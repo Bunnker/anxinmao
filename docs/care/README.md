@@ -20,3 +20,14 @@
 - `ai-cards/care-food-transition-picky-eating.care-card.md`: 挑食、换粮、换粮期软便预防。
 - `ai-cards/care-litter-box-habits.care-card.md`: 不埋屎、带砂、猫砂盆摆放和清洁。
 - `ai-cards/care-grooming-hairballs.care-card.md`: 梳毛、掉毛、毛球日常管理。
+- `ai-cards/care-vaccine-schedule-reactions.care-card.md`: 疫苗、免疫计划和疫苗后观察。
+- `ai-cards/care-parasite-prevention-zoonosis.care-card.md`: 驱虫、跳蚤蜱虫、寄生虫和人畜共患边界。
+- `ai-cards/care-nutrition-weight-bcs.care-card.md`: 营养、体重、体况评分和减重边界。
+- `ai-cards/care-scratching-furniture.care-card.md`: 抓家具、抓沙发和抓板训练。
+- `ai-cards/care-carrier-vet-visit.care-card.md`: 猫包、航空箱和去医院训练。
+- `ai-cards/care-intercat-introduction-tension.care-card.md`: 多猫关系、新猫引入和资源冲突。
+- `ai-cards/care-spay-neuter-postop-medication.care-card.md`: 绝育术后、戴圈、伤口观察和喂药执行。
+- `ai-cards/care-senior-chronic-monitoring.care-card.md`: 老年猫、慢病监测和复诊准备。
+- `ai-cards/care-chronic-kidney-endocrine-monitoring.care-card.md`: 肾病、糖尿病、甲亢、高血压的家庭记录和复诊准备。
+- `ai-cards/care-mobility-arthritis-home.care-card.md`: 关节、行动变慢和老年猫无障碍环境。
+- `ai-cards/care-reproduction-neonatal-kitten.care-card.md`: 发情、怀孕、分娩、新生幼猫和手养奶猫边界。

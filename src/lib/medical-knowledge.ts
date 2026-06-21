@@ -24,7 +24,7 @@ const CARD_BY_SYMPTOM: Record<string, string> = {
   blood: "cat-bleeding",
   pee: "cat-urethral-obstruction",
   urine: "cat-urethral-obstruction",
-  other: "cat-lethargy",
+  other: "cat-general-triage",
 };
 
 const CARD_BY_CLAIM_PREFIX: Record<string, string> = {
@@ -44,6 +44,11 @@ const CARD_BY_CLAIM_PREFIX: Record<string, string> = {
   bre: "cat-dyspnea",
   bld: "cat-bleeding",
   uo: "cat-urethral-obstruction",
+  gen: "cat-general-triage",
+  heat: "cat-heatstroke-weather-hazard",
+  con: "cat-constipation-straining",
+  tra: "cat-trauma-first-aid",
+  neu: "cat-seizure-neurologic-emergency",
 };
 
 export type MedicalKnowledgeInput = {
@@ -113,8 +118,8 @@ function cardIdsFor(symptom: string | undefined, claimIds: string[]): string[] {
   };
 
   if (symptom || claimIds.length > 0) add("cat-emergency-red-flags");
-  if (symptom) add(CARD_BY_SYMPTOM[symptom]);
   for (const id of claimIds) add(CARD_BY_CLAIM_PREFIX[claimPrefix(id)]);
+  if (symptom) add(CARD_BY_SYMPTOM[symptom]);
   return [...ids];
 }
 

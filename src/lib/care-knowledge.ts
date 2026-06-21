@@ -69,6 +69,17 @@ function queryTerms(query: string): string[] {
     [/剪指甲|指甲|爪子|挣扎|血线/, ["剪指甲", "摸爪", "血线", "care_nail_trimming"]],
     [/刷牙训练|接受刷牙|不让刷牙|口腔护理习惯/, ["刷牙训练", "牙刷", "猫专用牙膏", "care_toothbrushing_training"]],
     [/陪玩|玩耍|无聊|精力|咬手|环境|丰容|逗猫棒|抓板/, ["陪玩", "环境丰容", "逗猫棒", "抓板", "care_enrichment_play"]],
+    [/疫苗|免疫|猫三联|妙三多|狂犬|felv|加强针|补打|疫苗后/, ["疫苗", "免疫", "猫三联", "狂犬", "FeLV", "care_vaccine_schedule_reactions"]],
+    [/驱虫|外驱|内驱|跳蚤|蜱|寄生虫|耳螨|弓形虫|人畜共患/, ["驱虫", "寄生虫", "跳蚤", "蜱虫", "人畜共患", "care_parasite_prevention_zoonosis"]],
+    [/减肥|肥胖|体重|体况|bcs|热量|零食|生骨肉|自制粮|成猫喂多少/, ["体重管理", "体况评分", "热量", "零食", "care_nutrition_weight_bcs"]],
+    [/抓沙发|抓家具|抓墙|抓窗帘|破坏|猫抓柱/, ["抓家具", "抓板", "抓柱", "正常抓挠", "care_scratching_furniture"]],
+    [/猫包|航空箱|去医院|看医生|体检|坐车|抓不到猫/, ["猫包", "航空箱", "去医院", "就诊训练", "care_carrier_vet_visit"]],
+    [/多猫|新猫见面|打架|哈气|追咬|互相盯|资源冲突|原住民/, ["多猫", "新猫引入", "哈气", "资源冲突", "care_intercat_introduction_tension"]],
+    [/绝育|术后|戴圈|伊丽莎白圈|伤口|拆线|喂药|药片/, ["绝育术后", "戴圈", "伤口观察", "喂药", "care_spay_neuter_postop_medication"]],
+    [/老年猫|慢病|肾病|甲亢|高血压|糖尿病|关节炎|复查/, ["老年猫", "慢病", "家庭记录", "复诊准备", "care_senior_chronic_monitoring"]],
+    [/ckd|肾病|肾衰|糖尿病|胰岛素|甲亢|高血压|多饮多尿|快速消瘦/, ["CKD", "糖尿病", "甲亢", "高血压", "多饮多尿", "care_chronic_kidney_endocrine_monitoring"]],
+    [/关节炎|行动慢|跳不上|不爱动|低入口|坡道|台阶|老猫.*跳|老年猫.*动/, ["关节炎", "行动变慢", "低入口猫砂盆", "坡道", "care_mobility_arthritis_home"]],
+    [/发情|怀孕|生产|分娩|新生|奶猫|手养|孤儿猫|不会吃奶|fading/, ["怀孕", "分娩", "新生幼猫", "手养奶猫", "care_reproduction_neonatal_kitten"]],
   ];
   for (const [pattern, words] of expansions) {
     if (pattern.test(q)) words.forEach((word) => terms.add(word.toLowerCase()));

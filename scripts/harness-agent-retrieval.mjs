@@ -68,6 +68,13 @@ const CASES = [
     expect: ["cat-oral-problem"],
   },
   {
+    name: "不爱吃饭是否就医",
+    content: "猫不太爱吃饭,要不要去医院?",
+    expect: ["cat-anorexia"],
+    expectPoster: "cat-anorexia",
+    expectNoCareCard: "care-carrier-vet-visit",
+  },
+  {
     name: "幼猫喂养",
     content: "幼猫一天喂几次,每次喂多少?",
     expect: [],
@@ -169,6 +176,20 @@ function assertCase(c, data) {
 
   if (c.expectNoProductBoundary && web.query?.includes("VOHC accepted products")) {
     fail(`${c.name}: 普通处理建议不应触发 VOHC 商品搜索`, web.query);
+  }
+
+  if (c.expectPoster && data.posterAttachmentPreview?.id !== c.expectPoster) {
+    fail(
+      `${c.name}: 图解应命中 ${c.expectPoster}`,
+      JSON.stringify(data.posterAttachmentPreview, null, 2),
+    );
+  }
+
+  if (
+    c.expectNoCareCard &&
+    (data.careCardIds ?? []).includes(c.expectNoCareCard)
+  ) {
+    fail(`${c.name}: 不应命中护理卡 ${c.expectNoCareCard}`, JSON.stringify(data.careCardIds));
   }
 
   if (c.expectRegionPreview) {

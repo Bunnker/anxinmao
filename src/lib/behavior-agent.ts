@@ -63,6 +63,7 @@ export type BehaviorAgentResult = {
   carePrompt: string;
   retrievalPrompt: string;
   careCardIds: string[];
+  medicalCardIds: string[];
   tools: BehaviorAgentToolTrace[];
   plan: BehaviorAgentPlan;
 };
@@ -287,6 +288,21 @@ function carePromptToResult(prompt: string, cardId: string): AgentRetrievalResul
   };
 }
 
+function medicalCardIdsFromTrace(trace: AgentToolTrace): string[] {
+  const seen = new Set<string>();
+  const ids: string[] = [];
+  for (const result of trace.results ?? []) {
+    const match = result.path?.match(
+      /^docs\/medical\/(?:ai-cards\/([^/]+)\.ai-card|source\/([^/]+)\.source)\.md$/,
+    );
+    const id = match?.[1] ?? match?.[2];
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
+  return ids;
+}
+
 export async function runBehaviorAgentTools(
   input: BehaviorAgentInput,
 ): Promise<BehaviorAgentResult> {
@@ -381,6 +397,7 @@ export async function runBehaviorAgentTools(
     carePrompt,
     retrievalPrompt: retrieval.prompt,
     careCardIds,
+    medicalCardIds: medicalCardIdsFromTrace(localTrace),
     tools: [careTrace, localTrace, webTrace],
     plan,
   };

@@ -67,3 +67,8 @@ skills-lock.json
 
 # 小红书发布用的本地图片(猫照/截图),不入仓
 /xhs-images/
+
+# 临时出图/工具工作目录(不入库)
+/tmp/
+/.superpowers/
+.DS_Store

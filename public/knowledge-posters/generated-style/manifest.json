@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-18T06:49:23.936Z",
+  "generatedAt": "2026-06-21T02:18:43.372Z",
   "count": 43,
   "format": "png",
   "mobileTarget": "portrait 9:16, mostly 941x1672 or 1080x1920",
@@ -481,7 +481,7 @@
         "外侧牙面"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-vaccine-schedule-reactions",
@@ -501,7 +501,7 @@
         "问下一针"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "cat-behavior-change",
@@ -522,7 +522,7 @@
         "记录变化"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "cat-limping",
@@ -543,7 +543,7 @@
         "限制活动"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "cat-oral-problem",
@@ -564,7 +564,7 @@
         "产品边界"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "cat-skin-problem",
@@ -585,7 +585,7 @@
         "确诊优先"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-carrier-vet-visit",
@@ -605,7 +605,7 @@
         "路上安全"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-chronic-kidney-endocrine-monitoring",
@@ -625,7 +625,7 @@
         "问医生"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-enrichment-play",
@@ -645,7 +645,7 @@
         "环境点位"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-food-transition-picky-eating",
@@ -665,7 +665,7 @@
         "定时放饭"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-grooming-hairballs",
@@ -685,7 +685,7 @@
         "减少吞毛"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-intercat-introduction-tension",
@@ -705,7 +705,7 @@
         "短时见面"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-litter-box-habits",
@@ -725,7 +725,7 @@
         "换砂慢慢来"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-mobility-arthritis-home",
@@ -745,7 +745,7 @@
         "拍视频"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-new-home-hiding",
@@ -765,7 +765,7 @@
         "让猫决定"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-night-vocalization",
@@ -785,7 +785,7 @@
         "别强化叫"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-play-biting",
@@ -805,7 +805,7 @@
         "玩后进食"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-scratching-furniture",
@@ -825,7 +825,7 @@
         "奖励正确"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-senior-chronic-monitoring",
@@ -845,7 +845,7 @@
         "复诊材料"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-spay-neuter-postop-medication",
@@ -865,7 +865,7 @@
         "核对药物"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     },
     {
       "id": "care-vet-summary",
@@ -885,7 +885,7 @@
         "医生问题"
       ],
       "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
-      "generationMode": "local-scrapbook-fallback"
+      "generationMode": "ai-imagegen"
     }
   ]
 }
