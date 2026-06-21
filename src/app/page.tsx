@@ -153,6 +153,14 @@ const YARD_ITEMS = {
   rug: { src: "/pet/items/rug.webp", alt: "小地毯", left: 100, bottom: 9, w: 104 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
+const YARD_ITEM_ASPECT_RATIO: Record<ItemKey, string> = {
+  bed: "196 / 152",
+  box: "582 / 520",
+  bowl: "88 / 67",
+  yarn: "1 / 1",
+  scratch: "480 / 335",
+  rug: "1 / 1",
+};
 // 挠抓板:codex 出的「猫挠板」2 帧,在板左侧前爪上下挠(scratchFrame 在 0↔1 来回切)。
 // (2026-06-20 用户决定回滚到这个两帧版,撤掉后来的 8 帧/立式磨爪柱重设计。)
 const CAT_SCRATCH_FRAMES = [
@@ -1492,6 +1500,14 @@ function PetNudge({
           const pos = layout[k];
           const lifted = dragKey === k;
           const z = lifted ? 200 : k === "rug" ? 1 : zOf(pos.bottom);
+          const itemSrc =
+            k === "bowl"
+              ? waterLevel > 50
+                ? it.src // 满
+                : waterLevel > 0
+                  ? "/pet/items/bowl-half.webp" // 半
+                  : "/pet/items/bowl-empty.webp" // 空
+              : it.src;
           return (
             <button
               key={k}
@@ -1523,20 +1539,15 @@ function PetNudge({
                 transition: lifted ? "none" : "transform 0.14s ease-out",
               }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={
-                  k === "bowl"
-                    ? waterLevel > 50
-                      ? it.src // 满
-                      : waterLevel > 0
-                        ? "/pet/items/bowl-half.webp" // 半
-                        : "/pet/items/bowl-empty.webp" // 空
-                    : it.src
+              <span
+                aria-hidden="true"
+                className={
+                  "pet-yard-bg-art w-full " + (hideForAction ? "opacity-0" : "")
                 }
-                alt=""
-                draggable={false}
-                className={"w-full " + (hideForAction ? "opacity-0" : "")}
+                style={{
+                  aspectRatio: YARD_ITEM_ASPECT_RATIO[k],
+                  backgroundImage: `url("${itemSrc}")`,
+                }}
               />
             </button>
           );
@@ -1972,12 +1983,10 @@ function PetNudge({
                 onPointerUp={onToolPointerUp}
                 onPointerCancel={onToolPointerUp}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={tool.src}
-                  alt=""
-                  draggable={false}
-                  className="h-9 w-9 object-contain"
+                <span
+                  aria-hidden="true"
+                  className="pet-yard-bg-art h-9 w-9"
+                  style={{ backgroundImage: `url("${tool.src}")` }}
                 />
               </button>
             );
@@ -1986,22 +1995,20 @@ function PetNudge({
       </section>
 
       {carried && (
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img
-          src={TOOLBAR_ITEMS[carried.key].src}
-          alt=""
+        <div
           aria-hidden="true"
-          draggable={false}
+          className="pet-yard-bg-art"
           style={{
             position: "fixed",
             left: carried.x,
             top: carried.y,
             transform: "translate(-50%, -50%) rotate(-12deg)",
             width: 56,
-            height: "auto",
+            height: 56,
             zIndex: 999,
             pointerEvents: "none",
             filter: "drop-shadow(0 6px 8px rgba(0,0,0,0.25))",
+            backgroundImage: `url("${TOOLBAR_ITEMS[carried.key].src}")`,
           }}
         />
       )}

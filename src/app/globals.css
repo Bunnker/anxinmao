@@ -159,6 +159,12 @@ button[class*="bg-surface"] {
   -webkit-user-drag: none;
   user-drag: none;
 }
+.pet-yard-bg-art {
+  display: block;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
 
 /* 小猫陪伴提醒(PetNudge)—— 头像轻微呼吸感,克制的"它活着"信号 */
 @keyframes pet-breath {
