@@ -148,27 +148,21 @@ const YARD_ITEMS = {
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 240, bottom: 0, w: 36 },
   // 可拖家具:猫抓板(立式麻绳磨爪柱 + 宽圆底座)—— 走过去站起来挠柱。
   // w/left/bottom 调到让静态柱 ≈ 挠柱合成图里的柱子(切换不跳),见 SCRATCH_W/DX/DY。
-  scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 134, bottom: 84, w: 48 },
+  scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 124, bottom: 100, w: 78 },
   // 墙角小地毯:垫在地上的「地面物」(渲染 z 压到家具下、猫上 → 猫站毯上),走过去坐下洗脸
   rug: { src: "/pet/items/rug.webp", alt: "小地毯", left: 100, bottom: 9, w: 104 },
 } as const;
 type ItemKey = keyof typeof YARD_ITEMS;
-// 挠抓板 8 帧逐帧(查证真实磨爪:身体锁死、前爪沿斜面从顶端单调滑到底端 + 爪后拖痕逐帧加长)。
-// 单条 strip 出图,经 scr_fit2 按板高中位数全局缩放 + 板右下角锚定切片 → 板与静态 scratch.webp 重合不抖。
-const CAT_SCRATCH_FRAMES = [0, 1, 2, 3, 4, 5, 6, 7].map(
-  (i) => `/pet/items/cat-scratch-${i}.webp`,
-);
-// 播放序:0→7 下挠到底再 6→1 抬回顶 = ping-pong 连续上下挠(身体稳,只爪上下滑)。
-// 用「高柱版」帧(cat-scratch-*=ps8c):柱子又高又完整、8 帧跨帧一致、柱头始终在猫上方
-// —— 解决「猫挡住柱子/柱太短看不全」。静态柱 scratch.webp 也换成同款高柱(layout.scratch)。
-const SCRATCH_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1];
-const SCRATCH_MS = 110;
-// 立式磨爪柱版(2026-06-20 重设计):合成帧=猫站立挠麻绳柱,内容居中在 908×719 画布。
-// SCRATCH_W 定整体缩放,使站立猫体量 ≈ 常态 idle 猫;DX/DY 把合成图摆到柱位,并让帧里
-// 的柱子与静态 scratch.webp(layout.scratch)重合 —— 切换不跳。真机截图逐项核过。
-const SCRATCH_W = 170;
-const SCRATCH_DX = -75; // 帧 left = layout.scratch.left + DX(柱在帧右侧,补偿后柱子落到静态柱位)
-const SCRATCH_DY = -2; // 帧 bottom = layout.scratch.bottom + DY(柱底贴静态柱底)
+// 挠抓板:codex 出的「猫挠板」2 帧,在板左侧前爪上下挠(scratchFrame 在 0↔1 来回切)。
+// (2026-06-20 用户决定回滚到这个两帧版,撤掉后来的 8 帧/立式磨爪柱重设计。)
+const CAT_SCRATCH_FRAMES = [
+  "/pet/items/cat-scratch-0.webp",
+  "/pet/items/cat-scratch-1.webp",
+];
+// 显示宽 134 → 板=78(=scratch.webp.w);相对板原点偏移(猫在板左):
+const SCRATCH_W = 134;
+const SCRATCH_DX = -52; // 帧 left = layout.scratch.left + DX
+const SCRATCH_DY = -18; // 帧 bottom = layout.scratch.bottom + DY
 // 梳毛 2 帧(codex 专门画的「疏毛动作」,非复用素材):针梳贴后背 上↔下 来回梳。
 // 梳毛在猫的实时位置发生(不是固定家具),所以盖在 roam.x/roam.y 上、藏掉实时精灵。
 // 梳毛动作 → 帧序列(brushFrame 在序列里 ping-pong 来回播)。
@@ -291,8 +285,7 @@ const BOX_ANIM: Record<string, { order: number[]; ms: number }> = {
 // 在箱帧/钻入帧跟着箱子走、像素级重合。
 const BOX_W = 88;
 // 桌宠所有「靠切 <img>.src 轮播的动作盖帧」URL 汇总 —— 用于挂载时一次性预加载 + 预解码。
-// 不预载的话:某动作首次播放时浏览器才逐帧懒加载(实测刚进页面 8 帧挠柱图 0 张在缓存),
-// 110ms 高频换帧期间未就绪的帧会闪/缺(用户反馈「挠到一半另一半消失」)。
+// 不预载的话:某动作首次播放时浏览器才逐帧懒加载,高频换帧期间未就绪的帧会闪/缺。
 const ALL_ACTION_FRAMES: string[] = Array.from(
   new Set<string>([
     ...CAT_SCRATCH_FRAMES,
@@ -708,20 +701,17 @@ function PetNudge({
     }
   }, []);
 
-  // 挠抓板:scratch 期间按 SCRATCH_ORDER 循环播 8 帧(前爪沿斜面从顶到底再抬回 = 连续上下挠)。
-  // scratchFrame = 帧号(0-7),渲染处取 CAT_SCRATCH_FRAMES[scratchFrame]。
+  // 挠抓板:scratch 期间 2 帧 0↔1 来回切(前爪在板上下挠),220ms 一切。
   const [scratchFrame, setScratchFrame] = useState(0);
   useEffect(() => {
     if (roam.kind !== "scratch") {
       setScratchFrame(0);
       return;
     }
-    let k = 0;
-    setScratchFrame(SCRATCH_ORDER[0]);
-    const id = window.setInterval(() => {
-      k = (k + 1) % SCRATCH_ORDER.length;
-      setScratchFrame(SCRATCH_ORDER[k]);
-    }, SCRATCH_MS);
+    const id = window.setInterval(
+      () => setScratchFrame((f) => (f === 0 ? 1 : 0)),
+      220,
+    );
     return () => clearInterval(id);
   }, [roam.kind]);
 
