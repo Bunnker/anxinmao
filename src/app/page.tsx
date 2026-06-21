@@ -1427,13 +1427,14 @@ function PetNudge({
       <>
       <section
         ref={yardRef}
-        className="pet-yard-no-callout relative isolate min-h-[380px] flex-none overflow-hidden"
+        className="pet-yard-no-callout relative isolate min-h-[420px] flex-none overflow-hidden"
         // 桌宠舞台:禁掉移动端「长按图片」的原生菜单(保存/查看/复制/分享图片…),否则长按拖动
         // 家具/道具会被浏览器菜单抢走手势。touch-callout / user-select 继承给子元素,
         // onContextMenu 接住冒泡 → 覆盖院子内所有可拖图片。
         onContextMenu={(e) => e.preventDefault()}
         style={{
-          height: "clamp(380px, calc(100dvh - 330px), 620px)",
+          // 院子高度:手机端尽量撑满(少留底部、抬高上限),沉浸感更强;CTA 仍在下方可滚到。
+          height: "clamp(420px, calc(100dvh - 270px), 760px)",
           WebkitTouchCallout: "none",
           WebkitUserSelect: "none",
           userSelect: "none",
@@ -1532,7 +1533,7 @@ function PetNudge({
                 }
                 alt=""
                 draggable={false}
-                className={"pointer-events-none w-full " + (hideForAction ? "opacity-0" : "")}
+                className={"w-full " + (hideForAction ? "opacity-0" : "")}
               />
             </button>
           );
@@ -1973,7 +1974,7 @@ function PetNudge({
                   src={tool.src}
                   alt=""
                   draggable={false}
-                  className="pointer-events-none h-9 w-9 object-contain"
+                  className="h-9 w-9 object-contain"
                 />
               </button>
             );
