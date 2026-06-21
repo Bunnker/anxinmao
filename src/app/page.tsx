@@ -1428,7 +1428,16 @@ function PetNudge({
       <section
         ref={yardRef}
         className="relative isolate min-h-[380px] flex-none overflow-hidden"
-        style={{ height: "clamp(380px, calc(100dvh - 330px), 620px)" }}
+        // 桌宠舞台:禁掉移动端「长按图片」的原生菜单(保存/查看/复制/分享图片…),否则长按拖动
+        // 家具/道具会被浏览器菜单抢走手势。touch-callout / user-select 继承给子元素,
+        // onContextMenu 接住冒泡 → 覆盖院子内所有可拖图片。
+        onContextMenu={(e) => e.preventDefault()}
+        style={{
+          height: "clamp(380px, calc(100dvh - 330px), 620px)",
+          WebkitTouchCallout: "none",
+          WebkitUserSelect: "none",
+          userSelect: "none",
+        }}
         aria-label={`${cat.name}的家`}
       >
         {/* 院子背景:codex 出的温馨房间图(暖墙 + 右上窗户/窗台 + 浅木地板 + 窗边暖光斑)。
