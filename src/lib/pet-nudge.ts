@@ -46,13 +46,13 @@ const CHAT_INVITES: Nudge[] = [
     text: "喵~(拿不准的事,都能问我哦 ·ω·)",
     cta: "去问问",
     href: "/behavior",
-    sprite: "waving",
+    sprite: "knead",
   },
   {
     text: "喵呜?(哪儿不对劲,就带我去分诊呀 ฅ•ﻌ•ฅ)",
     cta: "去分诊",
     href: "/symptoms",
-    sprite: "waving",
+    sprite: "knead",
   },
 ];
 
@@ -74,7 +74,7 @@ function careNudge(cat: Cat): Nudge | null {
       text: "喵呜~(好久没量体重啦,帮我记一笔嘛 ｡•ᴗ•｡)",
       cta: "去记一笔",
       href: edit,
-      sprite: "review",
+      sprite: "coax",
       snoozeKey: "weigh",
     };
   const care = careStatus(cat);
@@ -83,7 +83,7 @@ function careNudge(cat: Cat): Nudge | null {
       text: "喵喵~(该做驱虫啦,别忘了我哦 =^‥^=)",
       cta: "去记一笔",
       href: edit,
-      sprite: "review",
+      sprite: "coax",
       snoozeKey: "deworm",
     };
   if (care.vaccine.status === "no" && !isReminderSnoozed(cat.id, "vaccine"))
@@ -91,7 +91,7 @@ function careNudge(cat: Cat): Nudge | null {
       text: "喵~(还没记我的疫苗呢,补一下嘛 ˘ω˘)",
       cta: "去记一笔",
       href: edit,
-      sprite: "review",
+      sprite: "coax",
       snoozeKey: "vaccine",
     };
   return null;
@@ -107,5 +107,9 @@ export function idleNudge(cat: Cat): Nudge {
     if (Math.random() < 0.5) return pick(CHAT_INVITES); // 否则偶尔来个分诊/问答邀请
     // 否则掉到闲聊
   }
-  return { text: pick(CHATTER), sprite: "review" };
+  // 纯闲聊也用卖萌帧:多数踩奶招呼,偶尔翻个肚皮换花样
+  return {
+    text: pick(CHATTER),
+    sprite: Math.random() < 0.3 ? "coax" : "knead",
+  };
 }

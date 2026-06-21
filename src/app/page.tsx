@@ -84,8 +84,8 @@ function findFollowupTarget(records: CatRecord[]): CatRecord | null {
 
 // 桌宠闲时气泡(nudge)—— 内容 + 挑选逻辑(idleNudge / Nudge 类型 / 闲聊词库 / 护理提醒)
 // 抽到 lib/pet-nudge.ts:约 80% 纯闲聊(不可点)+ 约 20% 提一嘴(护理 / 分诊 / 问答可点)。
-// 红线:文案不焦虑、不诊断、不碰风险三色;闲聊纯陪伴。sprite 暂用现有态(review/waving),
-// 待卖萌新帧出图后替换(见 docs/superpowers/specs/2026-06-17-nudge-cute-actions-handoff.md)。
+// 红线:文案不焦虑、不诊断、不碰风险三色;闲聊纯陪伴。sprite 用专属卖萌帧:
+// 护理提醒=coax 撒娇翻肚皮 / 搭话邀请=knead 踩奶招呼 / 纯闲聊在两者间随机。
 
 // 醒目的猫爪按钮 —— 提示气泡可点跳转(陶土红实心 + 猫爪 + 文案)。
 function PawCta({ label }: { label: string }) {
@@ -1328,7 +1328,7 @@ function PetNudge({
       : asking && !talk
         ? "review" // 歪头端详:比 waiting 的「举手放下」更可爱的关心式询问动作
         : nudge && !talk
-          ? nudge.sprite // 护理提醒=歪头端详 / 搭话邀请=招手
+          ? nudge.sprite // 护理提醒=coax 撒娇翻肚皮 / 搭话邀请=knead 踩奶招呼 / 闲聊随机
           : null;
     // 走路(stroll)优先级最高:猫在位移就必须播走路动画,压过 followFace / talk —
     // 否则说话泡 / 护理 nudge 在显示时点家具,猫会保持坐姿歪头被 CSS transition 滑过去

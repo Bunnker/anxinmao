@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 
 // 吉祥物雪碧图渲染器 —— 资产由 hatch-pet 管线孵化:
-// 8 列 × 11 行图集(1536×2288,单格 192×208,透明底),每行一个状态。
-// 前 9 行沿用 Codex 桌宠合同(行序与基础时长同官方表),后 2 行是本产品
-// 专属动作(petted 被摸享受 / groom 洗脸)。
+// 8 列 × 19 行图集(1664×4256,单格 192×208,带 16px 透明间隙),每行一个状态。
+// 前 9 行沿用 Codex 桌宠合同(行序与基础时长同官方表),其后是本产品专属动作
+// (petted 被摸 / groom 洗脸 / 起床四连 / play 玩球 / drink 喝水,及主动气泡卖萌帧
+// coax 撒娇翻肚皮 / knead 踩奶招呼)。
 // 播放模式:loop 循环;hold 播一遍后定格(招手抬爪不放下、跳一次就好,
 // 避免无限快循环的忙乱感)。reduced-motion 静止第 1 帧;切后台暂停;
 // 图集未就绪/加载失败回退静态 PNG。
@@ -26,11 +27,13 @@ export type PetSpriteState =
   | "yawn"
   | "arch"
   | "play"
-  | "drink";
+  | "drink"
+  | "coax"
+  | "knead";
 
 const SHEET_SRC = "/pet/spritesheet.webp";
 const SHEET_COLS = 8;
-const SHEET_ROWS = 17;
+const SHEET_ROWS = 19;
 const CELL_W = 192;
 const CELL_H = 208;
 // 格间透明间隙 —— 大图缩放时边界会多采样邻格,留透明缝接住;
@@ -103,6 +106,15 @@ const ROWS: Record<PetSpriteState, RowConfig> = {
   play: { row: 15, durations: [300, 260, 240, 260, 280, 420], mode: "hold" },
   // 喝水:低头 → 舔×3 → 抬头舔嘴(行内自带碗)
   drink: { row: 16, durations: [300, 280, 260, 260, 280, 380], mode: "hold" },
+  // 撒娇翻肚皮(护理提醒泡):坐 → 歪头 → 侧倒 → 四爪朝天露肚 → 眯眼笑,定格在翻肚卖萌
+  coax: {
+    row: 17,
+    durations: [360, 300, 320, 440, 600, 400],
+    mode: "hold",
+    holdFrame: 4,
+  },
+  // 踩奶招呼(搭话邀请泡):坐 → 抬爪 → 左右交替踩奶 → 歪头看你 → 轻招手,柔和循环(真猫做面包)
+  knead: { row: 18, durations: [340, 260, 260, 280, 360, 380], mode: "loop" },
 };
 
 // idle 时偶发的自理小动作(下限/随机区间,毫秒)

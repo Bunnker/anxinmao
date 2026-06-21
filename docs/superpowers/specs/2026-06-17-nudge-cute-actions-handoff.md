@@ -1,6 +1,6 @@
 ---
 title: 首页主动气泡 · 卖萌动作出图交接
-status: 待出图(交给「桌宠逐帧动画」批的 agent)
+status: ✅ 已完成(2026-06-21 自己出图 coax/knead 各 6 帧 → 合成 spritesheet row 17/18 → 接线 pet-nudge.ts → build/preview 验证)
 created: 2026-06-17
 branch: pet-home
 audience: 负责桌宠逐帧动画出图的 agent / 回来接手的自己
@@ -11,6 +11,14 @@ related:
 ---
 
 # 首页主动气泡 · 卖萌动作出图交接
+
+> **✅ 2026-06-21 收尾(改由本人出图,非交接)**:coax(撒娇翻肚皮)/ knead(踩奶招呼)
+> 各出 6 帧蓝幕条(gen.sh 锚 base.png + 产品内哑光帧风格锚 + 纠偏 prompt,coax 重出 2 次压
+> 玻璃眼/塑料光),hatch-cut 切帧 → 无损合成进 `public/pet/spritesheet.webp` 第 17/18 行
+> (新尺寸 1664×4256,19 行);`PetSprite.tsx` 加 `coax`(hold 定格翻肚)/`knead`(loop 踩奶)
+> 两态;`pet-nudge.ts` 接线:护理提醒→coax、搭话邀请→knead、纯闲聊在两者间随机。
+> 84px 真实尺寸与现有猫一致(大图上的轻微亮面在产品尺寸糊掉),build 过、浏览器实渲 row17/18
+> 取格正确、零 console 错。下方为当时的出图需求,留档。
 
 ## 背景
 
