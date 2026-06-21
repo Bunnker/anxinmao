@@ -1,5 +1,7 @@
 // 猫档案与分诊相关的核心类型。
 
+import type { KnowledgePosterAttachment } from "@/types/knowledge-poster";
+
 export interface Vaccine {
   name: string;
   date: string; // ISO date
@@ -42,6 +44,7 @@ export type RiskTier = "red" | "yellow" | "green";
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  poster?: KnowledgePosterAttachment;
 }
 
 // 一次分诊或问答的记录 —— 按时间累积,构成猫的"长期记忆"。
@@ -63,10 +66,35 @@ export interface CatRecord {
   outcome?: "已就医" | "在家好转" | "未跟进";
 }
 
+// ── Tier B 蒸馏记忆(批3)——「关于这只猫 / 这位主人」的持久、稳定事实 ──
+// 由 /api/memory/extract 从对话蒸馏(LLM + 红线过滤),常驻注入 /api/behavior 的
+// 「【关于这只猫,你已经知道的】」背景画像块,让助手更懂用户(长时记忆)。
+// ⚠ 红线:绝不承载疾病标签 / 诊断 / 慢性病史(那些只走 Cat.chronicConditions / allergies
+// 结构化档案);短命症状不进 cat_fact;判级评价不进记忆。详见 lib/behavior-memory.ts 过滤。
+export type MemoryKind = "cat_fact" | "owner_note" | "care_pref";
+
+export interface MemoryItem {
+  id: string;
+  kind: MemoryKind; // cat_fact=猫稳定特质/习惯(非症状) owner_note=主人反复担忧/沟通偏好 care_pref=喂养/护理偏好
+  text: string; // 已蒸馏并清洗的一句事实(无病名/症状/注入/PII)
+  source: "chat" | "triage" | "profile";
+  createdAt: string; // ISO,首次写入
+  lastSeenAt: string; // ISO,再被提及即刷新 —— LRU 淘汰依据 + 召回排序
+  ttlDays?: number; // 仅「可能短命」的事实给;稳定特质不设 = 永不过期
+}
+
+export interface CatMemory {
+  catId: string; // 跨猫隔离硬边界 —— 召回/写入/删猫都按它过滤,A 猫记忆绝不串 B 猫
+  items: MemoryItem[];
+  updatedAt: string; // ISO
+}
+
 // localStorage 持久化结构。
 // 数据层按"多只猫"设计(留接口),MVP 的 UI 只做单猫。
 export interface Store {
   cats: Cat[];
   activeCatId: string | null;
   records: CatRecord[];
+  // 批3 Tier B 蒸馏记忆,按 catId 索引;可选 —— 老 store 没此字段,loadStore 容忍缺失。
+  memory?: CatMemory[];
 }

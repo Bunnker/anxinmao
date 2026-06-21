@@ -15,6 +15,7 @@ import {
   checkBehaviorReplySafety,
 } from "@/lib/behavior-response-safety";
 import { runBehaviorAgentTools } from "@/lib/behavior-agent";
+import { buildEpisodeRecall, buildMemoryRecall } from "@/lib/behavior-memory";
 import { classifyBehaviorIntent } from "@/lib/behavior-intent";
 import { catProfileContext } from "@/lib/cat-profile-context";
 import { medicineProductPolicyContext } from "@/lib/medicine-products";
@@ -25,6 +26,10 @@ import {
   normalizeClaimIds,
   parseRiskTier,
 } from "@/lib/medical-knowledge";
+import {
+  encodeKnowledgePosterHeader,
+  selectKnowledgePosterAttachment,
+} from "@/lib/knowledge-poster-attachments";
 import { checkAndConsume, getClientIp, rateLimitMessage } from "@/lib/ratelimit";
 
 const SYSTEM_PROMPT = `你是「一位懂猫的朋友」—— 面向新手猫主人的养猫顾问。养育问题和健康疑问都能聊。
@@ -130,6 +135,8 @@ export async function POST(req: Request): Promise<Response> {
     messages?: unknown;
     cat?: unknown;
     memo?: unknown;
+    history?: unknown;
+    memory?: unknown;
     medical?: unknown;
     symptom?: unknown;
     tier?: unknown;
@@ -180,6 +187,12 @@ export async function POST(req: Request): Promise<Response> {
     str(nestedMedical.report) ?? str((b as { report?: unknown }).report) ?? ""
   ).slice(0, 600);
   const qaSummary = (str(nestedMedical.qa) ?? "").slice(0, 800);
+  // Tier A 既往档案回忆 —— 前端传来当前猫的 EpisodeInput[](已剥离 PII、排除当前会话),
+  // 服务端单一可信源派生护栏化回忆块(白名单症状 + 注入过滤 + 截断)。见 lib/behavior-memory.ts。
+  const episodeRecall = buildEpisodeRecall(b.history);
+  // Tier B 蒸馏记忆 —— 前端传来当前猫的 {kind,text}[](来自 getCatMemory),服务端召回前
+  // 再过一遍全套红线过滤(病名/症状/判级/注入/PII),派生「已知背景」画像块。
+  const memoryRecall = buildMemoryRecall(b.memory);
   const intent = classifyBehaviorIntent({
     query,
     ...medicalInput,
@@ -207,6 +220,13 @@ export async function POST(req: Request): Promise<Response> {
 
   // 把上游分诊判级作为强信号注入,防止 LLM 自主软化为更轻档(I-001 修复)
   const upstreamTier = parseRiskTier(nestedMedical.tier ?? b.tier);
+  const posterAttachment = selectKnowledgePosterAttachment({
+    medicalCardIds: medical.cardIds,
+    careCardIds: agent.careCardIds,
+    tier: upstreamTier,
+    intent: intent.intent,
+  });
+  const posterHeader = encodeKnowledgePosterHeader(posterAttachment);
   const tierSignal: ChatMessage | null = upstreamTier
     ? {
         role: "system" as const,
@@ -223,6 +243,15 @@ export async function POST(req: Request): Promise<Response> {
     ...(tierSignal ? [tierSignal] : []),
     { role: "system", content: regionPrompt(region) },
     ...(ctx ? [{ role: "system" as const, content: ctx }] : []),
+    // Tier A 既往回忆 —— 紧跟猫档案(同属「这只猫的背景」),且在 tierSignal 之后:
+    // 判级铁律先建立,既往档案只能作背景被它约束,绝不反向改判级(红线护栏 2)。
+    ...(episodeRecall
+      ? [{ role: "system" as const, content: episodeRecall }]
+      : []),
+    // Tier B 蒸馏画像 —— 紧跟 Tier A、仍在 tierSignal 之后:背景画像绝不改判级。
+    ...(memoryRecall
+      ? [{ role: "system" as const, content: memoryRecall }]
+      : []),
     ...(medical.prompt
       ? [{ role: "system" as const, content: medical.prompt }]
       : []),
@@ -280,8 +309,11 @@ export async function POST(req: Request): Promise<Response> {
       intentPreview: intent,
       agentPlanPreview: agent.plan,
       catProfilePreview: ctx ?? "",
+      episodeRecallPreview: episodeRecall ?? "",
+      memoryRecallPreview: memoryRecall ?? "",
       careKnowledgePreview: agent.carePrompt.slice(0, 4000),
       careCardIds: agent.careCardIds,
+      posterAttachmentPreview: posterAttachment,
       evidence: {
         claimIds: medical.claimIds,
         cardIds: medical.cardIds,
@@ -305,11 +337,14 @@ export async function POST(req: Request): Promise<Response> {
       Boolean(medicineProductPolicy) ||
       intent.intent === "product_or_medicine" ||
       upstreamTier === "red";
-    const headers = {
+    const headers: Record<string, string> = {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Accel-Buffering": "no",
     };
+    if (posterHeader) {
+      headers["X-Knowledge-Poster"] = posterHeader;
+    }
 
     if (guardedResponse) {
       const reply = await chat(fullMessages, {

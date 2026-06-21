@@ -1,0 +1,891 @@
+{
+  "generatedAt": "2026-06-18T06:49:23.936Z",
+  "count": 43,
+  "format": "png",
+  "mobileTarget": "portrait 9:16, mostly 941x1672 or 1080x1920",
+  "style": "xhs-scrapbook-watercolor-cat-care-v1",
+  "purpose": "multimodal retrieval poster images bound to local cat care and medical knowledge cards",
+  "items": [
+    {
+      "id": "care-nail-trimming",
+      "title": "剪指甲训练",
+      "kind": "care",
+      "priority": 1,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-nail-trimming.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-nail-trimming-xhs-style-v1.png",
+      "tags": [
+        "剪指甲训练",
+        "先脱敏,只剪透明尖尖",
+        "摸爪奖励",
+        "按出指甲",
+        "熟悉工具",
+        "剪透明尖"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-dyspnea",
+      "title": "呼吸异常",
+      "kind": "medical",
+      "priority": 1,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-dyspnea.ai-card.md",
+        "docs/medical/source/cat-dyspnea.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-dyspnea-xhs-style-v1.png",
+      "tags": [
+        "呼吸异常",
+        "猫张口喘不是普通累了",
+        "张口喘",
+        "费力呼吸",
+        "颜色变化",
+        "安全运输"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-emergency-red-flags",
+      "title": "通用急诊红旗",
+      "kind": "medical",
+      "priority": 1,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-emergency-red-flags.ai-card.md",
+        "docs/medical/source/cat-emergency-red-flags.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-emergency-red-flags-xhs-style-v1.png",
+      "tags": [
+        "通用急诊红旗",
+        "命中这些信号,不要继续在家观察",
+        "呼吸红旗",
+        "排尿红旗",
+        "误食红旗",
+        "神经/休克"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-general-triage",
+      "title": "通用分诊入口",
+      "kind": "medical",
+      "priority": 1,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-general-triage.ai-card.md",
+        "docs/medical/source/cat-general-triage.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-general-triage-xhs-style-v1.png",
+      "tags": [
+        "通用分诊入口",
+        "先排急症,再转具体症状或日常护理",
+        "第一问红旗",
+        "看状态时长",
+        "转具体路径",
+        "日常护理边界"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-seizure-neurologic-emergency",
+      "title": "抽搐/神经急症",
+      "kind": "medical",
+      "priority": 1,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-seizure-neurologic-emergency.ai-card.md",
+        "docs/medical/source/cat-seizure-neurologic-emergency.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-seizure-neurologic-emergency-xhs-style-v1.png",
+      "tags": [
+        "抽搐/神经急症",
+        "保护安全,记录时间,别伸手进嘴",
+        "先计时",
+        "清开周围",
+        "看次数",
+        "带视频"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-toxin-ingestion",
+      "title": "误食/中毒风险",
+      "kind": "medical",
+      "priority": 1,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-toxin-ingestion.ai-card.md",
+        "docs/medical/source/cat-toxin-ingestion.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-toxin-ingestion-xhs-style-v1.png",
+      "tags": [
+        "误食/中毒风险",
+        "先收集信息,不要自行处理",
+        "先问吃了什么",
+        "记录三件事",
+        "看伴随症状",
+        "联系路径"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-trauma-first-aid",
+      "title": "创伤急救与转运",
+      "kind": "medical",
+      "priority": 1,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-trauma-first-aid.ai-card.md",
+        "docs/medical/source/cat-trauma-first-aid.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-trauma-first-aid-xhs-style-v1.png",
+      "tags": [
+        "创伤急救与转运",
+        "止血、少搬动、尽快联系医院",
+        "先看ABC",
+        "出血按压",
+        "少搬动",
+        "带信息"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-urethral-obstruction",
+      "title": "尿不出硬急症",
+      "kind": "medical",
+      "priority": 1,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-urethral-obstruction.ai-card.md",
+        "docs/medical/source/cat-urethral-obstruction.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-urethral-obstruction-xhs-style-v1.png",
+      "tags": [
+        "尿不出硬急症",
+        "频繁蹲砂但没尿,优先排尿闭",
+        "先看尿量",
+        "公猫更急",
+        "疼痛信号",
+        "带上记录"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-anorexia",
+      "title": "猫不吃/食欲下降",
+      "kind": "medical",
+      "priority": 2,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-anorexia.ai-card.md",
+        "docs/medical/source/cat-anorexia.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-anorexia-xhs-style-v1.png",
+      "tags": [
+        "猫不吃/食欲下降",
+        "看时长、年龄和是否想吃但吃不了",
+        "看持续多久",
+        "幼猫更短",
+        "真假厌食",
+        "宿主风险"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-bleeding",
+      "title": "看到血/出血",
+      "kind": "medical",
+      "priority": 2,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-bleeding.ai-card.md",
+        "docs/medical/source/cat-bleeding.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-bleeding-xhs-style-v1.png",
+      "tags": [
+        "看到血/出血",
+        "先止血,再判断来源和休克",
+        "直接按压",
+        "看止不止",
+        "看牙龈",
+        "查来源"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-constipation-straining",
+      "title": "便秘/排便用力",
+      "kind": "medical",
+      "priority": 2,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-constipation-straining.ai-card.md",
+        "docs/medical/source/cat-constipation-straining.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-constipation-straining-xhs-style-v1.png",
+      "tags": [
+        "便秘/排便用力",
+        "先分清尿不出还是拉不出",
+        "先看尿团",
+        "看最后排便",
+        "看全身",
+        "宿主风险"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-diarrhea",
+      "title": "猫腹泻",
+      "kind": "medical",
+      "priority": 2,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-diarrhea.ai-card.md",
+        "docs/medical/source/cat-diarrhea.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-diarrhea-xhs-style-v1.png",
+      "tags": [
+        "猫腹泻",
+        "便便形态 + 精神食欲一起看",
+        "看颜色",
+        "看频率",
+        "看全身",
+        "幼猫更急"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-ear-problem",
+      "title": "耳朵问题",
+      "kind": "medical",
+      "priority": 2,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-ear-problem.ai-card.md",
+        "docs/medical/source/cat-ear-problem.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-ear-problem-xhs-style-v1.png",
+      "tags": [
+        "耳朵问题",
+        "先排头歪走不稳,再谈清洁",
+        "先排平衡",
+        "看外耳",
+        "问风险",
+        "可做记录"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-eye-problem",
+      "title": "眼睛问题",
+      "kind": "medical",
+      "priority": 2,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-eye-problem.ai-card.md",
+        "docs/medical/source/cat-eye-problem.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-eye-problem-xhs-style-v1.png",
+      "tags": [
+        "眼睛问题",
+        "疼痛、外伤、浑浊优先当天处理",
+        "先看疼痛",
+        "看眼球",
+        "问外伤",
+        "记录变化"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-heatstroke-weather-hazard",
+      "title": "高温/中暑风险",
+      "kind": "medical",
+      "priority": 2,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-heatstroke-weather-hazard.ai-card.md",
+        "docs/medical/source/cat-heatstroke-weather-hazard.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-heatstroke-weather-hazard-xhs-style-v1.png",
+      "tags": [
+        "高温/中暑风险",
+        "先降温通风,同时联系医院",
+        "看暴露",
+        "看呼吸",
+        "温和降温",
+        "记录时间"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-lethargy",
+      "title": "精神差/嗜睡",
+      "kind": "medical",
+      "priority": 2,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-lethargy.ai-card.md",
+        "docs/medical/source/cat-lethargy.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-lethargy-xhs-style-v1.png",
+      "tags": [
+        "精神差/嗜睡",
+        "系统性风险入口,先排硬红旗",
+        "叫不醒",
+        "看呼吸",
+        "看牙龈",
+        "看吃喝尿"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-uri",
+      "title": "打喷嚏/流鼻涕",
+      "kind": "medical",
+      "priority": 2,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-uri.ai-card.md",
+        "docs/medical/source/cat-uri.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-uri-xhs-style-v1.png",
+      "tags": [
+        "打喷嚏/流鼻涕",
+        "轻症观察,呼吸和不吃要升级",
+        "看呼吸",
+        "看进食",
+        "看口腔",
+        "做记录"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "cat-vomiting",
+      "title": "猫呕吐",
+      "kind": "medical",
+      "priority": 2,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-vomiting.ai-card.md",
+        "docs/medical/source/cat-vomiting.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-vomiting-xhs-style-v1.png",
+      "tags": [
+        "猫呕吐",
+        "频率和伴随症状决定急不急",
+        "先数次数",
+        "看内容",
+        "看状态",
+        "看误食"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "care-kitten-feeding",
+      "title": "幼猫喂养频率",
+      "kind": "care",
+      "priority": 3,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-kitten-feeding.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-kitten-feeding-xhs-style-v1.png",
+      "tags": [
+        "幼猫喂养频率",
+        "按年龄阶段,看体重和便便",
+        "4周以下",
+        "4-8周",
+        "2-6月龄",
+        "6月龄后"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "care-nutrition-weight-bcs",
+      "title": "营养/体重/体况",
+      "kind": "care",
+      "priority": 3,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-nutrition-weight-bcs.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-nutrition-weight-bcs-xhs-style-v1.png",
+      "tags": [
+        "营养/体重/体况",
+        "别只问几克,要看体况和热量",
+        "看体况",
+        "算热量",
+        "慢慢减重",
+        "记录7天"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "care-parasite-prevention-zoonosis",
+      "title": "驱虫/寄生虫预防",
+      "kind": "care",
+      "priority": 3,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-parasite-prevention-zoonosis.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-parasite-prevention-zoonosis-xhs-style-v1.png",
+      "tags": [
+        "驱虫/寄生虫预防",
+        "按猫和家庭风险,不要自行混药",
+        "问风险",
+        "室内不等于零",
+        "同住动物",
+        "家庭防护"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "care-reproduction-neonatal-kitten",
+      "title": "怀孕分娩/新生幼猫",
+      "kind": "care",
+      "priority": 3,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-reproduction-neonatal-kitten.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-reproduction-neonatal-kitten-xhs-style-v1.png",
+      "tags": [
+        "怀孕分娩/新生幼猫",
+        "繁殖和手养奶猫要保守处理",
+        "母猫异常",
+        "保温优先",
+        "喂养频率",
+        "体重记录"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "ai-imagegen"
+    },
+    {
+      "id": "care-toothbrushing-training",
+      "title": "刷牙训练",
+      "kind": "care",
+      "priority": 3,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-toothbrushing-training.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-toothbrushing-training-xhs-style-v1.png",
+      "tags": [
+        "刷牙训练",
+        "健康口腔训练,不是疼痛时硬刷",
+        "碰嘴1秒",
+        "逐步扩大",
+        "猫用牙膏",
+        "外侧牙面"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-vaccine-schedule-reactions",
+      "title": "疫苗与疫苗后观察",
+      "kind": "care",
+      "priority": 3,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-vaccine-schedule-reactions.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-vaccine-schedule-reactions-xhs-style-v1.png",
+      "tags": [
+        "疫苗与疫苗后观察",
+        "不是固定答案,按风险评估",
+        "带免疫史",
+        "核心讨论",
+        "当天休息",
+        "问下一针"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "cat-behavior-change",
+      "title": "行为突然变化",
+      "kind": "medical",
+      "priority": 3,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-behavior-change.ai-card.md",
+        "docs/medical/source/cat-behavior-change.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-behavior-change-xhs-style-v1.png",
+      "tags": [
+        "行为突然变化",
+        "先排疼痛和身体病,再谈行为训练",
+        "摸到就咬",
+        "伴身体症状",
+        "看神经",
+        "记录变化"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "cat-limping",
+      "title": "跛行/走路异常",
+      "kind": "medical",
+      "priority": 3,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-limping.ai-card.md",
+        "docs/medical/source/cat-limping.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-limping-xhs-style-v1.png",
+      "tags": [
+        "跛行/走路异常",
+        "从小伤到硬急症,先排后腿瘫软",
+        "后腿突然瘫",
+        "不能负重",
+        "问外伤",
+        "限制活动"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "cat-oral-problem",
+      "title": "口腔问题",
+      "kind": "medical",
+      "priority": 3,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-oral-problem.ai-card.md",
+        "docs/medical/source/cat-oral-problem.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-oral-problem-xhs-style-v1.png",
+      "tags": [
+        "口腔问题",
+        "疼痛口腔不靠刷牙解决",
+        "先排异物",
+        "看疼痛",
+        "护理边界",
+        "产品边界"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "cat-skin-problem",
+      "title": "皮肤痒/掉毛/猫癣疑似",
+      "kind": "medical",
+      "priority": 3,
+      "sourceDocs": [
+        "docs/medical/ai-cards/cat-skin-problem.ai-card.md",
+        "docs/medical/source/cat-skin-problem.source.md"
+      ],
+      "image": "/knowledge-posters/generated-style/cat-skin-problem-xhs-style-v1.png",
+      "tags": [
+        "皮肤痒/掉毛/猫癣疑似",
+        "会传染给人,但先让兽医确诊",
+        "看破溃",
+        "看全身",
+        "问人和环境",
+        "确诊优先"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-carrier-vet-visit",
+      "title": "猫包/去医院训练",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-carrier-vet-visit.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-carrier-vet-visit-xhs-style-v1.png",
+      "tags": [
+        "猫包/去医院训练",
+        "平时打开猫包,别只在看病日出现",
+        "生活区常驻",
+        "分步练习",
+        "出门准备",
+        "路上安全"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-chronic-kidney-endocrine-monitoring",
+      "title": "肾病/糖尿病/甲亢/高血压记录",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-chronic-kidney-endocrine-monitoring.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-chronic-kidney-endocrine-monitoring-xhs-style-v1.png",
+      "tags": [
+        "肾病/糖尿病/甲亢/高血压记录",
+        "不能靠聊天诊断,但能把记录做好",
+        "常见信号",
+        "每周称重",
+        "药物清单",
+        "问医生"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-enrichment-play",
+      "title": "玩耍/环境丰容",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-enrichment-play.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-enrichment-play-xhs-style-v1.png",
+      "tags": [
+        "玩耍/环境丰容",
+        "短而稳定,让猫抓到“猎物”",
+        "短互动",
+        "模拟猎物",
+        "结束奖励",
+        "环境点位"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-food-transition-picky-eating",
+      "title": "挑食/换粮",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-food-transition-picky-eating.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-food-transition-picky-eating-xhs-style-v1.png",
+      "tags": [
+        "挑食/换粮",
+        "先排不舒服,再稳定过渡",
+        "先排疾病",
+        "5-7天过渡",
+        "软便放慢",
+        "定时放饭"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-grooming-hairballs",
+      "title": "梳毛/掉毛/毛球",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-grooming-hairballs.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-grooming-hairballs-xhs-style-v1.png",
+      "tags": [
+        "梳毛/掉毛/毛球",
+        "少量多次,别用洗澡解决掉毛",
+        "短时间",
+        "顺毛轻梳",
+        "毛结边缘拆",
+        "减少吞毛"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-intercat-introduction-tension",
+      "title": "多猫关系/新猫引入",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-intercat-introduction-tension.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-intercat-introduction-tension-xhs-style-v1.png",
+      "tags": [
+        "多猫关系/新猫引入",
+        "隔离、气味交换、资源分散",
+        "安全房",
+        "气味交换",
+        "隔门喂食",
+        "短时见面"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-litter-box-habits",
+      "title": "猫砂盆习惯",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-litter-box-habits.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-litter-box-habits-xhs-style-v1.png",
+      "tags": [
+        "猫砂盆习惯",
+        "先把环境做好,再判断医疗信号",
+        "每天清洁",
+        "数量够",
+        "位置安全",
+        "换砂慢慢来"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-mobility-arthritis-home",
+      "title": "关节/行动变慢",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-mobility-arthritis-home.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-mobility-arthritis-home-xhs-style-v1.png",
+      "tags": [
+        "关节/行动变慢",
+        "老猫懒得动,可能是疼",
+        "看隐蔽信号",
+        "加台阶坡道",
+        "低入口砂盆",
+        "拍视频"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-new-home-hiding",
+      "title": "新猫到家躲藏",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-new-home-hiding.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-new-home-hiding-xhs-style-v1.png",
+      "tags": [
+        "新猫到家躲藏",
+        "这是确认安全,不是不喜欢你",
+        "安全屋",
+        "少打扰",
+        "固定作息",
+        "让猫决定"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-night-vocalization",
+      "title": "夜间叫/半夜扒门",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-night-vocalization.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-night-vocalization-xhs-style-v1.png",
+      "tags": [
+        "夜间叫/半夜扒门",
+        "先排健康问题,再调作息",
+        "睡前游戏",
+        "玩后小餐",
+        "白天丰容",
+        "别强化叫"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-play-biting",
+      "title": "咬手/扑腿",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-play-biting.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-play-biting-xhs-style-v1.png",
+      "tags": [
+        "咬手/扑腿",
+        "手只负责抚摸,猎物交给玩具",
+        "别用手逗",
+        "被咬就停",
+        "固定玩耍",
+        "玩后进食"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-scratching-furniture",
+      "title": "抓家具/抓沙发",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-scratching-furniture.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-scratching-furniture-xhs-style-v1.png",
+      "tags": [
+        "抓家具/抓沙发",
+        "这是正常需求,给替代物",
+        "正常需求",
+        "放对位置",
+        "材质匹配",
+        "奖励正确"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-senior-chronic-monitoring",
+      "title": "老年猫/慢病监测",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-senior-chronic-monitoring.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-senior-chronic-monitoring-xhs-style-v1.png",
+      "tags": [
+        "老年猫/慢病监测",
+        "记录变化,复诊前整理清楚",
+        "每周体重",
+        "吃喝尿便",
+        "活动变化",
+        "复诊材料"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-spay-neuter-postop-medication",
+      "title": "绝育术后/喂药",
+      "kind": "care",
+      "priority": 4,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-spay-neuter-postop-medication.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-spay-neuter-postop-medication-xhs-style-v1.png",
+      "tags": [
+        "绝育术后/喂药",
+        "执行出院医嘱,观察伤口和精神",
+        "以医嘱为准",
+        "防舔伤口",
+        "每天照片",
+        "核对药物"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    },
+    {
+      "id": "care-vet-summary",
+      "title": "整理给医生看的病情说明",
+      "kind": "care",
+      "priority": 5,
+      "sourceDocs": [
+        "docs/care/ai-cards/care-vet-summary.care-card.md"
+      ],
+      "image": "/knowledge-posters/generated-style/care-vet-summary-xhs-style-v1.png",
+      "tags": [
+        "整理给医生看的病情说明",
+        "只整理事实,不替医生下诊断",
+        "时间线",
+        "客观证据",
+        "处理经过",
+        "医生问题"
+      ],
+      "stylePromptVersion": "xhs-scrapbook-watercolor-cat-care-v1",
+      "generationMode": "local-scrapbook-fallback"
+    }
+  ]
+}
