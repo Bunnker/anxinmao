@@ -623,7 +623,8 @@ function PetNudge({
       return;
     }
     // 家具在按 sx 缩放的 wrapper 内,屏幕位移要除以 sx 换算回基准坐标
-    const sx = Math.min(1, (yardRef.current?.offsetWidth ?? YARD_BASE_W) / YARD_BASE_W);
+    // 与 contentScale 保持一致(已去掉 Math.min(1,…) 上限):屏位移除以真实缩放才换算对。
+    const sx = (yardRef.current?.offsetWidth ?? YARD_BASE_W) / YARD_BASE_W;
     const w = YARD_ITEMS[pr.k].w;
     const left = Math.round(
       Math.min(Math.max(0, YARD_BASE_W - w), Math.max(0, pr.startLeft + dx / sx)),
@@ -1421,7 +1422,9 @@ function PetNudge({
     // 看病/问答入口在底部 sheet;院子顶只留 小知识💡 + 使用说明? 两个图标(见下)。
     // 全屏 stage:院子内容层(345×280 设计坐标)整体上抬 floorLift,落到背景地面带;
     // floorLift 按实际院子高 yardH 比例,适配不同机身高度(地面在背景下部)。
-    const contentScale = Math.min(1, yardW / YARD_BASE_W);
+    // 不再 Math.min(1,…) 卡死在 1:那样比 345 宽的屏(手机/电脑)都只渲染 345、两侧留白、场景偏小。
+    // 直接按 yardW/345 等比放大填满列宽(列 max-w-430,所以最多 ~1.25×),手机端场景明显变宽变大。
+    const contentScale = yardW / YARD_BASE_W;
     const floorLift = Math.round(yardH * 0.12);
     return (
       <>
