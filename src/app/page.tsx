@@ -1437,7 +1437,7 @@ function PetNudge({
         onContextMenu={(e) => e.preventDefault()}
         style={{
           // 院子高度:手机端尽量撑满(少留底部、抬高上限),沉浸感更强;CTA 仍在下方可滚到。
-          height: "clamp(420px, calc(100dvh - 270px), 760px)",
+          height: "clamp(420px, calc(100dvh - 190px), 820px)",
           WebkitTouchCallout: "none",
           WebkitUserSelect: "none",
           userSelect: "none",
