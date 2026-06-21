@@ -1427,7 +1427,8 @@ function PetNudge({
       <>
       <section
         ref={yardRef}
-        className="relative isolate min-h-0 flex-1 overflow-hidden"
+        className="relative isolate min-h-[380px] flex-none overflow-hidden"
+        style={{ height: "clamp(380px, calc(100dvh - 330px), 620px)" }}
         aria-label={`${cat.name}的家`}
       >
         {/* 院子背景:codex 出的温馨房间图(暖墙 + 右上窗户/窗台 + 浅木地板 + 窗边暖光斑)。
@@ -2182,7 +2183,7 @@ export default function HomePage() {
     <>
       {guide}
       <main
-        className="relative mx-auto flex h-dvh max-w-[430px] flex-col overflow-hidden"
+        className="relative mx-auto flex min-h-dvh max-w-[430px] flex-col overflow-x-hidden"
         style={{ background: "var(--paper)" }}
       >
         {/* 全屏 stage:沉浸院子 —— 浮动问候 / 小知识💡 / 「?」/ floor 道具栏 / 搭话泡全在 PetNudge 内 */}
