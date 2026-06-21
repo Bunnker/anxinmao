@@ -146,8 +146,9 @@ const YARD_ITEMS = {
   box: { src: "/pet/items/box.webp", alt: "纸箱", left: 257, bottom: 88, w: 88 },
   bowl: { src: "/pet/items/bowl.webp", alt: "水碗", left: 25, bottom: 46, w: 44 },
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 240, bottom: 0, w: 36 },
-  // codex 出的新家具(可拖):猫抓板 —— 走过去挠抓
-  scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 124, bottom: 100, w: 78 },
+  // 可拖家具:猫抓板(立式麻绳磨爪柱 + 宽圆底座)—— 走过去站起来挠柱。
+  // w/left/bottom 调到让静态柱 ≈ 挠柱合成图里的柱子(切换不跳),见 SCRATCH_W/DX/DY。
+  scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 129, bottom: 84, w: 68 },
   // 墙角小地毯:垫在地上的「地面物」(渲染 z 压到家具下、猫上 → 猫站毯上),走过去坐下洗脸
   rug: { src: "/pet/items/rug.webp", alt: "小地毯", left: 100, bottom: 9, w: 104 },
 } as const;
@@ -160,13 +161,12 @@ const CAT_SCRATCH_FRAMES = [0, 1, 2, 3, 4, 5, 6, 7].map(
 // 播放序:0→7 下挠到底,再 6→1 抬回顶 = ping-pong 连续上下挠(身体稳,只爪上下滑)。
 const SCRATCH_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1];
 const SCRATCH_MS = 110;
-// 显示宽 134 → 板=78(=scratch.webp.w);相对板原点偏移(猫在板左):
-// 134→170:旧版挠板猫显著小于常态(idle 猫显示 84×91,猫头 ~50px;@134 时合成图里猫头仅 ~40px,
-// 整只「缩小一圈」)。挠板是直立侧身瘦姿、idle 是圆胖正脸坐姿——按「同一只猫=头一样大」对齐:
-// W=170 时实测挠板猫头 ~47px ≈ idle 猫头 ~50px,体量与常态一致(preview 真机截图核过)。
+// 立式磨爪柱版(2026-06-20 重设计):合成帧=猫站立挠麻绳柱,内容居中在 908×719 画布。
+// SCRATCH_W 定整体缩放,使站立猫体量 ≈ 常态 idle 猫;DX/DY 把合成图摆到柱位,并让帧里
+// 的柱子与静态 scratch.webp(layout.scratch)重合 —— 切换不跳。真机截图逐项核过。
 const SCRATCH_W = 170;
-const SCRATCH_DX = -70; // 帧 left = layout.scratch.left + DX(放大后补偿,保持内容水平居中在板位)
-const SCRATCH_DY = -18; // 帧 bottom = layout.scratch.bottom + DY
+const SCRATCH_DX = -75; // 帧 left = layout.scratch.left + DX(柱在帧右侧,补偿后柱子落到静态柱位)
+const SCRATCH_DY = -2; // 帧 bottom = layout.scratch.bottom + DY(柱底贴静态柱底)
 // 梳毛 2 帧(codex 专门画的「疏毛动作」,非复用素材):针梳贴后背 上↔下 来回梳。
 // 梳毛在猫的实时位置发生(不是固定家具),所以盖在 roam.x/roam.y 上、藏掉实时精灵。
 // 梳毛动作 → 帧序列(brushFrame 在序列里 ping-pong 来回播)。
