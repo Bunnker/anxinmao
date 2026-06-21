@@ -520,7 +520,9 @@ function PetNudge({
     pounceVariant?: string;
     // carry(叼走)阶段:catch 扑叼原位 / walk 叼着平移 / bite 到位咬
     carryPhase?: "catch" | "walk" | "bite";
-  }>({ kind: "sit", x: 4, y: 58, facing: "right", dur: 0 });
+    // 初始落在前方中间空地:旧值 x:4 会让猫压在左侧水碗/猫窝上,进入态看着像「半截陷进白碗」。
+    // 前方(y 小)中央 → 在家具前面、不压任何道具,整只猫完整露出。
+  }>({ kind: "sit", x: 140, y: 28, facing: "right", dur: 0 });
   // 减弱动效偏好或页面隐藏时不漫游;藏页瞬间散步中的猫就地坐下,回来不跳位
   const [calm, setCalm] = useState(false);
 
