@@ -148,7 +148,7 @@ const YARD_ITEMS = {
   yarn: { src: "/pet/items/yarn.webp", alt: "毛线球", left: 240, bottom: 0, w: 36 },
   // 可拖家具:猫抓板(立式麻绳磨爪柱 + 宽圆底座)—— 走过去站起来挠柱。
   // w/left/bottom 调到让静态柱 ≈ 挠柱合成图里的柱子(切换不跳),见 SCRATCH_W/DX/DY。
-  scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 129, bottom: 84, w: 68 },
+  scratch: { src: "/pet/items/scratch.webp", alt: "猫抓板", left: 134, bottom: 84, w: 48 },
   // 墙角小地毯:垫在地上的「地面物」(渲染 z 压到家具下、猫上 → 猫站毯上),走过去坐下洗脸
   rug: { src: "/pet/items/rug.webp", alt: "小地毯", left: 100, bottom: 9, w: 104 },
 } as const;
@@ -158,11 +158,10 @@ type ItemKey = keyof typeof YARD_ITEMS;
 const CAT_SCRATCH_FRAMES = [0, 1, 2, 3, 4, 5, 6, 7].map(
   (i) => `/pet/items/cat-scratch-${i}.webp`,
 );
-// 播放序:ping-pong 连续上下挠(身体稳,只爪上下滑)。
-// ⚠️ 只用帧 3-7:gpt-image-2 把帧 0/1/2(抬手最高那几帧)的柱子画细了/带黑洞(柱子跨帧不一致、
-// 动画一播柱子忽细忽粗显「展示不全」)。而 3-7 柱子一致完整;且 0-2 的抬手高度与 3-5 几乎相同
-// (爪顶仅差 ~5px),丢掉它们几乎不损失下挠幅度,却甩掉了坏柱子。坏帧文件保留但不入序列。
-const SCRATCH_ORDER = [3, 4, 5, 6, 7, 6, 5, 4];
+// 播放序:0→7 下挠到底再 6→1 抬回顶 = ping-pong 连续上下挠(身体稳,只爪上下滑)。
+// 用「高柱版」帧(cat-scratch-*=ps8c):柱子又高又完整、8 帧跨帧一致、柱头始终在猫上方
+// —— 解决「猫挡住柱子/柱太短看不全」。静态柱 scratch.webp 也换成同款高柱(layout.scratch)。
+const SCRATCH_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1];
 const SCRATCH_MS = 110;
 // 立式磨爪柱版(2026-06-20 重设计):合成帧=猫站立挠麻绳柱,内容居中在 908×719 画布。
 // SCRATCH_W 定整体缩放,使站立猫体量 ≈ 常态 idle 猫;DX/DY 把合成图摆到柱位,并让帧里
