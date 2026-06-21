@@ -31,6 +31,8 @@ export function HealthFootprint({ records }: { records: CatRecord[] }) {
       </section>
     );
   }
+  // 一次性算「30 天前」截点:render 里读 Date.now 只用于过滤、无副作用,毫秒级误差无关。
+  // eslint-disable-next-line react-hooks/purity
   const cutoff = Date.now() - 30 * 86400000;
   const recent30 = records.filter((r) => {
     const t = new Date(r.date).getTime();

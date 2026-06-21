@@ -198,8 +198,9 @@ export default function PetSprite({
     };
   }, []);
 
-  // 场景或重播信号变化时,放下手头的小动作,有正事说事
+  // 场景或重播信号变化时,放下手头的小动作,有正事说事(state/playKey 变即重置,故意如此)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFlourish(null);
   }, [state, playKey]);
 
@@ -214,8 +215,9 @@ export default function PetSprite({
     return () => clearTimeout(t);
   }, [idleFlourish, state, flourish, ready, still, paused]);
 
-  // 逐帧步进:loop 循环 / hold 播到定格帧停;状态切换从第 0 帧重来
+  // 逐帧步进:loop 循环 / hold 播到定格帧停;状态切换从第 0 帧重来(故意:换动作必须从头播)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFrame(0);
     if (!ready || still || paused) return;
     const cfg = ROWS[shown];

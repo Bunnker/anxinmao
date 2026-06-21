@@ -124,6 +124,8 @@ export default function RecordsPage() {
   const stats = useMemo(() => {
     const triage = records.filter((r) => r.kind === "triage");
     const behavior = records.filter((r) => r.kind === "behavior");
+    // 一次性算「30 天前」截点:只用于过滤统计、无副作用,毫秒级误差无关。
+    // eslint-disable-next-line react-hooks/purity
     const cutoff = Date.now() - 30 * 86400000;
     const recent30 = records.filter((r) => {
       const t = new Date(r.date).getTime();
