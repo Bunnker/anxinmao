@@ -6,10 +6,21 @@
 import { useState } from "react";
 import type { RiskTier } from "@/types/cat";
 
+// ⚠️ canvas 吃不了 CSS 变量,以下色值是 globals.css 对应 token 的 canvas 镜像 ——
+// 改 globals.css 的 token 时,务必同步改这里(否则分享图配色不跟主题)。
+// 风险三色 = 信号本体(--red/--amber/--green + 各自浅底)。
 const TIER_COLOR: Record<RiskTier, { main: string; soft: string }> = {
-  red: { main: "#d92d20", soft: "#fbe9e7" },
-  yellow: { main: "#b97900", soft: "#f7efdc" },
-  green: { main: "#238146", soft: "#e7f1ea" },
+  red: { main: "#d92d20", soft: "#fbe9e7" }, // --red
+  yellow: { main: "#b97900", soft: "#f7efdc" }, // --amber
+  green: { main: "#238146", soft: "#e7f1ea" }, // --green
+};
+// 分享卡中性色板(= globals.css token 的 canvas 镜像,改 token 须同步)。
+const SHARE_PALETTE = {
+  bg: "#f7f6f3", // = --paper
+  ink: "#1a1a18", // = --ink
+  inkSoft: "#6f6c66", // ≈ --ink-soft(正文)
+  muted: "#8a8782", // 次要文字(品牌行 / 条目点 / 免责)
+  divider: "#e3e0da", // 分隔线
 };
 
 type Props = {
@@ -77,7 +88,7 @@ function drawCard(props: Props): HTMLCanvasElement {
   const ctx = canvas.getContext("2d")!;
 
   // 背景
-  ctx.fillStyle = "#f7f6f3";
+  ctx.fillStyle = SHARE_PALETTE.bg;
   ctx.fillRect(0, 0, W, h);
 
   let y = 64;
@@ -86,7 +97,7 @@ function drawCard(props: Props): HTMLCanvasElement {
   ctx.beginPath();
   ctx.arc(P + 8, y - 8, 8, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#8a8782";
+  ctx.fillStyle = SHARE_PALETTE.muted;
   ctx.font = `600 26px ${SANS}`;
   ctx.fillText("小猫怎么了 · 安心报告", P + 30, y);
   y += 56;
@@ -103,7 +114,7 @@ function drawCard(props: Props): HTMLCanvasElement {
   y += 84;
 
   // headline(衬线大标题)
-  ctx.fillStyle = "#1a1a18";
+  ctx.fillStyle = SHARE_PALETTE.ink;
   ctx.font = `600 40px ${SERIF}`;
   for (const ln of headlineLines) {
     ctx.fillText(ln, P, y);
@@ -112,7 +123,7 @@ function drawCard(props: Props): HTMLCanvasElement {
   y += 8;
 
   // lead
-  ctx.fillStyle = "#6f6c66";
+  ctx.fillStyle = SHARE_PALETTE.inkSoft;
   ctx.font = `28px ${SANS}`;
   for (const ln of leadLines) {
     ctx.fillText(ln, P, y);
@@ -121,7 +132,7 @@ function drawCard(props: Props): HTMLCanvasElement {
   y += 28;
 
   // 升级清单标题
-  ctx.fillStyle = props.tier === "green" ? "#1a1a18" : c.main;
+  ctx.fillStyle = props.tier === "green" ? SHARE_PALETTE.ink : c.main;
   ctx.font = `600 28px ${SANS}`;
   ctx.fillText(props.escalateTitle, P, y);
   y += 48;
@@ -129,11 +140,11 @@ function drawCard(props: Props): HTMLCanvasElement {
   // 条目
   ctx.font = `28px ${SANS}`;
   for (const ls of itemLines) {
-    ctx.fillStyle = props.tier === "green" ? "#8a8782" : c.main;
+    ctx.fillStyle = props.tier === "green" ? SHARE_PALETTE.muted : c.main;
     ctx.beginPath();
     ctx.arc(P + 8, y - 9, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#1a1a18";
+    ctx.fillStyle = SHARE_PALETTE.ink;
     ls.forEach((ln, i) => {
       ctx.fillText(ln, P + 36, y + i * 42);
     });
@@ -142,13 +153,13 @@ function drawCard(props: Props): HTMLCanvasElement {
 
   // 底部免责
   y += 16;
-  ctx.strokeStyle = "#e3e0da";
+  ctx.strokeStyle = SHARE_PALETTE.divider;
   ctx.beginPath();
   ctx.moveTo(P, y);
   ctx.lineTo(W - P, y);
   ctx.stroke();
   y += 48;
-  ctx.fillStyle = "#8a8782";
+  ctx.fillStyle = SHARE_PALETTE.muted;
   ctx.font = `22px ${SANS}`;
   ctx.textAlign = "center";
   ctx.fillText("AI 整理 · 不能替代兽医 —— whatsupkitty.cn", W / 2, y);

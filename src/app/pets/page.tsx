@@ -31,14 +31,14 @@ const SEX_VIS: Record<Cat["sex"], { label: string; color: string; bg: string }> 
   {
     雌: { label: "♀ 母", color: "#c77fa0", bg: "#fbeaf1" },
     雄: { label: "♂ 公", color: "#5a90c2", bg: "#e6f0f8" },
-    不确定: { label: "性别未定", color: "#8a6f54", bg: "rgba(255,255,255,0.65)" },
+    不确定: { label: "性别未定", color: "var(--neutral-ink)", bg: "rgba(255,255,255,0.65)" },
   };
 
 // 护理徽章配色 —— 中性 / 陶土红,绝不取风险三色(红线)。
 const CARE_BADGE: Record<CareStatus, { color: string; bg: string }> = {
   done: { color: "var(--accent)", bg: "var(--accent-tint)" },
-  due: { color: "#8a6f54", bg: "#f0ebe2" },
-  no: { color: "var(--ink-soft)", bg: "#efece6" },
+  due: { color: "var(--neutral-ink)", bg: "var(--neutral-bg)" },
+  no: { color: "var(--ink-soft)", bg: "var(--neutral-bg)" },
 };
 
 // 健康记录时间轴 —— 真分诊记录的 tier 点/标签用红黄绿(合规:风险信号本体);
@@ -298,7 +298,7 @@ export default function PetsPage() {
           <Link
             href="/onboarding?add=1"
             aria-label="添加一只毛孩子"
-            className="grid size-[38px] flex-none place-items-center rounded-full border-[1.5px] border-dashed border-[#cdbfae] bg-white/35 text-[#9a7e62] transition active:scale-90"
+            className="grid size-[38px] flex-none place-items-center rounded-full border-[1.5px] border-dashed border-[var(--neutral-line)] bg-white/35 text-[var(--neutral-ink)] transition active:scale-90"
           >
             <svg
               width="18"
@@ -481,7 +481,7 @@ export default function PetsPage() {
             <button
               type="button"
               onClick={() => setAddSheet(true)}
-              className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-[1.5px] border-dashed border-[#d9d2c6] bg-white/45 text-caption text-ink-faint"
+              className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-[1.5px] border-dashed border-[var(--neutral-line)] bg-white/45 text-caption text-ink-faint"
             >
               <svg
                 width="20"
@@ -680,7 +680,7 @@ export default function PetsPage() {
                       )}
                       <span
                         className="relative z-[1] mt-[3px] size-3.5 rounded-full shadow-[0_0_0_3px_var(--paper)]"
-                        style={{ background: tv?.dot ?? "#cdbfae" }}
+                        style={{ background: tv?.dot ?? "var(--neutral-line)" }}
                       />
                     </div>
                     {href ? (

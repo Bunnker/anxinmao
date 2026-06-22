@@ -331,7 +331,7 @@ export default function RecordsPage() {
                   </span>
                   <span className="text-[12px] text-ink-soft">越多绿档越安心</span>
                 </div>
-                <div className="flex h-3.5 overflow-hidden rounded-full bg-[#efece6]">
+                <div className="flex h-3.5 overflow-hidden rounded-full bg-[var(--neutral-bg)]">
                   {(["green", "yellow", "red"] as const).map(
                     (k) =>
                       stats.tierN[k] > 0 && (
@@ -405,7 +405,7 @@ export default function RecordsPage() {
                     <span className="w-14 flex-none text-[13px] text-ink">
                       {name}
                     </span>
-                    <span className="h-[18px] flex-1 overflow-hidden rounded-md bg-[#f0ebe2]">
+                    <span className="h-[18px] flex-1 overflow-hidden rounded-md bg-[var(--neutral-bg)]">
                       <span
                         className="block h-full rounded-md"
                         style={{
@@ -498,7 +498,7 @@ export default function RecordsPage() {
                         )}
                         <span
                           className="relative z-[1] mt-[3px] size-3 rounded-full shadow-[0_0_0_3px_var(--paper)]"
-                          style={{ background: tv?.c ?? "#cdbfae" }}
+                          style={{ background: tv?.c ?? "var(--neutral-line)" }}
                         />
                       </div>
                       {href ? (

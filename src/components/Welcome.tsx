@@ -173,7 +173,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
             className="h-[54px] w-full rounded-[18px] px-4 text-[17px] font-semibold text-ink outline-none placeholder:text-[rgba(26,26,24,0.38)]"
             style={{
               border: "1px solid rgba(176,90,80,0.26)",
-              background: "#fffaf5",
+              background: "var(--warm-white)",
               boxShadow: "0 1px 0 rgba(255,255,255,0.8) inset",
             }}
           />
