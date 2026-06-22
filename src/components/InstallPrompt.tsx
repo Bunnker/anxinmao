@@ -21,13 +21,14 @@ function detectStandalone(): boolean {
 
 export function InstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
-  const [dismissed, setDismissed] = useState(true); // 默认 true,挂载后读真实值,避免闪现
-  const [standalone, setStandalone] = useState(true);
+  // 浏览器态用惰性初始化读(SSR 安全:服务端 window 守卫 → false;首屏 deferred 恒 null
+  // → 渲染 null,客户端读到真实值也不产生 hydration 不一致)。避免在 effect 里同步 setState。
+  const [dismissed, setDismissed] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem(INSTALL_DISMISS_KEY) === "1",
+  );
+  const [standalone, setStandalone] = useState(detectStandalone);
 
   useEffect(() => {
-    setStandalone(detectStandalone());
-    setDismissed(localStorage.getItem(INSTALL_DISMISS_KEY) === "1");
-
     const onPrompt = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);

@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   // iOS 主屏图标(Safari 优先用 apple-touch-icon,Android 用 manifest 里的)
   icons: {
     icon: "/icons/icon-192.png",
-    apple: "/icons/icon-192.png",
+    apple: "/icons/apple-touch-icon-180.png",
   },
 };
 
