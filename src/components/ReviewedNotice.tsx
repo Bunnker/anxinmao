@@ -7,7 +7,7 @@ export function ReviewedNotice({ className = "" }: { className?: string }) {
   return (
     <div
       className={
-        "flex gap-2.5 rounded-[22px] border border-[var(--line)] bg-white/70 px-3.5 py-3 shadow-[var(--shadow-control)] " +
+        "flex gap-2.5 rounded-xl border border-[var(--line)] bg-white/70 px-3.5 py-3 shadow-[var(--shadow-control)] " +
         className
       }
     >

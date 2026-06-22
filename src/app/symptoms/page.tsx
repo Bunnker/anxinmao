@@ -37,7 +37,7 @@ function SymptomCard({ s }: { s: Symptom }) {
   return (
     <Link
       href={`/triage?symptom=${s.id}`}
-      className="relative flex items-center gap-3 rounded-[22px] bg-surface px-4 py-3.5 shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.985]"
+      className="relative flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.985]"
     >
       {urgent && (
         <span
@@ -123,7 +123,7 @@ export default function SymptomsPage() {
 
       {/* 顶部主卡 */}
       <section className="pt-7">
-        <div className="rounded-[28px] bg-surface p-5 shadow-[var(--shadow-card)]">
+        <div className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]">
           <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
             它现在最让你担心的是?
           </h1>
@@ -149,7 +149,7 @@ export default function SymptomsPage() {
       {/* 其它 */}
       <Link
         href={`/triage?symptom=${soft.id}`}
-        className="mt-7 flex items-center justify-between rounded-[28px] border border-dashed border-[var(--line)] bg-white/55 px-5 py-4 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
+        className="mt-7 flex items-center justify-between rounded-2xl border border-dashed border-[var(--line)] bg-white/55 px-5 py-4 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
       >
         <span>
           <span className="text-[15px] text-ink">{soft.label}</span>

@@ -214,9 +214,9 @@ export default function RecordsPage() {
   if (!loaded) return <main className="min-h-dvh" aria-hidden="true" />;
 
   const secCls =
-    "mt-[18px] mb-2.5 ml-0.5 font-serif text-[15px] font-semibold tracking-wide text-ink";
+    "mt-4 mb-2.5 ml-0.5 font-serif text-[15px] font-semibold tracking-wide text-ink";
   const cardCls =
-    "rounded-[18px] bg-surface px-4 py-4 shadow-[var(--shadow-control)]";
+    "rounded-lg bg-surface px-4 py-4 shadow-[var(--shadow-control)]";
 
   return (
     <main
@@ -433,7 +433,7 @@ export default function RecordsPage() {
                   {(["已就医", "在家好转", "未跟进"] as const).map((k) => (
                     <div
                       key={k}
-                      className="flex-1 rounded-[13px] bg-paper px-2 py-2.5 text-center"
+                      className="flex-1 rounded-sm bg-paper px-2 py-2.5 text-center"
                     >
                       <div className="font-serif text-[18px] font-semibold text-ink">
                         {stats.fu[k]}
@@ -465,7 +465,7 @@ export default function RecordsPage() {
                     ? recordWhen(r.date)
                     : `${d.getMonth() + 1}月${d.getDate()}日 ${timeHM(r.date)}`;
                   const card = (
-                    <div className="flex-1 rounded-[14px] bg-surface px-3.5 py-3 shadow-[var(--shadow-control)]">
+                    <div className="flex-1 rounded-sm bg-surface px-3.5 py-3 shadow-[var(--shadow-control)]">
                       <p className="text-footnote leading-snug font-medium text-ink">
                         {r.summary}
                       </p>
@@ -497,7 +497,7 @@ export default function RecordsPage() {
                           <span className="absolute top-3.5 -bottom-1 w-0.5 bg-[var(--line)]" />
                         )}
                         <span
-                          className="relative z-[1] mt-[3px] size-3 rounded-full shadow-[0_0_0_3px_var(--paper)]"
+                          className="relative z-[1] mt-0.5 size-3 rounded-full shadow-[0_0_0_3px_var(--paper)]"
                           style={{ background: tv?.c ?? "var(--neutral-line)" }}
                         />
                       </div>

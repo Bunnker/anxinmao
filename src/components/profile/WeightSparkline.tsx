@@ -23,7 +23,7 @@ export function WeightSparkline({
   const lastPt = pts[pts.length - 1];
   const delta = Number((lastPt.kg - pts[0].kg).toFixed(1));
   return (
-    <div className="relative mt-3 rounded-[22px] bg-[var(--surface-2)] px-4 py-3">
+    <div className="relative mt-3 rounded-xl bg-[var(--surface-2)] px-4 py-3">
       <div className="flex items-baseline justify-between">
         <span className="text-[11px] text-ink-faint">
           体重记录 · {pts.length} 次

@@ -398,7 +398,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
 
       <section
         ref={coachRef}
-        className="guide-coach absolute overflow-y-auto rounded-[26px] border border-white/75 bg-[rgba(255,255,255,0.96)] p-4 text-ink shadow-[0_24px_70px_rgba(15,12,10,0.24),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl"
+        className="guide-coach absolute overflow-y-auto rounded-xl border border-white/75 bg-[rgba(255,255,255,0.96)] p-4 text-ink shadow-[0_24px_70px_rgba(15,12,10,0.24),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl"
         style={{ ...styles.coach, maxHeight: "calc(100dvh - 32px)" }}
       >
         <div className="flex items-start gap-3">
@@ -424,7 +424,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
         <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">
           {step.body}
         </p>
-        <p className="mt-2 rounded-[16px] bg-[var(--accent-soft)] px-3 py-2 text-caption leading-relaxed text-[var(--accent-deep)]">
+        <p className="mt-2 rounded-sm bg-[var(--accent-soft)] px-3 py-2 text-caption leading-relaxed text-[var(--accent-deep)]">
           {step.hint}
         </p>
 

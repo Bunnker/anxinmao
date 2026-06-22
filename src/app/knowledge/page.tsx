@@ -94,7 +94,7 @@ function CheckIcon() {
 
 function ItemCard({ item }: { item: Item }) {
   return (
-    <div className="overflow-hidden rounded-[28px] bg-surface shadow-[var(--shadow-card)]">
+    <div className="overflow-hidden rounded-2xl bg-surface shadow-[var(--shadow-card)]">
       {/* 顶部场景配图 + 「不必慌」信号 chips 叠在图底部 ——
           图传达「放松」氛围,chips 拎出 why 里的「这几项都正常 = 通常不必慌」标准,
           文字承担「升级条件」。三层递进,严格不画症状细节。
@@ -212,7 +212,7 @@ export default function KnowledgePage() {
       {/* 兜底:还是不放心 → 走分诊 */}
       <Link
         href="/symptoms"
-        className="mt-7 flex items-center justify-between rounded-[28px] border border-dashed border-[var(--line)] bg-white/55 px-5 py-4 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
+        className="mt-7 flex items-center justify-between rounded-2xl border border-dashed border-[var(--line)] bg-white/55 px-5 py-4 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
       >
         <span>
           <span className="block text-[15px] text-ink">还是不放心?</span>

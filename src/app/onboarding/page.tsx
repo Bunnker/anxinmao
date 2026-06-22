@@ -144,7 +144,7 @@ function EditCard({
       <p className="mb-2.5 ml-1 text-caption tracking-[0.08em] text-ink-faint">
         {title}
       </p>
-      <div className="rounded-[18px] bg-surface px-4 py-4 shadow-[var(--shadow-control)]">
+      <div className="rounded-lg bg-surface px-4 py-4 shadow-[var(--shadow-control)]">
         {hint && (
           <p className="mb-3 text-caption leading-relaxed text-ink-faint">
             {hint}
@@ -173,7 +173,7 @@ function IGroup({
       <p className="mb-2.5 ml-1 text-caption tracking-[0.08em] text-ink-faint">
         {label}
       </p>
-      <div className="overflow-hidden rounded-[18px] bg-surface shadow-[var(--shadow-control)]">
+      <div className="overflow-hidden rounded-lg bg-surface shadow-[var(--shadow-control)]">
         {children}
       </div>
     </div>
@@ -664,7 +664,7 @@ function OnboardingForm() {
                   type="button"
                   onClick={() => removeAlbumPhoto(index)}
                   aria-label="移除这张相册照片"
-                  className="relative aspect-square overflow-hidden rounded-[14px] bg-[var(--surface-2)] shadow-[var(--shadow-control)]"
+                  className="relative aspect-square overflow-hidden rounded-sm bg-[var(--surface-2)] shadow-[var(--shadow-control)]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -678,7 +678,7 @@ function OnboardingForm() {
                 </button>
               ))}
               {(draft.photos?.length ?? 0) < MAX_PROFILE_PHOTOS && (
-                <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-[14px] border-[1.5px] border-dashed border-[var(--line)] bg-white/60 text-ink-faint">
+                <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-sm border-[1.5px] border-dashed border-[var(--line)] bg-white/60 text-ink-faint">
                   <input
                     type="file"
                     accept="image/*"
@@ -727,7 +727,7 @@ function OnboardingForm() {
             {draft.vaccines.map((v, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 rounded-[22px] border border-[var(--line)] bg-surface px-3 py-2 shadow-[var(--shadow-control)]"
+                className="flex items-center gap-2 rounded-xl border border-[var(--line)] bg-surface px-3 py-2 shadow-[var(--shadow-control)]"
               >
                 <input
                   value={v.name}
@@ -774,7 +774,7 @@ function OnboardingForm() {
                 onClick={() =>
                   set("vaccines", [...draft.vaccines, { name: "", date: "" }])
                 }
-                className="flex flex-1 items-center gap-2 rounded-[22px] border border-dashed border-[var(--line)] bg-white/50 px-3 py-2.5 text-[13px] text-ink-soft shadow-[var(--shadow-control)]"
+                className="flex flex-1 items-center gap-2 rounded-xl border border-dashed border-[var(--line)] bg-white/50 px-3 py-2.5 text-[13px] text-ink-soft shadow-[var(--shadow-control)]"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path
@@ -796,7 +796,7 @@ function OnboardingForm() {
                       { name: "猫三联第3针", date: "" },
                     ])
                   }
-                  className="rounded-[22px] bg-surface px-3 py-2.5 text-[12px] text-ink-soft shadow-[var(--shadow-control)]"
+                  className="rounded-xl bg-surface px-3 py-2.5 text-[12px] text-ink-soft shadow-[var(--shadow-control)]"
                 >
                   填入参考模版
                 </button>
@@ -888,7 +888,7 @@ function OnboardingForm() {
             className="absolute inset-0 bg-black/40"
           />
           <div
-            className="relative w-full max-w-[430px] overflow-y-auto rounded-t-[28px] bg-paper px-6 pt-4 shadow-[var(--shadow-card)]"
+            className="relative w-full max-w-[430px] overflow-y-auto rounded-t-2xl bg-paper px-6 pt-4 shadow-[var(--shadow-card)]"
             style={{
               maxHeight: "88dvh",
               paddingBottom: "calc(1.5rem + env(safe-area-inset-bottom, 0px))",
@@ -907,7 +907,7 @@ function OnboardingForm() {
             </div>
 
             {/* 1) 上传真实照片当头像 */}
-            <div className="mt-4 flex items-center gap-4 rounded-[24px] bg-surface p-4 shadow-[var(--shadow-control)]">
+            <div className="mt-4 flex items-center gap-4 rounded-xl bg-surface p-4 shadow-[var(--shadow-control)]">
               <CatAvatar
                 avatar={draft.avatar}
                 name={draft.name}
@@ -957,7 +957,7 @@ function OnboardingForm() {
                     type="button"
                     onClick={() => setAvatarPhoto(null)}
                     aria-label="换一张照片"
-                    className="relative size-20 shrink-0 overflow-hidden rounded-[24px] border border-[var(--line)] shadow-[var(--shadow-control)]"
+                    className="relative size-20 shrink-0 overflow-hidden rounded-xl border border-[var(--line)] shadow-[var(--shadow-control)]"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={avatarPhoto} alt="选中的照片" className="h-full w-full object-cover" />
@@ -966,7 +966,7 @@ function OnboardingForm() {
                     </span>
                   </button>
                 ) : (
-                  <label className="flex size-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-[24px] border border-dashed border-[var(--line)] bg-white/55 text-ink-soft shadow-[var(--shadow-control)] transition-colors hover:bg-white">
+                  <label className="flex size-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--line)] bg-white/55 text-ink-soft shadow-[var(--shadow-control)] transition-colors hover:bg-white">
                     <input type="file" accept="image/*" onChange={onPhotoPick} className="hidden" />
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <path
@@ -999,7 +999,7 @@ function OnboardingForm() {
                 onClick={generateAvatar}
                 disabled={(!avatarDesc.trim() && !avatarPhoto) || avatarLoading}
                 className={
-                  "rounded-[22px] py-3 text-[14px] font-medium tracking-wide transition-colors " +
+                  "rounded-xl py-3 text-[14px] font-medium tracking-wide transition-colors " +
                   ((avatarDesc.trim() || avatarPhoto) && !avatarLoading
                     ? "bg-accent text-accent-fg"
                     : "bg-[var(--surface-2)] text-ink-faint")
@@ -1013,7 +1013,7 @@ function OnboardingForm() {
               </button>
 
               {avatarError && (
-                <div className="rounded-[22px] border border-[var(--red)]/20 bg-[var(--red-bg)] p-3">
+                <div className="rounded-xl border border-[var(--red)]/20 bg-[var(--red-bg)] p-3">
                   <p className="text-caption leading-relaxed text-[var(--red-ink)]">
                     {avatarError}
                   </p>

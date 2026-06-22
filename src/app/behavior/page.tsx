@@ -470,7 +470,7 @@ function CatTag() {
 function UserBubble({ text }: { text: string }) {
   return (
     <div
-      className="max-w-[82%] self-end whitespace-pre-wrap rounded-[26px] rounded-br-lg px-4 py-3 text-body leading-relaxed text-white"
+      className="max-w-[82%] self-end whitespace-pre-wrap rounded-xl rounded-br-lg px-4 py-3 text-body leading-relaxed text-white"
       style={{
         background: "linear-gradient(180deg, var(--accent-light), var(--accent))",
         boxShadow: "0 8px 18px rgba(176,90,80,0.26)",
@@ -498,7 +498,7 @@ function AssistantCard({
   return (
     <div className="max-w-[96%] self-start">
       <CatTag />
-      <div className="rounded-[28px] rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
+      <div className="rounded-2xl rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
         <MarkdownMessage text={text} streaming={streaming} />
       </div>
     </div>
@@ -531,7 +531,7 @@ function PosterAttachmentCard({
       <button
         type="button"
         onClick={() => onOpen(poster)}
-        className="ml-8 w-[82%] max-w-[320px] self-start overflow-hidden rounded-[22px] border border-[var(--line)] bg-surface text-left shadow-[var(--shadow-card)]"
+        className="ml-8 w-[82%] max-w-[320px] self-start overflow-hidden rounded-xl border border-[var(--line)] bg-surface text-left shadow-[var(--shadow-card)]"
       >
         <div className="flex items-center justify-between gap-2 border-b border-[var(--line-soft)] px-3.5 py-2.5">
           <span className="inline-flex min-w-0 items-center gap-2 text-[12px] font-semibold text-ink-soft">
@@ -559,12 +559,12 @@ function PosterAttachmentCard({
     <button
       type="button"
       onClick={() => onOpen(poster)}
-      className="ml-8 flex w-[82%] max-w-[320px] items-center gap-3 self-start rounded-[20px] border border-[var(--line)] bg-surface px-3 py-2.5 text-left shadow-[var(--shadow-control)]"
+      className="ml-8 flex w-[82%] max-w-[320px] items-center gap-3 self-start rounded-xl border border-[var(--line)] bg-surface px-3 py-2.5 text-left shadow-[var(--shadow-control)]"
     >
       <img
         src={poster.image}
         alt=""
-        className="h-[70px] w-[44px] shrink-0 rounded-[9px] object-cover"
+        className="h-[70px] w-[44px] shrink-0 rounded-md object-cover"
         loading="lazy"
         onError={() => setHidden(true)}
       />
@@ -616,7 +616,7 @@ function PosterViewer({
         <img
           src={poster.image}
           alt={`${poster.title}相关图解`}
-          className="mx-auto block min-h-0 max-h-none w-full max-w-[430px] rounded-[18px] object-contain"
+          className="mx-auto block min-h-0 max-h-none w-full max-w-[430px] rounded-lg object-contain"
         />
       </div>
     </div>
@@ -627,7 +627,7 @@ function Thinking() {
   return (
     <div className="max-w-[96%] self-start">
       <CatTag />
-      <div className="inline-flex items-center gap-1.5 rounded-[28px] rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
+      <div className="inline-flex items-center gap-1.5 rounded-2xl rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
         <span className="size-1.5 animate-bounce rounded-full bg-ink-faint [animation-delay:-0.3s]" />
         <span className="size-1.5 animate-bounce rounded-full bg-ink-faint [animation-delay:-0.15s]" />
         <span className="size-1.5 animate-bounce rounded-full bg-ink-faint" />
@@ -641,7 +641,7 @@ function Thinking() {
 function EmergencyNotice() {
   return (
     <div
-      className="self-stretch rounded-[20px] px-4 py-3.5"
+      className="self-stretch rounded-xl px-4 py-3.5"
       style={{
         background: "var(--red-bg)",
         border: "1px solid rgba(217,45,32,0.22)",
@@ -679,7 +679,7 @@ function EmergencyNotice() {
           </p>
           <Link
             href="/symptoms"
-            className="mt-2.5 inline-flex items-center gap-1 rounded-[11px] px-3 py-1.5 text-[12px] font-semibold text-white"
+            className="mt-2.5 inline-flex items-center gap-1 rounded-sm px-3 py-1.5 text-[12px] font-semibold text-white"
             style={{ background: "var(--red)" }}
           >
             去分诊 / 找医院 →
@@ -692,7 +692,7 @@ function EmergencyNotice() {
 
 function ErrorRow({ text, onRetry }: { text: string; onRetry: () => void }) {
   return (
-    <div className="max-w-[96%] self-start rounded-[28px] bg-[var(--surface-2)] px-4 py-3 shadow-[var(--shadow-control)]">
+    <div className="max-w-[96%] self-start rounded-2xl bg-[var(--surface-2)] px-4 py-3 shadow-[var(--shadow-control)]">
       <p className="text-[13px] leading-relaxed text-ink-soft">{text}</p>
       <button
         type="button"
@@ -775,7 +775,7 @@ function FollowupChips({
           type="button"
           disabled={disabled}
           onClick={() => onPick(q)}
-          className="group flex items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-surface px-4 py-2.5 text-left text-footnote leading-snug text-ink-soft shadow-[var(--shadow-control)] transition-colors duration-150 active:bg-[var(--surface-2)] disabled:opacity-50"
+          className="group flex items-center justify-between gap-3 rounded-lg border border-[var(--line)] bg-surface px-4 py-2.5 text-left text-footnote leading-snug text-ink-soft shadow-[var(--shadow-control)] transition-colors duration-150 active:bg-[var(--surface-2)] disabled:opacity-50"
         >
           <span className="min-w-0">{q}</span>
           <span className="shrink-0 text-caption font-medium text-accent transition-transform duration-200 group-active:translate-x-0.5">
@@ -834,11 +834,11 @@ function SuggestionRow({
       type="button"
       disabled={disabled}
       onClick={() => onPick(item.q)}
-      className="flex w-full items-center gap-3 rounded-[16px] bg-surface px-4 py-3.5 text-left shadow-[var(--shadow-control)] transition-transform duration-150 active:scale-[0.99] disabled:opacity-50"
+      className="flex w-full items-center gap-3 rounded-sm bg-surface px-4 py-3.5 text-left shadow-[var(--shadow-control)] transition-transform duration-150 active:scale-[0.99] disabled:opacity-50"
     >
       {tag && (
         <span
-          className="shrink-0 rounded-[7px] px-1.5 py-1 text-[10px] font-semibold tracking-[0.02em]"
+          className="shrink-0 rounded-md px-1.5 py-1 text-[10px] font-semibold tracking-[0.02em]"
           style={
             tag.solid
               ? { background: "var(--accent)", color: "var(--accent-fg)" }
@@ -877,7 +877,7 @@ function Discovery({
   return (
     <div className="flex flex-col pb-4 pt-3">
       {/* 空态卡 */}
-      <div className="rounded-[28px] bg-surface p-5 shadow-[var(--shadow-card)]">
+      <div className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]">
         <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
           关于{cat.name},
           <span className="text-accent">想问点什么?</span>
@@ -947,7 +947,7 @@ function Discovery({
           <p className="mb-1 px-1 text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
             最近问过
           </p>
-          <div className="rounded-[18px] bg-surface px-1 shadow-[var(--shadow-control)]">
+          <div className="rounded-lg bg-surface px-1 shadow-[var(--shadow-control)]">
             {recentBehavior.map((r, i) => (
               <button
                 key={r.id}
@@ -981,7 +981,7 @@ function Discovery({
       {/* 去分诊兜底 */}
       <Link
         href="/symptoms"
-        className="mt-6 flex items-center justify-between rounded-[16px] bg-surface px-4 py-3.5 shadow-[var(--shadow-control)]"
+        className="mt-6 flex items-center justify-between rounded-sm bg-surface px-4 py-3.5 shadow-[var(--shadow-control)]"
       >
         <span className="text-[13px] text-ink-soft">想要红黄绿分诊报告?</span>
         <span className="flex items-center gap-1 text-[13px] font-medium text-accent">
@@ -1541,7 +1541,7 @@ function BehaviorContent() {
         }}
       >
         {hint && (
-          <div className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full rounded-[12px] bg-ink/90 px-3.5 py-2 text-[12px] text-paper">
+          <div className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full rounded-sm bg-ink/90 px-3.5 py-2 text-[12px] text-paper">
             {hint}
           </div>
         )}

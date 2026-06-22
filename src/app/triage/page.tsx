@@ -200,7 +200,7 @@ function TriageSession({ symptom }: { symptom: string }) {
               type="button"
               onClick={() => choose(i)}
               className={
-                "flex items-center gap-3 rounded-[28px] border px-5 py-4 text-left shadow-[var(--shadow-card)] transition-all duration-500 " +
+                "flex items-center gap-3 rounded-2xl border px-5 py-4 text-left shadow-[var(--shadow-card)] transition-all duration-500 " +
                 (on
                   ? "border-[var(--accent)] bg-[var(--accent-soft)]"
                   : "border-[var(--line)] bg-surface")
@@ -240,7 +240,7 @@ function TriageSession({ symptom }: { symptom: string }) {
         onClick={next}
         disabled={!answered}
         className={
-          "mt-7 w-full rounded-[28px] py-4 text-[16px] font-medium tracking-wide transition-colors duration-500 " +
+          "mt-7 w-full rounded-2xl py-4 text-[16px] font-medium tracking-wide transition-colors duration-500 " +
           (answered
             ? "bg-accent text-accent-fg"
             : "bg-[var(--surface-2)] text-ink-faint")

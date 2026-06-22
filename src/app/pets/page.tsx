@@ -275,7 +275,7 @@ export default function PetsPage() {
                 type="button"
                 onClick={() => switchCat(c.id)}
                 className={
-                  "flex flex-none items-center gap-2 rounded-full border-[1.5px] py-[5px] pr-[13px] pl-[5px] transition " +
+                  "flex flex-none items-center gap-2 rounded-full border-[1.5px] py-1 pr-3 pl-1 transition " +
                   (on
                     ? "border-accent bg-white shadow-[0_4px_12px_rgba(176,90,80,0.16)]"
                     : "border-transparent bg-white/45")
@@ -320,7 +320,7 @@ export default function PetsPage() {
         <div className="mt-2 flex items-start gap-4">
           <div className="flex flex-none flex-col items-center gap-2.5">
             <div
-              className="relative size-[88px] overflow-hidden rounded-[28px] shadow-[0_10px_24px_-8px_rgba(190,130,70,0.55),inset_0_0_0_3px_#fff]"
+              className="relative size-[88px] overflow-hidden rounded-2xl shadow-[0_10px_24px_-8px_rgba(190,130,70,0.55),inset_0_0_0_3px_#fff]"
               style={{
                 background:
                   "radial-gradient(circle at 50% 38%,#f3c590,#e2954f 76%)",
@@ -375,7 +375,7 @@ export default function PetsPage() {
                 {cat.name || "未命名"}
               </span>
               <span
-                className="flex-none rounded-lg px-2 py-[3px] text-[12px] font-semibold whitespace-nowrap"
+                className="flex-none rounded-lg px-2 py-0.5 text-[12px] font-semibold whitespace-nowrap"
                 style={{ color: sex.color, background: sex.bg }}
               >
                 {sex.label}
@@ -389,7 +389,7 @@ export default function PetsPage() {
 
         {/* 四宫格 */}
         <div
-          className="mt-[18px] flex gap-px overflow-hidden rounded-2xl bg-white/50 shadow-[var(--shadow-control)]"
+          className="mt-4 flex gap-px overflow-hidden rounded-2xl bg-white/50 shadow-[var(--shadow-control)]"
           data-guide-target="guide-profile-summary"
         >
           {(
@@ -409,7 +409,7 @@ export default function PetsPage() {
                   </small>
                 )}
               </div>
-              <div className="mt-[3px] text-[11px] tracking-wide text-ink-faint">
+              <div className="mt-0.5 text-[11px] tracking-wide text-ink-faint">
                 {k}
               </div>
             </div>
@@ -535,9 +535,9 @@ export default function PetsPage() {
               <Link
                 key={type}
                 href={editHref + (type === "neuter" ? "#edit-basic" : "#edit-health")}
-                className="flex items-center gap-3 rounded-2xl bg-surface px-[15px] py-3.5 shadow-[var(--shadow-control)] transition active:scale-[0.99]"
+                className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3.5 shadow-[var(--shadow-control)] transition active:scale-[0.99]"
               >
-                <span className="grid size-[42px] flex-none place-items-center rounded-[13px] bg-[var(--accent-tint)] text-accent">
+                <span className="grid size-[42px] flex-none place-items-center rounded-sm bg-[var(--accent-tint)] text-accent">
                   <CareIcon type={type} />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -549,7 +549,7 @@ export default function PetsPage() {
                   </span>
                 </span>
                 <span
-                  className="flex-none rounded-full px-2.5 py-[5px] text-caption font-semibold whitespace-nowrap"
+                  className="flex-none rounded-full px-2.5 py-1 text-caption font-semibold whitespace-nowrap"
                   style={{ color: badge.color, background: badge.bg }}
                 >
                   {item.label}
@@ -602,7 +602,7 @@ export default function PetsPage() {
             <div
               key={k}
               className={
-                "flex gap-3 px-[15px] py-3 " +
+                "flex gap-3 px-4 py-3 " +
                 (i < 2 ? "border-b border-[var(--line)]" : "")
               }
             >
@@ -645,7 +645,7 @@ export default function PetsPage() {
                 const href = recordHref(r);
                 const last = i === arr.length - 1;
                 const card = (
-                  <div className="flex-1 rounded-[15px] bg-surface px-3.5 py-3 shadow-[var(--shadow-control)]">
+                  <div className="flex-1 rounded-sm bg-surface px-3.5 py-3 shadow-[var(--shadow-control)]">
                     <p className="text-[14px] leading-snug font-medium text-ink">
                       {r.summary}
                     </p>
@@ -671,7 +671,7 @@ export default function PetsPage() {
                   <div
                     key={r.id}
                     className={
-                      "relative flex gap-3.5 " + (last ? "" : "pb-[18px]")
+                      "relative flex gap-3.5 " + (last ? "" : "pb-4")
                     }
                   >
                     <div className="relative flex w-3.5 flex-none justify-center">
@@ -679,7 +679,7 @@ export default function PetsPage() {
                         <span className="absolute top-4 -bottom-1 w-0.5 bg-[var(--line)]" />
                       )}
                       <span
-                        className="relative z-[1] mt-[3px] size-3.5 rounded-full shadow-[0_0_0_3px_var(--paper)]"
+                        className="relative z-[1] mt-0.5 size-3.5 rounded-full shadow-[0_0_0_3px_var(--paper)]"
                         style={{ background: tv?.dot ?? "var(--neutral-line)" }}
                       />
                     </div>
@@ -736,7 +736,7 @@ export default function PetsPage() {
           onClick={() => setAddSheet(false)}
         >
           <div
-            className="w-full max-w-[460px] rounded-t-[26px] bg-paper px-3.5 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
+            className="w-full max-w-[460px] rounded-t-xl bg-paper px-3.5 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[#e0dcd2]" />
@@ -746,7 +746,7 @@ export default function PetsPage() {
                 setAddSheet(false);
                 cameraInputRef.current?.click();
               }}
-              className="flex w-full items-center gap-3 rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center gap-3 rounded-sm px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
             >
               <svg
                 width="20"
@@ -770,7 +770,7 @@ export default function PetsPage() {
                 setAddSheet(false);
                 galleryInputRef.current?.click();
               }}
-              className="flex w-full items-center gap-3 rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center gap-3 rounded-sm px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
             >
               <svg
                 width="20"
@@ -800,14 +800,14 @@ export default function PetsPage() {
           onClick={() => setSheetIdx(null)}
         >
           <div
-            className="w-full max-w-[460px] rounded-t-[26px] bg-paper px-3.5 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
+            className="w-full max-w-[460px] rounded-t-xl bg-paper px-3.5 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[#e0dcd2]" />
             <button
               type="button"
               onClick={() => setCover(photos[sheetIdx])}
-              className="flex w-full items-center justify-between rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center justify-between rounded-sm px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
             >
               设为主图(作头像)
               {cat.avatar === photos[sheetIdx] && (
@@ -820,14 +820,14 @@ export default function PetsPage() {
                 replaceIdxRef.current = sheetIdx;
                 replaceInputRef.current?.click();
               }}
-              className="flex w-full items-center rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center rounded-sm px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
             >
               替换这张
             </button>
             <button
               type="button"
               onClick={() => removeAlbumPhoto(sheetIdx)}
-              className="flex w-full items-center rounded-[13px] px-3.5 py-3.5 text-[15px] text-[var(--accent-deep)] active:bg-black/5"
+              className="flex w-full items-center rounded-sm px-3.5 py-3.5 text-[15px] text-[var(--accent-deep)] active:bg-black/5"
             >
               删除
             </button>

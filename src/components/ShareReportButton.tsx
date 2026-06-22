@@ -236,7 +236,7 @@ export function ShareReportButton(props: Props) {
         type="button"
         onClick={share}
         disabled={busy}
-        className="mt-3 flex w-full items-center justify-between rounded-[28px] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)] disabled:opacity-60"
+        className="mt-3 flex w-full items-center justify-between rounded-2xl bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)] disabled:opacity-60"
       >
         <span>{busy ? "正在生成图片…" : "保存报告图片 · 发给家人朋友"}</span>
         <span className="text-ink-faint" aria-hidden="true">
@@ -258,7 +258,7 @@ export function ShareReportButton(props: Props) {
           <img
             src={previewUrl}
             alt="安心报告图片 —— 长按保存"
-            className="max-h-[70vh] w-auto max-w-full rounded-[16px] shadow-2xl"
+            className="max-h-[70vh] w-auto max-w-full rounded-sm shadow-2xl"
           />
           <button
             type="button"

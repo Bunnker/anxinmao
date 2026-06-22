@@ -140,7 +140,7 @@ export function TabBar() {
               href={tab.href}
               data-guide-target={tab.href === "/pets" ? "guide-profile" : undefined}
               aria-current={active ? "page" : undefined}
-              className="flex flex-1 flex-col items-center justify-center gap-[3px]"
+              className="flex flex-1 flex-col items-center justify-center gap-0.5"
               style={{ color: active ? "var(--accent)" : "var(--ink-ghost)" }}
             >
               <TabIcon name={tab.icon} active={active} />

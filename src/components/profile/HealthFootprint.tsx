@@ -15,7 +15,7 @@ const TIER_VIS = {
 export function HealthFootprint({ records }: { records: CatRecord[] }) {
   if (records.length === 0) {
     return (
-      <section className="mt-4 rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
+      <section className="mt-4 rounded-2xl bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
         <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
           健康足迹
         </p>
@@ -49,7 +49,7 @@ export function HealthFootprint({ records }: { records: CatRecord[] }) {
   const totalTier = tierN.red + tierN.yellow + tierN.green;
 
   return (
-    <section className="mt-4 rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
+    <section className="mt-4 rounded-2xl bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
       <div className="mb-1.5 flex items-center justify-between">
         <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
           健康足迹

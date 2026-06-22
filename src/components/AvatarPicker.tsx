@@ -223,7 +223,7 @@ export function AvatarPicker({
           <div
             ref={sheetRef}
             tabIndex={-1}
-            className="relative z-10 mx-auto w-full max-w-[430px] rounded-t-[28px] bg-surface px-5 pb-[calc(20px+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-18px_48px_rgba(54,43,35,0.18)] outline-none"
+            className="relative z-10 mx-auto w-full max-w-[430px] rounded-t-2xl bg-surface px-5 pb-[calc(20px+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-18px_48px_rgba(54,43,35,0.18)] outline-none"
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--hairline)]" />
             <h2 className="font-serif text-[19px] font-bold text-ink">

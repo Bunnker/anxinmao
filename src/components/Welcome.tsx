@@ -127,7 +127,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
 
       {/* 卡片 */}
       <section
-        className="relative z-[1] mx-4 -mt-7 rounded-[28px] bg-surface px-5 pb-[18px] pt-[25px]"
+        className="relative z-[1] mx-4 -mt-7 rounded-2xl bg-surface px-5 pb-4 pt-6"
         style={{
           border: "1px solid rgba(255,255,255,0.76)",
           boxShadow:
@@ -142,7 +142,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
         </p>
 
         {/* 头像行 */}
-        <div className="mb-5 grid grid-cols-[82px_1fr] items-center gap-[14px]">
+        <div className="mb-5 grid grid-cols-[82px_1fr] items-center gap-3.5">
           <AvatarPicker avatar={avatar} name={name} onChange={setAvatar} />
           <div className="grid gap-1">
             <strong className="text-[15px] font-bold text-ink">
@@ -155,7 +155,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
         </div>
 
         {/* 名字(唯一必填) */}
-        <div className="mb-[15px]">
+        <div className="mb-4">
           <div className="mb-2 flex items-center justify-between text-[14px] font-bold text-ink">
             <label htmlFor="cat-name">它叫什么？</label>
             <span className="text-[12px] font-bold text-[var(--accent)]">
@@ -170,7 +170,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
             placeholder="输入猫咪名字"
             maxLength={12}
             autoComplete="off"
-            className="h-[54px] w-full rounded-[18px] px-4 text-[17px] font-semibold text-ink outline-none placeholder:text-[rgba(26,26,24,0.38)]"
+            className="h-[54px] w-full rounded-lg px-4 text-[17px] font-semibold text-ink outline-none placeholder:text-[rgba(26,26,24,0.38)]"
             style={{
               border: "1px solid rgba(176,90,80,0.26)",
               background: "var(--warm-white)",
@@ -220,7 +220,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
 
         {/* 隐私安心条 */}
         <div
-          className="mt-4 flex min-h-[43px] items-center gap-[9px] rounded-2xl px-[13px] text-[13px] font-semibold"
+          className="mt-4 flex min-h-[43px] items-center gap-2 rounded-2xl px-3 text-[13px] font-semibold"
           style={{
             border: "1px solid rgba(176,90,80,0.12)",
             background: "var(--warm-white)",
@@ -260,7 +260,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
           type="button"
           onClick={start}
           disabled={!ready}
-          className="mt-[14px] grid h-14 w-full place-items-center rounded-full text-[17px] font-extrabold text-white transition-transform duration-300 active:scale-[0.985] disabled:cursor-not-allowed"
+          className="mt-3.5 grid h-14 w-full place-items-center rounded-full text-[17px] font-extrabold text-white transition-transform duration-300 active:scale-[0.985] disabled:cursor-not-allowed"
           style={{
             background: ready
               ? "linear-gradient(180deg, var(--accent-light), var(--accent))"
@@ -274,7 +274,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
           开始照顾它
         </button>
 
-        <p className="mx-auto mt-[14px] max-w-[300px] text-center text-[12px] leading-[1.55] text-[rgba(107,104,101,0.82)]">
+        <p className="mx-auto mt-3.5 max-w-[300px] text-center text-[12px] leading-[1.55] text-[rgba(107,104,101,0.82)]">
           品种 · 生日 · 体重 · 疫苗病史 —— 进去之后随时补
         </p>
       </section>

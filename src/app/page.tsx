@@ -1828,7 +1828,7 @@ function PetNudge({
         {showBubble && (
           <div
             className={
-              "pet-bubble absolute rounded-[22px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] " +
+              "pet-bubble absolute rounded-xl bg-surface px-4 py-3 shadow-[var(--shadow-card)] " +
               (bubbleInteractive ? "" : "pointer-events-none ") +
               (bubbleOnRight ? "rounded-bl-md" : "rounded-br-md")
             }
@@ -1988,7 +1988,7 @@ function PetNudge({
                 key={tk}
                 type="button"
                 aria-label={`${tool.alt}(长按拖到${tool.target === "cat" ? "猫" : "水碗"}上)`}
-                className="grid size-[52px] place-items-center rounded-[15px] bg-white/65 p-1.5 shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.55)] backdrop-blur-md select-none"
+                className="grid size-[52px] place-items-center rounded-sm bg-white/65 p-1.5 shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.55)] backdrop-blur-md select-none"
                 style={{ touchAction: "none", opacity: grabbed ? 0.35 : 1 }}
                 onPointerDown={(e) => onToolPointerDown(tk, e)}
                 onPointerMove={onToolPointerMove}
@@ -2237,7 +2237,7 @@ export default function HomePage() {
 
         {/* 底部上拉 sheet:盖院子下沿、圆角顶、上向阴影 —— 回访(如有)+ 看病 CTA + 问问 + 最近 */}
         <div
-          className="relative z-10 -mt-[30px] flex-none rounded-t-[28px] px-5 pt-3"
+          className="relative z-10 -mt-8 flex-none rounded-t-2xl px-5 pt-3"
           style={{
             background: "var(--paper)",
             boxShadow: "0 -10px 30px rgba(60,45,30,0.1)",
@@ -2256,7 +2256,7 @@ export default function HomePage() {
             href="/symptoms"
             data-guide-target="guide-triage"
             aria-label="看病:选症状做分诊,30 秒红黄绿就医建议"
-            className="flex items-center justify-between rounded-[20px] px-5 py-4 text-white transition-transform active:scale-[0.99]"
+            className="flex items-center justify-between rounded-xl px-5 py-4 text-white transition-transform active:scale-[0.99]"
             style={{
               background:
                 "linear-gradient(180deg,var(--accent-light),var(--accent) 42%,var(--accent-deep))",
@@ -2265,7 +2265,7 @@ export default function HomePage() {
             }}
           >
             <span className="flex items-center gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-[12px] bg-white/[0.16]">
+              <span className="grid size-9 shrink-0 place-items-center rounded-sm bg-white/[0.16]">
                 <svg
                   width="22"
                   height="22"
@@ -2318,10 +2318,10 @@ export default function HomePage() {
             href="/behavior"
             data-guide-target="guide-behavior"
             aria-label={`问问${cat.name}:喂养 / 习性 / 拿不准的病情都能问`}
-            className="mt-2.5 flex items-center gap-3 rounded-[18px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] transition-transform active:scale-[0.99]"
+            className="mt-2.5 flex items-center gap-3 rounded-lg bg-surface px-4 py-3 shadow-[var(--shadow-card)] transition-transform active:scale-[0.99]"
           >
             <span
-              className="grid size-9 shrink-0 place-items-center rounded-[12px]"
+              className="grid size-9 shrink-0 place-items-center rounded-sm"
               style={{ background: "var(--accent-tint)", color: "var(--accent)" }}
             >
               <svg

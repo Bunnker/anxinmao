@@ -1576,7 +1576,7 @@ function ReportContent() {
 
       {/* 分级卡 */}
       <div
-        className="mt-3 rounded-[32px] p-5 shadow-[var(--shadow-card)]"
+        className="mt-3 rounded-3xl p-5 shadow-[var(--shadow-card)]"
         style={{ background: vis.bg }}
       >
         <div className="mb-3 flex items-center gap-2.5">
@@ -1603,7 +1603,7 @@ function ReportContent() {
           按用户分诊选中的 claim 联动:基线危险(无 when)总显示,带 when 的只在命中相关选择时显示。 */}
       {redDanger.length > 0 && (
         <section
-          className="mt-4 rounded-[28px] border p-4 shadow-[var(--shadow-control)]"
+          className="mt-4 rounded-2xl border p-4 shadow-[var(--shadow-control)]"
           style={{ background: "var(--red-bg)", borderColor: "var(--red)" }}
         >
           <p
@@ -1668,7 +1668,7 @@ function ReportContent() {
           href="https://uri.amap.com/search?keyword=宠物医院"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 flex items-center justify-center gap-2 rounded-[28px] py-4 text-[16px] font-medium text-white shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
+          className="mt-3 flex items-center justify-center gap-2 rounded-2xl py-4 text-[16px] font-medium text-white shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
           style={{ background: "var(--red)" }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1690,7 +1690,7 @@ function ReportContent() {
       <Link
         href={askHref}
         onClick={saveAskHandoff}
-        className="mt-3 flex items-center justify-between rounded-[28px] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)]"
+        className="mt-3 flex items-center justify-between rounded-2xl bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)]"
       >
         <span>继续补充问问</span>
         <span className="text-ink-faint" aria-hidden="true">
@@ -1723,7 +1723,7 @@ function ReportContent() {
                 className="flex gap-2.5 text-footnote leading-snug text-ink"
               >
                 <span
-                  className="mt-[7px] size-1.5 shrink-0 rounded-full"
+                  className="mt-2 size-1.5 shrink-0 rounded-full"
                   style={{ background: "var(--ink-faint)" }}
                 />
                 <span className="flex-1">{m}</span>
@@ -1751,7 +1751,7 @@ function ReportContent() {
 
       {/* 升级清单 —— 黄/红档是红线,绿档是温和提醒 */}
       <div
-        className="mt-7 rounded-[28px] border p-4 shadow-[var(--shadow-control)]"
+        className="mt-7 rounded-2xl border p-4 shadow-[var(--shadow-control)]"
         style={
           alarm
             ? { background: "var(--red-bg)", borderColor: "var(--red)" }
@@ -1768,7 +1768,7 @@ function ReportContent() {
           {info.escalateItems.map((it, i) => (
             <li key={i} className="flex gap-2.5 text-footnote leading-snug text-ink">
               <span
-                className="mt-[7px] size-1.5 shrink-0 rounded-full"
+                className="mt-2 size-1.5 shrink-0 rounded-full"
                 style={{ background: alarm ? "var(--red)" : "var(--ink-faint)" }}
               />
               <span className="flex-1">{it}</span>
@@ -1778,7 +1778,7 @@ function ReportContent() {
       </div>
 
       {/* 诚实边界:明说 AI 够不到的地方 —— 承认局限反而增强可信(市场调研:信任杠杆) */}
-      <div className="mt-7 rounded-[28px] bg-surface px-4 py-3.5 shadow-[var(--shadow-control)]">
+      <div className="mt-7 rounded-2xl bg-surface px-4 py-3.5 shadow-[var(--shadow-control)]">
         <p className="text-caption font-semibold text-ink">我够不到的地方</p>
         <p className="mt-1.5 text-caption leading-relaxed text-ink-soft">
           我只能照你的描述判断 —— 摸不到它的肚子、查不了脱水、看不到牙龈和体温,也不知道它的既往病和最近用药。所以拿不准、或它看着比你说的更糟时,直接找兽医最稳。
