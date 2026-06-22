@@ -2259,7 +2259,7 @@ export default function HomePage() {
             className="flex items-center justify-between rounded-[20px] px-5 py-4 text-white transition-transform active:scale-[0.99]"
             style={{
               background:
-                "linear-gradient(180deg,#bd6258,var(--accent) 42%,var(--accent-deep))",
+                "linear-gradient(180deg,var(--accent-light),var(--accent) 42%,var(--accent-deep))",
               boxShadow:
                 "0 12px 26px rgba(176,90,80,0.34), inset 0 1px 0 rgba(255,255,255,0.22)",
             }}
@@ -2284,7 +2284,7 @@ export default function HomePage() {
                 </svg>
               </span>
               <span className="text-left">
-                <span className="block font-serif text-[18px] font-semibold tracking-[0.04em]">
+                <span className="block font-serif text-title font-semibold tracking-[0.04em]">
                   猫不对劲?选症状看病
                 </span>
                 <span className="mt-1 flex items-center gap-1.5 text-[11.5px] opacity-90">
@@ -2342,7 +2342,7 @@ export default function HomePage() {
               </svg>
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[14.5px] font-semibold tracking-wide text-ink">
+              <span className="block font-serif text-title font-semibold tracking-wide text-ink">
                 问问{cat.name}
               </span>
               <span className="mt-0.5 block truncate text-[11.5px] text-ink-faint">

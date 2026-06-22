@@ -95,7 +95,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
       {/* 头图(图与淡出装饰,品牌文字保留给读屏) */}
       <section
         className="relative h-[250px] overflow-hidden"
-        style={{ background: "#f8eddc" }}
+        style={{ background: "var(--warm-cream)" }}
       >
         <div
           className="absolute inset-x-0 z-[2] text-center text-[12px] font-semibold"
@@ -200,12 +200,12 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
                 aria-checked={active}
                 tabIndex={sexIdx < 0 ? (i === 0 ? 0 : -1) : active ? 0 : -1}
                 onClick={() => setSex(sexValue(opt))}
-                className="grid h-9 place-items-center rounded-xl text-[13px] font-[650] transition-colors"
+                className="grid h-9 place-items-center rounded-xl text-[13px] font-semibold transition-colors"
                 style={
                   active
                     ? {
                         background: "#fff",
-                        color: "#95483f",
+                        color: "var(--accent-deep)",
                         boxShadow:
                           "0 7px 18px rgba(54,43,35,0.08), 0 0 0 1px rgba(176,90,80,0.1)",
                       }
@@ -220,10 +220,10 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
 
         {/* 隐私安心条 */}
         <div
-          className="mt-4 flex min-h-[43px] items-center gap-[9px] rounded-2xl px-[13px] text-[13px] font-[650]"
+          className="mt-4 flex min-h-[43px] items-center gap-[9px] rounded-2xl px-[13px] text-[13px] font-semibold"
           style={{
             border: "1px solid rgba(176,90,80,0.12)",
-            background: "#fff8f0",
+            background: "var(--warm-white)",
             color: "#5c5049",
           }}
         >
@@ -235,11 +235,11 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
             <svg width="11" height="12" viewBox="0 0 11 12" fill="none">
               <path
                 d="M2.4 5.2V3.7a3.1 3.1 0 0 1 6.2 0v1.5"
-                stroke="#95483f"
+                stroke="var(--accent-deep)"
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
-              <rect x="1.4" y="5" width="8.2" height="6.4" rx="1.8" fill="#95483f" />
+              <rect x="1.4" y="5" width="8.2" height="6.4" rx="1.8" fill="var(--accent-deep)" />
             </svg>
           </span>
           <span>不用登录 · 资料只存在你手机里</span>
@@ -263,7 +263,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
           className="mt-[14px] grid h-14 w-full place-items-center rounded-full text-[17px] font-extrabold text-white transition-transform duration-300 active:scale-[0.985] disabled:cursor-not-allowed"
           style={{
             background: ready
-              ? "linear-gradient(180deg, #bd655b, var(--accent))"
+              ? "linear-gradient(180deg, var(--accent-light), var(--accent))"
               : "var(--surface-2)",
             color: ready ? "#fff" : "var(--ink-faint)",
             boxShadow: ready

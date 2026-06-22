@@ -68,6 +68,22 @@
     0 18px 44px rgba(176, 90, 80, 0.22),
     0 7px 18px rgba(176, 90, 80, 0.13),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+  /* ── 设计 token 标度补全(2026-06-22 批0)——
+     见 docs/superpowers/specs/2026-06-22-design-token-audit-refactor-plan.md。
+     只增不改:补「尺寸维度」标度 + 收口散落颜色魔数,旧值后续批再机械替换。 ── */
+  /* 墨色基 / accent rgb(供 rgba(var(--x) / .aa),收口重复硬编码的 28,26,22 / 176,90,80) */
+  --ink-rgb: 28, 26, 22;
+  --accent-rgb: 176, 90, 80;
+  /* 品牌陶土红次阶:收口 #bd6258 / #bd655b 渐变亮端魔数(深态文字复用已有 --accent-deep) */
+  --accent-light: #bd6258;
+  /* 暖米 / 暖白(欢迎 + 建档专属暖调,区别于冷白 paper / surface) */
+  --warm-cream: #f8eddc;
+  --warm-white: #fff8f0;
+  /* 中性米灰(护理徽章 / 进度槽 / 虚线边) */
+  --neutral-bg: #f0ebe2;
+  --neutral-line: #cdbfae;
+  --neutral-ink: #8a6f54;
 }
 
 @theme inline {
@@ -88,6 +104,44 @@
   --radius-xl: 22px;
   --radius-2xl: var(--radius-card);
   --radius-3xl: var(--radius-card-lg);
+
+  /* ── 字号标度(7 档,px 整数,统一字阶。后续批把 text-[Npx] 替换为这些类) ── */
+  --text-micro: 10px;
+  --text-micro--line-height: 1.2;
+  --text-caption: 12px;
+  --text-caption--line-height: 1.35;
+  --text-footnote: 13px;
+  --text-footnote--line-height: 1.4;
+  --text-body: 14px;
+  --text-body--line-height: 1.55;
+  --text-callout: 15px;
+  --text-callout--line-height: 1.45;
+  --text-title: 18px;
+  --text-title--line-height: 1.3;
+  --text-display: 26px;
+  --text-display--line-height: 1.25;
+
+  /* ── 小圆角档(收 7~16px 一族;现有 lg18 / xl22 / 2xl28 / 3xl34) ── */
+  --radius-sm: 14px;
+
+  /* ── 颜色别名补进工具类(此前被迫内联 var() 的缺口) ── */
+  --color-surface-2: var(--surface-2);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-tint: var(--accent-tint);
+  --color-accent-light: var(--accent-light);
+  --color-warm-cream: var(--warm-cream);
+  --color-warm-white: var(--warm-white);
+  --color-neutral-bg: var(--neutral-bg);
+  --color-neutral-line: var(--neutral-line);
+  --color-neutral-ink: var(--neutral-ink);
+  /* 风险底 / 深字色补工具类(此前 6 个全靠内联,漂移高危;语义与值一字不改) */
+  --color-red-bg: var(--red-bg);
+  --color-red-ink: var(--red-ink);
+  --color-amber-bg: var(--amber-bg);
+  --color-amber-ink: var(--amber-ink);
+  --color-green-bg: var(--green-bg);
+  --color-green-ink: var(--green-ink);
 }
 
 /* 首页舞台高度:默认用稳定视口,运行时由 visualViewport 写入真实可视高度。 */

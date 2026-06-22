@@ -419,7 +419,7 @@ export default function PetsPage() {
 
       <div className="px-5">
         {/* 生活相册(照片墙 · 可单独编辑) */}
-        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
+        <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
           <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
             生活相册
           </span>
@@ -427,7 +427,7 @@ export default function PetsPage() {
             <button
               type="button"
               onClick={() => setAlbumEdit((v) => !v)}
-              className="text-[12.5px] font-semibold text-accent"
+              className="text-[12.5px] text-ink-faint"
             >
               {albumEdit ? "完成" : "编辑 ›"}
             </button>
@@ -454,7 +454,7 @@ export default function PetsPage() {
                 className="h-full w-full object-cover"
               />
               {cat.avatar === p && (
-                <span className="absolute top-1.5 left-1.5 rounded-lg bg-accent/90 px-1.5 py-0.5 text-[9.5px] font-semibold tracking-wide text-white">
+                <span className="absolute top-1.5 left-1.5 rounded-lg bg-accent/90 px-1.5 py-0.5 text-micro font-semibold tracking-wide text-white">
                   主图
                 </span>
               )}
@@ -511,7 +511,7 @@ export default function PetsPage() {
         )}
 
         {/* 健康档案(疫苗/驱虫/绝育)—— 徽章中性/陶土红,不碰风险三色 */}
-        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
+        <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
           <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
             健康档案
           </span>
@@ -560,7 +560,7 @@ export default function PetsPage() {
         </div>
 
         {/* 体重曲线 */}
-        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
+        <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
           <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
             体重
           </span>
@@ -580,7 +580,7 @@ export default function PetsPage() {
         )}
 
         {/* 健康背景 */}
-        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
+        <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
           <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
             健康背景
           </span>
@@ -622,14 +622,14 @@ export default function PetsPage() {
         </div>
 
         {/* 健康记录:健康足迹(合规三色统计)+ 最近 5 条 timeline + 跳全部记录/报表页 */}
-        <div className="mt-[22px] mb-1 flex items-baseline justify-between px-0.5">
+        <div className="mt-5 mb-1 flex items-baseline justify-between px-0.5">
           <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
             健康记录
           </span>
           {records.length > 0 && (
             <Link
               href="/pets/records"
-              className="text-[12.5px] font-semibold text-accent"
+              className="text-[12.5px] text-ink-faint"
             >
               全部 {records.length} 条 · 报表 ›
             </Link>
@@ -827,7 +827,7 @@ export default function PetsPage() {
             <button
               type="button"
               onClick={() => removeAlbumPhoto(sheetIdx)}
-              className="flex w-full items-center rounded-[13px] px-3.5 py-3.5 text-[15px] text-[#b54b3f] active:bg-black/5"
+              className="flex w-full items-center rounded-[13px] px-3.5 py-3.5 text-[15px] text-[var(--accent-deep)] active:bg-black/5"
             >
               删除
             </button>

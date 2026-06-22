@@ -472,7 +472,7 @@ function UserBubble({ text }: { text: string }) {
     <div
       className="max-w-[82%] self-end whitespace-pre-wrap rounded-[26px] rounded-br-lg px-4 py-3 text-[14.5px] leading-relaxed text-white"
       style={{
-        background: "linear-gradient(180deg, #bd6258, var(--accent))",
+        background: "linear-gradient(180deg, var(--accent-light), var(--accent))",
         boxShadow: "0 8px 18px rgba(176,90,80,0.26)",
       }}
     >
