@@ -1,5 +1,6 @@
 "use client";
 
+import { InstallPrompt } from "@/components/InstallPrompt";
 import {
   useEffect,
   useMemo,
@@ -2402,6 +2403,7 @@ export default function HomePage() {
           </div>
         </div>
       </main>
+      <InstallPrompt />
     </>
   );
 }
