@@ -34,7 +34,7 @@ export function ReviewedNotice({ className = "" }: { className?: string }) {
           strokeLinejoin="round"
         />
       </svg>
-      <p className="text-[12px] leading-relaxed text-ink-soft">
+      <p className="text-caption leading-relaxed text-ink-soft">
         <strong className="font-semibold text-ink">
           经执业兽医逐条审核 · 权威来源核对
         </strong>

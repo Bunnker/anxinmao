@@ -412,16 +412,16 @@ export function Guide({ onClose }: { onClose: () => void }) {
             className="mt-0.5 size-[58px] shrink-0 object-contain"
           />
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold tracking-[0.18em] text-accent">
+            <p className="text-caption font-semibold tracking-[0.18em] text-accent">
               {step.badge}
             </p>
-            <h2 className="mt-1 font-serif text-[21px] font-semibold leading-tight tracking-wide text-ink">
+            <h2 className="mt-1 font-serif text-title font-semibold leading-tight tracking-wide text-ink">
               {step.title}
             </h2>
           </div>
         </div>
 
-        <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">
+        <p className="mt-3 text-body leading-relaxed text-ink-soft">
           {step.body}
         </p>
         <p className="mt-2 rounded-sm bg-[var(--accent-soft)] px-3 py-2 text-caption leading-relaxed text-[var(--accent-deep)]">
@@ -445,7 +445,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 px-1 text-[13px] font-medium text-ink-faint"
+            className="shrink-0 px-1 text-footnote font-medium text-ink-faint"
           >
             跳过
           </button>
@@ -463,7 +463,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={() => (last ? onClose() : setStepIndex((i) => i + 1))}
-            className="flex-1 rounded-full bg-accent px-5 py-3 text-[14px] font-semibold text-accent-fg shadow-[var(--shadow-accent)] transition-transform active:scale-[0.985]"
+            className="flex-1 rounded-full bg-accent px-5 py-3 text-body font-semibold text-accent-fg shadow-[var(--shadow-accent)] transition-transform active:scale-[0.985]"
           >
             {last ? "知道啦,开始用" : "下一处"}
           </button>

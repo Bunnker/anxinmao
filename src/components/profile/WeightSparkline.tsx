@@ -25,10 +25,10 @@ export function WeightSparkline({
   return (
     <div className="relative mt-3 rounded-xl bg-[var(--surface-2)] px-4 py-3">
       <div className="flex items-baseline justify-between">
-        <span className="text-[11px] text-ink-faint">
+        <span className="text-caption text-ink-faint">
           体重记录 · {pts.length} 次
         </span>
-        <span className="text-[12px] tabular-nums text-ink-soft">
+        <span className="text-caption tabular-nums text-ink-soft">
           {pts[0].kg} → {lastPt.kg} kg
           {delta !== 0 && ` (${delta > 0 ? "+" : ""}${delta})`}
         </span>

@@ -1837,7 +1837,7 @@ function PetNudge({
             {showFollowNote && followupNote ? (
               // 答完:致谢 / 引导(「还没好」带再分诊链接)
               <>
-                <p className="text-[14px] leading-relaxed text-ink">
+                <p className="text-body leading-relaxed text-ink">
                   {followupNote.text}
                 </p>
                 {followupNote.href && (
@@ -1852,7 +1852,7 @@ function PetNudge({
             ) : showFollowAsk && followupTarget ? (
               // 问:上次某症状之后好点了吗 + 三选一(陶土红/中性,不碰风险色)
               <>
-                <p className="text-[14px] leading-relaxed text-ink">
+                <p className="text-body leading-relaxed text-ink">
                   上次「{followupTarget.summary}」之后,{cat.name}好点了吗?
                 </p>
                 <div className="mt-2.5 flex gap-1.5">
@@ -1893,19 +1893,19 @@ function PetNudge({
                   }}
                   className="block transition active:opacity-70"
                 >
-                  <p className="text-[14px] leading-relaxed text-ink">
+                  <p className="text-body leading-relaxed text-ink">
                     {nudge.text}
                   </p>
                   {nudge.cta && <PawCta label={nudge.cta} />}
                 </Link>
               ) : (
                 // 闲聊:纯卖萌文字,不可点、不用理,12s 自己飘走
-                <p className="text-[14px] leading-relaxed text-ink">
+                <p className="text-body leading-relaxed text-ink">
                   {nudge.text}
                 </p>
               )
             ) : (
-              <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
+              <p className="text-body leading-relaxed text-ink">{talk}</p>
             )}
           </div>
         )}
@@ -1923,10 +1923,10 @@ function PetNudge({
             className="shrink-0 rounded-full bg-[var(--accent-tint)] shadow-[inset_0_0_0_2px_#fff]"
           />
           <div className="min-w-0">
-            <p className="font-serif text-[15px] font-semibold leading-tight tracking-wide text-ink">
+            <p className="font-serif text-callout font-semibold leading-tight tracking-wide text-ink">
               {greeting()},{cat.name}
             </p>
-            <p className="mt-px truncate text-[11px] tracking-wide text-ink-soft">
+            <p className="mt-px truncate text-caption tracking-wide text-ink-soft">
               {[ageLabel(cat.ageMonths), cat.sex, cat.coat]
                 .filter(Boolean)
                 .join(" · ")}
@@ -1967,7 +1967,7 @@ function PetNudge({
             onClick={onOpenGuide}
             data-guide-target="guide-help"
             aria-label="使用说明"
-            className="grid size-9 place-items-center rounded-full bg-white/60 font-serif text-[16px] font-bold text-accent shadow-[var(--shadow-soft)] backdrop-blur-md transition-transform active:scale-90"
+            className="grid size-9 place-items-center rounded-full bg-white/60 font-serif text-title font-semibold text-accent shadow-[var(--shadow-soft)] backdrop-blur-md transition-transform active:scale-90"
           >
             ?
           </button>
@@ -2046,10 +2046,10 @@ function RecentRow({ record }: { record: CatRecord }) {
         style={{ background: dot }}
       />
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-medium text-ink">
+        <span className="block text-callout font-medium text-ink">
           {record.summary}
         </span>
-        <span className="mt-0.5 block text-[12px] tracking-wide text-ink-faint">
+        <span className="mt-0.5 block text-caption tracking-wide text-ink-faint">
           {formatDate(record.date)}
         </span>
       </span>

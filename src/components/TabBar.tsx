@@ -144,7 +144,7 @@ export function TabBar() {
               style={{ color: active ? "var(--accent)" : "var(--ink-ghost)" }}
             >
               <TabIcon name={tab.icon} active={active} />
-              <span className="text-[10px] font-medium">{tab.label}</span>
+              <span className="text-micro font-medium">{tab.label}</span>
             </Link>
           );
         })}

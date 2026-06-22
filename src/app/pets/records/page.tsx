@@ -19,7 +19,7 @@ function WeightTrend({ log }: { log: { date: string; kg: number }[] }) {
   const pts = log.slice(-12);
   if (pts.length < 2)
     return (
-      <p className="text-[13px] leading-relaxed text-ink-soft">
+      <p className="text-footnote leading-relaxed text-ink-soft">
         当前还不足两次称重 —— 多记几次,这里会长出体重趋势曲线。
       </p>
     );
@@ -49,7 +49,7 @@ function WeightTrend({ log }: { log: { date: string; kg: number }[] }) {
         <span className="text-footnote font-semibold text-ink">
           近 {n} 次称重
         </span>
-        <span className="text-[12px] text-ink-soft">
+        <span className="text-caption text-ink-soft">
           {first.kg} → <span className="font-semibold text-accent">{last.kg} kg</span>
           {delta !== 0 && ` · ${delta > 0 ? "+" : ""}${delta}`}
         </span>
@@ -214,7 +214,7 @@ export default function RecordsPage() {
   if (!loaded) return <main className="min-h-dvh" aria-hidden="true" />;
 
   const secCls =
-    "mt-4 mb-2.5 ml-0.5 font-serif text-[15px] font-semibold tracking-wide text-ink";
+    "mt-4 mb-2.5 ml-0.5 font-serif text-callout font-semibold tracking-wide text-ink";
   const cardCls =
     "rounded-lg bg-surface px-4 py-4 shadow-[var(--shadow-control)]";
 
@@ -248,7 +248,7 @@ export default function RecordsPage() {
             <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
-        <span className="font-serif text-[17px] font-semibold tracking-wide text-ink">
+        <span className="font-serif text-title font-semibold tracking-wide text-ink">
           {cat ? `${cat.name} · 健康记录` : "健康记录"}
         </span>
       </header>
@@ -266,7 +266,7 @@ export default function RecordsPage() {
             type="button"
             onClick={() => setTab(k)}
             className={
-              "flex-1 rounded-lg py-2 text-[14px] font-medium transition-colors " +
+              "flex-1 rounded-lg py-2 text-body font-medium transition-colors " +
               (tab === k
                 ? "bg-white font-semibold text-accent shadow-[var(--shadow-control)]"
                 : "text-ink-soft")
@@ -279,12 +279,12 @@ export default function RecordsPage() {
 
       {records.length === 0 ? (
         <div className="px-4 pt-10 text-center">
-          <p className="text-[14px] leading-relaxed text-ink-soft">
+          <p className="text-body leading-relaxed text-ink-soft">
             还没有健康记录 —— {cat?.name ?? "它"}不对劲时来分诊,这里会自动长出它的病历和报表。
           </p>
           <Link
             href="/symptoms"
-            className="mt-3 inline-block text-[14px] font-medium text-accent"
+            className="mt-3 inline-block text-body font-medium text-accent"
           >
             试试分诊 →
           </Link>
@@ -302,7 +302,7 @@ export default function RecordsPage() {
               ] as const
             ).map(([v, k]) => (
               <div key={k} className="bg-surface px-1 py-3 text-center">
-                <div className="font-serif text-[19px] font-semibold text-ink">
+                <div className="font-serif text-title font-semibold text-ink">
                   {v}
                 </div>
                 <div className="mt-0.5 text-micro text-ink-faint">{k}</div>
@@ -320,7 +320,7 @@ export default function RecordsPage() {
           <p className={secCls}>分诊风险分布</p>
           <div className={cardCls}>
             {stats.totalTier === 0 ? (
-              <p className="text-[13px] leading-relaxed text-ink-soft">
+              <p className="text-footnote leading-relaxed text-ink-soft">
                 还没有分诊结果 —— 做一次分诊,这里会统计红黄绿分布。
               </p>
             ) : (
@@ -329,7 +329,7 @@ export default function RecordsPage() {
                   <span className="text-footnote font-semibold text-ink">
                     {stats.totalTier} 次分诊
                   </span>
-                  <span className="text-[12px] text-ink-soft">越多绿档越安心</span>
+                  <span className="text-caption text-ink-soft">越多绿档越安心</span>
                 </div>
                 <div className="flex h-3.5 overflow-hidden rounded-full bg-[var(--neutral-bg)]">
                   {(["green", "yellow", "red"] as const).map(
@@ -345,7 +345,7 @@ export default function RecordsPage() {
                       ),
                   )}
                 </div>
-                <div className="mt-2.5 flex gap-4 text-[12px] text-ink-soft">
+                <div className="mt-2.5 flex gap-4 text-caption text-ink-soft">
                   {(["green", "yellow", "red"] as const).map((k) => (
                     <span key={k} className="inline-flex items-center gap-1.5">
                       <span
@@ -383,7 +383,7 @@ export default function RecordsPage() {
                               ) : null;
                             })}
                           </div>
-                          <span className="text-[10px] text-ink-faint">
+                          <span className="text-micro text-ink-faint">
                             {m.label}
                           </span>
                         </div>
@@ -402,7 +402,7 @@ export default function RecordsPage() {
               <div className={cardCls}>
                 {stats.topSym.map(([name, n]) => (
                   <div key={name} className="mb-3 flex items-center gap-2.5 last:mb-0">
-                    <span className="w-14 flex-none text-[13px] text-ink">
+                    <span className="w-14 flex-none text-footnote text-ink">
                       {name}
                     </span>
                     <span className="h-[18px] flex-1 overflow-hidden rounded-md bg-[var(--neutral-bg)]">
@@ -415,7 +415,7 @@ export default function RecordsPage() {
                         }}
                       />
                     </span>
-                    <span className="w-9 flex-none text-right text-[12px] text-ink-soft">
+                    <span className="w-9 flex-none text-right text-caption text-ink-soft">
                       {n} 次
                     </span>
                   </div>
@@ -435,10 +435,10 @@ export default function RecordsPage() {
                       key={k}
                       className="flex-1 rounded-sm bg-paper px-2 py-2.5 text-center"
                     >
-                      <div className="font-serif text-[18px] font-semibold text-ink">
+                      <div className="font-serif text-title font-semibold text-ink">
                         {stats.fu[k]}
                       </div>
-                      <div className="mt-0.5 text-[11px] text-ink-faint">{k}</div>
+                      <div className="mt-0.5 text-caption text-ink-faint">{k}</div>
                     </div>
                   ))}
                 </div>
@@ -452,7 +452,7 @@ export default function RecordsPage() {
         <div className="px-4 pt-2">
           {groups.map((g) => (
             <div key={g.label}>
-              <p className="mt-4 mb-2.5 ml-0.5 text-[12px] tracking-[0.08em] text-ink-faint">
+              <p className="mt-4 mb-2.5 ml-0.5 text-caption tracking-[0.08em] text-ink-faint">
                 {g.label}
               </p>
               <div className="relative pl-1.5">
@@ -469,7 +469,7 @@ export default function RecordsPage() {
                       <p className="text-footnote leading-snug font-medium text-ink">
                         {r.summary}
                       </p>
-                      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-ink-faint">
+                      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-ink-faint">
                         {tv && (
                           <>
                             <span

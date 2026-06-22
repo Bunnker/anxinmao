@@ -16,7 +16,7 @@ export function HealthFootprint({ records }: { records: CatRecord[] }) {
   if (records.length === 0) {
     return (
       <section className="mt-4 rounded-2xl bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
-        <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
+        <p className="text-caption font-semibold tracking-[0.14em] text-accent">
           健康足迹
         </p>
         <p className="mt-2 text-footnote leading-relaxed text-ink-soft">
@@ -51,12 +51,12 @@ export function HealthFootprint({ records }: { records: CatRecord[] }) {
   return (
     <section className="mt-4 rounded-2xl bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
       <div className="mb-1.5 flex items-center justify-between">
-        <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
+        <p className="text-caption font-semibold tracking-[0.14em] text-accent">
           健康足迹
         </p>
-        <span className="text-[11px] text-ink-faint">最近 30 天</span>
+        <span className="text-caption text-ink-faint">最近 30 天</span>
       </div>
-      <p className="text-[13px] text-ink-soft">
+      <p className="text-footnote text-ink-soft">
         分诊 {triage30.length} 次 · 问答 {chat30.length} 次
       </p>
 
@@ -82,7 +82,7 @@ export function HealthFootprint({ records }: { records: CatRecord[] }) {
                 tierN[k] > 0 && (
                   <span
                     key={k}
-                    className="flex items-center gap-1.5 text-[12px] text-ink-soft"
+                    className="flex items-center gap-1.5 text-caption text-ink-soft"
                   >
                     <span
                       className="size-2 rounded-full"

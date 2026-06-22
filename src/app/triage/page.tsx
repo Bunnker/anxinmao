@@ -151,7 +151,7 @@ function TriageSession({ symptom }: { symptom: string }) {
             />
           </svg>
         </button>
-        <span className="flex-1 text-center text-[12px] font-medium uppercase tracking-[0.18em] text-ink-soft">
+        <span className="flex-1 text-center text-caption font-medium uppercase tracking-[0.18em] text-ink-soft">
           分诊中 · {step + 1} / {total}
         </span>
         <span className="size-9" />
@@ -165,7 +165,7 @@ function TriageSession({ symptom }: { symptom: string }) {
 
       {/* 症状锚点 */}
       <div className="mt-6">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-[12px] text-ink-soft shadow-[var(--shadow-control)]">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 text-caption text-ink-soft shadow-[var(--shadow-control)]">
           <SymptomIcon id={flow.symptom} size={15} className="text-accent" />
           症状 · {SYMPTOM_LABELS[flow.symptom]}
         </span>
@@ -182,7 +182,7 @@ function TriageSession({ symptom }: { symptom: string }) {
           )}
         </h1>
         {q.hint && (
-          <p className="mt-2 text-[13px] leading-relaxed text-ink-soft">{q.hint}</p>
+          <p className="mt-2 text-footnote leading-relaxed text-ink-soft">{q.hint}</p>
         )}
       </div>
 
@@ -240,7 +240,7 @@ function TriageSession({ symptom }: { symptom: string }) {
         onClick={next}
         disabled={!answered}
         className={
-          "mt-7 w-full rounded-2xl py-4 text-[16px] font-medium tracking-wide transition-colors duration-500 " +
+          "mt-7 w-full rounded-2xl py-4 text-title font-medium tracking-wide transition-colors duration-500 " +
           (answered
             ? "bg-accent text-accent-fg"
             : "bg-[var(--surface-2)] text-ink-faint")
@@ -249,7 +249,7 @@ function TriageSession({ symptom }: { symptom: string }) {
         {nextLabel}
       </button>
       {redNow && (
-        <p className="mt-2.5 text-center text-[12px] text-[var(--red)]">
+        <p className="mt-2.5 text-center text-caption text-[var(--red)]">
           你选的这项可能要紧 —— 直接看处理建议,不用问完。
         </p>
       )}

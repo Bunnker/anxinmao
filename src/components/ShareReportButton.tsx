@@ -236,7 +236,7 @@ export function ShareReportButton(props: Props) {
         type="button"
         onClick={share}
         disabled={busy}
-        className="mt-3 flex w-full items-center justify-between rounded-2xl bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)] disabled:opacity-60"
+        className="mt-3 flex w-full items-center justify-between rounded-2xl bg-surface px-4 py-3.5 text-body font-medium text-ink shadow-[var(--shadow-control)] disabled:opacity-60"
       >
         <span>{busy ? "正在生成图片…" : "保存报告图片 · 发给家人朋友"}</span>
         <span className="text-ink-faint" aria-hidden="true">
@@ -251,7 +251,7 @@ export function ShareReportButton(props: Props) {
           aria-modal="true"
           aria-label="保存报告图片"
         >
-          <p className="mb-3 text-[14px] font-medium text-white">
+          <p className="mb-3 text-body font-medium text-white">
             长按下面的图片,选「保存图片」
           </p>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -263,7 +263,7 @@ export function ShareReportButton(props: Props) {
           <button
             type="button"
             onClick={() => setPreviewUrl(null)}
-            className="mt-4 rounded-full bg-white/15 px-6 py-2.5 text-[14px] font-medium text-white"
+            className="mt-4 rounded-full bg-white/15 px-6 py-2.5 text-body font-medium text-white"
           >
             关闭
           </button>

@@ -53,7 +53,7 @@ function Field({
           {label}
         </span>
         {hint && (
-          <span className="text-[13px] tabular-nums text-ink-soft">{hint}</span>
+          <span className="text-footnote tabular-nums text-ink-soft">{hint}</span>
         )}
       </div>
       {children}
@@ -80,7 +80,7 @@ function SegRow({
             type="button"
             onClick={() => onChange(opt)}
             className={
-              "flex-1 rounded-lg py-2.5 text-[14px] font-medium transition-colors " +
+              "flex-1 rounded-lg py-2.5 text-body font-medium transition-colors " +
               (active
                 ? "bg-white text-ink shadow-[var(--shadow-control)]"
                 : "text-ink-soft")
@@ -489,11 +489,11 @@ function OnboardingForm() {
         <button
           type="button"
           onClick={leaveOnboarding}
-          className="min-w-[52px] text-left text-[15px] tracking-wide text-ink-soft"
+          className="min-w-[52px] text-left text-callout tracking-wide text-ink-soft"
         >
           取消
         </button>
-        <span className="font-serif text-[17px] font-semibold tracking-wide text-ink">
+        <span className="font-serif text-title font-semibold tracking-wide text-ink">
           {isAdd ? "添加毛孩子" : isEdit ? "编辑资料" : "新建档案"}
         </span>
         <button
@@ -501,7 +501,7 @@ function OnboardingForm() {
           onClick={commit}
           disabled={!ready}
           className={
-            "min-w-[52px] text-right text-[15px] font-bold tracking-wide " +
+            "min-w-[52px] text-right text-callout font-bold tracking-wide " +
             (ready ? "text-accent" : "text-ink-faint")
           }
         >
@@ -554,7 +554,7 @@ function OnboardingForm() {
           className="text-center text-footnote font-semibold text-accent"
         >
           {draft.avatar ? "更换照片" : "设置照片"}
-          <span className="mt-0.5 block text-[11px] font-normal text-ink-faint">
+          <span className="mt-0.5 block text-caption font-normal text-ink-faint">
             拍照 / 相册 / AI 生成卡通形象
           </span>
         </button>
@@ -572,7 +572,7 @@ function OnboardingForm() {
               value={draft.name}
               onChange={(e) => set("name", e.target.value)}
               placeholder="豆豆 / 咪咪 / 团子…"
-              className="min-w-0 flex-1 bg-transparent text-right font-serif text-[18px] font-medium text-ink outline-none placeholder:font-sans placeholder:text-[15px] placeholder:font-normal placeholder:text-ink-faint"
+              className="min-w-0 flex-1 bg-transparent text-right font-serif text-title font-medium text-ink outline-none placeholder:font-sans placeholder:text-callout placeholder:font-normal placeholder:text-ink-faint"
             />
           </IRow>
           <IRow label="性别">
@@ -587,7 +587,7 @@ function OnboardingForm() {
               value={draft.breed ?? ""}
               onChange={(e) => set("breed", e.target.value)}
               placeholder="中华田园 / 英短 / 布偶…"
-              className="min-w-0 flex-1 bg-transparent text-right text-[15px] text-ink outline-none placeholder:text-ink-faint"
+              className="min-w-0 flex-1 bg-transparent text-right text-callout text-ink outline-none placeholder:text-ink-faint"
             />
           </IRow>
           <IRow label="生日">
@@ -595,10 +595,10 @@ function OnboardingForm() {
               type="date"
               value={draft.birthday ?? ""}
               onChange={onBirthday}
-              className="bg-transparent text-[15px] text-ink-soft outline-none"
+              className="bg-transparent text-callout text-ink-soft outline-none"
               style={{ colorScheme: "light" }}
             />
-            <span className="whitespace-nowrap text-[12px] text-ink-faint">
+            <span className="whitespace-nowrap text-caption text-ink-faint">
               {ageLabel(draft.ageMonths)}
             </span>
           </IRow>
@@ -612,13 +612,13 @@ function OnboardingForm() {
                   Math.max(0.2, Math.round((draft.weight - 0.1) * 10) / 10),
                 )
               }
-              className="grid size-[30px] place-items-center rounded-full bg-[var(--accent-tint)] text-[18px] text-accent"
+              className="grid size-[30px] place-items-center rounded-full bg-[var(--accent-tint)] text-title text-accent"
             >
               −
             </button>
-            <span className="min-w-[64px] text-center font-serif text-[17px] font-semibold text-ink">
+            <span className="min-w-[64px] text-center font-serif text-title font-semibold text-ink">
               {draft.weight.toFixed(1)}
-              <small className="ml-px text-[12px] font-normal text-ink-soft">
+              <small className="ml-px text-caption font-normal text-ink-soft">
                 kg
               </small>
             </span>
@@ -631,7 +631,7 @@ function OnboardingForm() {
                   Math.min(15, Math.round((draft.weight + 0.1) * 10) / 10),
                 )
               }
-              className="grid size-[30px] place-items-center rounded-full bg-[var(--accent-tint)] text-[18px] text-accent"
+              className="grid size-[30px] place-items-center rounded-full bg-[var(--accent-tint)] text-title text-accent"
             >
               +
             </button>
@@ -672,7 +672,7 @@ function OnboardingForm() {
                     alt={`${draft.name || "猫咪"}的生活照 ${index + 1}`}
                     className="h-full w-full object-cover"
                   />
-                  <span className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-black/55 text-[11px] text-white">
+                  <span className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-black/55 text-caption text-white">
                     ×
                   </span>
                 </button>
@@ -689,7 +689,7 @@ function OnboardingForm() {
                   <svg width="19" height="19" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                     <path d="M12 5v14M5 12h14" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
                   </svg>
-                  <span className="text-[11px]">添加</span>
+                  <span className="text-caption">添加</span>
                 </label>
               )}
             </div>
@@ -710,7 +710,7 @@ function OnboardingForm() {
             type="date"
             value={draft.homeDate}
             onChange={(e) => set("homeDate", e.target.value)}
-            className={inputCls + " text-[15px]"}
+            className={inputCls + " text-callout"}
             style={{ colorScheme: "light" }}
           />
         </Field>
@@ -737,13 +737,13 @@ function OnboardingForm() {
                     i === 1 ? "如:猫三联第2针" :
                     i === 2 ? "如:猫三联第3针" : "疫苗名称"
                   }
-                  className="min-w-0 flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-faint"
+                  className="min-w-0 flex-1 bg-transparent text-body text-ink outline-none placeholder:text-ink-faint"
                 />
                 <input
                   type="date"
                   value={v.date}
                   onChange={(e) => setVaccine(i, { date: e.target.value })}
-                  className="bg-transparent text-[12px] text-ink-soft outline-none"
+                  className="bg-transparent text-caption text-ink-soft outline-none"
                   style={{ colorScheme: "light" }}
                 />
                 <button
@@ -774,7 +774,7 @@ function OnboardingForm() {
                 onClick={() =>
                   set("vaccines", [...draft.vaccines, { name: "", date: "" }])
                 }
-                className="flex flex-1 items-center gap-2 rounded-xl border border-dashed border-[var(--line)] bg-white/50 px-3 py-2.5 text-[13px] text-ink-soft shadow-[var(--shadow-control)]"
+                className="flex flex-1 items-center gap-2 rounded-xl border border-dashed border-[var(--line)] bg-white/50 px-3 py-2.5 text-footnote text-ink-soft shadow-[var(--shadow-control)]"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path
@@ -796,7 +796,7 @@ function OnboardingForm() {
                       { name: "猫三联第3针", date: "" },
                     ])
                   }
-                  className="rounded-xl bg-surface px-3 py-2.5 text-[12px] text-ink-soft shadow-[var(--shadow-control)]"
+                  className="rounded-xl bg-surface px-3 py-2.5 text-caption text-ink-soft shadow-[var(--shadow-control)]"
                 >
                   填入参考模版
                 </button>
@@ -810,7 +810,7 @@ function OnboardingForm() {
             type="date"
             value={draft.deworm}
             onChange={(e) => set("deworm", e.target.value)}
-            className={inputCls + " text-[15px]"}
+            className={inputCls + " text-callout"}
             style={{ colorScheme: "light" }}
           />
           <p className="text-caption leading-relaxed text-ink-faint">
@@ -830,7 +830,7 @@ function OnboardingForm() {
             onChange={(e) => set("chronicConditions", e.target.value)}
             placeholder="比如:心脏病 / 糖尿病 / 慢性肾病 / 长期在吃某种药"
             rows={2}
-            className="w-full resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
+            className="w-full resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-body leading-relaxed text-ink outline-none placeholder:text-ink-faint"
           />
         </Field>
 
@@ -840,7 +840,7 @@ function OnboardingForm() {
             onChange={(e) => set("allergies", e.target.value)}
             placeholder="比如:对鸡肉过敏 / 对某种药物过敏"
             rows={2}
-            className="w-full resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
+            className="w-full resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-body leading-relaxed text-ink outline-none placeholder:text-ink-faint"
           />
         </Field>
 
@@ -850,7 +850,7 @@ function OnboardingForm() {
             onChange={(e) => set("notes", e.target.value)}
             placeholder="比如:挑食 / 怕生 / 最近换了猫粮…"
             rows={2}
-            className="w-full resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
+            className="w-full resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-body leading-relaxed text-ink outline-none placeholder:text-ink-faint"
           />
         </Field>
         </EditCard>
@@ -859,7 +859,7 @@ function OnboardingForm() {
 
       {/* 保存已移到右上角「完成」;名字未填时给个提示 */}
       {!ready && (
-        <p className="mt-6 text-center text-[12px] text-ink-faint">
+        <p className="mt-6 text-center text-caption text-ink-faint">
           给它起个名字,右上角就能点「{isAdd ? "添加" : "完成"}」。
         </p>
       )}
@@ -896,11 +896,11 @@ function OnboardingForm() {
           >
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[var(--line)]" />
             <div className="flex items-center justify-between">
-              <h2 className="text-[17px] font-semibold text-ink">设置头像</h2>
+              <h2 className="text-title font-semibold text-ink">设置头像</h2>
               <button
                 type="button"
                 onClick={() => setAvatarModalOpen(false)}
-                className="text-[13px] font-medium text-accent"
+                className="text-footnote font-medium text-accent"
               >
                 完成
               </button>
@@ -916,7 +916,7 @@ function OnboardingForm() {
               />
               <div className="min-w-0 flex-1">
                 <p className="text-footnote font-medium text-ink">用真实照片当头像</p>
-                <p className="mt-0.5 text-[12px] text-ink-faint">直接用你拍的猫照片</p>
+                <p className="mt-0.5 text-caption text-ink-faint">直接用你拍的猫照片</p>
                 <label className="mt-2.5 inline-flex cursor-pointer items-center gap-2 rounded-full bg-accent px-3.5 py-1.5 text-caption font-medium text-accent-fg">
                   <input
                     type="file"
@@ -934,7 +934,7 @@ function OnboardingForm() {
                     set("avatar", undefined);
                     setAvatarError(null);
                   }}
-                  className="self-start text-[12px] text-ink-faint underline underline-offset-2"
+                  className="self-start text-caption text-ink-faint underline underline-offset-2"
                 >
                   清除
                 </button>
@@ -943,7 +943,7 @@ function OnboardingForm() {
 
             <div className="my-5 flex items-center gap-3">
               <span className="h-px flex-1 bg-[var(--line)]" />
-              <span className="shrink-0 text-[11px] tracking-[0.06em] text-ink-faint">
+              <span className="shrink-0 text-caption tracking-[0.06em] text-ink-faint">
                 或 让 AI 生成卡通形象
               </span>
               <span className="h-px flex-1 bg-[var(--line)]" />
@@ -961,7 +961,7 @@ function OnboardingForm() {
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={avatarPhoto} alt="选中的照片" className="h-full w-full object-cover" />
-                    <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-black/60 text-[10px] text-white">
+                    <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-black/60 text-micro text-white">
                       ×
                     </span>
                   </button>
@@ -977,7 +977,7 @@ function OnboardingForm() {
                       />
                       <circle cx="12" cy="13" r="3.2" stroke="currentColor" strokeWidth="1.5" />
                     </svg>
-                    <span className="text-[11px]">传照片</span>
+                    <span className="text-caption">传照片</span>
                   </label>
                 )}
                 <textarea
@@ -990,7 +990,7 @@ function OnboardingForm() {
                   }
                   rows={3}
                   maxLength={200}
-                  className="min-w-0 flex-1 resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-[14px] leading-relaxed text-ink outline-none placeholder:text-ink-faint"
+                  className="min-w-0 flex-1 resize-none border-b border-[var(--hairline)] bg-transparent py-2.5 text-body leading-relaxed text-ink outline-none placeholder:text-ink-faint"
                 />
               </div>
 
@@ -999,7 +999,7 @@ function OnboardingForm() {
                 onClick={generateAvatar}
                 disabled={(!avatarDesc.trim() && !avatarPhoto) || avatarLoading}
                 className={
-                  "rounded-xl py-3 text-[14px] font-medium tracking-wide transition-colors " +
+                  "rounded-xl py-3 text-body font-medium tracking-wide transition-colors " +
                   ((avatarDesc.trim() || avatarPhoto) && !avatarLoading
                     ? "bg-accent text-accent-fg"
                     : "bg-[var(--surface-2)] text-ink-faint")
@@ -1022,7 +1022,7 @@ function OnboardingForm() {
                       <button
                         type="button"
                         onClick={useDefaultAvatar}
-                        className="rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-[12px] text-ink"
+                        className="rounded-full bg-[var(--surface-2)] px-3 py-1.5 text-caption text-ink"
                       >
                         用默认头像
                       </button>
@@ -1033,7 +1033,7 @@ function OnboardingForm() {
                           setAvatarError(null);
                           setAvatarNotCat(false);
                         }}
-                        className="rounded-full border border-[var(--line)] px-3 py-1.5 text-[12px] text-ink-soft"
+                        className="rounded-full border border-[var(--line)] px-3 py-1.5 text-caption text-ink-soft"
                       >
                         换一张照片
                       </button>

@@ -395,7 +395,7 @@ function MarkdownMessage({
           return (
             <Tag
               key={blockIndex}
-              className="text-[15px] font-semibold leading-snug text-ink"
+              className="text-callout font-semibold leading-snug text-ink"
             >
               {renderInline(block.text, `h-${blockIndex}`)}
               {streaming && isLastBlock && <Caret />}
@@ -456,10 +456,10 @@ function MarkdownMessage({
 function CatTag() {
   return (
     <div className="mb-2.5 flex items-center gap-2">
-      <span className="grid size-6 place-items-center rounded-full bg-accent text-[11px] font-medium text-accent-fg">
+      <span className="grid size-6 place-items-center rounded-full bg-accent text-caption font-medium text-accent-fg">
         猫
       </span>
-      <span className="text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+      <span className="text-caption font-semibold tracking-[0.16em] text-ink-faint">
         一位懂猫的朋友
       </span>
     </div>
@@ -534,7 +534,7 @@ function PosterAttachmentCard({
         className="ml-8 w-[82%] max-w-[320px] self-start overflow-hidden rounded-xl border border-[var(--line)] bg-surface text-left shadow-[var(--shadow-card)]"
       >
         <div className="flex items-center justify-between gap-2 border-b border-[var(--line-soft)] px-3.5 py-2.5">
-          <span className="inline-flex min-w-0 items-center gap-2 text-[12px] font-semibold text-ink-soft">
+          <span className="inline-flex min-w-0 items-center gap-2 text-caption font-semibold text-ink-soft">
             <span
               className="size-1.5 shrink-0 rounded-full"
               style={{ background: toneColor }}
@@ -542,7 +542,7 @@ function PosterAttachmentCard({
             />
             <span className="truncate">相关图解</span>
           </span>
-          <span className="shrink-0 text-[11px] text-ink-faint">点开看大图</span>
+          <span className="shrink-0 text-caption text-ink-faint">点开看大图</span>
         </div>
         <img
           src={poster.image}
@@ -569,13 +569,13 @@ function PosterAttachmentCard({
         onError={() => setHidden(true)}
       />
       <span className="min-w-0 flex-1">
-        <span className="block text-[12px] font-semibold text-ink">相关图解</span>
-        <span className="mt-0.5 block truncate text-[12px] text-ink-soft">
+        <span className="block text-caption font-semibold text-ink">相关图解</span>
+        <span className="mt-0.5 block truncate text-caption text-ink-soft">
           {poster.title}
         </span>
       </span>
       <span
-        className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white"
+        className="shrink-0 rounded-full px-2.5 py-1 text-caption font-semibold text-white"
         style={{ background: toneColor }}
       >
         {actionText}
@@ -600,13 +600,13 @@ function PosterViewer({
     >
       <div className="flex shrink-0 items-center gap-3 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] text-white">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-semibold">{poster.title}</p>
-          <p className="mt-0.5 text-[11px] text-white/62">相关图解</p>
+          <p className="truncate text-footnote font-semibold">{poster.title}</p>
+          <p className="mt-0.5 text-caption text-white/62">相关图解</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="grid size-10 shrink-0 place-items-center rounded-full bg-white/12 text-[20px] text-white"
+          className="grid size-10 shrink-0 place-items-center rounded-full bg-white/12 text-title text-white"
           aria-label="关闭图解"
         >
           ×
@@ -672,14 +672,14 @@ function EmergencyNotice() {
             这可能是急症
           </p>
           <p
-            className="mt-1 text-[12px] leading-relaxed"
+            className="mt-1 text-caption leading-relaxed"
             style={{ color: "var(--red-ink)" }}
           >
             这类情况别在这儿耗时间,尽快联系就近的宠物医院 / 急诊。
           </p>
           <Link
             href="/symptoms"
-            className="mt-2.5 inline-flex items-center gap-1 rounded-sm px-3 py-1.5 text-[12px] font-semibold text-white"
+            className="mt-2.5 inline-flex items-center gap-1 rounded-sm px-3 py-1.5 text-caption font-semibold text-white"
             style={{ background: "var(--red)" }}
           >
             去分诊 / 找医院 →
@@ -693,11 +693,11 @@ function EmergencyNotice() {
 function ErrorRow({ text, onRetry }: { text: string; onRetry: () => void }) {
   return (
     <div className="max-w-[96%] self-start rounded-2xl bg-[var(--surface-2)] px-4 py-3 shadow-[var(--shadow-control)]">
-      <p className="text-[13px] leading-relaxed text-ink-soft">{text}</p>
+      <p className="text-footnote leading-relaxed text-ink-soft">{text}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="mt-2 text-[13px] font-medium text-accent"
+        className="mt-2 text-footnote font-medium text-accent"
       >
         重试 →
       </button>
@@ -710,7 +710,7 @@ function MemoDivider() {
   return (
     <div className="flex items-center gap-2.5 py-0.5">
       <span className="h-px flex-1 bg-[var(--line-soft)]" />
-      <span className="shrink-0 text-[11px] tracking-wide text-ink-faint">
+      <span className="shrink-0 text-caption tracking-wide text-ink-faint">
         更早的对话已收进摘要
       </span>
       <span className="h-px flex-1 bg-[var(--line-soft)]" />
@@ -744,7 +744,7 @@ function ContextChip({ symptom, tier }: { symptom?: string; tier?: RiskTier }) {
         style={{ background: dotColor }}
         aria-hidden="true"
       />
-      <span className="text-[12px] text-ink-soft">
+      <span className="text-caption text-ink-soft">
         接着刚才的分诊:{label}
         {tierText ? ` · ${tierText}` : ""}
       </span>
@@ -765,7 +765,7 @@ function FollowupChips({
   if (items.length === 0) return null;
   return (
     <div className="flex max-w-[96%] flex-col gap-2 self-start">
-      <span className="ml-1 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+      <span className="ml-1 flex items-center gap-1.5 text-caption font-semibold tracking-[0.16em] text-ink-faint">
         <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
         接着可以问
       </span>
@@ -838,7 +838,7 @@ function SuggestionRow({
     >
       {tag && (
         <span
-          className="shrink-0 rounded-md px-1.5 py-1 text-[10px] font-semibold tracking-[0.02em]"
+          className="shrink-0 rounded-md px-1.5 py-1 text-micro font-semibold tracking-[0.02em]"
           style={
             tag.solid
               ? { background: "var(--accent)", color: "var(--accent-fg)" }
@@ -848,7 +848,7 @@ function SuggestionRow({
           {tag.text}
         </span>
       )}
-      <span className="flex-1 text-[14px] leading-snug text-ink">{item.q}</span>
+      <span className="flex-1 text-body leading-snug text-ink">{item.q}</span>
       <ChevronRight className="shrink-0 text-ink-faint" />
     </button>
   );
@@ -882,7 +882,7 @@ function Discovery({
           关于{cat.name},
           <span className="text-accent">想问点什么?</span>
         </h1>
-        <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
+        <p className="mt-2.5 text-footnote leading-relaxed text-ink-soft">
           生病拿不准、喂养、训练、行为都能问 —— 急症我会直接让你去医院。
         </p>
         <p className="mt-2.5 flex items-center gap-1.5 text-caption text-ink-faint">
@@ -903,7 +903,7 @@ function Discovery({
               key={c.key}
               type="button"
               onClick={() => setCategory(c.key)}
-              className="shrink-0 rounded-full px-4 py-2 text-[13px] font-medium transition-colors duration-150"
+              className="shrink-0 rounded-full px-4 py-2 text-footnote font-medium transition-colors duration-150"
               style={
                 on
                   ? {
@@ -925,7 +925,7 @@ function Discovery({
       </div>
 
       {/* 推荐问题 */}
-      <p className="mb-2.5 mt-3.5 px-1 text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+      <p className="mb-2.5 mt-3.5 px-1 text-caption font-semibold tracking-[0.16em] text-ink-faint">
         {category === "all" ? `为${cat.name}推荐` : label}
       </p>
       <div className="flex flex-col gap-2.5">
@@ -944,7 +944,7 @@ function Discovery({
       {/* 最近问过 */}
       {recentBehavior.length > 0 && (
         <div className="mt-6">
-          <p className="mb-1 px-1 text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+          <p className="mb-1 px-1 text-caption font-semibold tracking-[0.16em] text-ink-faint">
             最近问过
           </p>
           <div className="rounded-lg bg-surface px-1 shadow-[var(--shadow-control)]">
@@ -966,10 +966,10 @@ function Discovery({
                     <path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
-                <span className="flex-1 truncate text-[13px] text-ink-soft">
+                <span className="flex-1 truncate text-footnote text-ink-soft">
                   {r.question ?? r.summary}
                 </span>
-                <span className="shrink-0 text-[11px] text-ink-faint">
+                <span className="shrink-0 text-caption text-ink-faint">
                   {relativeDate(r.date)}
                 </span>
               </button>
@@ -983,8 +983,8 @@ function Discovery({
         href="/symptoms"
         className="mt-6 flex items-center justify-between rounded-sm bg-surface px-4 py-3.5 shadow-[var(--shadow-control)]"
       >
-        <span className="text-[13px] text-ink-soft">想要红黄绿分诊报告?</span>
-        <span className="flex items-center gap-1 text-[13px] font-medium text-accent">
+        <span className="text-footnote text-ink-soft">想要红黄绿分诊报告?</span>
+        <span className="flex items-center gap-1 text-footnote font-medium text-accent">
           去分诊 <ChevronRight />
         </span>
       </Link>
@@ -1440,7 +1440,7 @@ function BehaviorContent() {
 
       {/* navbar —— 标题 + 猫徽章(+ 有对话时给「新对话」) */}
       <header className="flex shrink-0 items-center gap-2.5 px-5 py-2.5">
-        <h1 className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+        <h1 className="font-serif text-title font-semibold tracking-wide text-ink">
           问{cat.name}
         </h1>
         {!empty && (
@@ -1541,7 +1541,7 @@ function BehaviorContent() {
         }}
       >
         {hint && (
-          <div className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full rounded-sm bg-ink/90 px-3.5 py-2 text-[12px] text-paper">
+          <div className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full rounded-sm bg-ink/90 px-3.5 py-2 text-caption text-paper">
             {hint}
           </div>
         )}
@@ -1560,7 +1560,7 @@ function BehaviorContent() {
             placeholder="生病、喂养、行为…都能问"
             enterKeyHint="send"
             maxLength={500}
-            className="min-w-0 flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-faint disabled:opacity-60"
+            className="min-w-0 flex-1 bg-transparent text-body text-ink outline-none placeholder:text-ink-faint disabled:opacity-60"
           />
           {voiceSupported && (
             <button

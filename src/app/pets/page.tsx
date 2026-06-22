@@ -260,7 +260,7 @@ export default function PetsPage() {
         }}
       >
         <div className="flex h-9 items-center">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             毛孩子
           </span>
         </div>
@@ -286,7 +286,7 @@ export default function PetsPage() {
                 </span>
                 <span
                   className={
-                    "text-[13px] font-semibold tracking-wide whitespace-nowrap " +
+                    "text-footnote font-semibold tracking-wide whitespace-nowrap " +
                     (on ? "text-accent" : "text-ink-soft")
                   }
                 >
@@ -350,7 +350,7 @@ export default function PetsPage() {
             </div>
             <Link
               href={editHref}
-              className="flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[12px] font-semibold tracking-wide text-accent shadow-[var(--shadow-control)] transition active:scale-95"
+              className="flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-caption font-semibold tracking-wide text-accent shadow-[var(--shadow-control)] transition active:scale-95"
             >
               <svg
                 width="13"
@@ -371,17 +371,17 @@ export default function PetsPage() {
 
           <div className="min-w-0 pt-1">
             <div className="flex items-center gap-2">
-              <span className="truncate font-serif text-[25px] font-bold tracking-wide text-ink">
+              <span className="truncate font-serif text-display font-semibold tracking-wide text-ink">
                 {cat.name || "未命名"}
               </span>
               <span
-                className="flex-none rounded-lg px-2 py-0.5 text-[12px] font-semibold whitespace-nowrap"
+                className="flex-none rounded-lg px-2 py-0.5 text-caption font-semibold whitespace-nowrap"
                 style={{ color: sex.color, background: sex.bg }}
               >
                 {sex.label}
               </span>
             </div>
-            <p className="mt-1.5 text-[13px] tracking-wide text-ink-soft">
+            <p className="mt-1.5 text-footnote tracking-wide text-ink-soft">
               {breedLine || "资料待完善"}
             </p>
           </div>
@@ -401,15 +401,15 @@ export default function PetsPage() {
             ] as const
           ).map(([v, unit, k]) => (
             <div key={k} className="flex-1 bg-white/55 px-1 py-3 text-center">
-              <div className="font-serif text-[18px] font-semibold tracking-wide text-ink">
+              <div className="font-serif text-title font-semibold tracking-wide text-ink">
                 {v}
                 {unit && (
-                  <small className="ml-px text-[11px] font-normal text-ink-soft">
+                  <small className="ml-px text-caption font-normal text-ink-soft">
                     {unit}
                   </small>
                 )}
               </div>
-              <div className="mt-0.5 text-[11px] tracking-wide text-ink-faint">
+              <div className="mt-0.5 text-caption tracking-wide text-ink-faint">
                 {k}
               </div>
             </div>
@@ -420,7 +420,7 @@ export default function PetsPage() {
       <div className="px-5">
         {/* 生活相册(照片墙 · 可单独编辑) */}
         <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             生活相册
           </span>
           {(photos.length > 0 || albumEdit) && (
@@ -501,18 +501,18 @@ export default function PetsPage() {
           )}
         </div>
         {photos.length === 0 && !albumEdit ? (
-          <p className="mt-2 px-0.5 text-[12px] leading-relaxed text-ink-faint">
+          <p className="mt-2 px-0.5 text-caption leading-relaxed text-ink-faint">
             还没有生活照 —— 点上面添加。仅本地展示,不参与分诊判断。
           </p>
         ) : (
-          <p className="mt-2.5 px-0.5 text-[11px] tracking-wide text-ink-faint">
+          <p className="mt-2.5 px-0.5 text-caption tracking-wide text-ink-faint">
             最多 6 张 · 仅本地展示,不参与分诊判断
           </p>
         )}
 
         {/* 健康档案(疫苗/驱虫/绝育)—— 徽章中性/陶土红,不碰风险三色 */}
         <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             健康档案
           </span>
           <Link
@@ -544,7 +544,7 @@ export default function PetsPage() {
                   <span className="block text-body font-semibold tracking-wide text-ink">
                     {title}
                   </span>
-                  <span className="mt-0.5 block text-[12px] text-ink-faint">
+                  <span className="mt-0.5 block text-caption text-ink-faint">
                     {item.sub}
                   </span>
                 </span>
@@ -561,7 +561,7 @@ export default function PetsPage() {
 
         {/* 体重曲线 */}
         <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             体重
           </span>
           <Link
@@ -574,14 +574,14 @@ export default function PetsPage() {
         {cat.weightLog && cat.weightLog.length >= 2 ? (
           <WeightSparkline log={cat.weightLog} />
         ) : (
-          <div className="rounded-2xl bg-surface px-4 py-4 text-[13px] leading-relaxed text-ink-soft shadow-[var(--shadow-control)]">
+          <div className="rounded-2xl bg-surface px-4 py-4 text-footnote leading-relaxed text-ink-soft shadow-[var(--shadow-control)]">
             当前 {cat.weight} kg —— 记满 2 次称重就会长出体重曲线。
           </div>
         )}
 
         {/* 健康背景 */}
         <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             健康背景
           </span>
           <Link
@@ -606,7 +606,7 @@ export default function PetsPage() {
                 (i < 2 ? "border-b border-[var(--line)]" : "")
               }
             >
-              <span className="w-[62px] flex-none text-[13px] text-ink-soft">
+              <span className="w-[62px] flex-none text-footnote text-ink-soft">
                 {k}
               </span>
               <span
@@ -623,7 +623,7 @@ export default function PetsPage() {
 
         {/* 健康记录:健康足迹(合规三色统计)+ 最近 5 条 timeline + 跳全部记录/报表页 */}
         <div className="mt-5 mb-1 flex items-baseline justify-between px-0.5">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             健康记录
           </span>
           {records.length > 0 && (
@@ -646,7 +646,7 @@ export default function PetsPage() {
                 const last = i === arr.length - 1;
                 const card = (
                   <div className="flex-1 rounded-sm bg-surface px-3.5 py-3 shadow-[var(--shadow-control)]">
-                    <p className="text-[14px] leading-snug font-medium text-ink">
+                    <p className="text-body leading-snug font-medium text-ink">
                       {r.summary}
                     </p>
                     <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-ink-faint">
@@ -746,7 +746,7 @@ export default function PetsPage() {
                 setAddSheet(false);
                 cameraInputRef.current?.click();
               }}
-              className="flex w-full items-center gap-3 rounded-sm px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center gap-3 rounded-sm px-3.5 py-3.5 text-callout text-ink active:bg-black/5"
             >
               <svg
                 width="20"
@@ -770,7 +770,7 @@ export default function PetsPage() {
                 setAddSheet(false);
                 galleryInputRef.current?.click();
               }}
-              className="flex w-full items-center gap-3 rounded-sm px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center gap-3 rounded-sm px-3.5 py-3.5 text-callout text-ink active:bg-black/5"
             >
               <svg
                 width="20"
@@ -807,11 +807,11 @@ export default function PetsPage() {
             <button
               type="button"
               onClick={() => setCover(photos[sheetIdx])}
-              className="flex w-full items-center justify-between rounded-sm px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center justify-between rounded-sm px-3.5 py-3.5 text-callout text-ink active:bg-black/5"
             >
               设为主图(作头像)
               {cat.avatar === photos[sheetIdx] && (
-                <span className="text-[13px] text-accent">当前主图</span>
+                <span className="text-footnote text-accent">当前主图</span>
               )}
             </button>
             <button
@@ -820,14 +820,14 @@ export default function PetsPage() {
                 replaceIdxRef.current = sheetIdx;
                 replaceInputRef.current?.click();
               }}
-              className="flex w-full items-center rounded-sm px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center rounded-sm px-3.5 py-3.5 text-callout text-ink active:bg-black/5"
             >
               替换这张
             </button>
             <button
               type="button"
               onClick={() => removeAlbumPhoto(sheetIdx)}
-              className="flex w-full items-center rounded-sm px-3.5 py-3.5 text-[15px] text-[var(--accent-deep)] active:bg-black/5"
+              className="flex w-full items-center rounded-sm px-3.5 py-3.5 text-callout text-[var(--accent-deep)] active:bg-black/5"
             >
               删除
             </button>

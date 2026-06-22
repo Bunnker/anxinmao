@@ -199,7 +199,7 @@ export function AvatarPicker({
         {/* AI 角标(陶土红药丸 + 白描边) */}
         <span
           aria-hidden="true"
-          className="absolute -right-[3px] bottom-[6px] grid h-6 min-w-[29px] place-items-center rounded-full text-[10px] font-extrabold leading-none text-white"
+          className="absolute -right-[3px] bottom-[6px] grid h-6 min-w-[29px] place-items-center rounded-full text-micro font-bold leading-none text-white"
           style={{ border: "2px solid #fff", background: "var(--accent)" }}
         >
           AI
@@ -226,7 +226,7 @@ export function AvatarPicker({
             className="relative z-10 mx-auto w-full max-w-[430px] rounded-t-2xl bg-surface px-5 pb-[calc(20px+env(safe-area-inset-bottom,0px))] pt-3 shadow-[0_-18px_48px_rgba(54,43,35,0.18)] outline-none"
           >
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[var(--hairline)]" />
-            <h2 className="font-serif text-[19px] font-bold text-ink">
+            <h2 className="font-serif text-title font-semibold text-ink">
               给它一张头像
             </h2>
             <p className="mt-1 text-caption leading-relaxed text-ink-soft">
@@ -235,7 +235,7 @@ export function AvatarPicker({
 
             {/* 上传真实照片 */}
             <label
-              className="mt-4 flex h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl text-[15px] font-semibold text-white"
+              className="mt-4 flex h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl text-callout font-semibold text-white"
               style={{ background: "var(--accent)" }}
             >
               <input
@@ -253,7 +253,7 @@ export function AvatarPicker({
 
             {/* AI 生成 */}
             <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-3">
-              <div className="text-[13px] font-bold text-ink">
+              <div className="text-footnote font-bold text-ink">
                 或 · 让 AI 画一只卡通头像
               </div>
               <textarea
@@ -261,7 +261,7 @@ export function AvatarPicker({
                 onChange={(e) => setDesc(e.target.value)}
                 rows={2}
                 placeholder="描述一下它:橘色短毛、圆脸、绿眼睛…"
-                className="mt-2 w-full resize-none rounded-xl border border-[var(--hairline)] bg-surface p-2.5 text-[14px] text-ink outline-none placeholder:text-ink-faint"
+                className="mt-2 w-full resize-none rounded-xl border border-[var(--hairline)] bg-surface p-2.5 text-body text-ink outline-none placeholder:text-ink-faint"
               />
               <div className="mt-2 flex items-center gap-2">
                 <label className="cursor-pointer rounded-full border border-[rgba(176,90,80,0.3)] px-3 py-1.5 text-caption font-semibold text-[var(--accent-deep)]">
@@ -291,7 +291,7 @@ export function AvatarPicker({
                 type="button"
                 onClick={generate}
                 disabled={loading || (!desc.trim() && !photo)}
-                className="mt-3 h-11 w-full rounded-full text-[15px] font-bold text-white disabled:opacity-50"
+                className="mt-3 h-11 w-full rounded-full text-callout font-bold text-white disabled:opacity-50"
                 style={{ background: "var(--accent)" }}
               >
                 {loading ? "生成中…" : "生成卡通头像"}
@@ -299,7 +299,7 @@ export function AvatarPicker({
             </div>
 
             {error && (
-              <p role="alert" className="mt-3 text-[13px] leading-relaxed text-[var(--red)]">
+              <p role="alert" className="mt-3 text-footnote leading-relaxed text-[var(--red)]">
                 {error}
                 {notCat && "(换一张更清楚的猫照片,或用默认头像)"}
               </p>
@@ -311,7 +311,7 @@ export function AvatarPicker({
                 onChange(undefined);
                 close();
               }}
-              className="mt-3 h-11 w-full rounded-full bg-[var(--surface-2)] text-[14px] font-semibold text-ink-soft"
+              className="mt-3 h-11 w-full rounded-full bg-[var(--surface-2)] text-body font-semibold text-ink-soft"
             >
               先用默认头像
             </button>
