@@ -876,26 +876,8 @@ function Discovery({
 
   return (
     <div className="flex flex-col pb-4 pt-3">
-      {/* 空态卡 */}
-      <div className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]">
-        <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
-          关于{cat.name},
-          <span className="text-accent">想问点什么?</span>
-        </h1>
-        <p className="mt-2.5 text-footnote leading-relaxed text-ink-soft">
-          生病拿不准、喂养、训练、行为都能问 —— 急症我会直接让你去医院。
-        </p>
-        <p className="mt-2.5 flex items-center gap-1.5 text-caption text-ink-faint">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-            <path d="M12 8v5M12 16.5v.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-          由 AI 解答,不替代兽医的面诊和检查
-        </p>
-      </div>
-
       {/* 分类 chips */}
-      <div className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {CATEGORIES.map((c) => {
           const on = c.key === category;
           return (
@@ -978,16 +960,6 @@ function Discovery({
         </div>
       )}
 
-      {/* 去分诊兜底 */}
-      <Link
-        href="/symptoms"
-        className="mt-6 flex items-center justify-between rounded-sm bg-surface px-4 py-3.5 shadow-[var(--shadow-control)]"
-      >
-        <span className="text-footnote text-ink-soft">想要红黄绿分诊报告?</span>
-        <span className="flex items-center gap-1 text-footnote font-medium text-accent">
-          去分诊 <ChevronRight />
-        </span>
-      </Link>
     </div>
   );
 }
