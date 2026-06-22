@@ -143,6 +143,56 @@ function queryTerms(query: string): string[] {
       /不吃|食欲|厌食|拒食|不想吃|没胃口|胃口差|不(太|怎么|咋|大)?爱吃|吃得(很)?少|吃很少|食量|饭量/,
       ["不吃", "食欲", "厌食", "拒食", "没胃口", "ano_", "anorexia", "cat-anorexia"],
     ],
+    [
+      /没精神|精神差|精神很差|精神不好|趴着不动|嗜睡|叫不醒|不愿动|不互动|躲起来/,
+      ["没精神", "精神差", "嗜睡", "趴着不动", "leth_", "lethargy", "cat-lethargy"],
+    ],
+    [
+      /不喝水|喝水少|饮水少|明显不喝|不怎么喝水/,
+      ["不喝水", "饮水", "脱水", "精神差", "leth_", "lethargy", "cat-lethargy"],
+    ],
+    [
+      /疼叫|疼|痛|惨叫|哀叫|不舒服/,
+      ["疼痛", "不舒服", "异常", "分诊", "general", "cat-general-triage"],
+    ],
+    [
+      /肚子胀|腹胀|拉不出|拉不出来|便秘|排便困难|蹲猫砂盆.*(拉|便)|几天没拉/,
+      [
+        "肚子胀",
+        "腹胀",
+        "拉不出来",
+        "便秘",
+        "排便用力",
+        "con_",
+        "constipation",
+        "cat-constipation-straining",
+      ],
+    ],
+    [
+      /尿不|尿少|尿很少|没尿|尿几滴|频繁蹲砂|一直蹲猫砂盆|蹲猫砂盆.*(尿|没尿|尿少)|舔尿道|尿道口/,
+      [
+        "尿不出",
+        "尿很少",
+        "只有几滴",
+        "一直蹲猫砂盆",
+        "舔尿道",
+        "uo_",
+        "urethral",
+        "cat-urethral-obstruction",
+      ],
+    ],
+    [
+      /走路不稳|站不稳|眼球抖动|抽搐|癫痫|转圈|歪头|瘫软/,
+      [
+        "走路不稳",
+        "眼球抖动",
+        "抽搐",
+        "神经",
+        "seizure",
+        "neurologic",
+        "cat-seizure-neurologic-emergency",
+      ],
+    ],
     [/打喷嚏|鼻涕|流鼻|上呼吸|感冒/, ["打喷嚏", "鼻涕", "uri_", "respiratory"]],
     [/耳朵|挠耳|甩头|咖啡渣|耳螨|外耳/, ["耳朵", "挠耳", "甩头", "咖啡渣", "耳螨", "ear_"]],
     [/眼睛|流泪|眼泪|分泌物|结膜|眯眼/, ["眼睛", "流泪", "分泌物", "eye_"]],
@@ -192,6 +242,32 @@ function cardHint(symptom?: string): string | undefined {
   return symptom ? map[symptom] : undefined;
 }
 
+function cardHintsForQuery(query: string): string[] {
+  const hints: string[] = [];
+  const add = (id: string) => {
+    if (!hints.includes(id)) hints.push(id);
+  };
+  if (/没精神|精神差|精神很差|精神不好|趴着不动|嗜睡|叫不醒|不愿动|不互动|躲起来/.test(query)) {
+    add("cat-lethargy");
+  }
+  if (/不喝水|喝水少|饮水少|明显不喝|不怎么喝水/.test(query)) {
+    add("cat-lethargy");
+  }
+  if (/疼叫|疼|痛|惨叫|哀叫|不舒服/.test(query)) {
+    add("cat-general-triage");
+  }
+  if (/肚子胀|腹胀|拉不出|拉不出来|便秘|排便困难|几天没拉/.test(query)) {
+    add("cat-constipation-straining");
+  }
+  if (/尿不|尿少|尿很少|没尿|尿几滴|频繁蹲砂|一直蹲猫砂盆|蹲猫砂盆.*(尿|没尿|尿少)|舔尿道|尿道口/.test(query)) {
+    add("cat-urethral-obstruction");
+  }
+  if (/走路不稳|站不稳|眼球抖动|抽搐|癫痫|转圈|歪头|瘫软/.test(query)) {
+    add("cat-seizure-neurologic-emergency");
+  }
+  return hints;
+}
+
 function scoreDoc(doc: LocalDoc, terms: string[], input: AgentRetrievalInput): number {
   const haystack = `${doc.path}\n${doc.title}\n${doc.text}`.toLowerCase();
   let score = 0;
@@ -204,6 +280,9 @@ function scoreDoc(doc: LocalDoc, terms: string[], input: AgentRetrievalInput): n
   }
   const hint = cardHint(input.symptom);
   if (hint && doc.path.includes(hint)) score += 24;
+  cardHintsForQuery(input.query).forEach((queryHint, index) => {
+    if (doc.path.includes(queryHint)) score += 72 - index * 6;
+  });
   if (
     terms.includes("cat-emergency-red-flags") &&
     doc.path.includes("cat-emergency-red-flags")

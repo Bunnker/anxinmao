@@ -90,6 +90,25 @@
   --radius-3xl: var(--radius-card-lg);
 }
 
+/* 首页舞台高度:默认用稳定视口,运行时由 visualViewport 写入真实可视高度。 */
+:root {
+  --home-visual-height: 100vh;
+  --home-stage-min: 500px;
+  --home-stage-max: 760px;
+}
+
+@supports (height: 100svh) {
+  :root {
+    --home-visual-height: 100svh;
+  }
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --home-visual-height: 100dvh;
+  }
+}
+
 html,
 body {
   height: 100%;
@@ -164,6 +183,30 @@ button[class*="bg-surface"] {
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
+}
+
+.home-shell {
+  min-height: var(--home-visual-height);
+}
+
+.home-stage {
+  min-height: var(--home-stage-min);
+  height: clamp(
+    var(--home-stage-min),
+    calc(var(--home-visual-height) - 168px),
+    var(--home-stage-max)
+  );
+}
+
+@media (max-height: 700px) {
+  :root {
+    --home-stage-min: 480px;
+    --home-stage-max: 660px;
+  }
+
+  .home-shell {
+    min-height: auto;
+  }
 }
 
 /* 小猫陪伴提醒(PetNudge)—— 头像轻微呼吸感,克制的"它活着"信号 */

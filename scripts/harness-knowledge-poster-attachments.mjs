@@ -48,10 +48,12 @@ function loadTypeScriptModule(rel, customRequire = require) {
 
 function assertSelectorBehavior() {
   const typeExports = loadTypeScriptModule("src/types/knowledge-poster.ts");
+  const behaviorIntentExports = loadTypeScriptModule("src/lib/behavior-intent.ts");
   const selectorExports = loadTypeScriptModule(
     "src/lib/knowledge-poster-attachments.ts",
     (request) => {
       if (request === "@/types/knowledge-poster") return typeExports;
+      if (request === "@/lib/behavior-intent") return behaviorIntentExports;
       return require(request);
     },
   );
@@ -274,7 +276,113 @@ function assertSelectorBehavior() {
   );
 }
 
-function main() {
+function medicalCardIdsFromTrace(trace) {
+  const seen = new Set();
+  const ids = [];
+  for (const result of trace.results ?? []) {
+    const match = result.path?.match(
+      /^docs\/medical\/(?:ai-cards\/([^/]+)\.ai-card|source\/([^/]+)\.source)\.md$/,
+    );
+    const id = match?.[1] ?? match?.[2];
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
+  return ids;
+}
+
+async function assertBehaviorPosterRouting(manifestItems) {
+  const typeExports = loadTypeScriptModule("src/types/knowledge-poster.ts");
+  const behaviorIntentExports = loadTypeScriptModule("src/lib/behavior-intent.ts");
+  const careKnowledgeExports = loadTypeScriptModule("src/lib/care-knowledge.ts");
+  const agentRetrievalExports = loadTypeScriptModule("src/lib/agent-retrieval.ts");
+  const selectorExports = loadTypeScriptModule(
+    "src/lib/knowledge-poster-attachments.ts",
+    (request) => {
+      if (request === "@/types/knowledge-poster") return typeExports;
+      if (request === "@/lib/behavior-intent") return behaviorIntentExports;
+      return require(request);
+    },
+  );
+  const cases = [
+    {
+      query: "猫没精神要不要去医院",
+      expectIntent: "medical_general",
+      expectPoster: "cat-lethargy",
+      forbidPoster: "care-carrier-vet-visit",
+    },
+    {
+      query: "猫肚子胀要不要去医院",
+      expectIntent: "medical_general",
+      expectPoster: "cat-constipation-straining",
+      forbidPoster: "care-carrier-vet-visit",
+    },
+    {
+      query: "猫一直疼叫要不要去医院",
+      expectIntent: "medical_general",
+      expectPoster: "cat-general-triage",
+      forbidPoster: "cat-behavior-change",
+    },
+    {
+      query: "猫不喝水要不要去医院",
+      expectIntent: "medical_general",
+      expectPoster: "cat-lethargy",
+      forbidPoster: "cat-trauma-first-aid",
+    },
+    {
+      query: "猫老是去猫砂盆尿很少",
+      expectIntent: "medical_general",
+      expectPoster: "cat-urethral-obstruction",
+      forbidPoster: "care-litter-box-habits",
+    },
+    {
+      query: "猫有点拉稀要不要去医院",
+      expectIntent: "medical_general",
+      expectPoster: "cat-diarrhea",
+      forbidPoster: "care-carrier-vet-visit",
+    },
+    {
+      query: "猫一直舔尿道口怎么办",
+      expectIntent: "medical_general",
+      expectPoster: "cat-urethral-obstruction",
+      forbidPoster: "care-spay-neuter-postop-medication",
+    },
+  ];
+
+  for (const c of cases) {
+    const intent = behaviorIntentExports.classifyBehaviorIntent({ query: c.query });
+    const care = intent.useCareKnowledge
+      ? await careKnowledgeExports.buildCareKnowledgeContext(c.query, 6000)
+      : { cardIds: [] };
+    const local = intent.useMedicalRecall
+      ? await agentRetrievalExports.localMedicalRecall({ query: c.query, dryRun: true })
+      : { results: [] };
+    const medicalCardIds = medicalCardIdsFromTrace(local);
+    const poster = selectorExports.selectKnowledgePosterFromItems(manifestItems, {
+      intent: intent.intent,
+      careCardIds: care.cardIds,
+      medicalCardIds,
+    });
+
+    assert(
+      intent.intent === c.expectIntent,
+      `health query should route as ${c.expectIntent}: ${c.query}`,
+      JSON.stringify({ intent, careCardIds: care.cardIds, medicalCardIds, poster }, null, 2),
+    );
+    assert(
+      poster?.id === c.expectPoster,
+      `health query should attach matching poster ${c.expectPoster}: ${c.query}`,
+      JSON.stringify({ intent, careCardIds: care.cardIds, medicalCardIds, poster }, null, 2),
+    );
+    assert(
+      poster?.id !== c.forbidPoster,
+      `health query should not fall back to care poster ${c.forbidPoster}: ${c.query}`,
+      JSON.stringify({ intent, careCardIds: care.cardIds, medicalCardIds, poster }, null, 2),
+    );
+  }
+}
+
+async function main() {
   console.log("══ Knowledge poster attachment harness ══");
 
   const manifestPath = path.join(ROOT, "public/knowledge-posters/generated-style/manifest.json");
@@ -308,6 +416,8 @@ function main() {
   console.log("  ✓ selector exports expected API");
   assertSelectorBehavior();
   console.log("  ✓ selector rejects unsafe image paths");
+  await assertBehaviorPosterRouting(manifest.items);
+  console.log("  ✓ health queries route to matching medical posters");
 
   const routeSource = read("src/app/api/behavior/route.ts");
   assertIncludes(routeSource, "selectKnowledgePosterAttachment", "behavior route");
@@ -322,4 +432,4 @@ function main() {
   console.log("  ✓ frontend integration points exist");
 }
 
-main();
+main().catch((e) => fail("Knowledge poster harness failed", e.stack ?? e.message));

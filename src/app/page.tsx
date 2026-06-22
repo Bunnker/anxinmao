@@ -439,6 +439,7 @@ function PetNudge({
   const [nudge, setNudge] = useState<Nudge | null>(null);
   const nudgeShownRef = useRef(false);
   const nudgeTimer = useRef<number | null>(null);
+  const enteredAtRef = useRef(Date.now());
   // 「去小地毯」手动触发洗脸时,循环切下一个变体(脸→身→胸腹),方便逐个测试
   const washCycleRef = useRef(0);
   // 读最新 cat 的 ref —— nudge 定时器不依赖 cat,避免 store 更新(云同步/并行写)
@@ -1213,6 +1214,13 @@ function PetNudge({
                   : roll < 0.93
                     ? "scratch"
                     : "box";
+          if (
+            target === "box" &&
+            Date.now() - enteredAtRef.current < 60000
+          ) {
+            setRoam((r) => ({ ...r, kind: "sit", dur: 0 }));
+            return;
+          }
           setRoam((r) =>
             walkTo(r, itemAnchor(liveItem(INTERACT_ITEM[target])), target),
           );
@@ -1370,7 +1378,7 @@ function PetNudge({
           ? "running-right"
           : "running-left"
         : followFace
-        ? followFace
+        ? (intro ? "idle" : followFace)
         : talk
         ? (touch?.action ?? "idle")
         : roam.kind === "groom" || roam.kind === "rug"
@@ -1438,14 +1446,13 @@ function PetNudge({
       <section
         ref={yardRef}
         data-guide-target="guide-home-stage"
-        className="pet-yard-no-callout relative isolate min-h-[420px] flex-none overflow-hidden"
+        data-home-stage
+        className="home-stage pet-yard-no-callout relative isolate flex-none overflow-hidden"
         // 桌宠舞台:禁掉移动端「长按图片」的原生菜单(保存/查看/复制/分享图片…),否则长按拖动
         // 家具/道具会被浏览器菜单抢走手势。touch-callout / user-select 继承给子元素,
         // onContextMenu 接住冒泡 → 覆盖院子内所有可拖图片。
         onContextMenu={(e) => e.preventDefault()}
         style={{
-          // 院子高度:手机端尽量撑满(少留底部、抬高上限),沉浸感更强;CTA 仍在下方可滚到。
-          height: "clamp(420px, calc(100dvh - 190px), 820px)",
           WebkitTouchCallout: "none",
           WebkitUserSelect: "none",
           userSelect: "none",
@@ -1574,6 +1581,7 @@ function PetNudge({
           return (
           <div
             ref={catRef}
+            data-home-cat
             className="absolute bottom-0 left-0"
             style={{
               transform: `translate(${roam.x}px, ${-roam.y}px) scale(${scaleOf(roam.y).toFixed(3)})`,
@@ -2086,6 +2094,32 @@ export default function HomePage() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    const applyViewportHeight = () => {
+      const visualHeight = Math.round(
+        window.visualViewport?.height ?? window.innerHeight,
+      );
+      document.documentElement.style.setProperty(
+        "--home-visual-height",
+        `${visualHeight}px`,
+      );
+    };
+
+    applyViewportHeight();
+    window.visualViewport?.addEventListener("resize", applyViewportHeight);
+    window.visualViewport?.addEventListener("scroll", applyViewportHeight);
+    window.addEventListener("resize", applyViewportHeight);
+    window.addEventListener("orientationchange", applyViewportHeight);
+    window.addEventListener("pageshow", applyViewportHeight);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", applyViewportHeight);
+      window.visualViewport?.removeEventListener("scroll", applyViewportHeight);
+      window.removeEventListener("resize", applyViewportHeight);
+      window.removeEventListener("orientationchange", applyViewportHeight);
+      window.removeEventListener("pageshow", applyViewportHeight);
+    };
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     const applyStore = (store: Store) => {
@@ -2189,7 +2223,7 @@ export default function HomePage() {
   return (
     <>
       <main
-        className="relative mx-auto flex min-h-dvh max-w-[430px] flex-col overflow-x-hidden"
+        className="home-shell relative mx-auto flex max-w-[430px] flex-col overflow-x-hidden"
         style={{ background: "var(--paper)" }}
       >
         {/* 全屏 stage:沉浸院子 —— 浮动问候 / 小知识💡 / 「?」/ floor 道具栏 / 搭话泡全在 PetNudge 内 */}

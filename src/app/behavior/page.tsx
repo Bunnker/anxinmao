@@ -1099,6 +1099,7 @@ function BehaviorContent() {
   const [memo, setMemo] = useState("");
   const [memoCount, setMemoCount] = useState(0);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   // 会话 id —— 从「最近」点回来时是 ?c=<id>;新会话首次发送时再生成。
   const convIdRef = useRef<string | null>(searchParams.get("c"));
   const restoredRef = useRef(false);
@@ -1355,6 +1356,7 @@ function BehaviorContent() {
   function send(text: string) {
     const q = text.trim();
     if (!q || loading) return;
+    inputRef.current?.blur();
     if (!convIdRef.current) {
       convIdRef.current =
         typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -1551,6 +1553,7 @@ function BehaviorContent() {
           className="flex items-center gap-2 rounded-full bg-surface py-2 pl-4 pr-2 shadow-[var(--shadow-control)]"
         >
           <input
+            ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={loading}

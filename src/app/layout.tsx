@@ -3,11 +3,37 @@ import "./globals.css";
 import { TabBar } from "@/components/TabBar";
 import { SWRecovery } from "@/components/SWRecovery";
 import { GuideHost } from "@/components/GuideHost";
+import { StableTitle } from "@/components/StableTitle";
+
+const SITE_URL = "https://www.whatsupkitty.cn";
+const SITE_TITLE = "小猫怎么了 · whatsupkitty.cn";
+const SITE_DESCRIPTION =
+  "猫不对劲时,5 步分诊 + 红黄绿风险报告 + 带出处的多轮追问。AI 整理,不能替代兽医。";
 
 export const metadata: Metadata = {
-  title: "小猫怎么了 · 猫咪安心分诊器",
-  description:
-    "猫不对劲时,5 步分诊 + 红黄绿风险报告 + 带出处的多轮追问。AI 整理,不能替代兽医。",
+  metadataBase: new URL(SITE_URL),
+  applicationName: "小猫怎么了",
+  title: {
+    default: SITE_TITLE,
+    template: "%s · 小猫怎么了",
+  },
+  description: SITE_DESCRIPTION,
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "小猫怎么了",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    locale: "zh_CN",
+  },
+  twitter: {
+    card: "summary",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
   // PWA —— Web App Manifest 路径(public/manifest.json)
   manifest: "/manifest.json",
   // iOS Safari「添加到主屏」专用元数据
@@ -37,6 +63,7 @@ export default function RootLayout({
     <html lang="zh-CN" className="h-full antialiased">
       <body className="min-h-full">
         <SWRecovery />
+        <StableTitle title={SITE_TITLE} />
         {children}
         <GuideHost />
         <TabBar />
