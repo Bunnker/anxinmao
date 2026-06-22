@@ -2,24 +2,19 @@
   "name": "小猫怎么了 · 猫咪安心分诊器",
   "short_name": "小猫怎么了",
   "description": "猫不对劲时,5 步分诊 + 红黄绿风险报告 + 带出处的多轮追问",
+  "id": "/?app",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f5e6cf",
-  "theme_color": "#a64a2f",
+  "background_color": "#f7f6f3",
+  "theme_color": "#f7f6f3",
   "lang": "zh-CN",
+  "categories": ["medical", "lifestyle"],
   "icons": [
-    {
-      "src": "/icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
