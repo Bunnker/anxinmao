@@ -497,7 +497,7 @@ export default function RecordsPage() {
                           <span className="absolute top-3.5 -bottom-1 w-0.5 bg-[var(--line)]" />
                         )}
                         <span
-                          className="relative z-[1] mt-0.5 size-3 rounded-full shadow-[0_0_0_3px_var(--paper)]"
+                          className="relative z-[1] mt-0.5 size-3 rounded-full shadow-[var(--shadow-ring-paper)]"
                           style={{ background: tv?.c ?? "var(--neutral-line)" }}
                         />
                       </div>

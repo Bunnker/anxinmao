@@ -68,6 +68,13 @@
     0 18px 44px rgba(176, 90, 80, 0.22),
     0 7px 18px rgba(176, 90, 80, 0.13),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  /* 收口重复出现的离散阴影(批5):选中白环 / 头像贴底 paper 环 / 院子浮层暖棕软阴影。
+     一次性阴影(头像光晕、sheet、导览遮罩等)仍保留内联,单源无需 token。 */
+  --shadow-ring-white: 0 0 0 2px rgba(255, 255, 255, 0.25);
+  --shadow-ring-paper: 0 0 0 3px var(--paper);
+  --shadow-soft:
+    0 4px 12px rgba(120, 90, 60, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 
   /* ── 设计 token 标度补全(2026-06-22 批0)——
      见 docs/superpowers/specs/2026-06-22-design-token-audit-refactor-plan.md。

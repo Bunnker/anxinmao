@@ -1914,7 +1914,7 @@ function PetNudge({
         {/* ── 院子浮层 ── 全在 section 内、content 层外:不随内容缩放、不被裁。 */}
         {/* 浮动问候(左上,毛玻璃胶囊):头像 + 衬线问候 + 月龄/性别 */}
         <div
-          className="pointer-events-none absolute left-4 z-30 flex items-center gap-2.5 rounded-full bg-white/55 py-1.5 pr-3.5 pl-2 shadow-[0_6px_16px_rgba(120,90,60,0.14),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md"
+          className="pointer-events-none absolute left-4 z-30 flex items-center gap-2.5 rounded-full bg-white/55 py-1.5 pr-3.5 pl-2 shadow-[var(--shadow-soft)] backdrop-blur-md"
           style={{ top: "calc(env(safe-area-inset-top, 0px) + 14px)" }}
         >
           <CatFace
@@ -1944,7 +1944,7 @@ function PetNudge({
             href="/knowledge"
             data-guide-target="guide-knowledge"
             aria-label="小知识:看着吓人但不必慌的 6 种情况,权威兽医来源"
-            className="grid size-9 place-items-center rounded-full bg-white/60 text-accent shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-90"
+            className="grid size-9 place-items-center rounded-full bg-white/60 text-accent shadow-[var(--shadow-soft)] backdrop-blur-md transition-transform active:scale-90"
           >
             <svg
               width="19"
@@ -1967,7 +1967,7 @@ function PetNudge({
             onClick={onOpenGuide}
             data-guide-target="guide-help"
             aria-label="使用说明"
-            className="grid size-9 place-items-center rounded-full bg-white/60 font-serif text-[16px] font-bold text-accent shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-90"
+            className="grid size-9 place-items-center rounded-full bg-white/60 font-serif text-[16px] font-bold text-accent shadow-[var(--shadow-soft)] backdrop-blur-md transition-transform active:scale-90"
           >
             ?
           </button>
@@ -1988,7 +1988,7 @@ function PetNudge({
                 key={tk}
                 type="button"
                 aria-label={`${tool.alt}(长按拖到${tool.target === "cat" ? "猫" : "水碗"}上)`}
-                className="grid size-[52px] place-items-center rounded-sm bg-white/65 p-1.5 shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.55)] backdrop-blur-md select-none"
+                className="grid size-[52px] place-items-center rounded-sm bg-white/65 p-1.5 shadow-[var(--shadow-soft)] backdrop-blur-md select-none"
                 style={{ touchAction: "none", opacity: grabbed ? 0.35 : 1 }}
                 onPointerDown={(e) => onToolPointerDown(tk, e)}
                 onPointerMove={onToolPointerMove}
@@ -2289,9 +2289,9 @@ export default function HomePage() {
                 </span>
                 <span className="mt-1 flex items-center gap-1.5 text-caption opacity-90">
                   <span className="flex items-center gap-1" aria-hidden="true">
-                    <i className="size-[7px] rounded-full bg-[var(--red)] shadow-[0_0_0_2px_rgba(255,255,255,0.25)]" />
-                    <i className="size-[7px] rounded-full bg-[var(--amber)] shadow-[0_0_0_2px_rgba(255,255,255,0.25)]" />
-                    <i className="size-[7px] rounded-full bg-[var(--green)] shadow-[0_0_0_2px_rgba(255,255,255,0.25)]" />
+                    <i className="size-[7px] rounded-full bg-[var(--red)] shadow-[var(--shadow-ring-white)]" />
+                    <i className="size-[7px] rounded-full bg-[var(--amber)] shadow-[var(--shadow-ring-white)]" />
+                    <i className="size-[7px] rounded-full bg-[var(--green)] shadow-[var(--shadow-ring-white)]" />
                   </span>
                   30 秒红黄绿就医建议
                 </span>
