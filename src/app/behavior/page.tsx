@@ -823,12 +823,13 @@ function SuggestionRow({
   disabled: boolean;
   onPick: (q: string) => void;
 }) {
-  // 标签红线:「和{name}有关」「健康」都用 accent 系,绝不取风险盘(红/黄/绿)。
-  const tag = related
-    ? { text: catName ? `和${catName}有关` : "和它有关", solid: true }
-    : item.topic === "health"
-      ? { text: "健康", solid: false }
-      : null;
+  // 只保留个性化「和{name}有关」标(命中既往记录时才出现,用 accent 系、绝不取风险盘)。
+  // 分类「健康」标已去掉(信息冗余)。标签放问题文字之后、箭头之前。
+  const relatedText = related
+    ? catName
+      ? `和${catName}有关`
+      : "和它有关"
+    : null;
   return (
     <button
       type="button"
@@ -836,19 +837,15 @@ function SuggestionRow({
       onClick={() => onPick(item.q)}
       className="flex w-full items-center gap-3 rounded-sm bg-surface px-4 py-3.5 text-left shadow-[var(--shadow-control)] transition-transform duration-150 active:scale-[0.99] disabled:opacity-50"
     >
-      {tag && (
+      <span className="flex-1 text-body leading-snug text-ink">{item.q}</span>
+      {relatedText && (
         <span
           className="shrink-0 rounded-md px-1.5 py-1 text-micro font-semibold tracking-[0.02em]"
-          style={
-            tag.solid
-              ? { background: "var(--accent)", color: "var(--accent-fg)" }
-              : { background: "var(--accent-tint)", color: "var(--accent)" }
-          }
+          style={{ background: "var(--accent)", color: "var(--accent-fg)" }}
         >
-          {tag.text}
+          {relatedText}
         </span>
       )}
-      <span className="flex-1 text-body leading-snug text-ink">{item.q}</span>
       <ChevronRight className="shrink-0 text-ink-faint" />
     </button>
   );
