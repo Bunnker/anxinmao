@@ -46,7 +46,7 @@ function WeightTrend({ log }: { log: { date: string; kg: number }[] }) {
   return (
     <>
       <div className="mb-1 flex items-baseline justify-between">
-        <span className="text-[13.5px] font-semibold text-ink">
+        <span className="text-footnote font-semibold text-ink">
           近 {n} 次称重
         </span>
         <span className="text-[12px] text-ink-soft">
@@ -305,7 +305,7 @@ export default function RecordsPage() {
                 <div className="font-serif text-[19px] font-semibold text-ink">
                   {v}
                 </div>
-                <div className="mt-0.5 text-[10.5px] text-ink-faint">{k}</div>
+                <div className="mt-0.5 text-micro text-ink-faint">{k}</div>
               </div>
             ))}
           </div>
@@ -326,7 +326,7 @@ export default function RecordsPage() {
             ) : (
               <>
                 <div className="mb-2.5 flex items-baseline justify-between">
-                  <span className="text-[13.5px] font-semibold text-ink">
+                  <span className="text-footnote font-semibold text-ink">
                     {stats.totalTier} 次分诊
                   </span>
                   <span className="text-[12px] text-ink-soft">越多绿档越安心</span>
@@ -466,7 +466,7 @@ export default function RecordsPage() {
                     : `${d.getMonth() + 1}月${d.getDate()}日 ${timeHM(r.date)}`;
                   const card = (
                     <div className="flex-1 rounded-[14px] bg-surface px-3.5 py-3 shadow-[var(--shadow-control)]">
-                      <p className="text-[13.5px] leading-snug font-medium text-ink">
+                      <p className="text-footnote leading-snug font-medium text-ink">
                         {r.summary}
                       </p>
                       <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-ink-faint">

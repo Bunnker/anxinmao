@@ -114,10 +114,10 @@ export default function FeedbackPage() {
   if (status === "done") {
     return (
       <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col items-center justify-center px-7 text-center" style={{ background: "var(--gradient-page)" }}>
-        <span className="grid size-16 place-items-center rounded-full bg-[var(--accent-soft)] text-[1.8rem]">
+        <span className="grid size-16 place-items-center rounded-full bg-[var(--accent-soft)] text-display">
           🐱
         </span>
-        <h1 className="mt-6 font-serif text-[1.8rem] font-medium tracking-tight text-ink">
+        <h1 className="mt-6 font-serif text-display font-medium tracking-tight text-ink">
           收到啦,谢谢你
         </h1>
         <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">
@@ -141,10 +141,10 @@ export default function FeedbackPage() {
       <BackBar />
 
       <div className="px-7 pt-6">
-        <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
+        <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
           有什么想说的?
         </h1>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft">
+        <p className="mt-2 text-footnote leading-relaxed text-ink-soft">
           哪里不好用、哪里看不懂、想要什么功能 —— 都告诉我。一个人在做,你的每条话都算数。
         </p>
 
@@ -155,7 +155,7 @@ export default function FeedbackPage() {
           disabled={sending}
           rows={6}
           placeholder="比如:多选那一题我以为是单选…… / 希望能加个 XX 功能"
-          className="mt-5 w-full resize-none rounded-[28px] border border-[var(--line)] bg-surface px-4 py-3.5 text-[14.5px] leading-relaxed text-ink shadow-[var(--shadow-control)] outline-none placeholder:text-ink-faint focus:border-[var(--accent)] disabled:opacity-60"
+          className="mt-5 w-full resize-none rounded-[28px] border border-[var(--line)] bg-surface px-4 py-3.5 text-body leading-relaxed text-ink shadow-[var(--shadow-control)] outline-none placeholder:text-ink-faint focus:border-[var(--accent)] disabled:opacity-60"
         />
         <div className="mt-1 text-right text-[11px] text-ink-faint">
           {text.length} / {MAX_TEXT}
@@ -186,7 +186,7 @@ export default function FeedbackPage() {
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={sending}
-              className="flex items-center gap-2 rounded-[24px] border border-dashed border-[var(--line)] bg-surface px-4 py-3 text-[13.5px] text-ink-soft shadow-[var(--shadow-control)] disabled:opacity-60"
+              className="flex items-center gap-2 rounded-[24px] border border-dashed border-[var(--line)] bg-surface px-4 py-3 text-footnote text-ink-soft shadow-[var(--shadow-control)] disabled:opacity-60"
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path
@@ -239,7 +239,7 @@ export default function FeedbackPage() {
         >
           {sending ? "提交中…" : "提交反馈"}
         </button>
-        <p className="mt-3 text-center text-[11.5px] leading-relaxed text-ink-faint">
+        <p className="mt-3 text-center text-caption leading-relaxed text-ink-faint">
           只会保存你写的内容,不收集身份信息。
         </p>
       </div>

@@ -424,7 +424,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
         <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">
           {step.body}
         </p>
-        <p className="mt-2 rounded-[16px] bg-[var(--accent-soft)] px-3 py-2 text-[12.5px] leading-relaxed text-[var(--accent-deep)]">
+        <p className="mt-2 rounded-[16px] bg-[var(--accent-soft)] px-3 py-2 text-caption leading-relaxed text-[var(--accent-deep)]">
           {step.hint}
         </p>
 
@@ -456,7 +456,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
             type="button"
             disabled={stepIndex === 0}
             onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
-            className="rounded-full bg-[var(--surface-2)] px-4 py-3 text-[13.5px] font-medium text-ink-soft shadow-[var(--shadow-control)] transition disabled:opacity-35"
+            className="rounded-full bg-[var(--surface-2)] px-4 py-3 text-footnote font-medium text-ink-soft shadow-[var(--shadow-control)] transition disabled:opacity-35"
           >
             上一步
           </button>

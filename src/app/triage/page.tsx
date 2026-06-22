@@ -173,7 +173,7 @@ function TriageSession({ symptom }: { symptom: string }) {
 
       {/* 问题 */}
       <div className="mt-4">
-        <h1 className="text-[1.55rem] font-semibold leading-snug tracking-tight text-ink">
+        <h1 className="text-display font-semibold leading-snug tracking-tight text-ink">
           {q.text}
           {q.multi && (
             <span className="ml-1.5 align-[0.12em] text-[0.6em] font-normal text-ink-faint">
@@ -213,7 +213,7 @@ function TriageSession({ symptom }: { symptom: string }) {
                   className={on ? "shrink-0 text-accent" : "shrink-0 text-ink/40"}
                 />
               )}
-              <span className="flex-1 text-[15.5px] text-ink">{opt.label}</span>
+              <span className="flex-1 text-callout text-ink">{opt.label}</span>
               <span
                 className={
                   "grid size-5 shrink-0 place-items-center border " +

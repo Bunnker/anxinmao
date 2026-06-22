@@ -141,12 +141,12 @@ function EditCard({
   // 与 IGroup 同款外观(灰小标题在外 + rounded-18 白卡),保证编辑页各分组一致。
   return (
     <div id={id} className="scroll-mt-20" data-guide-target={guideTarget}>
-      <p className="mb-2.5 ml-1 text-[11.5px] tracking-[0.08em] text-ink-faint">
+      <p className="mb-2.5 ml-1 text-caption tracking-[0.08em] text-ink-faint">
         {title}
       </p>
       <div className="rounded-[18px] bg-surface px-4 py-4 shadow-[var(--shadow-control)]">
         {hint && (
-          <p className="mb-3 text-[11.5px] leading-relaxed text-ink-faint">
+          <p className="mb-3 text-caption leading-relaxed text-ink-faint">
             {hint}
           </p>
         )}
@@ -170,7 +170,7 @@ function IGroup({
 }) {
   return (
     <div id={id} className="scroll-mt-20" data-guide-target={guideTarget}>
-      <p className="mb-2.5 ml-1 text-[11.5px] tracking-[0.08em] text-ink-faint">
+      <p className="mb-2.5 ml-1 text-caption tracking-[0.08em] text-ink-faint">
         {label}
       </p>
       <div className="overflow-hidden rounded-[18px] bg-surface shadow-[var(--shadow-control)]">
@@ -197,7 +197,7 @@ function IRow({
         (align === "start" ? "items-start py-3" : "min-h-[54px] items-center")
       }
     >
-      <span className="w-16 flex-none text-[14.5px] tracking-wide text-ink">
+      <span className="w-16 flex-none text-body tracking-wide text-ink">
         {label}
       </span>
       <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
@@ -551,7 +551,7 @@ function OnboardingForm() {
             setAvatarNotCat(false);
             setAvatarModalOpen(true);
           }}
-          className="text-center text-[13.5px] font-semibold text-accent"
+          className="text-center text-footnote font-semibold text-accent"
         >
           {draft.avatar ? "更换照片" : "设置照片"}
           <span className="mt-0.5 block text-[11px] font-normal text-ink-faint">
@@ -693,7 +693,7 @@ function OnboardingForm() {
                 </label>
               )}
             </div>
-            <p className="mt-2.5 text-[11.5px] leading-relaxed text-ink-faint">
+            <p className="mt-2.5 text-caption leading-relaxed text-ink-faint">
               最多 6 张 · 点「添加」可拍照或从相册选,仅本地展示不参与分诊。
             </p>
           </div>
@@ -721,7 +721,7 @@ function OnboardingForm() {
         >
           <div className="flex flex-col gap-2">
             {/* 常见疫苗名称参考提示 */}
-            <p className="text-[11.5px] leading-relaxed text-ink-faint">
+            <p className="text-caption leading-relaxed text-ink-faint">
               常见:猫三联（第1/2/3针）· 猫白血病疫苗 · 狂犬疫苗
             </p>
             {draft.vaccines.map((v, i) => (
@@ -813,7 +813,7 @@ function OnboardingForm() {
             className={inputCls + " text-[15px]"}
             style={{ colorScheme: "light" }}
           />
-          <p className="text-[11.5px] leading-relaxed text-ink-faint">
+          <p className="text-caption leading-relaxed text-ink-faint">
             常见药:体外驱虫用福来恩/赛诺菲 · 体内驱虫用拜宠清/倍脉心 · 每1-3个月一次
           </p>
         </Field>
@@ -870,7 +870,7 @@ function OnboardingForm() {
           <button
             type="button"
             onClick={removeCat}
-            className="px-2 py-2 text-[13.5px] tracking-wide"
+            className="px-2 py-2 text-footnote tracking-wide"
             style={{ color: "var(--accent-deep)" }}
           >
             移除这只毛孩子
@@ -915,9 +915,9 @@ function OnboardingForm() {
                 className="shadow-[var(--shadow-control)]"
               />
               <div className="min-w-0 flex-1">
-                <p className="text-[13.5px] font-medium text-ink">用真实照片当头像</p>
+                <p className="text-footnote font-medium text-ink">用真实照片当头像</p>
                 <p className="mt-0.5 text-[12px] text-ink-faint">直接用你拍的猫照片</p>
-                <label className="mt-2.5 inline-flex cursor-pointer items-center gap-2 rounded-full bg-accent px-3.5 py-1.5 text-[12.5px] font-medium text-accent-fg">
+                <label className="mt-2.5 inline-flex cursor-pointer items-center gap-2 rounded-full bg-accent px-3.5 py-1.5 text-caption font-medium text-accent-fg">
                   <input
                     type="file"
                     accept="image/*"
@@ -1014,7 +1014,7 @@ function OnboardingForm() {
 
               {avatarError && (
                 <div className="rounded-[22px] border border-[var(--red)]/20 bg-[var(--red-bg)] p-3">
-                  <p className="text-[12.5px] leading-relaxed text-[var(--red-ink)]">
+                  <p className="text-caption leading-relaxed text-[var(--red-ink)]">
                     {avatarError}
                   </p>
                   {avatarNotCat && (
@@ -1041,7 +1041,7 @@ function OnboardingForm() {
                   )}
                 </div>
               )}
-              <p className="text-[11.5px] leading-relaxed text-ink-faint">
+              <p className="text-caption leading-relaxed text-ink-faint">
                 AI 出图仅作头像 / 角色装饰,不做症状示意。传猫照效果最好(会先检测是不是猫,不是猫不出图);纯文字描述也行。
               </p>
             </div>

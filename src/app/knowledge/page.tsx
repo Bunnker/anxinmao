@@ -130,12 +130,12 @@ function ItemCard({ item }: { item: Item }) {
         </div>
       </div>
       <div className="p-5">
-        <h3 className="text-[15.5px] font-medium text-ink">{item.title}</h3>
+        <h3 className="text-callout font-medium text-ink">{item.title}</h3>
         <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">
           {item.why}
         </p>
         <div className="mt-3 border-l-2 border-[var(--red)] pl-3">
-          <p className="text-[12.5px] leading-relaxed text-[var(--red-ink)]">
+          <p className="text-caption leading-relaxed text-[var(--red-ink)]">
             {item.escalate}
           </p>
         </div>
@@ -192,7 +192,7 @@ export default function KnowledgePage() {
 
       {/* 标题 + 说明 */}
       <section className="pt-6">
-        <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
+        <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
           这些事新手容易吓到 —— 但通常不必冲急诊
         </h1>
         <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
@@ -216,7 +216,7 @@ export default function KnowledgePage() {
       >
         <span>
           <span className="block text-[15px] text-ink">还是不放心?</span>
-          <span className="mt-0.5 block text-[12.5px] text-ink-faint">
+          <span className="mt-0.5 block text-caption text-ink-faint">
             去分诊看看,几个问题就有答案
           </span>
         </span>

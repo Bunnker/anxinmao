@@ -229,7 +229,7 @@ export function AvatarPicker({
             <h2 className="font-serif text-[19px] font-bold text-ink">
               给它一张头像
             </h2>
-            <p className="mt-1 text-[12.5px] leading-relaxed text-ink-soft">
+            <p className="mt-1 text-caption leading-relaxed text-ink-soft">
               可选 —— 只用作它的卡通头像,不影响看病。
             </p>
 
@@ -264,7 +264,7 @@ export function AvatarPicker({
                 className="mt-2 w-full resize-none rounded-xl border border-[var(--hairline)] bg-surface p-2.5 text-[14px] text-ink outline-none placeholder:text-ink-faint"
               />
               <div className="mt-2 flex items-center gap-2">
-                <label className="cursor-pointer rounded-full border border-[rgba(176,90,80,0.3)] px-3 py-1.5 text-[12.5px] font-semibold text-[var(--accent-deep)]">
+                <label className="cursor-pointer rounded-full border border-[rgba(176,90,80,0.3)] px-3 py-1.5 text-caption font-semibold text-[var(--accent-deep)]">
                   <input
                     type="file"
                     accept="image/*"
@@ -281,7 +281,7 @@ export function AvatarPicker({
                   <button
                     type="button"
                     onClick={() => setPhoto(null)}
-                    className="text-[12.5px] text-ink-faint"
+                    className="text-caption text-ink-faint"
                   >
                     移除
                   </button>

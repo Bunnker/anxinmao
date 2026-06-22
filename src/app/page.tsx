@@ -85,7 +85,7 @@ function findFollowupTarget(records: CatRecord[]): CatRecord | null {
 // 醒目的猫爪按钮 —— 提示气泡可点跳转(陶土红实心 + 猫爪 + 文案)。
 function PawCta({ label }: { label: string }) {
   return (
-    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-[12.5px] font-semibold text-accent-fg shadow-[var(--shadow-accent)]">
+    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-caption font-semibold text-accent-fg shadow-[var(--shadow-accent)]">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <ellipse cx="12" cy="15.5" rx="4.6" ry="3.7" />
         <circle cx="6.3" cy="10.5" r="1.9" />
@@ -1871,7 +1871,7 @@ function PetNudge({
                         setAsking(false);
                       }}
                       className={
-                        "flex-1 rounded-full px-1.5 py-2 text-[12.5px] font-semibold transition-transform active:scale-[0.96] " +
+                        "flex-1 rounded-full px-1.5 py-2 text-caption font-semibold transition-transform active:scale-[0.96] " +
                         (primary
                           ? "bg-[var(--accent-tint)] text-accent"
                           : "bg-[var(--surface-2)] text-ink shadow-[var(--shadow-control)]")
@@ -2287,7 +2287,7 @@ export default function HomePage() {
                 <span className="block font-serif text-title font-semibold tracking-[0.04em]">
                   猫不对劲?选症状看病
                 </span>
-                <span className="mt-1 flex items-center gap-1.5 text-[11.5px] opacity-90">
+                <span className="mt-1 flex items-center gap-1.5 text-caption opacity-90">
                   <span className="flex items-center gap-1" aria-hidden="true">
                     <i className="size-[7px] rounded-full bg-[var(--red)] shadow-[0_0_0_2px_rgba(255,255,255,0.25)]" />
                     <i className="size-[7px] rounded-full bg-[var(--amber)] shadow-[0_0_0_2px_rgba(255,255,255,0.25)]" />
@@ -2345,7 +2345,7 @@ export default function HomePage() {
               <span className="block font-serif text-title font-semibold tracking-wide text-ink">
                 问问{cat.name}
               </span>
-              <span className="mt-0.5 block truncate text-[11.5px] text-ink-faint">
+              <span className="mt-0.5 block truncate text-caption text-ink-faint">
                 喂养 · 习性 · 拿不准的病情,都能问
               </span>
             </span>
@@ -2371,7 +2371,7 @@ export default function HomePage() {
               <RecentRow record={records[0]} />
             </div>
           ) : (
-            <p className="mt-3 px-1 text-[12.5px] leading-relaxed text-ink-faint">
+            <p className="mt-3 px-1 text-caption leading-relaxed text-ink-faint">
               还没有记录 —— {cat.name}有情况,选症状看病就行。
             </p>
           )}
@@ -2381,7 +2381,7 @@ export default function HomePage() {
           <div className="mt-2.5 flex flex-col items-center gap-1.5">
             <Link
               href="/feedback"
-              className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-[12.5px] font-medium tracking-wide text-ink-soft shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-caption font-medium tracking-wide text-ink-soft shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
             >
               <svg
                 width="13"

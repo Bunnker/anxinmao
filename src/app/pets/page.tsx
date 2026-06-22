@@ -427,7 +427,7 @@ export default function PetsPage() {
             <button
               type="button"
               onClick={() => setAlbumEdit((v) => !v)}
-              className="text-[12.5px] text-ink-faint"
+              className="text-caption text-ink-faint"
             >
               {albumEdit ? "完成" : "编辑 ›"}
             </button>
@@ -481,7 +481,7 @@ export default function PetsPage() {
             <button
               type="button"
               onClick={() => setAddSheet(true)}
-              className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-[1.5px] border-dashed border-[#d9d2c6] bg-white/45 text-[11.5px] text-ink-faint"
+              className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-[1.5px] border-dashed border-[#d9d2c6] bg-white/45 text-caption text-ink-faint"
             >
               <svg
                 width="20"
@@ -517,7 +517,7 @@ export default function PetsPage() {
           </span>
           <Link
             href={editHref + "#edit-health"}
-            className="text-[12.5px] text-ink-faint"
+            className="text-caption text-ink-faint"
           >
             管理 ›
           </Link>
@@ -541,7 +541,7 @@ export default function PetsPage() {
                   <CareIcon type={type} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14.5px] font-semibold tracking-wide text-ink">
+                  <span className="block text-body font-semibold tracking-wide text-ink">
                     {title}
                   </span>
                   <span className="mt-0.5 block text-[12px] text-ink-faint">
@@ -549,7 +549,7 @@ export default function PetsPage() {
                   </span>
                 </span>
                 <span
-                  className="flex-none rounded-full px-2.5 py-[5px] text-[11.5px] font-semibold whitespace-nowrap"
+                  className="flex-none rounded-full px-2.5 py-[5px] text-caption font-semibold whitespace-nowrap"
                   style={{ color: badge.color, background: badge.bg }}
                 >
                   {item.label}
@@ -566,7 +566,7 @@ export default function PetsPage() {
           </span>
           <Link
             href={editHref + "#edit-basic"}
-            className="text-[12.5px] text-ink-faint"
+            className="text-caption text-ink-faint"
           >
             记一笔 ›
           </Link>
@@ -586,7 +586,7 @@ export default function PetsPage() {
           </span>
           <Link
             href={editHref + "#edit-background"}
-            className="text-[12.5px] text-ink-faint"
+            className="text-caption text-ink-faint"
           >
             编辑 ›
           </Link>
@@ -611,7 +611,7 @@ export default function PetsPage() {
               </span>
               <span
                 className={
-                  "flex-1 text-[13.5px] leading-relaxed " +
+                  "flex-1 text-footnote leading-relaxed " +
                   (v ? "text-ink" : "text-ink-faint")
                 }
               >
@@ -629,7 +629,7 @@ export default function PetsPage() {
           {records.length > 0 && (
             <Link
               href="/pets/records"
-              className="text-[12.5px] text-ink-faint"
+              className="text-caption text-ink-faint"
             >
               全部 {records.length} 条 · 报表 ›
             </Link>
@@ -649,7 +649,7 @@ export default function PetsPage() {
                     <p className="text-[14px] leading-snug font-medium text-ink">
                       {r.summary}
                     </p>
-                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11.5px] text-ink-faint">
+                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-ink-faint">
                       {tv && (
                         <>
                           <span

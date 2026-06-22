@@ -137,7 +137,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
         <h1 className="m-0 font-serif text-[29px] font-bold leading-[1.18] text-ink">
           先给它建个小档案
         </h1>
-        <p className="mb-5 mt-3 text-[14.5px] leading-[1.58] text-ink-soft">
+        <p className="mb-5 mt-3 text-body leading-[1.58] text-ink-soft">
           它不对劲时，我陪你 30 秒看红黄绿就医建议 —— 建了档案，分诊更懂它
         </p>
 
@@ -148,7 +148,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
             <strong className="text-[15px] font-bold text-ink">
               {avatar ? "头像已添加" : "加张照片"}
             </strong>
-            <span className="text-[12.5px] leading-[1.45] text-ink-soft">
+            <span className="text-caption leading-[1.45] text-ink-soft">
               {avatar ? "点头像可更换或重新生成" : "可选，也能 AI 生成卡通头像"}
             </span>
           </div>

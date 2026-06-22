@@ -54,7 +54,7 @@ function SymptomCard({ s }: { s: Symptom }) {
         <span className="text-[15px] font-medium leading-snug text-ink">
           {s.label}
         </span>
-        <span className="text-[11.5px] leading-snug text-ink-faint">{s.sub}</span>
+        <span className="text-caption leading-snug text-ink-faint">{s.sub}</span>
       </span>
     </Link>
   );
@@ -124,7 +124,7 @@ export default function SymptomsPage() {
       {/* 顶部主卡 */}
       <section className="pt-7">
         <div className="rounded-[28px] bg-surface p-5 shadow-[var(--shadow-card)]">
-          <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
+          <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
             它现在最让你担心的是?
           </h1>
           <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">

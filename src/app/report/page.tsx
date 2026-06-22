@@ -1423,7 +1423,7 @@ function Step({ n, text }: { n: number; text: string }) {
       <span className="mt-px grid size-6 shrink-0 place-items-center rounded-full border border-[var(--hairline)] text-[12px] font-medium text-ink-soft">
         {n}
       </span>
-      <p className="flex-1 text-[14.5px] leading-relaxed text-ink">{text}</p>
+      <p className="flex-1 text-body leading-relaxed text-ink">{text}</p>
     </div>
   );
 }
@@ -1593,7 +1593,7 @@ function ReportContent() {
             {info.badge}
           </span>
         </div>
-        <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
+        <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
           {info.headline}
         </h1>
         <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">{lead}</p>
@@ -1644,7 +1644,7 @@ function ReportContent() {
               <circle cx="8" cy="43" r="3" fill="var(--red)" />
               <circle cx="270" cy="7" r="3" fill="var(--red)" />
             </svg>
-            <div className="mt-1 flex justify-between text-[10.5px] text-ink-faint">
+            <div className="mt-1 flex justify-between text-micro text-ink-faint">
               <span>现在就去 · 最好处理时机</span>
               <span>拖得越久 · 越危险</span>
             </div>
@@ -1652,7 +1652,7 @@ function ReportContent() {
           <ul className="mt-3 flex flex-col gap-3">
             {redDanger.map((d, i) => (
               <li key={i} className="flex flex-col gap-1">
-                <span className="text-[13.5px] leading-relaxed text-ink">
+                <span className="text-footnote leading-relaxed text-ink">
                   {d.text}
                 </span>
                 <span className="text-[11px] text-ink-faint">据 {d.source}</span>
@@ -1720,7 +1720,7 @@ function ReportContent() {
             {careMonitors.map((m, i) => (
               <li
                 key={i}
-                className="flex gap-2.5 text-[13.5px] leading-snug text-ink"
+                className="flex gap-2.5 text-footnote leading-snug text-ink"
               >
                 <span
                   className="mt-[7px] size-1.5 shrink-0 rounded-full"
@@ -1766,7 +1766,7 @@ function ReportContent() {
         </p>
         <ul className="mt-2.5 flex flex-col gap-2">
           {info.escalateItems.map((it, i) => (
-            <li key={i} className="flex gap-2.5 text-[13.5px] leading-snug text-ink">
+            <li key={i} className="flex gap-2.5 text-footnote leading-snug text-ink">
               <span
                 className="mt-[7px] size-1.5 shrink-0 rounded-full"
                 style={{ background: alarm ? "var(--red)" : "var(--ink-faint)" }}
@@ -1779,8 +1779,8 @@ function ReportContent() {
 
       {/* 诚实边界:明说 AI 够不到的地方 —— 承认局限反而增强可信(市场调研:信任杠杆) */}
       <div className="mt-7 rounded-[28px] bg-surface px-4 py-3.5 shadow-[var(--shadow-control)]">
-        <p className="text-[12.5px] font-semibold text-ink">我够不到的地方</p>
-        <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">
+        <p className="text-caption font-semibold text-ink">我够不到的地方</p>
+        <p className="mt-1.5 text-caption leading-relaxed text-ink-soft">
           我只能照你的描述判断 —— 摸不到它的肚子、查不了脱水、看不到牙龈和体温,也不知道它的既往病和最近用药。所以拿不准、或它看着比你说的更糟时,直接找兽医最稳。
         </p>
       </div>

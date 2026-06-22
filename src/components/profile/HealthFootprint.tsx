@@ -19,12 +19,12 @@ export function HealthFootprint({ records }: { records: CatRecord[] }) {
         <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
           健康足迹
         </p>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft">
+        <p className="mt-2 text-footnote leading-relaxed text-ink-soft">
           还没有分诊记录 —— 它不对劲时来分诊,这里会自动长出它的病历。
         </p>
         <Link
           href="/symptoms"
-          className="mt-2 inline-block text-[13.5px] font-medium text-accent"
+          className="mt-2 inline-block text-footnote font-medium text-accent"
         >
           试试分诊 →
         </Link>

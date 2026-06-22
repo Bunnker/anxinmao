@@ -407,7 +407,7 @@ function MarkdownMessage({
           return (
             <p
               key={blockIndex}
-              className="text-[14.5px] leading-relaxed text-ink"
+              className="text-body leading-relaxed text-ink"
             >
               {renderInline(block.text, `p-${blockIndex}`)}
               {streaming && isLastBlock && <Caret />}
@@ -419,7 +419,7 @@ function MarkdownMessage({
           return (
             <ul
               key={blockIndex}
-              className="list-disc space-y-1.5 pl-5 text-[14.5px] leading-relaxed text-ink"
+              className="list-disc space-y-1.5 pl-5 text-body leading-relaxed text-ink"
             >
               {block.items.map((item, itemIndex) => (
                 <li key={itemIndex}>
@@ -436,7 +436,7 @@ function MarkdownMessage({
         return (
           <ol
             key={blockIndex}
-            className="list-decimal space-y-1.5 pl-5 text-[14.5px] leading-relaxed text-ink"
+            className="list-decimal space-y-1.5 pl-5 text-body leading-relaxed text-ink"
           >
             {block.items.map((item, itemIndex) => (
               <li key={itemIndex}>
@@ -470,7 +470,7 @@ function CatTag() {
 function UserBubble({ text }: { text: string }) {
   return (
     <div
-      className="max-w-[82%] self-end whitespace-pre-wrap rounded-[26px] rounded-br-lg px-4 py-3 text-[14.5px] leading-relaxed text-white"
+      className="max-w-[82%] self-end whitespace-pre-wrap rounded-[26px] rounded-br-lg px-4 py-3 text-body leading-relaxed text-white"
       style={{
         background: "linear-gradient(180deg, var(--accent-light), var(--accent))",
         boxShadow: "0 8px 18px rgba(176,90,80,0.26)",
@@ -666,7 +666,7 @@ function EmergencyNotice() {
         </span>
         <div className="min-w-0">
           <p
-            className="text-[13.5px] font-bold"
+            className="text-footnote font-bold"
             style={{ color: "var(--red-ink)" }}
           >
             这可能是急症
@@ -775,10 +775,10 @@ function FollowupChips({
           type="button"
           disabled={disabled}
           onClick={() => onPick(q)}
-          className="group flex items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-surface px-4 py-2.5 text-left text-[13.5px] leading-snug text-ink-soft shadow-[var(--shadow-control)] transition-colors duration-150 active:bg-[var(--surface-2)] disabled:opacity-50"
+          className="group flex items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-surface px-4 py-2.5 text-left text-footnote leading-snug text-ink-soft shadow-[var(--shadow-control)] transition-colors duration-150 active:bg-[var(--surface-2)] disabled:opacity-50"
         >
           <span className="min-w-0">{q}</span>
-          <span className="shrink-0 text-[12.5px] font-medium text-accent transition-transform duration-200 group-active:translate-x-0.5">
+          <span className="shrink-0 text-caption font-medium text-accent transition-transform duration-200 group-active:translate-x-0.5">
             →
           </span>
         </button>
@@ -878,14 +878,14 @@ function Discovery({
     <div className="flex flex-col pb-4 pt-3">
       {/* 空态卡 */}
       <div className="rounded-[28px] bg-surface p-5 shadow-[var(--shadow-card)]">
-        <h1 className="font-serif text-[1.6rem] font-medium leading-snug tracking-tight text-ink">
+        <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
           关于{cat.name},
           <span className="text-accent">想问点什么?</span>
         </h1>
         <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
           生病拿不准、喂养、训练、行为都能问 —— 急症我会直接让你去医院。
         </p>
-        <p className="mt-2.5 flex items-center gap-1.5 text-[11.5px] text-ink-faint">
+        <p className="mt-2.5 flex items-center gap-1.5 text-caption text-ink-faint">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
             <path d="M12 8v5M12 16.5v.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
@@ -1447,14 +1447,14 @@ function BehaviorContent() {
           <button
             type="button"
             onClick={newConversation}
-            className="rounded-full border border-[var(--line)] bg-surface px-3 py-1 text-[11.5px] font-medium text-ink-soft shadow-[var(--shadow-control)]"
+            className="rounded-full border border-[var(--line)] bg-surface px-3 py-1 text-caption font-medium text-ink-soft shadow-[var(--shadow-control)]"
           >
             新对话
           </button>
         )}
         <span className="ml-auto flex items-center gap-1.5 rounded-full bg-surface py-1 pl-1 pr-3 shadow-[var(--shadow-control)]">
           <CatAvatar avatar={cat.avatar} name={cat.name} size={24} />
-          <span className="text-[11.5px] text-ink-soft">
+          <span className="text-caption text-ink-soft">
             {[ageLabel(cat.ageMonths), sex].filter(Boolean).join(" · ")}
           </span>
         </span>
