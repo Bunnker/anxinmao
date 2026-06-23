@@ -225,6 +225,7 @@ export async function POST(req: Request): Promise<Response> {
     careCardIds: agent.careCardIds,
     tier: upstreamTier,
     intent: intent.intent,
+    query,
   });
   const posterHeader = encodeKnowledgePosterHeader(posterAttachment);
   const tierSignal: ChatMessage | null = upstreamTier

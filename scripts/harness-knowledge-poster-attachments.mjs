@@ -49,11 +49,15 @@ function loadTypeScriptModule(rel, customRequire = require) {
 function assertSelectorBehavior() {
   const typeExports = loadTypeScriptModule("src/types/knowledge-poster.ts");
   const behaviorIntentExports = loadTypeScriptModule("src/lib/behavior-intent.ts");
+  const posterRulesExports = loadTypeScriptModule(
+    "src/lib/poster-query-rules.ts",
+  );
   const selectorExports = loadTypeScriptModule(
     "src/lib/knowledge-poster-attachments.ts",
     (request) => {
       if (request === "@/types/knowledge-poster") return typeExports;
       if (request === "@/lib/behavior-intent") return behaviorIntentExports;
+      if (request === "@/lib/poster-query-rules") return posterRulesExports;
       return require(request);
     },
   );
@@ -274,6 +278,95 @@ function assertSelectorBehavior() {
     "pure selector should map daily care to collapsed care poster",
     JSON.stringify(care),
   );
+
+  // ── 召回精确率闸门(query gate):意图相反→弃权;相符→召回;tier 不过闸;无 query 放行 ──
+  const gateItems = [
+    ...expectedItems,
+    {
+      id: "care-intercat-introduction-tension",
+      title: "多猫关系/新猫引入",
+      image:
+        "/knowledge-posters/generated-style/care-intercat-introduction-tension-xhs-style-v1.png",
+    },
+    {
+      id: "cat-constipation-straining",
+      title: "便秘/排便用力",
+      image:
+        "/knowledge-posters/generated-style/cat-constipation-straining-xhs-style-v1.png",
+    },
+    {
+      id: "cat-urethral-obstruction",
+      title: "尿不出硬急症",
+      image:
+        "/knowledge-posters/generated-style/cat-urethral-obstruction-xhs-style-v1.png",
+    },
+  ];
+  const gate = (input) =>
+    selectorExports.selectKnowledgePosterFromItems(gateItems, input);
+
+  // 用户原始痛点:问「隔离生病猫防传染」命中 negativeKeyword → 不召回「多猫引入/相处」图
+  assert(
+    gate({
+      intent: "daily_care",
+      careCardIds: ["care-intercat-introduction-tension"],
+      query: "猫生病了怎么隔离防止传染给另一只猫",
+    }) === undefined,
+    "query gate: 隔离生病猫(防传染)不应召回多猫引入/相处图",
+  );
+  // 相符:问「新猫和原住猫相处」命中 positive → 召回
+  assert(
+    gate({
+      intent: "daily_care",
+      careCardIds: ["care-intercat-introduction-tension"],
+      query: "新猫到家怎么和原住猫慢慢相处",
+    })?.id === "care-intercat-introduction-tension",
+    "query gate: 新猫引入/相处应召回多猫引入图",
+  );
+  // 跨图消歧:便秘卡 + 问「尿不出」→ 弃权
+  assert(
+    gate({
+      intent: "medical_general",
+      medicalCardIds: ["cat-constipation-straining"],
+      query: "猫一直蹲猫砂盆尿不出来",
+    }) === undefined,
+    "query gate: 问尿不出不应召回便秘图(弃权)",
+  );
+  // 相符:便秘卡 + 问「便秘」→ 召回
+  assert(
+    gate({
+      intent: "medical_general",
+      medicalCardIds: ["cat-constipation-straining"],
+      query: "猫好几天没拉屎便秘怎么办",
+    })?.id === "cat-constipation-straining",
+    "query gate: 问便秘应召回便秘图",
+  );
+  // 无正向命中 → 弃权(不相干就不召回)
+  assert(
+    gate({
+      intent: "daily_care",
+      careCardIds: ["care-nail-trimming"],
+      query: "猫呼吸困难张口喘怎么办",
+    }) === undefined,
+    "query gate: 无正向命中应弃权(剪指甲图不该被呼吸问题召回)",
+  );
+  // tier 红档不过闸 → 分诊图仍召回(保安全)
+  assert(
+    gate({
+      tier: "red",
+      medicalCardIds: ["cat-urethral-obstruction"],
+      query: "完全不相干的问题文字",
+    })?.id === "cat-urethral-obstruction",
+    "query gate: tier 红档不过闸,分诊图应仍召回(保安全)",
+  );
+  // 无 query → 放行(向后兼容)
+  assert(
+    gate({ intent: "daily_care", careCardIds: ["care-nail-trimming"] })?.id ===
+      "care-nail-trimming",
+    "query gate: 无 query 应放行(向后兼容)",
+  );
+  console.log(
+    "  ✓ 召回精确率闸门:意图相反弃权 / 相符召回 / tier 不过闸 / 无 query 放行",
+  );
 }
 
 function medicalCardIdsFromTrace(trace) {
@@ -296,11 +389,15 @@ async function assertBehaviorPosterRouting(manifestItems) {
   const behaviorIntentExports = loadTypeScriptModule("src/lib/behavior-intent.ts");
   const careKnowledgeExports = loadTypeScriptModule("src/lib/care-knowledge.ts");
   const agentRetrievalExports = loadTypeScriptModule("src/lib/agent-retrieval.ts");
+  const posterRulesExports = loadTypeScriptModule(
+    "src/lib/poster-query-rules.ts",
+  );
   const selectorExports = loadTypeScriptModule(
     "src/lib/knowledge-poster-attachments.ts",
     (request) => {
       if (request === "@/types/knowledge-poster") return typeExports;
       if (request === "@/lib/behavior-intent") return behaviorIntentExports;
+      if (request === "@/lib/poster-query-rules") return posterRulesExports;
       return require(request);
     },
   );

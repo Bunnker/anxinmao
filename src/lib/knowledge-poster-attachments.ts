@@ -10,6 +10,7 @@ import {
   type KnowledgePosterDisplayMode,
   type KnowledgePosterRiskTone,
 } from "@/types/knowledge-poster";
+import { posterPassesQueryGate } from "@/lib/poster-query-rules";
 
 const MANIFEST_PATH = path.join(
   process.cwd(),
@@ -59,6 +60,8 @@ export type KnowledgePosterSelectionInput = {
   } | null;
   tier?: RiskTier;
   intent?: IntentLike | null;
+  /** 用户原始提问 —— 召回精确率闸门用(意图歧义/不相干则弃权,不召回) */
+  query?: string | null;
 };
 
 type Candidate = {
@@ -285,6 +288,15 @@ export function selectKnowledgePosterFromItems(
   const careCandidates = candidatesFor(itemsById, careCardIds);
   const intent = intentValue(input.intent);
 
+  // 召回精确率闸门:意图分支用「过闸后」的候选(命中 negativeKeywords 或无 keyword 命中即弃权);
+  // tier 分支(红/黄/绿)不过闸 —— 真分诊场景的图解保安全、永远展示。
+  const gatedMedical = medicalCandidates.filter((c) =>
+    posterPassesQueryGate(c.item.id, input.query),
+  );
+  const gatedCare = careCandidates.filter((c) =>
+    posterPassesQueryGate(c.item.id, input.query),
+  );
+
   if (input.tier === "red" || intent === "emergency") {
     const candidate =
       selectRedCandidate(medicalCandidates) ?? careCandidates[0];
@@ -311,25 +323,25 @@ export function selectKnowledgePosterFromItems(
 
   if (isMedicalPosterIntent(intent)) {
     const candidate =
-      selectNonRedMedicalCandidate(medicalCandidates) ?? medicalCandidates[0];
+      selectNonRedMedicalCandidate(gatedMedical) ?? gatedMedical[0];
     return candidate
       ? attachmentFromItem(candidate.item, "preview", "yellow", "medical_recall")
       : undefined;
   }
 
   if (intent === "daily_care") {
-    const candidate = careCandidates[0];
+    const candidate = gatedCare[0];
     return candidate
       ? attachmentFromItem(candidate.item, "collapsed", "care", "daily_care")
       : undefined;
   }
 
   if (
-    medicalCandidates.length === 1 &&
-    medicalCandidates[0]?.item.id !== EMERGENCY_CARD_ID
+    gatedMedical.length === 1 &&
+    gatedMedical[0]?.item.id !== EMERGENCY_CARD_ID
   ) {
     return attachmentFromItem(
-      medicalCandidates[0].item,
+      gatedMedical[0].item,
       "preview",
       "yellow",
       "single_medical_candidate",
