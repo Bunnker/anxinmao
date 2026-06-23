@@ -1420,10 +1420,10 @@ function TierIcon({ tier }: { tier: RiskTier }) {
 function Step({ n, text }: { n: number; text: string }) {
   return (
     <div className="flex gap-3.5 border-b border-[var(--line-soft)] py-3 last:border-b-0">
-      <span className="mt-px grid size-6 shrink-0 place-items-center rounded-full border border-[var(--hairline)] text-[12px] font-medium text-ink-soft">
+      <span className="mt-px grid size-6 shrink-0 place-items-center rounded-full border border-[var(--hairline)] text-caption font-medium text-ink-soft">
         {n}
       </span>
-      <p className="flex-1 text-[14.5px] leading-relaxed text-ink">{text}</p>
+      <p className="flex-1 text-body leading-relaxed text-ink">{text}</p>
     </div>
   );
 }
@@ -1563,12 +1563,12 @@ function ReportContent() {
           护栏:这个位置是 docs/AI生成形象-实施说明.md §二 明确允许的「报告卡角落」。 */}
       <header className="flex items-center">
         <CatAvatar avatar={catAvatar} name={catName} size={36} />
-        <span className="flex-1 text-center text-[12px] font-medium uppercase tracking-[0.18em] text-ink-soft">
+        <span className="flex-1 text-center text-caption font-medium uppercase tracking-[0.18em] text-ink-soft">
           安心报告
         </span>
         <Link
           href="/"
-          className="grid h-9 place-items-center px-1 text-[13px] text-ink-soft"
+          className="grid h-9 place-items-center px-1 text-footnote text-ink-soft"
         >
           完成
         </Link>
@@ -1576,7 +1576,7 @@ function ReportContent() {
 
       {/* 分级卡 */}
       <div
-        className="mt-3 rounded-[32px] p-5 shadow-[var(--shadow-card)]"
+        className="mt-3 rounded-3xl p-5 shadow-[var(--shadow-card)]"
         style={{ background: vis.bg }}
       >
         <div className="mb-3 flex items-center gap-2.5">
@@ -1587,27 +1587,27 @@ function ReportContent() {
             <TierIcon tier={shownTier} />
           </span>
           <span
-            className="text-[12px] font-semibold tracking-[0.08em]"
+            className="text-caption font-semibold tracking-[0.08em]"
             style={{ color: vis.ink }}
           >
             {info.badge}
           </span>
         </div>
-        <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
+        <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
           {info.headline}
         </h1>
-        <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">{lead}</p>
+        <p className="mt-3 text-body leading-relaxed text-ink-soft">{lead}</p>
       </div>
 
       {/* 为什么等不得 —— 红档:危险机制 + 时限 + 权威出处,先于操作展示,让用户看懂危险性、且可信。
           按用户分诊选中的 claim 联动:基线危险(无 when)总显示,带 when 的只在命中相关选择时显示。 */}
       {redDanger.length > 0 && (
         <section
-          className="mt-4 rounded-[28px] border p-4 shadow-[var(--shadow-control)]"
+          className="mt-4 rounded-2xl border p-4 shadow-[var(--shadow-control)]"
           style={{ background: "var(--red-bg)", borderColor: "var(--red)" }}
         >
           <p
-            className="text-[13px] font-semibold leading-snug"
+            className="text-footnote font-semibold leading-snug"
             style={{ color: "var(--red-ink)" }}
           >
             {info.dangerTitle ?? "为什么等不得"}
@@ -1644,7 +1644,7 @@ function ReportContent() {
               <circle cx="8" cy="43" r="3" fill="var(--red)" />
               <circle cx="270" cy="7" r="3" fill="var(--red)" />
             </svg>
-            <div className="mt-1 flex justify-between text-[10.5px] text-ink-faint">
+            <div className="mt-1 flex justify-between text-micro text-ink-faint">
               <span>现在就去 · 最好处理时机</span>
               <span>拖得越久 · 越危险</span>
             </div>
@@ -1652,10 +1652,10 @@ function ReportContent() {
           <ul className="mt-3 flex flex-col gap-3">
             {redDanger.map((d, i) => (
               <li key={i} className="flex flex-col gap-1">
-                <span className="text-[13.5px] leading-relaxed text-ink">
+                <span className="text-footnote leading-relaxed text-ink">
                   {d.text}
                 </span>
-                <span className="text-[11px] text-ink-faint">据 {d.source}</span>
+                <span className="text-caption text-ink-faint">据 {d.source}</span>
               </li>
             ))}
           </ul>
@@ -1668,7 +1668,7 @@ function ReportContent() {
           href="https://uri.amap.com/search?keyword=宠物医院"
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 flex items-center justify-center gap-2 rounded-[28px] py-4 text-[16px] font-medium text-white shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
+          className="mt-3 flex items-center justify-center gap-2 rounded-2xl py-4 text-title font-medium text-white shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
           style={{ background: "var(--red)" }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -1690,7 +1690,7 @@ function ReportContent() {
       <Link
         href={askHref}
         onClick={saveAskHandoff}
-        className="mt-3 flex items-center justify-between rounded-[28px] bg-surface px-4 py-3.5 text-[14px] font-medium text-ink shadow-[var(--shadow-control)]"
+        className="mt-3 flex items-center justify-between rounded-2xl bg-surface px-4 py-3.5 text-body font-medium text-ink shadow-[var(--shadow-control)]"
       >
         <span>继续补充问问</span>
         <span className="text-ink-faint" aria-hidden="true">
@@ -1700,7 +1700,7 @@ function ReportContent() {
 
       {/* 现在做什么 */}
       <section className="mt-8">
-        <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-faint">
+        <p className="text-caption font-semibold tracking-[0.2em] text-ink-faint">
           {info.stepsTitle}
         </p>
         <div className="mt-1.5">
@@ -1713,17 +1713,17 @@ function ReportContent() {
       {/* 「在家盯这几点」—— 观察要点(黄/绿档),组成「在家做 → 盯这几点 → 变化再评估」安心闭环 */}
       {careMonitors.length > 0 && (
         <section className="mt-8">
-          <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-faint">
+          <p className="text-caption font-semibold tracking-[0.2em] text-ink-faint">
             在家盯这几点
           </p>
           <ul className="mt-2.5 flex flex-col gap-2">
             {careMonitors.map((m, i) => (
               <li
                 key={i}
-                className="flex gap-2.5 text-[13.5px] leading-snug text-ink"
+                className="flex gap-2.5 text-footnote leading-snug text-ink"
               >
                 <span
-                  className="mt-[7px] size-1.5 shrink-0 rounded-full"
+                  className="mt-2 size-1.5 shrink-0 rounded-full"
                   style={{ background: "var(--ink-faint)" }}
                 />
                 <span className="flex-1">{m}</span>
@@ -1736,12 +1736,12 @@ function ReportContent() {
       {/* 为什么这么判断 —— 红档已显示「为什么等不得」(redDanger)时隐藏本段,避免重复 */}
       {redDanger.length === 0 && (
         <section className="mt-8">
-          <p className="text-[11px] font-semibold tracking-[0.2em] text-ink-faint">
+          <p className="text-caption font-semibold tracking-[0.2em] text-ink-faint">
             为什么这么判断
           </p>
           <div className="mt-2.5 flex flex-col gap-2">
             {info.why.map((w, i) => (
-              <p key={i} className="text-[14px] leading-relaxed text-ink-soft">
+              <p key={i} className="text-body leading-relaxed text-ink-soft">
                 {w}
               </p>
             ))}
@@ -1751,7 +1751,7 @@ function ReportContent() {
 
       {/* 升级清单 —— 黄/红档是红线,绿档是温和提醒 */}
       <div
-        className="mt-7 rounded-[28px] border p-4 shadow-[var(--shadow-control)]"
+        className="mt-7 rounded-2xl border p-4 shadow-[var(--shadow-control)]"
         style={
           alarm
             ? { background: "var(--red-bg)", borderColor: "var(--red)" }
@@ -1759,16 +1759,16 @@ function ReportContent() {
         }
       >
         <p
-          className="text-[13px] font-semibold leading-snug"
+          className="text-footnote font-semibold leading-snug"
           style={{ color: alarm ? "var(--red-ink)" : "var(--ink)" }}
         >
           {info.escalateTitle}
         </p>
         <ul className="mt-2.5 flex flex-col gap-2">
           {info.escalateItems.map((it, i) => (
-            <li key={i} className="flex gap-2.5 text-[13.5px] leading-snug text-ink">
+            <li key={i} className="flex gap-2.5 text-footnote leading-snug text-ink">
               <span
-                className="mt-[7px] size-1.5 shrink-0 rounded-full"
+                className="mt-2 size-1.5 shrink-0 rounded-full"
                 style={{ background: alarm ? "var(--red)" : "var(--ink-faint)" }}
               />
               <span className="flex-1">{it}</span>
@@ -1778,9 +1778,9 @@ function ReportContent() {
       </div>
 
       {/* 诚实边界:明说 AI 够不到的地方 —— 承认局限反而增强可信(市场调研:信任杠杆) */}
-      <div className="mt-7 rounded-[28px] bg-surface px-4 py-3.5 shadow-[var(--shadow-control)]">
-        <p className="text-[12.5px] font-semibold text-ink">我够不到的地方</p>
-        <p className="mt-1.5 text-[12.5px] leading-relaxed text-ink-soft">
+      <div className="mt-7 rounded-2xl bg-surface px-4 py-3.5 shadow-[var(--shadow-control)]">
+        <p className="text-caption font-semibold text-ink">我够不到的地方</p>
+        <p className="mt-1.5 text-caption leading-relaxed text-ink-soft">
           我只能照你的描述判断 —— 摸不到它的肚子、查不了脱水、看不到牙龈和体温,也不知道它的既往病和最近用药。所以拿不准、或它看着比你说的更糟时,直接找兽医最稳。
         </p>
       </div>

@@ -94,7 +94,7 @@ function CheckIcon() {
 
 function ItemCard({ item }: { item: Item }) {
   return (
-    <div className="overflow-hidden rounded-[28px] bg-surface shadow-[var(--shadow-card)]">
+    <div className="overflow-hidden rounded-2xl bg-surface shadow-[var(--shadow-card)]">
       {/* 顶部场景配图 + 「不必慌」信号 chips 叠在图底部 ——
           图传达「放松」氛围,chips 拎出 why 里的「这几项都正常 = 通常不必慌」标准,
           文字承担「升级条件」。三层递进,严格不画症状细节。
@@ -121,7 +121,7 @@ function ItemCard({ item }: { item: Item }) {
           {item.checks.map((c) => (
             <span
               key={c}
-              className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-medium text-ink shadow-sm"
+              className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-caption font-medium text-ink shadow-sm"
             >
               <CheckIcon />
               {c}
@@ -130,12 +130,12 @@ function ItemCard({ item }: { item: Item }) {
         </div>
       </div>
       <div className="p-5">
-        <h3 className="text-[15.5px] font-medium text-ink">{item.title}</h3>
-        <p className="mt-2 text-[14px] leading-relaxed text-ink-soft">
+        <h3 className="text-callout font-medium text-ink">{item.title}</h3>
+        <p className="mt-2 text-body leading-relaxed text-ink-soft">
           {item.why}
         </p>
         <div className="mt-3 border-l-2 border-[var(--red)] pl-3">
-          <p className="text-[12.5px] leading-relaxed text-[var(--red-ink)]">
+          <p className="text-caption leading-relaxed text-[var(--red-ink)]">
             {item.escalate}
           </p>
         </div>
@@ -184,7 +184,7 @@ export default function KnowledgePage() {
             />
           </svg>
         </Link>
-        <span className="flex-1 text-center text-[12px] font-medium uppercase tracking-[0.18em] text-ink-soft">
+        <span className="flex-1 text-center text-caption font-medium uppercase tracking-[0.18em] text-ink-soft">
           看着吓人但不必慌
         </span>
         <span className="size-9" />
@@ -192,10 +192,10 @@ export default function KnowledgePage() {
 
       {/* 标题 + 说明 */}
       <section className="pt-6">
-        <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
+        <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
           这些事新手容易吓到 —— 但通常不必冲急诊
         </h1>
-        <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
+        <p className="mt-2.5 text-footnote leading-relaxed text-ink-soft">
           权威兽医资料(Anicira / Merck)明确指出的「常被当急症、其实可以白天再约门诊」的几种情况。图底部的 ✓ 信号 —— 这几项都正常,通常可以白天再约门诊;红色框里是「什么时候要升级」,出现立刻走分诊。
         </p>
       </section>
@@ -212,15 +212,15 @@ export default function KnowledgePage() {
       {/* 兜底:还是不放心 → 走分诊 */}
       <Link
         href="/symptoms"
-        className="mt-7 flex items-center justify-between rounded-[28px] border border-dashed border-[var(--line)] bg-white/55 px-5 py-4 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
+        className="mt-7 flex items-center justify-between rounded-2xl border border-dashed border-[var(--line)] bg-white/55 px-5 py-4 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
       >
         <span>
-          <span className="block text-[15px] text-ink">还是不放心?</span>
-          <span className="mt-0.5 block text-[12.5px] text-ink-faint">
+          <span className="block text-callout text-ink">还是不放心?</span>
+          <span className="mt-0.5 block text-caption text-ink-faint">
             去分诊看看,几个问题就有答案
           </span>
         </span>
-        <span className="shrink-0 text-[13px] font-medium text-accent">
+        <span className="shrink-0 text-footnote font-medium text-accent">
           去分诊 →
         </span>
       </Link>

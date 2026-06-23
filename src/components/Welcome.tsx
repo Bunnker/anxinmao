@@ -95,10 +95,10 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
       {/* 头图(图与淡出装饰,品牌文字保留给读屏) */}
       <section
         className="relative h-[250px] overflow-hidden"
-        style={{ background: "#f8eddc" }}
+        style={{ background: "var(--warm-cream)" }}
       >
         <div
-          className="absolute inset-x-0 z-[2] text-center text-[12px] font-semibold"
+          className="absolute inset-x-0 z-[2] text-center text-caption font-semibold"
           style={{
             top: "calc(18px + env(safe-area-inset-top,0px))",
             color: "rgba(26,26,24,0.66)",
@@ -127,38 +127,38 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
 
       {/* 卡片 */}
       <section
-        className="relative z-[1] mx-4 -mt-7 rounded-[28px] bg-surface px-5 pb-[18px] pt-[25px]"
+        className="relative z-[1] mx-4 -mt-7 rounded-2xl bg-surface px-5 pb-4 pt-6"
         style={{
           border: "1px solid rgba(255,255,255,0.76)",
           boxShadow:
             "0 26px 62px rgba(54,43,35,0.1), 0 1px 0 rgba(255,255,255,0.9) inset",
         }}
       >
-        <h1 className="m-0 font-serif text-[29px] font-bold leading-[1.18] text-ink">
+        <h1 className="m-0 font-serif text-display font-semibold leading-[1.18] text-ink">
           先给它建个小档案
         </h1>
-        <p className="mb-5 mt-3 text-[14.5px] leading-[1.58] text-ink-soft">
+        <p className="mb-5 mt-3 text-body leading-[1.58] text-ink-soft">
           它不对劲时，我陪你 30 秒看红黄绿就医建议 —— 建了档案，分诊更懂它
         </p>
 
         {/* 头像行 */}
-        <div className="mb-5 grid grid-cols-[82px_1fr] items-center gap-[14px]">
+        <div className="mb-5 grid grid-cols-[82px_1fr] items-center gap-3.5">
           <AvatarPicker avatar={avatar} name={name} onChange={setAvatar} />
           <div className="grid gap-1">
-            <strong className="text-[15px] font-bold text-ink">
+            <strong className="text-callout font-bold text-ink">
               {avatar ? "头像已添加" : "加张照片"}
             </strong>
-            <span className="text-[12.5px] leading-[1.45] text-ink-soft">
+            <span className="text-caption leading-[1.45] text-ink-soft">
               {avatar ? "点头像可更换或重新生成" : "可选，也能 AI 生成卡通头像"}
             </span>
           </div>
         </div>
 
         {/* 名字(唯一必填) */}
-        <div className="mb-[15px]">
-          <div className="mb-2 flex items-center justify-between text-[14px] font-bold text-ink">
+        <div className="mb-4">
+          <div className="mb-2 flex items-center justify-between text-body font-bold text-ink">
             <label htmlFor="cat-name">它叫什么？</label>
-            <span className="text-[12px] font-bold text-[var(--accent)]">
+            <span className="text-caption font-bold text-[var(--accent)]">
               唯一必填
             </span>
           </div>
@@ -170,10 +170,10 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
             placeholder="输入猫咪名字"
             maxLength={12}
             autoComplete="off"
-            className="h-[54px] w-full rounded-[18px] px-4 text-[17px] font-semibold text-ink outline-none placeholder:text-[rgba(26,26,24,0.38)]"
+            className="h-[54px] w-full rounded-lg px-4 text-title font-semibold text-ink outline-none placeholder:text-[rgba(26,26,24,0.38)]"
             style={{
               border: "1px solid rgba(176,90,80,0.26)",
-              background: "#fffaf5",
+              background: "var(--warm-white)",
               boxShadow: "0 1px 0 rgba(255,255,255,0.8) inset",
             }}
           />
@@ -200,12 +200,12 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
                 aria-checked={active}
                 tabIndex={sexIdx < 0 ? (i === 0 ? 0 : -1) : active ? 0 : -1}
                 onClick={() => setSex(sexValue(opt))}
-                className="grid h-9 place-items-center rounded-xl text-[13px] font-[650] transition-colors"
+                className="grid h-9 place-items-center rounded-xl text-footnote font-semibold transition-colors"
                 style={
                   active
                     ? {
                         background: "#fff",
-                        color: "#95483f",
+                        color: "var(--accent-deep)",
                         boxShadow:
                           "0 7px 18px rgba(54,43,35,0.08), 0 0 0 1px rgba(176,90,80,0.1)",
                       }
@@ -220,10 +220,10 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
 
         {/* 隐私安心条 */}
         <div
-          className="mt-4 flex min-h-[43px] items-center gap-[9px] rounded-2xl px-[13px] text-[13px] font-[650]"
+          className="mt-4 flex min-h-[43px] items-center gap-2 rounded-2xl px-3 text-footnote font-semibold"
           style={{
             border: "1px solid rgba(176,90,80,0.12)",
-            background: "#fff8f0",
+            background: "var(--warm-white)",
             color: "#5c5049",
           }}
         >
@@ -235,11 +235,11 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
             <svg width="11" height="12" viewBox="0 0 11 12" fill="none">
               <path
                 d="M2.4 5.2V3.7a3.1 3.1 0 0 1 6.2 0v1.5"
-                stroke="#95483f"
+                stroke="var(--accent-deep)"
                 strokeWidth="1.5"
                 strokeLinecap="round"
               />
-              <rect x="1.4" y="5" width="8.2" height="6.4" rx="1.8" fill="#95483f" />
+              <rect x="1.4" y="5" width="8.2" height="6.4" rx="1.8" fill="var(--accent-deep)" />
             </svg>
           </span>
           <span>不用登录 · 资料只存在你手机里</span>
@@ -249,7 +249,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
         {error && (
           <p
             role="alert"
-            className="mt-3 text-[13px] leading-relaxed text-[var(--red)]"
+            className="mt-3 text-footnote leading-relaxed text-[var(--red)]"
           >
             {error}
           </p>
@@ -260,10 +260,10 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
           type="button"
           onClick={start}
           disabled={!ready}
-          className="mt-[14px] grid h-14 w-full place-items-center rounded-full text-[17px] font-extrabold text-white transition-transform duration-300 active:scale-[0.985] disabled:cursor-not-allowed"
+          className="mt-3.5 grid h-14 w-full place-items-center rounded-full text-title font-bold text-white transition-transform duration-300 active:scale-[0.985] disabled:cursor-not-allowed"
           style={{
             background: ready
-              ? "linear-gradient(180deg, #bd655b, var(--accent))"
+              ? "linear-gradient(180deg, var(--accent-light), var(--accent))"
               : "var(--surface-2)",
             color: ready ? "#fff" : "var(--ink-faint)",
             boxShadow: ready
@@ -274,7 +274,7 @@ export function Welcome({ onCreated }: { onCreated: (store: Store) => void }) {
           开始照顾它
         </button>
 
-        <p className="mx-auto mt-[14px] max-w-[300px] text-center text-[12px] leading-[1.55] text-[rgba(107,104,101,0.82)]">
+        <p className="mx-auto mt-3.5 max-w-[300px] text-center text-caption leading-[1.55] text-[rgba(107,104,101,0.82)]">
           品种 · 生日 · 体重 · 疫苗病史 —— 进去之后随时补
         </p>
       </section>

@@ -31,14 +31,14 @@ const SEX_VIS: Record<Cat["sex"], { label: string; color: string; bg: string }> 
   {
     雌: { label: "♀ 母", color: "#c77fa0", bg: "#fbeaf1" },
     雄: { label: "♂ 公", color: "#5a90c2", bg: "#e6f0f8" },
-    不确定: { label: "性别未定", color: "#8a6f54", bg: "rgba(255,255,255,0.65)" },
+    不确定: { label: "性别未定", color: "var(--neutral-ink)", bg: "rgba(255,255,255,0.65)" },
   };
 
 // 护理徽章配色 —— 中性 / 陶土红,绝不取风险三色(红线)。
 const CARE_BADGE: Record<CareStatus, { color: string; bg: string }> = {
   done: { color: "var(--accent)", bg: "var(--accent-tint)" },
-  due: { color: "#8a6f54", bg: "#f0ebe2" },
-  no: { color: "var(--ink-soft)", bg: "#efece6" },
+  due: { color: "var(--neutral-ink)", bg: "var(--neutral-bg)" },
+  no: { color: "var(--ink-soft)", bg: "var(--neutral-bg)" },
 };
 
 // 健康记录时间轴 —— 真分诊记录的 tier 点/标签用红黄绿(合规:风险信号本体);
@@ -260,7 +260,7 @@ export default function PetsPage() {
         }}
       >
         <div className="flex h-9 items-center">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             毛孩子
           </span>
         </div>
@@ -275,7 +275,7 @@ export default function PetsPage() {
                 type="button"
                 onClick={() => switchCat(c.id)}
                 className={
-                  "flex flex-none items-center gap-2 rounded-full border-[1.5px] py-[5px] pr-[13px] pl-[5px] transition " +
+                  "flex flex-none items-center gap-2 rounded-full border-[1.5px] py-1 pr-3 pl-1 transition " +
                   (on
                     ? "border-accent bg-white shadow-[0_4px_12px_rgba(176,90,80,0.16)]"
                     : "border-transparent bg-white/45")
@@ -286,7 +286,7 @@ export default function PetsPage() {
                 </span>
                 <span
                   className={
-                    "text-[13px] font-semibold tracking-wide whitespace-nowrap " +
+                    "text-footnote font-semibold tracking-wide whitespace-nowrap " +
                     (on ? "text-accent" : "text-ink-soft")
                   }
                 >
@@ -298,7 +298,7 @@ export default function PetsPage() {
           <Link
             href="/onboarding?add=1"
             aria-label="添加一只毛孩子"
-            className="grid size-[38px] flex-none place-items-center rounded-full border-[1.5px] border-dashed border-[#cdbfae] bg-white/35 text-[#9a7e62] transition active:scale-90"
+            className="grid size-[38px] flex-none place-items-center rounded-full border-[1.5px] border-dashed border-[var(--neutral-line)] bg-white/35 text-[var(--neutral-ink)] transition active:scale-90"
           >
             <svg
               width="18"
@@ -320,7 +320,7 @@ export default function PetsPage() {
         <div className="mt-2 flex items-start gap-4">
           <div className="flex flex-none flex-col items-center gap-2.5">
             <div
-              className="relative size-[88px] overflow-hidden rounded-[28px] shadow-[0_10px_24px_-8px_rgba(190,130,70,0.55),inset_0_0_0_3px_#fff]"
+              className="relative size-[88px] overflow-hidden rounded-2xl shadow-[0_10px_24px_-8px_rgba(190,130,70,0.55),inset_0_0_0_3px_#fff]"
               style={{
                 background:
                   "radial-gradient(circle at 50% 38%,#f3c590,#e2954f 76%)",
@@ -350,7 +350,7 @@ export default function PetsPage() {
             </div>
             <Link
               href={editHref}
-              className="flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-[12px] font-semibold tracking-wide text-accent shadow-[var(--shadow-control)] transition active:scale-95"
+              className="flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1.5 text-caption font-semibold tracking-wide text-accent shadow-[var(--shadow-control)] transition active:scale-95"
             >
               <svg
                 width="13"
@@ -371,17 +371,17 @@ export default function PetsPage() {
 
           <div className="min-w-0 pt-1">
             <div className="flex items-center gap-2">
-              <span className="truncate font-serif text-[25px] font-bold tracking-wide text-ink">
+              <span className="truncate font-serif text-display font-semibold tracking-wide text-ink">
                 {cat.name || "未命名"}
               </span>
               <span
-                className="flex-none rounded-lg px-2 py-[3px] text-[12px] font-semibold whitespace-nowrap"
+                className="flex-none rounded-lg px-2 py-0.5 text-caption font-semibold whitespace-nowrap"
                 style={{ color: sex.color, background: sex.bg }}
               >
                 {sex.label}
               </span>
             </div>
-            <p className="mt-1.5 text-[13px] tracking-wide text-ink-soft">
+            <p className="mt-1.5 text-footnote tracking-wide text-ink-soft">
               {breedLine || "资料待完善"}
             </p>
           </div>
@@ -389,7 +389,7 @@ export default function PetsPage() {
 
         {/* 四宫格 */}
         <div
-          className="mt-[18px] flex gap-px overflow-hidden rounded-2xl bg-white/50 shadow-[var(--shadow-control)]"
+          className="mt-4 flex gap-px overflow-hidden rounded-2xl bg-white/50 shadow-[var(--shadow-control)]"
           data-guide-target="guide-profile-summary"
         >
           {(
@@ -401,15 +401,15 @@ export default function PetsPage() {
             ] as const
           ).map(([v, unit, k]) => (
             <div key={k} className="flex-1 bg-white/55 px-1 py-3 text-center">
-              <div className="font-serif text-[18px] font-semibold tracking-wide text-ink">
+              <div className="font-serif text-title font-semibold tracking-wide text-ink">
                 {v}
                 {unit && (
-                  <small className="ml-px text-[11px] font-normal text-ink-soft">
+                  <small className="ml-px text-caption font-normal text-ink-soft">
                     {unit}
                   </small>
                 )}
               </div>
-              <div className="mt-[3px] text-[11px] tracking-wide text-ink-faint">
+              <div className="mt-0.5 text-caption tracking-wide text-ink-faint">
                 {k}
               </div>
             </div>
@@ -419,15 +419,15 @@ export default function PetsPage() {
 
       <div className="px-5">
         {/* 生活相册(照片墙 · 可单独编辑) */}
-        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+        <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             生活相册
           </span>
           {(photos.length > 0 || albumEdit) && (
             <button
               type="button"
               onClick={() => setAlbumEdit((v) => !v)}
-              className="text-[12.5px] font-semibold text-accent"
+              className="text-caption text-ink-faint"
             >
               {albumEdit ? "完成" : "编辑 ›"}
             </button>
@@ -454,7 +454,7 @@ export default function PetsPage() {
                 className="h-full w-full object-cover"
               />
               {cat.avatar === p && (
-                <span className="absolute top-1.5 left-1.5 rounded-lg bg-accent/90 px-1.5 py-0.5 text-[9.5px] font-semibold tracking-wide text-white">
+                <span className="absolute top-1.5 left-1.5 rounded-lg bg-accent/90 px-1.5 py-0.5 text-micro font-semibold tracking-wide text-white">
                   主图
                 </span>
               )}
@@ -481,7 +481,7 @@ export default function PetsPage() {
             <button
               type="button"
               onClick={() => setAddSheet(true)}
-              className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-[1.5px] border-dashed border-[#d9d2c6] bg-white/45 text-[11.5px] text-ink-faint"
+              className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-2xl border-[1.5px] border-dashed border-[var(--neutral-line)] bg-white/45 text-caption text-ink-faint"
             >
               <svg
                 width="20"
@@ -501,23 +501,23 @@ export default function PetsPage() {
           )}
         </div>
         {photos.length === 0 && !albumEdit ? (
-          <p className="mt-2 px-0.5 text-[12px] leading-relaxed text-ink-faint">
+          <p className="mt-2 px-0.5 text-caption leading-relaxed text-ink-faint">
             还没有生活照 —— 点上面添加。仅本地展示,不参与分诊判断。
           </p>
         ) : (
-          <p className="mt-2.5 px-0.5 text-[11px] tracking-wide text-ink-faint">
+          <p className="mt-2.5 px-0.5 text-caption tracking-wide text-ink-faint">
             最多 6 张 · 仅本地展示,不参与分诊判断
           </p>
         )}
 
         {/* 健康档案(疫苗/驱虫/绝育)—— 徽章中性/陶土红,不碰风险三色 */}
-        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+        <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             健康档案
           </span>
           <Link
             href={editHref + "#edit-health"}
-            className="text-[12.5px] text-ink-faint"
+            className="text-caption text-ink-faint"
           >
             管理 ›
           </Link>
@@ -535,21 +535,21 @@ export default function PetsPage() {
               <Link
                 key={type}
                 href={editHref + (type === "neuter" ? "#edit-basic" : "#edit-health")}
-                className="flex items-center gap-3 rounded-2xl bg-surface px-[15px] py-3.5 shadow-[var(--shadow-control)] transition active:scale-[0.99]"
+                className="flex items-center gap-3 rounded-2xl bg-surface px-4 py-3.5 shadow-[var(--shadow-control)] transition active:scale-[0.99]"
               >
-                <span className="grid size-[42px] flex-none place-items-center rounded-[13px] bg-[var(--accent-tint)] text-accent">
+                <span className="grid size-[42px] flex-none place-items-center rounded-sm bg-[var(--accent-tint)] text-accent">
                   <CareIcon type={type} />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14.5px] font-semibold tracking-wide text-ink">
+                  <span className="block text-body font-semibold tracking-wide text-ink">
                     {title}
                   </span>
-                  <span className="mt-0.5 block text-[12px] text-ink-faint">
+                  <span className="mt-0.5 block text-caption text-ink-faint">
                     {item.sub}
                   </span>
                 </span>
                 <span
-                  className="flex-none rounded-full px-2.5 py-[5px] text-[11.5px] font-semibold whitespace-nowrap"
+                  className="flex-none rounded-full px-2.5 py-1 text-caption font-semibold whitespace-nowrap"
                   style={{ color: badge.color, background: badge.bg }}
                 >
                   {item.label}
@@ -560,13 +560,13 @@ export default function PetsPage() {
         </div>
 
         {/* 体重曲线 */}
-        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+        <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             体重
           </span>
           <Link
             href={editHref + "#edit-basic"}
-            className="text-[12.5px] text-ink-faint"
+            className="text-caption text-ink-faint"
           >
             记一笔 ›
           </Link>
@@ -574,19 +574,19 @@ export default function PetsPage() {
         {cat.weightLog && cat.weightLog.length >= 2 ? (
           <WeightSparkline log={cat.weightLog} />
         ) : (
-          <div className="rounded-2xl bg-surface px-4 py-4 text-[13px] leading-relaxed text-ink-soft shadow-[var(--shadow-control)]">
+          <div className="rounded-2xl bg-surface px-4 py-4 text-footnote leading-relaxed text-ink-soft shadow-[var(--shadow-control)]">
             当前 {cat.weight} kg —— 记满 2 次称重就会长出体重曲线。
           </div>
         )}
 
         {/* 健康背景 */}
-        <div className="mt-[22px] mb-3 flex items-baseline justify-between px-0.5">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+        <div className="mt-5 mb-3 flex items-baseline justify-between px-0.5">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             健康背景
           </span>
           <Link
             href={editHref + "#edit-background"}
-            className="text-[12.5px] text-ink-faint"
+            className="text-caption text-ink-faint"
           >
             编辑 ›
           </Link>
@@ -602,16 +602,16 @@ export default function PetsPage() {
             <div
               key={k}
               className={
-                "flex gap-3 px-[15px] py-3 " +
+                "flex gap-3 px-4 py-3 " +
                 (i < 2 ? "border-b border-[var(--line)]" : "")
               }
             >
-              <span className="w-[62px] flex-none text-[13px] text-ink-soft">
+              <span className="w-[62px] flex-none text-footnote text-ink-soft">
                 {k}
               </span>
               <span
                 className={
-                  "flex-1 text-[13.5px] leading-relaxed " +
+                  "flex-1 text-footnote leading-relaxed " +
                   (v ? "text-ink" : "text-ink-faint")
                 }
               >
@@ -622,14 +622,14 @@ export default function PetsPage() {
         </div>
 
         {/* 健康记录:健康足迹(合规三色统计)+ 最近 5 条 timeline + 跳全部记录/报表页 */}
-        <div className="mt-[22px] mb-1 flex items-baseline justify-between px-0.5">
-          <span className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+        <div className="mt-5 mb-1 flex items-baseline justify-between px-0.5">
+          <span className="font-serif text-title font-semibold tracking-wide text-ink">
             健康记录
           </span>
           {records.length > 0 && (
             <Link
               href="/pets/records"
-              className="text-[12.5px] font-semibold text-accent"
+              className="text-caption text-ink-faint"
             >
               全部 {records.length} 条 · 报表 ›
             </Link>
@@ -645,11 +645,11 @@ export default function PetsPage() {
                 const href = recordHref(r);
                 const last = i === arr.length - 1;
                 const card = (
-                  <div className="flex-1 rounded-[15px] bg-surface px-3.5 py-3 shadow-[var(--shadow-control)]">
-                    <p className="text-[14px] leading-snug font-medium text-ink">
+                  <div className="flex-1 rounded-sm bg-surface px-3.5 py-3 shadow-[var(--shadow-control)]">
+                    <p className="text-body leading-snug font-medium text-ink">
                       {r.summary}
                     </p>
-                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11.5px] text-ink-faint">
+                    <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-ink-faint">
                       {tv && (
                         <>
                           <span
@@ -671,7 +671,7 @@ export default function PetsPage() {
                   <div
                     key={r.id}
                     className={
-                      "relative flex gap-3.5 " + (last ? "" : "pb-[18px]")
+                      "relative flex gap-3.5 " + (last ? "" : "pb-4")
                     }
                   >
                     <div className="relative flex w-3.5 flex-none justify-center">
@@ -679,8 +679,8 @@ export default function PetsPage() {
                         <span className="absolute top-4 -bottom-1 w-0.5 bg-[var(--line)]" />
                       )}
                       <span
-                        className="relative z-[1] mt-[3px] size-3.5 rounded-full shadow-[0_0_0_3px_var(--paper)]"
-                        style={{ background: tv?.dot ?? "#cdbfae" }}
+                        className="relative z-[1] mt-0.5 size-3.5 rounded-full shadow-[var(--shadow-ring-paper)]"
+                        style={{ background: tv?.dot ?? "var(--neutral-line)" }}
                       />
                     </div>
                     {href ? (
@@ -736,7 +736,7 @@ export default function PetsPage() {
           onClick={() => setAddSheet(false)}
         >
           <div
-            className="w-full max-w-[460px] rounded-t-[26px] bg-paper px-3.5 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
+            className="w-full max-w-[460px] rounded-t-xl bg-paper px-3.5 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[#e0dcd2]" />
@@ -746,7 +746,7 @@ export default function PetsPage() {
                 setAddSheet(false);
                 cameraInputRef.current?.click();
               }}
-              className="flex w-full items-center gap-3 rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center gap-3 rounded-sm px-3.5 py-3.5 text-callout text-ink active:bg-black/5"
             >
               <svg
                 width="20"
@@ -770,7 +770,7 @@ export default function PetsPage() {
                 setAddSheet(false);
                 galleryInputRef.current?.click();
               }}
-              className="flex w-full items-center gap-3 rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center gap-3 rounded-sm px-3.5 py-3.5 text-callout text-ink active:bg-black/5"
             >
               <svg
                 width="20"
@@ -800,18 +800,18 @@ export default function PetsPage() {
           onClick={() => setSheetIdx(null)}
         >
           <div
-            className="w-full max-w-[460px] rounded-t-[26px] bg-paper px-3.5 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
+            className="w-full max-w-[460px] rounded-t-xl bg-paper px-3.5 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[#e0dcd2]" />
             <button
               type="button"
               onClick={() => setCover(photos[sheetIdx])}
-              className="flex w-full items-center justify-between rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center justify-between rounded-sm px-3.5 py-3.5 text-callout text-ink active:bg-black/5"
             >
               设为主图(作头像)
               {cat.avatar === photos[sheetIdx] && (
-                <span className="text-[13px] text-accent">当前主图</span>
+                <span className="text-footnote text-accent">当前主图</span>
               )}
             </button>
             <button
@@ -820,14 +820,14 @@ export default function PetsPage() {
                 replaceIdxRef.current = sheetIdx;
                 replaceInputRef.current?.click();
               }}
-              className="flex w-full items-center rounded-[13px] px-3.5 py-3.5 text-[15px] text-ink active:bg-black/5"
+              className="flex w-full items-center rounded-sm px-3.5 py-3.5 text-callout text-ink active:bg-black/5"
             >
               替换这张
             </button>
             <button
               type="button"
               onClick={() => removeAlbumPhoto(sheetIdx)}
-              className="flex w-full items-center rounded-[13px] px-3.5 py-3.5 text-[15px] text-[#b54b3f] active:bg-black/5"
+              className="flex w-full items-center rounded-sm px-3.5 py-3.5 text-callout text-[var(--accent-deep)] active:bg-black/5"
             >
               删除
             </button>

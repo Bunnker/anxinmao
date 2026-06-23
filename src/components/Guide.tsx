@@ -398,7 +398,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
 
       <section
         ref={coachRef}
-        className="guide-coach absolute overflow-y-auto rounded-[26px] border border-white/75 bg-[rgba(255,255,255,0.96)] p-4 text-ink shadow-[0_24px_70px_rgba(15,12,10,0.24),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl"
+        className="guide-coach absolute overflow-y-auto rounded-xl border border-white/75 bg-[rgba(255,255,255,0.96)] p-4 text-ink shadow-[0_24px_70px_rgba(15,12,10,0.24),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-xl"
         style={{ ...styles.coach, maxHeight: "calc(100dvh - 32px)" }}
       >
         <div className="flex items-start gap-3">
@@ -412,19 +412,19 @@ export function Guide({ onClose }: { onClose: () => void }) {
             className="mt-0.5 size-[58px] shrink-0 object-contain"
           />
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold tracking-[0.18em] text-accent">
+            <p className="text-caption font-semibold tracking-[0.18em] text-accent">
               {step.badge}
             </p>
-            <h2 className="mt-1 font-serif text-[21px] font-semibold leading-tight tracking-wide text-ink">
+            <h2 className="mt-1 font-serif text-title font-semibold leading-tight tracking-wide text-ink">
               {step.title}
             </h2>
           </div>
         </div>
 
-        <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">
+        <p className="mt-3 text-body leading-relaxed text-ink-soft">
           {step.body}
         </p>
-        <p className="mt-2 rounded-[16px] bg-[var(--accent-soft)] px-3 py-2 text-[12.5px] leading-relaxed text-[var(--accent-deep)]">
+        <p className="mt-2 rounded-sm bg-[var(--accent-soft)] px-3 py-2 text-caption leading-relaxed text-[var(--accent-deep)]">
           {step.hint}
         </p>
 
@@ -445,7 +445,7 @@ export function Guide({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 px-1 text-[13px] font-medium text-ink-faint"
+            className="shrink-0 px-1 text-footnote font-medium text-ink-faint"
           >
             跳过
           </button>
@@ -456,14 +456,14 @@ export function Guide({ onClose }: { onClose: () => void }) {
             type="button"
             disabled={stepIndex === 0}
             onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
-            className="rounded-full bg-[var(--surface-2)] px-4 py-3 text-[13.5px] font-medium text-ink-soft shadow-[var(--shadow-control)] transition disabled:opacity-35"
+            className="rounded-full bg-[var(--surface-2)] px-4 py-3 text-footnote font-medium text-ink-soft shadow-[var(--shadow-control)] transition disabled:opacity-35"
           >
             上一步
           </button>
           <button
             type="button"
             onClick={() => (last ? onClose() : setStepIndex((i) => i + 1))}
-            className="flex-1 rounded-full bg-accent px-5 py-3 text-[14px] font-semibold text-accent-fg shadow-[var(--shadow-accent)] transition-transform active:scale-[0.985]"
+            className="flex-1 rounded-full bg-accent px-5 py-3 text-body font-semibold text-accent-fg shadow-[var(--shadow-accent)] transition-transform active:scale-[0.985]"
           >
             {last ? "知道啦,开始用" : "下一处"}
           </button>

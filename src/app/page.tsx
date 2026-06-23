@@ -86,7 +86,7 @@ function findFollowupTarget(records: CatRecord[]): CatRecord | null {
 // 醒目的猫爪按钮 —— 提示气泡可点跳转(陶土红实心 + 猫爪 + 文案)。
 function PawCta({ label }: { label: string }) {
   return (
-    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-[12.5px] font-semibold text-accent-fg shadow-[var(--shadow-accent)]">
+    <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-caption font-semibold text-accent-fg shadow-[var(--shadow-accent)]">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <ellipse cx="12" cy="15.5" rx="4.6" ry="3.7" />
         <circle cx="6.3" cy="10.5" r="1.9" />
@@ -1829,7 +1829,7 @@ function PetNudge({
         {showBubble && (
           <div
             className={
-              "pet-bubble absolute rounded-[22px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] " +
+              "pet-bubble absolute rounded-xl bg-surface px-4 py-3 shadow-[var(--shadow-card)] " +
               (bubbleInteractive ? "" : "pointer-events-none ") +
               (bubbleOnRight ? "rounded-bl-md" : "rounded-br-md")
             }
@@ -1838,7 +1838,7 @@ function PetNudge({
             {showFollowNote && followupNote ? (
               // 答完:致谢 / 引导(「还没好」带再分诊链接)
               <>
-                <p className="text-[14px] leading-relaxed text-ink">
+                <p className="text-body leading-relaxed text-ink">
                   {followupNote.text}
                 </p>
                 {followupNote.href && (
@@ -1853,7 +1853,7 @@ function PetNudge({
             ) : showFollowAsk && followupTarget ? (
               // 问:上次某症状之后好点了吗 + 三选一(陶土红/中性,不碰风险色)
               <>
-                <p className="text-[14px] leading-relaxed text-ink">
+                <p className="text-body leading-relaxed text-ink">
                   上次「{followupTarget.summary}」之后,{cat.name}好点了吗?
                 </p>
                 <div className="mt-2.5 flex gap-1.5">
@@ -1872,7 +1872,7 @@ function PetNudge({
                         setAsking(false);
                       }}
                       className={
-                        "flex-1 rounded-full px-1.5 py-2 text-[12.5px] font-semibold transition-transform active:scale-[0.96] " +
+                        "flex-1 rounded-full px-1.5 py-2 text-caption font-semibold transition-transform active:scale-[0.96] " +
                         (primary
                           ? "bg-[var(--accent-tint)] text-accent"
                           : "bg-[var(--surface-2)] text-ink shadow-[var(--shadow-control)]")
@@ -1894,19 +1894,19 @@ function PetNudge({
                   }}
                   className="block transition active:opacity-70"
                 >
-                  <p className="text-[14px] leading-relaxed text-ink">
+                  <p className="text-body leading-relaxed text-ink">
                     {nudge.text}
                   </p>
                   {nudge.cta && <PawCta label={nudge.cta} />}
                 </Link>
               ) : (
                 // 闲聊:纯卖萌文字,不可点、不用理,12s 自己飘走
-                <p className="text-[14px] leading-relaxed text-ink">
+                <p className="text-body leading-relaxed text-ink">
                   {nudge.text}
                 </p>
               )
             ) : (
-              <p className="text-[14px] leading-relaxed text-ink">{talk}</p>
+              <p className="text-body leading-relaxed text-ink">{talk}</p>
             )}
           </div>
         )}
@@ -1915,7 +1915,7 @@ function PetNudge({
         {/* ── 院子浮层 ── 全在 section 内、content 层外:不随内容缩放、不被裁。 */}
         {/* 浮动问候(左上,毛玻璃胶囊):头像 + 衬线问候 + 月龄/性别 */}
         <div
-          className="pointer-events-none absolute left-4 z-30 flex items-center gap-2.5 rounded-full bg-white/55 py-1.5 pr-3.5 pl-2 shadow-[0_6px_16px_rgba(120,90,60,0.14),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md"
+          className="pointer-events-none absolute left-4 z-30 flex items-center gap-2.5 rounded-full bg-white/55 py-1.5 pr-3.5 pl-2 shadow-[var(--shadow-soft)] backdrop-blur-md"
           style={{ top: "calc(env(safe-area-inset-top, 0px) + 14px)" }}
         >
           <CatFace
@@ -1924,10 +1924,10 @@ function PetNudge({
             className="shrink-0 rounded-full bg-[var(--accent-tint)] shadow-[inset_0_0_0_2px_#fff]"
           />
           <div className="min-w-0">
-            <p className="font-serif text-[15px] font-semibold leading-tight tracking-wide text-ink">
+            <p className="font-serif text-callout font-semibold leading-tight tracking-wide text-ink">
               {greeting()},{cat.name}
             </p>
-            <p className="mt-px truncate text-[11px] tracking-wide text-ink-soft">
+            <p className="mt-px truncate text-caption tracking-wide text-ink-soft">
               {[ageLabel(cat.ageMonths), cat.sex, cat.coat]
                 .filter(Boolean)
                 .join(" · ")}
@@ -1945,7 +1945,7 @@ function PetNudge({
             href="/knowledge"
             data-guide-target="guide-knowledge"
             aria-label="小知识:看着吓人但不必慌的 6 种情况,权威兽医来源"
-            className="grid size-9 place-items-center rounded-full bg-white/60 text-accent shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-90"
+            className="grid size-9 place-items-center rounded-full bg-white/60 text-accent shadow-[var(--shadow-soft)] backdrop-blur-md transition-transform active:scale-90"
           >
             <svg
               width="19"
@@ -1968,7 +1968,7 @@ function PetNudge({
             onClick={onOpenGuide}
             data-guide-target="guide-help"
             aria-label="使用说明"
-            className="grid size-9 place-items-center rounded-full bg-white/60 font-serif text-[16px] font-bold text-accent shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.6)] backdrop-blur-md transition-transform active:scale-90"
+            className="grid size-9 place-items-center rounded-full bg-white/60 font-serif text-title font-semibold text-accent shadow-[var(--shadow-soft)] backdrop-blur-md transition-transform active:scale-90"
           >
             ?
           </button>
@@ -1989,7 +1989,7 @@ function PetNudge({
                 key={tk}
                 type="button"
                 aria-label={`${tool.alt}(长按拖到${tool.target === "cat" ? "猫" : "水碗"}上)`}
-                className="grid size-[52px] place-items-center rounded-[15px] bg-white/65 p-1.5 shadow-[0_4px_12px_rgba(120,90,60,0.16),inset_0_0_0_1px_rgba(255,255,255,0.55)] backdrop-blur-md select-none"
+                className="grid size-[52px] place-items-center rounded-sm bg-white/65 p-1.5 shadow-[var(--shadow-soft)] backdrop-blur-md select-none"
                 style={{ touchAction: "none", opacity: grabbed ? 0.35 : 1 }}
                 onPointerDown={(e) => onToolPointerDown(tk, e)}
                 onPointerMove={onToolPointerMove}
@@ -2047,10 +2047,10 @@ function RecentRow({ record }: { record: CatRecord }) {
         style={{ background: dot }}
       />
       <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-medium text-ink">
+        <span className="block text-callout font-medium text-ink">
           {record.summary}
         </span>
-        <span className="mt-0.5 block text-[12px] tracking-wide text-ink-faint">
+        <span className="mt-0.5 block text-caption tracking-wide text-ink-faint">
           {formatDate(record.date)}
         </span>
       </span>
@@ -2238,7 +2238,7 @@ export default function HomePage() {
 
         {/* 底部上拉 sheet:盖院子下沿、圆角顶、上向阴影 —— 回访(如有)+ 看病 CTA + 问问 + 最近 */}
         <div
-          className="relative z-10 -mt-[30px] flex-none rounded-t-[28px] px-5 pt-3"
+          className="relative z-10 -mt-8 flex-none rounded-t-2xl px-5 pt-3"
           style={{
             background: "var(--paper)",
             boxShadow: "0 -10px 30px rgba(60,45,30,0.1)",
@@ -2257,16 +2257,16 @@ export default function HomePage() {
             href="/symptoms"
             data-guide-target="guide-triage"
             aria-label="看病:选症状做分诊,30 秒红黄绿就医建议"
-            className="flex items-center justify-between rounded-[20px] px-5 py-4 text-white transition-transform active:scale-[0.99]"
+            className="flex items-center justify-between rounded-xl px-5 py-4 text-white transition-transform active:scale-[0.99]"
             style={{
               background:
-                "linear-gradient(180deg,#bd6258,var(--accent) 42%,var(--accent-deep))",
+                "linear-gradient(180deg,var(--accent-light),var(--accent) 42%,var(--accent-deep))",
               boxShadow:
                 "0 12px 26px rgba(176,90,80,0.34), inset 0 1px 0 rgba(255,255,255,0.22)",
             }}
           >
             <span className="flex items-center gap-3">
-              <span className="grid size-9 shrink-0 place-items-center rounded-[12px] bg-white/[0.16]">
+              <span className="grid size-9 shrink-0 place-items-center rounded-sm bg-white/[0.16]">
                 <svg
                   width="22"
                   height="22"
@@ -2285,14 +2285,14 @@ export default function HomePage() {
                 </svg>
               </span>
               <span className="text-left">
-                <span className="block font-serif text-[18px] font-semibold tracking-[0.04em]">
+                <span className="block font-serif text-title font-semibold tracking-[0.04em]">
                   猫不对劲?选症状看病
                 </span>
-                <span className="mt-1 flex items-center gap-1.5 text-[11.5px] opacity-90">
+                <span className="mt-1 flex items-center gap-1.5 text-caption opacity-90">
                   <span className="flex items-center gap-1" aria-hidden="true">
-                    <i className="size-[7px] rounded-full bg-[var(--red)] shadow-[0_0_0_2px_rgba(255,255,255,0.25)]" />
-                    <i className="size-[7px] rounded-full bg-[var(--amber)] shadow-[0_0_0_2px_rgba(255,255,255,0.25)]" />
-                    <i className="size-[7px] rounded-full bg-[var(--green)] shadow-[0_0_0_2px_rgba(255,255,255,0.25)]" />
+                    <i className="size-[7px] rounded-full bg-[var(--red)] shadow-[var(--shadow-ring-white)]" />
+                    <i className="size-[7px] rounded-full bg-[var(--amber)] shadow-[var(--shadow-ring-white)]" />
+                    <i className="size-[7px] rounded-full bg-[var(--green)] shadow-[var(--shadow-ring-white)]" />
                   </span>
                   30 秒红黄绿就医建议
                 </span>
@@ -2319,10 +2319,10 @@ export default function HomePage() {
             href="/behavior"
             data-guide-target="guide-behavior"
             aria-label={`问问${cat.name}:喂养 / 习性 / 拿不准的病情都能问`}
-            className="mt-2.5 flex items-center gap-3 rounded-[18px] bg-surface px-4 py-3 shadow-[var(--shadow-card)] transition-transform active:scale-[0.99]"
+            className="mt-2.5 flex items-center gap-3 rounded-lg bg-surface px-4 py-3 shadow-[var(--shadow-card)] transition-transform active:scale-[0.99]"
           >
             <span
-              className="grid size-9 shrink-0 place-items-center rounded-[12px]"
+              className="grid size-9 shrink-0 place-items-center rounded-sm"
               style={{ background: "var(--accent-tint)", color: "var(--accent)" }}
             >
               <svg
@@ -2343,10 +2343,10 @@ export default function HomePage() {
               </svg>
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[14.5px] font-semibold tracking-wide text-ink">
+              <span className="block font-serif text-title font-semibold tracking-wide text-ink">
                 问问{cat.name}
               </span>
-              <span className="mt-0.5 block truncate text-[11.5px] text-ink-faint">
+              <span className="mt-0.5 block truncate text-caption text-ink-faint">
                 喂养 · 习性 · 拿不准的病情,都能问
               </span>
             </span>
@@ -2372,7 +2372,7 @@ export default function HomePage() {
               <RecentRow record={records[0]} />
             </div>
           ) : (
-            <p className="mt-3 px-1 text-[12.5px] leading-relaxed text-ink-faint">
+            <p className="mt-3 px-1 text-caption leading-relaxed text-ink-faint">
               还没有记录 —— {cat.name}有情况,选症状看病就行。
             </p>
           )}
@@ -2382,7 +2382,7 @@ export default function HomePage() {
           <div className="mt-2.5 flex flex-col items-center gap-1.5">
             <Link
               href="/feedback"
-              className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-[12.5px] font-medium tracking-wide text-ink-soft shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
+              className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3.5 py-1.5 text-caption font-medium tracking-wide text-ink-soft shadow-[var(--shadow-control)] transition-transform active:scale-[0.97]"
             >
               <svg
                 width="13"

@@ -15,16 +15,16 @@ const TIER_VIS = {
 export function HealthFootprint({ records }: { records: CatRecord[] }) {
   if (records.length === 0) {
     return (
-      <section className="mt-4 rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
-        <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
+      <section className="mt-4 rounded-2xl bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
+        <p className="text-caption font-semibold tracking-[0.14em] text-accent">
           健康足迹
         </p>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft">
+        <p className="mt-2 text-footnote leading-relaxed text-ink-soft">
           还没有分诊记录 —— 它不对劲时来分诊,这里会自动长出它的病历。
         </p>
         <Link
           href="/symptoms"
-          className="mt-2 inline-block text-[13.5px] font-medium text-accent"
+          className="mt-2 inline-block text-footnote font-medium text-accent"
         >
           试试分诊 →
         </Link>
@@ -49,14 +49,14 @@ export function HealthFootprint({ records }: { records: CatRecord[] }) {
   const totalTier = tierN.red + tierN.yellow + tierN.green;
 
   return (
-    <section className="mt-4 rounded-[28px] bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
+    <section className="mt-4 rounded-2xl bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
       <div className="mb-1.5 flex items-center justify-between">
-        <p className="text-[12px] font-semibold tracking-[0.14em] text-accent">
+        <p className="text-caption font-semibold tracking-[0.14em] text-accent">
           健康足迹
         </p>
-        <span className="text-[11px] text-ink-faint">最近 30 天</span>
+        <span className="text-caption text-ink-faint">最近 30 天</span>
       </div>
-      <p className="text-[13px] text-ink-soft">
+      <p className="text-footnote text-ink-soft">
         分诊 {triage30.length} 次 · 问答 {chat30.length} 次
       </p>
 
@@ -82,7 +82,7 @@ export function HealthFootprint({ records }: { records: CatRecord[] }) {
                 tierN[k] > 0 && (
                   <span
                     key={k}
-                    className="flex items-center gap-1.5 text-[12px] text-ink-soft"
+                    className="flex items-center gap-1.5 text-caption text-ink-soft"
                   >
                     <span
                       className="size-2 rounded-full"

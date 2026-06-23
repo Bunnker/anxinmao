@@ -28,6 +28,11 @@ import {
   flushMemoryExtract,
   scheduleMemoryExtract,
 } from "@/lib/memory-extract";
+import {
+  QUESTION_POOL,
+  recommendQuestions,
+  type Suggestion,
+} from "@/lib/behavior-suggest";
 import { CatAvatar } from "@/components/CatAvatar";
 import { Disclaimer } from "@/components/Disclaimer";
 import type { Cat, CatRecord, ChatMessage, RiskTier, Store } from "@/types/cat";
@@ -82,7 +87,8 @@ const KEEP_VERBATIM = 8;
 // 只在前几轮回答后给追问 —— 新手最需要引导;聊深了就不给,省一次调用。
 const MAX_FOLLOWUP_TURNS = 3;
 
-// 发现态:分类 + 每类推荐问题(curated)。「推荐」= 各类挑一条。
+// 发现态:分类 chips。「推荐」(all)走个性化引擎 recommendQuestions(0 LLM,
+// 从记录/资料/记忆派生);具体分类走该类 curated 池 QUESTION_POOL。
 const CATEGORIES = [
   { key: "all", label: "推荐" },
   { key: "health", label: "健康" },
@@ -91,57 +97,6 @@ const CATEGORIES = [
   { key: "daily", label: "日常" },
 ] as const;
 type CategoryKey = (typeof CATEGORIES)[number]["key"];
-type TopicKey = Exclude<CategoryKey, "all">;
-
-const SUGGESTIONS: Record<TopicKey, string[]> = {
-  health: [
-    "打喷嚏好几天了,会自己好吗?",
-    "猫不太爱吃饭,要不要去医院?",
-    "猫一直打喷嚏,要紧吗?",
-  ],
-  feed: ["幼猫一天喂几次、喂多少?", "幼猫能不能喝牛奶?"],
-  behave: ["怎么让猫慢慢接受剪指甲?", "猫总抓沙发怎么办?"],
-  daily: ["多久给猫梳一次毛?", "猫砂多久彻底换一次?"],
-};
-
-type Suggestion = { q: string; topic: TopicKey };
-
-function suggestionsFor(cat: CategoryKey): Suggestion[] {
-  if (cat === "all") {
-    return [
-      { q: SUGGESTIONS.health[0], topic: "health" },
-      { q: SUGGESTIONS.feed[0], topic: "feed" },
-      { q: SUGGESTIONS.behave[0], topic: "behave" },
-      { q: SUGGESTIONS.health[1], topic: "health" },
-    ];
-  }
-  return SUGGESTIONS[cat].map((q) => ({ q, topic: cat }));
-}
-
-// 「和{name}有关」轻量个性化:推荐问题命中既往记录里聊过 / 分诊过的主题就打标。
-// 纯前端从 records 派生,零后端改动(批二 Tier A 会把这条接成正式记忆回忆)。
-const TOPIC_KEYWORDS = [
-  "打喷嚏",
-  "喷嚏",
-  "吃饭",
-  "食欲",
-  "驱虫",
-  "剪指甲",
-  "指甲",
-  "抓",
-  "梳毛",
-  "猫砂",
-  "牛奶",
-  "喂",
-];
-function relatedToRecords(q: string, records: CatRecord[]): boolean {
-  if (records.length === 0) return false;
-  const hay = records
-    .slice(0, 8)
-    .map((r) => `${r.question ?? ""} ${r.summary ?? ""} ${r.symptom ?? ""}`)
-    .join(" ");
-  return TOPIC_KEYWORDS.some((k) => q.includes(k) && hay.includes(k));
-}
 
 // 急症词 —— 命中即时弹「这可能是急症」红横幅(红旗中途急停红线的前端可视化)。
 // 这是防御纵深 / 即时提示,不替代后端 LLM + 意图分流的真实急症处理。
@@ -395,7 +350,7 @@ function MarkdownMessage({
           return (
             <Tag
               key={blockIndex}
-              className="text-[15px] font-semibold leading-snug text-ink"
+              className="text-callout font-semibold leading-snug text-ink"
             >
               {renderInline(block.text, `h-${blockIndex}`)}
               {streaming && isLastBlock && <Caret />}
@@ -407,7 +362,7 @@ function MarkdownMessage({
           return (
             <p
               key={blockIndex}
-              className="text-[14.5px] leading-relaxed text-ink"
+              className="text-body leading-relaxed text-ink"
             >
               {renderInline(block.text, `p-${blockIndex}`)}
               {streaming && isLastBlock && <Caret />}
@@ -419,7 +374,7 @@ function MarkdownMessage({
           return (
             <ul
               key={blockIndex}
-              className="list-disc space-y-1.5 pl-5 text-[14.5px] leading-relaxed text-ink"
+              className="list-disc space-y-1.5 pl-5 text-body leading-relaxed text-ink"
             >
               {block.items.map((item, itemIndex) => (
                 <li key={itemIndex}>
@@ -436,7 +391,7 @@ function MarkdownMessage({
         return (
           <ol
             key={blockIndex}
-            className="list-decimal space-y-1.5 pl-5 text-[14.5px] leading-relaxed text-ink"
+            className="list-decimal space-y-1.5 pl-5 text-body leading-relaxed text-ink"
           >
             {block.items.map((item, itemIndex) => (
               <li key={itemIndex}>
@@ -456,10 +411,10 @@ function MarkdownMessage({
 function CatTag() {
   return (
     <div className="mb-2.5 flex items-center gap-2">
-      <span className="grid size-6 place-items-center rounded-full bg-accent text-[11px] font-medium text-accent-fg">
+      <span className="grid size-6 place-items-center rounded-full bg-accent text-caption font-medium text-accent-fg">
         猫
       </span>
-      <span className="text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+      <span className="text-caption font-semibold tracking-[0.16em] text-ink-faint">
         一位懂猫的朋友
       </span>
     </div>
@@ -470,9 +425,9 @@ function CatTag() {
 function UserBubble({ text }: { text: string }) {
   return (
     <div
-      className="max-w-[82%] self-end whitespace-pre-wrap rounded-[26px] rounded-br-lg px-4 py-3 text-[14.5px] leading-relaxed text-white"
+      className="max-w-[82%] self-end whitespace-pre-wrap rounded-xl rounded-br-lg px-4 py-3 text-body leading-relaxed text-white"
       style={{
-        background: "linear-gradient(180deg, #bd6258, var(--accent))",
+        background: "linear-gradient(180deg, var(--accent-light), var(--accent))",
         boxShadow: "0 8px 18px rgba(176,90,80,0.26)",
       }}
     >
@@ -498,7 +453,7 @@ function AssistantCard({
   return (
     <div className="max-w-[96%] self-start">
       <CatTag />
-      <div className="rounded-[28px] rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
+      <div className="rounded-2xl rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
         <MarkdownMessage text={text} streaming={streaming} />
       </div>
     </div>
@@ -531,10 +486,10 @@ function PosterAttachmentCard({
       <button
         type="button"
         onClick={() => onOpen(poster)}
-        className="ml-8 w-[82%] max-w-[320px] self-start overflow-hidden rounded-[22px] border border-[var(--line)] bg-surface text-left shadow-[var(--shadow-card)]"
+        className="ml-8 w-[82%] max-w-[320px] self-start overflow-hidden rounded-xl border border-[var(--line)] bg-surface text-left shadow-[var(--shadow-card)]"
       >
         <div className="flex items-center justify-between gap-2 border-b border-[var(--line-soft)] px-3.5 py-2.5">
-          <span className="inline-flex min-w-0 items-center gap-2 text-[12px] font-semibold text-ink-soft">
+          <span className="inline-flex min-w-0 items-center gap-2 text-caption font-semibold text-ink-soft">
             <span
               className="size-1.5 shrink-0 rounded-full"
               style={{ background: toneColor }}
@@ -542,7 +497,7 @@ function PosterAttachmentCard({
             />
             <span className="truncate">相关图解</span>
           </span>
-          <span className="shrink-0 text-[11px] text-ink-faint">点开看大图</span>
+          <span className="shrink-0 text-caption text-ink-faint">点开看大图</span>
         </div>
         <img
           src={poster.image}
@@ -559,23 +514,23 @@ function PosterAttachmentCard({
     <button
       type="button"
       onClick={() => onOpen(poster)}
-      className="ml-8 flex w-[82%] max-w-[320px] items-center gap-3 self-start rounded-[20px] border border-[var(--line)] bg-surface px-3 py-2.5 text-left shadow-[var(--shadow-control)]"
+      className="ml-8 flex w-[82%] max-w-[320px] items-center gap-3 self-start rounded-xl border border-[var(--line)] bg-surface px-3 py-2.5 text-left shadow-[var(--shadow-control)]"
     >
       <img
         src={poster.image}
         alt=""
-        className="h-[70px] w-[44px] shrink-0 rounded-[9px] object-cover"
+        className="h-[70px] w-[44px] shrink-0 rounded-md object-cover"
         loading="lazy"
         onError={() => setHidden(true)}
       />
       <span className="min-w-0 flex-1">
-        <span className="block text-[12px] font-semibold text-ink">相关图解</span>
-        <span className="mt-0.5 block truncate text-[12px] text-ink-soft">
+        <span className="block text-caption font-semibold text-ink">相关图解</span>
+        <span className="mt-0.5 block truncate text-caption text-ink-soft">
           {poster.title}
         </span>
       </span>
       <span
-        className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white"
+        className="shrink-0 rounded-full px-2.5 py-1 text-caption font-semibold text-white"
         style={{ background: toneColor }}
       >
         {actionText}
@@ -600,13 +555,13 @@ function PosterViewer({
     >
       <div className="flex shrink-0 items-center gap-3 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] text-white">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[13px] font-semibold">{poster.title}</p>
-          <p className="mt-0.5 text-[11px] text-white/62">相关图解</p>
+          <p className="truncate text-footnote font-semibold">{poster.title}</p>
+          <p className="mt-0.5 text-caption text-white/62">相关图解</p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="grid size-10 shrink-0 place-items-center rounded-full bg-white/12 text-[20px] text-white"
+          className="grid size-10 shrink-0 place-items-center rounded-full bg-white/12 text-title text-white"
           aria-label="关闭图解"
         >
           ×
@@ -616,7 +571,7 @@ function PosterViewer({
         <img
           src={poster.image}
           alt={`${poster.title}相关图解`}
-          className="mx-auto block min-h-0 max-h-none w-full max-w-[430px] rounded-[18px] object-contain"
+          className="mx-auto block min-h-0 max-h-none w-full max-w-[430px] rounded-lg object-contain"
         />
       </div>
     </div>
@@ -627,7 +582,7 @@ function Thinking() {
   return (
     <div className="max-w-[96%] self-start">
       <CatTag />
-      <div className="inline-flex items-center gap-1.5 rounded-[28px] rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
+      <div className="inline-flex items-center gap-1.5 rounded-2xl rounded-tl-lg bg-surface px-5 py-4 shadow-[var(--shadow-card)]">
         <span className="size-1.5 animate-bounce rounded-full bg-ink-faint [animation-delay:-0.3s]" />
         <span className="size-1.5 animate-bounce rounded-full bg-ink-faint [animation-delay:-0.15s]" />
         <span className="size-1.5 animate-bounce rounded-full bg-ink-faint" />
@@ -641,7 +596,7 @@ function Thinking() {
 function EmergencyNotice() {
   return (
     <div
-      className="self-stretch rounded-[20px] px-4 py-3.5"
+      className="self-stretch rounded-xl px-4 py-3.5"
       style={{
         background: "var(--red-bg)",
         border: "1px solid rgba(217,45,32,0.22)",
@@ -666,20 +621,20 @@ function EmergencyNotice() {
         </span>
         <div className="min-w-0">
           <p
-            className="text-[13.5px] font-bold"
+            className="text-footnote font-bold"
             style={{ color: "var(--red-ink)" }}
           >
             这可能是急症
           </p>
           <p
-            className="mt-1 text-[12px] leading-relaxed"
+            className="mt-1 text-caption leading-relaxed"
             style={{ color: "var(--red-ink)" }}
           >
             这类情况别在这儿耗时间,尽快联系就近的宠物医院 / 急诊。
           </p>
           <Link
             href="/symptoms"
-            className="mt-2.5 inline-flex items-center gap-1 rounded-[11px] px-3 py-1.5 text-[12px] font-semibold text-white"
+            className="mt-2.5 inline-flex items-center gap-1 rounded-sm px-3 py-1.5 text-caption font-semibold text-white"
             style={{ background: "var(--red)" }}
           >
             去分诊 / 找医院 →
@@ -692,12 +647,12 @@ function EmergencyNotice() {
 
 function ErrorRow({ text, onRetry }: { text: string; onRetry: () => void }) {
   return (
-    <div className="max-w-[96%] self-start rounded-[28px] bg-[var(--surface-2)] px-4 py-3 shadow-[var(--shadow-control)]">
-      <p className="text-[13px] leading-relaxed text-ink-soft">{text}</p>
+    <div className="max-w-[96%] self-start rounded-2xl bg-[var(--surface-2)] px-4 py-3 shadow-[var(--shadow-control)]">
+      <p className="text-footnote leading-relaxed text-ink-soft">{text}</p>
       <button
         type="button"
         onClick={onRetry}
-        className="mt-2 text-[13px] font-medium text-accent"
+        className="mt-2 text-footnote font-medium text-accent"
       >
         重试 →
       </button>
@@ -710,7 +665,7 @@ function MemoDivider() {
   return (
     <div className="flex items-center gap-2.5 py-0.5">
       <span className="h-px flex-1 bg-[var(--line-soft)]" />
-      <span className="shrink-0 text-[11px] tracking-wide text-ink-faint">
+      <span className="shrink-0 text-caption tracking-wide text-ink-faint">
         更早的对话已收进摘要
       </span>
       <span className="h-px flex-1 bg-[var(--line-soft)]" />
@@ -744,7 +699,7 @@ function ContextChip({ symptom, tier }: { symptom?: string; tier?: RiskTier }) {
         style={{ background: dotColor }}
         aria-hidden="true"
       />
-      <span className="text-[12px] text-ink-soft">
+      <span className="text-caption text-ink-soft">
         接着刚才的分诊:{label}
         {tierText ? ` · ${tierText}` : ""}
       </span>
@@ -765,7 +720,7 @@ function FollowupChips({
   if (items.length === 0) return null;
   return (
     <div className="flex max-w-[96%] flex-col gap-2 self-start">
-      <span className="ml-1 flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+      <span className="ml-1 flex items-center gap-1.5 text-caption font-semibold tracking-[0.16em] text-ink-faint">
         <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
         接着可以问
       </span>
@@ -775,10 +730,10 @@ function FollowupChips({
           type="button"
           disabled={disabled}
           onClick={() => onPick(q)}
-          className="group flex items-center justify-between gap-3 rounded-[18px] border border-[var(--line)] bg-surface px-4 py-2.5 text-left text-[13.5px] leading-snug text-ink-soft shadow-[var(--shadow-control)] transition-colors duration-150 active:bg-[var(--surface-2)] disabled:opacity-50"
+          className="group flex items-center justify-between gap-3 rounded-lg border border-[var(--line)] bg-surface px-4 py-2.5 text-left text-footnote leading-snug text-ink-soft shadow-[var(--shadow-control)] transition-colors duration-150 active:bg-[var(--surface-2)] disabled:opacity-50"
         >
           <span className="min-w-0">{q}</span>
-          <span className="shrink-0 text-[12.5px] font-medium text-accent transition-transform duration-200 group-active:translate-x-0.5">
+          <span className="shrink-0 text-caption font-medium text-accent transition-transform duration-200 group-active:translate-x-0.5">
             →
           </span>
         </button>
@@ -823,32 +778,29 @@ function SuggestionRow({
   disabled: boolean;
   onPick: (q: string) => void;
 }) {
-  // 标签红线:「和{name}有关」「健康」都用 accent 系,绝不取风险盘(红/黄/绿)。
-  const tag = related
-    ? { text: catName ? `和${catName}有关` : "和它有关", solid: true }
-    : item.topic === "health"
-      ? { text: "健康", solid: false }
-      : null;
+  // 只保留个性化「和{name}有关」标(命中既往记录时才出现,用 accent 系、绝不取风险盘)。
+  // 分类「健康」标已去掉(信息冗余)。标签放问题文字之后、箭头之前。
+  const relatedText = related
+    ? catName
+      ? `和${catName}有关`
+      : "和它有关"
+    : null;
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={() => onPick(item.q)}
-      className="flex w-full items-center gap-3 rounded-[16px] bg-surface px-4 py-3.5 text-left shadow-[var(--shadow-control)] transition-transform duration-150 active:scale-[0.99] disabled:opacity-50"
+      className="flex w-full items-center gap-3 rounded-sm bg-surface px-4 py-3.5 text-left shadow-[var(--shadow-control)] transition-transform duration-150 active:scale-[0.99] disabled:opacity-50"
     >
-      {tag && (
+      <span className="flex-1 text-body leading-snug text-ink">{item.q}</span>
+      {relatedText && (
         <span
-          className="shrink-0 rounded-[7px] px-1.5 py-1 text-[10px] font-semibold tracking-[0.02em]"
-          style={
-            tag.solid
-              ? { background: "var(--accent)", color: "var(--accent-fg)" }
-              : { background: "var(--accent-tint)", color: "var(--accent)" }
-          }
+          className="shrink-0 rounded-md px-1.5 py-1 text-micro font-semibold tracking-[0.02em]"
+          style={{ background: "var(--accent)", color: "var(--accent-fg)" }}
         >
-          {tag.text}
+          {relatedText}
         </span>
       )}
-      <span className="flex-1 text-[14px] leading-snug text-ink">{item.q}</span>
       <ChevronRight className="shrink-0 text-ink-faint" />
     </button>
   );
@@ -868,7 +820,14 @@ function Discovery({
   onOpenRecord: (r: CatRecord) => void;
 }) {
   const [category, setCategory] = useState<CategoryKey>("all");
-  const items = suggestionsFor(category);
+  // 「推荐」走个性化引擎(0 LLM,读 记录/资料/记忆 派生);具体分类走该类 curated 池。
+  const items = useMemo<Suggestion[]>(
+    () =>
+      category === "all"
+        ? recommendQuestions(cat, records, getCatMemory(cat.id), 4)
+        : QUESTION_POOL[category].map((q) => ({ q, topic: category, related: false })),
+    [category, cat, records],
+  );
   const recentBehavior = records
     .filter((r) => r.kind === "behavior")
     .slice(0, 3);
@@ -876,26 +835,8 @@ function Discovery({
 
   return (
     <div className="flex flex-col pb-4 pt-3">
-      {/* 空态卡 */}
-      <div className="rounded-[28px] bg-surface p-5 shadow-[var(--shadow-card)]">
-        <h1 className="font-serif text-[1.6rem] font-medium leading-snug tracking-tight text-ink">
-          关于{cat.name},
-          <span className="text-accent">想问点什么?</span>
-        </h1>
-        <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
-          生病拿不准、喂养、训练、行为都能问 —— 急症我会直接让你去医院。
-        </p>
-        <p className="mt-2.5 flex items-center gap-1.5 text-[11.5px] text-ink-faint">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-            <path d="M12 8v5M12 16.5v.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-          由 AI 解答,不替代兽医的面诊和检查
-        </p>
-      </div>
-
       {/* 分类 chips */}
-      <div className="-mx-1 mt-4 flex gap-2 overflow-x-auto px-1 pb-1">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {CATEGORIES.map((c) => {
           const on = c.key === category;
           return (
@@ -903,7 +844,7 @@ function Discovery({
               key={c.key}
               type="button"
               onClick={() => setCategory(c.key)}
-              className="shrink-0 rounded-full px-4 py-2 text-[13px] font-medium transition-colors duration-150"
+              className="shrink-0 rounded-full px-4 py-2 text-footnote font-medium transition-colors duration-150"
               style={
                 on
                   ? {
@@ -925,7 +866,7 @@ function Discovery({
       </div>
 
       {/* 推荐问题 */}
-      <p className="mb-2.5 mt-3.5 px-1 text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+      <p className="mb-2.5 mt-3.5 px-1 text-caption font-semibold tracking-[0.16em] text-ink-faint">
         {category === "all" ? `为${cat.name}推荐` : label}
       </p>
       <div className="flex flex-col gap-2.5">
@@ -933,7 +874,7 @@ function Discovery({
           <SuggestionRow
             key={`${it.topic}-${it.q}`}
             item={it}
-            related={relatedToRecords(it.q, records)}
+            related={it.related}
             catName={cat.name}
             disabled={disabled}
             onPick={onPick}
@@ -944,10 +885,10 @@ function Discovery({
       {/* 最近问过 */}
       {recentBehavior.length > 0 && (
         <div className="mt-6">
-          <p className="mb-1 px-1 text-[11px] font-semibold tracking-[0.16em] text-ink-faint">
+          <p className="mb-1 px-1 text-caption font-semibold tracking-[0.16em] text-ink-faint">
             最近问过
           </p>
-          <div className="rounded-[18px] bg-surface px-1 shadow-[var(--shadow-control)]">
+          <div className="rounded-lg bg-surface px-1 shadow-[var(--shadow-control)]">
             {recentBehavior.map((r, i) => (
               <button
                 key={r.id}
@@ -966,10 +907,10 @@ function Discovery({
                     <path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
-                <span className="flex-1 truncate text-[13px] text-ink-soft">
+                <span className="flex-1 truncate text-footnote text-ink-soft">
                   {r.question ?? r.summary}
                 </span>
-                <span className="shrink-0 text-[11px] text-ink-faint">
+                <span className="shrink-0 text-caption text-ink-faint">
                   {relativeDate(r.date)}
                 </span>
               </button>
@@ -978,16 +919,6 @@ function Discovery({
         </div>
       )}
 
-      {/* 去分诊兜底 */}
-      <Link
-        href="/symptoms"
-        className="mt-6 flex items-center justify-between rounded-[16px] bg-surface px-4 py-3.5 shadow-[var(--shadow-control)]"
-      >
-        <span className="text-[13px] text-ink-soft">想要红黄绿分诊报告?</span>
-        <span className="flex items-center gap-1 text-[13px] font-medium text-accent">
-          去分诊 <ChevronRight />
-        </span>
-      </Link>
     </div>
   );
 }
@@ -1440,21 +1371,21 @@ function BehaviorContent() {
 
       {/* navbar —— 标题 + 猫徽章(+ 有对话时给「新对话」) */}
       <header className="flex shrink-0 items-center gap-2.5 px-5 py-2.5">
-        <h1 className="font-serif text-[16px] font-semibold tracking-wide text-ink">
+        <h1 className="font-serif text-title font-semibold tracking-wide text-ink">
           问{cat.name}
         </h1>
         {!empty && (
           <button
             type="button"
             onClick={newConversation}
-            className="rounded-full border border-[var(--line)] bg-surface px-3 py-1 text-[11.5px] font-medium text-ink-soft shadow-[var(--shadow-control)]"
+            className="rounded-full border border-[var(--line)] bg-surface px-3 py-1 text-caption font-medium text-ink-soft shadow-[var(--shadow-control)]"
           >
             新对话
           </button>
         )}
         <span className="ml-auto flex items-center gap-1.5 rounded-full bg-surface py-1 pl-1 pr-3 shadow-[var(--shadow-control)]">
           <CatAvatar avatar={cat.avatar} name={cat.name} size={24} />
-          <span className="text-[11.5px] text-ink-soft">
+          <span className="text-caption text-ink-soft">
             {[ageLabel(cat.ageMonths), sex].filter(Boolean).join(" · ")}
           </span>
         </span>
@@ -1541,7 +1472,7 @@ function BehaviorContent() {
         }}
       >
         {hint && (
-          <div className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full rounded-[12px] bg-ink/90 px-3.5 py-2 text-[12px] text-paper">
+          <div className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 -translate-y-full rounded-sm bg-ink/90 px-3.5 py-2 text-caption text-paper">
             {hint}
           </div>
         )}
@@ -1560,7 +1491,7 @@ function BehaviorContent() {
             placeholder="生病、喂养、行为…都能问"
             enterKeyHint="send"
             maxLength={500}
-            className="min-w-0 flex-1 bg-transparent text-[14px] text-ink outline-none placeholder:text-ink-faint disabled:opacity-60"
+            className="min-w-0 flex-1 bg-transparent text-body text-ink outline-none placeholder:text-ink-faint disabled:opacity-60"
           />
           {voiceSupported && (
             <button

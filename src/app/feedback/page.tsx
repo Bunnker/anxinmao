@@ -36,7 +36,7 @@ function BackBar() {
           />
         </svg>
       </Link>
-      <span className="flex-1 text-center text-[12px] font-medium uppercase tracking-[0.18em] text-ink-soft">
+      <span className="flex-1 text-center text-caption font-medium uppercase tracking-[0.18em] text-ink-soft">
         意见反馈
       </span>
       <span className="size-9" />
@@ -114,18 +114,18 @@ export default function FeedbackPage() {
   if (status === "done") {
     return (
       <main className="mx-auto flex min-h-dvh max-w-[430px] flex-col items-center justify-center px-7 text-center" style={{ background: "var(--gradient-page)" }}>
-        <span className="grid size-16 place-items-center rounded-full bg-[var(--accent-soft)] text-[1.8rem]">
+        <span className="grid size-16 place-items-center rounded-full bg-[var(--accent-soft)] text-display">
           🐱
         </span>
-        <h1 className="mt-6 font-serif text-[1.8rem] font-medium tracking-tight text-ink">
+        <h1 className="mt-6 font-serif text-display font-medium tracking-tight text-ink">
           收到啦,谢谢你
         </h1>
-        <p className="mt-3 text-[14px] leading-relaxed text-ink-soft">
+        <p className="mt-3 text-body leading-relaxed text-ink-soft">
           每一条都会认真看 —— 你的反馈会让小猫怎么了更好用。
         </p>
         <Link
           href="/"
-          className="mt-8 rounded-[28px] bg-accent px-8 py-3.5 text-[15px] font-medium tracking-wide text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.985]"
+          className="mt-8 rounded-2xl bg-accent px-8 py-3.5 text-callout font-medium tracking-wide text-accent-fg shadow-[var(--shadow-accent)] transition-transform duration-500 active:scale-[0.985]"
         >
           回首页
         </Link>
@@ -141,10 +141,10 @@ export default function FeedbackPage() {
       <BackBar />
 
       <div className="px-7 pt-6">
-        <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
+        <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
           有什么想说的?
         </h1>
-        <p className="mt-2 text-[13.5px] leading-relaxed text-ink-soft">
+        <p className="mt-2 text-footnote leading-relaxed text-ink-soft">
           哪里不好用、哪里看不懂、想要什么功能 —— 都告诉我。一个人在做,你的每条话都算数。
         </p>
 
@@ -155,9 +155,9 @@ export default function FeedbackPage() {
           disabled={sending}
           rows={6}
           placeholder="比如:多选那一题我以为是单选…… / 希望能加个 XX 功能"
-          className="mt-5 w-full resize-none rounded-[28px] border border-[var(--line)] bg-surface px-4 py-3.5 text-[14.5px] leading-relaxed text-ink shadow-[var(--shadow-control)] outline-none placeholder:text-ink-faint focus:border-[var(--accent)] disabled:opacity-60"
+          className="mt-5 w-full resize-none rounded-2xl border border-[var(--line)] bg-surface px-4 py-3.5 text-body leading-relaxed text-ink shadow-[var(--shadow-control)] outline-none placeholder:text-ink-faint focus:border-[var(--accent)] disabled:opacity-60"
         />
-        <div className="mt-1 text-right text-[11px] text-ink-faint">
+        <div className="mt-1 text-right text-caption text-ink-faint">
           {text.length} / {MAX_TEXT}
         </div>
 
@@ -170,13 +170,13 @@ export default function FeedbackPage() {
               <img
                 src={image}
                 alt="反馈配图预览"
-                className="max-h-44 rounded-[24px] border border-[var(--line)] object-cover shadow-[var(--shadow-control)]"
+                className="max-h-44 rounded-xl border border-[var(--line)] object-cover shadow-[var(--shadow-control)]"
               />
               <button
                 type="button"
                 onClick={removeImage}
                 aria-label="移除图片"
-                className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full bg-ink text-[12px] text-paper shadow"
+                className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full bg-ink text-caption text-paper shadow"
               >
                 ×
               </button>
@@ -186,7 +186,7 @@ export default function FeedbackPage() {
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={sending}
-              className="flex items-center gap-2 rounded-[24px] border border-dashed border-[var(--line)] bg-surface px-4 py-3 text-[13.5px] text-ink-soft shadow-[var(--shadow-control)] disabled:opacity-60"
+              className="flex items-center gap-2 rounded-xl border border-dashed border-[var(--line)] bg-surface px-4 py-3 text-footnote text-ink-soft shadow-[var(--shadow-control)] disabled:opacity-60"
             >
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path
@@ -207,7 +207,7 @@ export default function FeedbackPage() {
             className="hidden"
           />
           {imgErr && (
-            <p className="mt-1.5 text-[12px] text-[var(--red)]">{imgErr}</p>
+            <p className="mt-1.5 text-caption text-[var(--red)]">{imgErr}</p>
           )}
         </div>
 
@@ -217,11 +217,11 @@ export default function FeedbackPage() {
           onChange={(e) => setContact(e.target.value.slice(0, 120))}
           disabled={sending}
           placeholder="留个联系方式?想回复你时能找到(可选)"
-          className="mt-3 w-full rounded-[28px] border border-[var(--line)] bg-surface px-4 py-3 text-[14px] text-ink shadow-[var(--shadow-control)] outline-none placeholder:text-ink-faint focus:border-[var(--accent)] disabled:opacity-60"
+          className="mt-3 w-full rounded-2xl border border-[var(--line)] bg-surface px-4 py-3 text-body text-ink shadow-[var(--shadow-control)] outline-none placeholder:text-ink-faint focus:border-[var(--accent)] disabled:opacity-60"
         />
 
         {error && (
-          <p className="mt-4 text-[13px] leading-relaxed text-[var(--red)]">
+          <p className="mt-4 text-footnote leading-relaxed text-[var(--red)]">
             {error}
           </p>
         )}
@@ -231,7 +231,7 @@ export default function FeedbackPage() {
           onClick={submit}
           disabled={!canSend}
           className={
-            "mt-6 w-full rounded-[28px] py-4 text-[16px] font-medium tracking-wide transition-colors duration-500 " +
+            "mt-6 w-full rounded-2xl py-4 text-title font-medium tracking-wide transition-colors duration-500 " +
             (canSend
               ? "bg-accent text-accent-fg"
               : "bg-[var(--surface-2)] text-ink-faint")
@@ -239,7 +239,7 @@ export default function FeedbackPage() {
         >
           {sending ? "提交中…" : "提交反馈"}
         </button>
-        <p className="mt-3 text-center text-[11.5px] leading-relaxed text-ink-faint">
+        <p className="mt-3 text-center text-caption leading-relaxed text-ink-faint">
           只会保存你写的内容,不收集身份信息。
         </p>
       </div>

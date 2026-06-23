@@ -37,7 +37,7 @@ function SymptomCard({ s }: { s: Symptom }) {
   return (
     <Link
       href={`/triage?symptom=${s.id}`}
-      className="relative flex items-center gap-3 rounded-[22px] bg-surface px-4 py-3.5 shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.985]"
+      className="relative flex items-center gap-3 rounded-xl bg-surface px-4 py-3.5 shadow-[var(--shadow-card)] transition-transform duration-500 active:scale-[0.985]"
     >
       {urgent && (
         <span
@@ -51,10 +51,10 @@ function SymptomCard({ s }: { s: Symptom }) {
         className={urgent ? "shrink-0 text-[var(--red)]/70" : "shrink-0 text-ink/45"}
       />
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-[15px] font-medium leading-snug text-ink">
+        <span className="text-callout font-medium leading-snug text-ink">
           {s.label}
         </span>
-        <span className="text-[11.5px] leading-snug text-ink-faint">{s.sub}</span>
+        <span className="text-caption leading-snug text-ink-faint">{s.sub}</span>
       </span>
     </Link>
   );
@@ -75,7 +75,7 @@ function Group({
     <section className="mt-7" data-guide-target={guideTarget}>
       <p
         className={
-          "mb-2.5 text-[11px] font-semibold tracking-[0.2em] " +
+          "mb-2.5 text-caption font-semibold tracking-[0.2em] " +
           (urgent ? "text-[var(--red)]" : "text-ink-faint")
         }
       >
@@ -110,7 +110,7 @@ export default function SymptomsPage() {
       {/* 顶栏 */}
       <header className="flex items-center py-2">
         <span
-          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[11px] font-medium tracking-[0.06em]"
+          className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-caption font-medium tracking-[0.06em]"
           style={{ background: "var(--accent-soft)", color: "var(--accent)" }}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -123,11 +123,11 @@ export default function SymptomsPage() {
 
       {/* 顶部主卡 */}
       <section className="pt-7">
-        <div className="rounded-[28px] bg-surface p-5 shadow-[var(--shadow-card)]">
-          <h1 className="font-serif text-[1.7rem] font-medium leading-snug tracking-tight text-ink">
+        <div className="rounded-2xl bg-surface p-5 shadow-[var(--shadow-card)]">
+          <h1 className="font-serif text-display font-medium leading-snug tracking-tight text-ink">
             它现在最让你担心的是?
           </h1>
-          <p className="mt-2.5 text-[13px] leading-relaxed text-ink-soft">
+          <p className="mt-2.5 text-footnote leading-relaxed text-ink-soft">
             挑最像的一项 —— 后面我会再追问几个问题。
           </p>
           <ReviewedNotice className="mt-4" />
@@ -149,11 +149,11 @@ export default function SymptomsPage() {
       {/* 其它 */}
       <Link
         href={`/triage?symptom=${soft.id}`}
-        className="mt-7 flex items-center justify-between rounded-[28px] border border-dashed border-[var(--line)] bg-white/55 px-5 py-4 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
+        className="mt-7 flex items-center justify-between rounded-2xl border border-dashed border-[var(--line)] bg-white/55 px-5 py-4 shadow-[var(--shadow-control)] transition-transform duration-500 active:scale-[0.985]"
       >
         <span>
-          <span className="text-[15px] text-ink">{soft.label}</span>
-          <span className="ml-2.5 text-[12px] text-ink-faint">{soft.sub}</span>
+          <span className="text-callout text-ink">{soft.label}</span>
+          <span className="ml-2.5 text-caption text-ink-faint">{soft.sub}</span>
         </span>
         <svg
           width="15"

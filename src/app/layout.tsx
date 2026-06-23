@@ -53,6 +53,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // = --paper(Next metadata 不支持 CSS 变量,只能字面量;改 --paper 须同步这里)
   themeColor: "#f7f6f3",
 };
 
