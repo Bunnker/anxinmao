@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "cn.whatsupkitty.app",
+      "sha256_cert_fingerprints": [
+        "CB:15:58:20:C8:6D:CD:1C:0D:31:D1:89:50:B6:4F:B2:6B:1A:9D:CA:D8:B0:E4:CC:1B:6B:00:00:FE:21:CE:89"
+      ]
+    }
+  }
+]
