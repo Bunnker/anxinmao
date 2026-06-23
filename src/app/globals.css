@@ -112,6 +112,8 @@
 html,
 body {
   height: 100%;
+  overscroll-behavior: none; /* 去 PWA/TWA 里的橡皮筋回弹辉光,更像原生 */
+  -webkit-tap-highlight-color: transparent; /* 全局去点击灰闪(原仅 a/button/input) */
 }
 
 body {

@@ -23,7 +23,9 @@
     "harness:review-regressions": "node scripts/harness-review-regressions.mjs",
     "medical:fetch": "node scripts/fetch-medical-sources.mjs",
     "medical:validate": "node scripts/validate-medical-docs.mjs",
-    "triage:check": "node scripts/check-triage-cards.mjs"
+    "triage:check": "node scripts/check-triage-cards.mjs",
+    "pwa:check": "node scripts/check-pwa-manifest.mjs",
+    "harness:install-prompt": "node scripts/harness-install-prompt.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
