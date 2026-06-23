@@ -28,6 +28,11 @@ import {
   flushMemoryExtract,
   scheduleMemoryExtract,
 } from "@/lib/memory-extract";
+import {
+  QUESTION_POOL,
+  recommendQuestions,
+  type Suggestion,
+} from "@/lib/behavior-suggest";
 import { CatAvatar } from "@/components/CatAvatar";
 import { Disclaimer } from "@/components/Disclaimer";
 import type { Cat, CatRecord, ChatMessage, RiskTier, Store } from "@/types/cat";
@@ -82,7 +87,8 @@ const KEEP_VERBATIM = 8;
 // 只在前几轮回答后给追问 —— 新手最需要引导;聊深了就不给,省一次调用。
 const MAX_FOLLOWUP_TURNS = 3;
 
-// 发现态:分类 + 每类推荐问题(curated)。「推荐」= 各类挑一条。
+// 发现态:分类 chips。「推荐」(all)走个性化引擎 recommendQuestions(0 LLM,
+// 从记录/资料/记忆派生);具体分类走该类 curated 池 QUESTION_POOL。
 const CATEGORIES = [
   { key: "all", label: "推荐" },
   { key: "health", label: "健康" },
@@ -91,57 +97,6 @@ const CATEGORIES = [
   { key: "daily", label: "日常" },
 ] as const;
 type CategoryKey = (typeof CATEGORIES)[number]["key"];
-type TopicKey = Exclude<CategoryKey, "all">;
-
-const SUGGESTIONS: Record<TopicKey, string[]> = {
-  health: [
-    "打喷嚏好几天了,会自己好吗?",
-    "猫不太爱吃饭,要不要去医院?",
-    "猫一直打喷嚏,要紧吗?",
-  ],
-  feed: ["幼猫一天喂几次、喂多少?", "幼猫能不能喝牛奶?"],
-  behave: ["怎么让猫慢慢接受剪指甲?", "猫总抓沙发怎么办?"],
-  daily: ["多久给猫梳一次毛?", "猫砂多久彻底换一次?"],
-};
-
-type Suggestion = { q: string; topic: TopicKey };
-
-function suggestionsFor(cat: CategoryKey): Suggestion[] {
-  if (cat === "all") {
-    return [
-      { q: SUGGESTIONS.health[0], topic: "health" },
-      { q: SUGGESTIONS.feed[0], topic: "feed" },
-      { q: SUGGESTIONS.behave[0], topic: "behave" },
-      { q: SUGGESTIONS.health[1], topic: "health" },
-    ];
-  }
-  return SUGGESTIONS[cat].map((q) => ({ q, topic: cat }));
-}
-
-// 「和{name}有关」轻量个性化:推荐问题命中既往记录里聊过 / 分诊过的主题就打标。
-// 纯前端从 records 派生,零后端改动(批二 Tier A 会把这条接成正式记忆回忆)。
-const TOPIC_KEYWORDS = [
-  "打喷嚏",
-  "喷嚏",
-  "吃饭",
-  "食欲",
-  "驱虫",
-  "剪指甲",
-  "指甲",
-  "抓",
-  "梳毛",
-  "猫砂",
-  "牛奶",
-  "喂",
-];
-function relatedToRecords(q: string, records: CatRecord[]): boolean {
-  if (records.length === 0) return false;
-  const hay = records
-    .slice(0, 8)
-    .map((r) => `${r.question ?? ""} ${r.summary ?? ""} ${r.symptom ?? ""}`)
-    .join(" ");
-  return TOPIC_KEYWORDS.some((k) => q.includes(k) && hay.includes(k));
-}
 
 // 急症词 —— 命中即时弹「这可能是急症」红横幅(红旗中途急停红线的前端可视化)。
 // 这是防御纵深 / 即时提示,不替代后端 LLM + 意图分流的真实急症处理。
@@ -865,7 +820,14 @@ function Discovery({
   onOpenRecord: (r: CatRecord) => void;
 }) {
   const [category, setCategory] = useState<CategoryKey>("all");
-  const items = suggestionsFor(category);
+  // 「推荐」走个性化引擎(0 LLM,读 记录/资料/记忆 派生);具体分类走该类 curated 池。
+  const items = useMemo<Suggestion[]>(
+    () =>
+      category === "all"
+        ? recommendQuestions(cat, records, getCatMemory(cat.id), 4)
+        : QUESTION_POOL[category].map((q) => ({ q, topic: category, related: false })),
+    [category, cat, records],
+  );
   const recentBehavior = records
     .filter((r) => r.kind === "behavior")
     .slice(0, 3);
@@ -912,7 +874,7 @@ function Discovery({
           <SuggestionRow
             key={`${it.topic}-${it.q}`}
             item={it}
-            related={relatedToRecords(it.q, records)}
+            related={it.related}
             catName={cat.name}
             disabled={disabled}
             onPick={onPick}
