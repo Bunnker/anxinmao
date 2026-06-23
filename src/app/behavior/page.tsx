@@ -1206,6 +1206,14 @@ function BehaviorContent() {
       }
 
       const poster = posterFromHeader(res.headers);
+      // 对话内去重:普通图解一次对话只展示一次(用户已看过,重复是噪音);
+      // 红档急症图解保留重复展示,反复引起用户重视(安全)。
+      const dedupedPoster =
+        poster &&
+        poster.riskTone !== "red" &&
+        msgs.some((m) => m.poster?.id === poster.id)
+          ? undefined
+          : poster;
 
       // 流式读取:每收到一段,就更新末尾那条 assistant 消息。
       const reader = res.body.getReader();
@@ -1225,8 +1233,8 @@ function BehaviorContent() {
       if (acc.trim() === "") {
         setError("没收到回答,请重试。");
       } else {
-        const assistantMsg: Msg = poster
-          ? { role: "assistant", content: acc, poster }
+        const assistantMsg: Msg = dedupedPoster
+          ? { role: "assistant", content: acc, poster: dedupedPoster }
           : { role: "assistant", content: acc };
         const finalMsgs: Msg[] = [...msgs, assistantMsg];
         setMessages(finalMsgs);
