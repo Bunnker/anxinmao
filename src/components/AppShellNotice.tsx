@@ -12,6 +12,8 @@ export function AppShellNotice() {
 
   useEffect(() => {
     if (readPersisted(SEEN_KEY) === "1") return;
+    // 故意挂载后再决定:服务端/导出期不渲染弹窗,避免 hydration 不匹配(localStorage 仅客户端可读)。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShow(true);
   }, []);
 
