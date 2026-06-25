@@ -8,6 +8,7 @@
 // 不改 onboarding(避免与并发工作流冲突),逻辑独立。
 import { useEffect, useRef, useState } from "react";
 import { CatAvatar } from "@/components/CatAvatar";
+import { apiUrl } from "@/lib/api-base";
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -105,7 +106,7 @@ export function AvatarPicker({
     setError(null);
     setNotCat(false);
     try {
-      const res = await fetch("/api/avatar", {
+      const res = await fetch(apiUrl("/api/avatar"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

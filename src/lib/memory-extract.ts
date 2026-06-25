@@ -8,6 +8,7 @@
 // - 失败一律静默,绝不阻塞 / 影响问答主流程。
 
 import { mergeCatMemory } from "@/lib/storage";
+import { apiUrl } from "@/lib/api-base";
 
 type ExtractMsg = { role: "user" | "assistant"; content: string };
 export type ExtractArgs = {
@@ -57,7 +58,7 @@ async function run(keepalive: boolean): Promise<void> {
   if (job.messages.length - prev < MIN_NEW_MSGS) return;
   inflight = true;
   try {
-    const res = await fetch("/api/memory/extract", {
+    const res = await fetch(apiUrl("/api/memory/extract"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       keepalive,

@@ -2,6 +2,7 @@
 // 服务端是 /api/history,按匿名 deviceId 落服务器本地文件。
 import type { Store } from "@/types/cat";
 import { getDeviceId } from "@/lib/device-id";
+import { apiUrl } from "@/lib/api-base";
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null;
 let pending: Store | null = null;
@@ -21,7 +22,7 @@ function flush(): void {
   if (!store) return;
   const deviceId = getDeviceId();
   if (!deviceId) return;
-  fetch("/api/history", {
+  fetch(apiUrl("/api/history"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ deviceId, store }),
@@ -41,7 +42,7 @@ export async function pullHistory(timeoutMs = 4000): Promise<Store | null> {
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(
-      `/api/history?deviceId=${encodeURIComponent(deviceId)}`,
+      apiUrl(`/api/history?deviceId=${encodeURIComponent(deviceId)}`),
       { signal: ctrl.signal },
     );
     if (!res.ok) return null;

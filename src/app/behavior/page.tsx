@@ -28,6 +28,7 @@ import {
   flushMemoryExtract,
   scheduleMemoryExtract,
 } from "@/lib/memory-extract";
+import { apiUrl } from "@/lib/api-base";
 import {
   QUESTION_POOL,
   recommendQuestions,
@@ -1142,7 +1143,7 @@ function BehaviorContent() {
     const toFold = all.slice(memoCount, foldEnd);
     if (toFold.length === 0) return;
     try {
-      const res = await fetch("/api/summarize", {
+      const res = await fetch(apiUrl("/api/summarize"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memo, messages: toFold }),
@@ -1180,7 +1181,7 @@ function BehaviorContent() {
       : [];
     let acc = "";
     try {
-      const res = await fetch("/api/behavior", {
+      const res = await fetch(apiUrl("/api/behavior"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1270,7 +1271,7 @@ function BehaviorContent() {
   // 答完后台拉「追问建议」。失败静默;只有仍是最新一轮(seq 对得上)才采用。
   async function fetchFollowups(msgs: Msg[], seq: number) {
     try {
-      const res = await fetch("/api/followups", {
+      const res = await fetch(apiUrl("/api/followups"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // 省 token:只发最近一两轮(后端也只取最后 4 条),不带猫档案 / 摘要

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { apiUrl } from "@/lib/api-base";
 
 // 意见反馈 —— 文字(必填)+ 可选配图 + 可选联系方式,落服务端 /api/feedback。
 // 边界:不放赞赏 / 收款码(产品红线「不做电商 / 导流」)。
@@ -86,7 +87,7 @@ export default function FeedbackPage() {
     setStatus("sending");
     setError(null);
     try {
-      const res = await fetch("/api/feedback", {
+      const res = await fetch(apiUrl("/api/feedback"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

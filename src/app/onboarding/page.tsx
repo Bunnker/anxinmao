@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { addCat, deleteCat, loadStore, saveStore } from "@/lib/storage";
+import { apiUrl } from "@/lib/api-base";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
 import { ageLabel, ageMonthsFromBirthday } from "@/lib/profile";
@@ -345,7 +346,7 @@ function OnboardingForm() {
     setAvatarError(null);
     setAvatarNotCat(false);
     try {
-      const res = await fetch("/api/avatar", {
+      const res = await fetch(apiUrl("/api/avatar"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
