@@ -7,6 +7,7 @@
 //     docker run -v /opt/anxinmao/data:/app/.data ...
 // - 防刷走 ratelimit 的 feedback 额度(dev 不限)。
 
+import { withCors, preflight } from "@/lib/cors";
 import type { NextRequest } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -42,26 +43,32 @@ function parseImage(dataUrl: string): { ext: string; buf: Buffer } | null {
   return { ext, buf };
 }
 
+export async function OPTIONS(req: Request) { return preflight(req); }
+
 export async function POST(req: NextRequest): Promise<Response> {
+  const origin = req.headers.get("origin");
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return Response.json({ error: "请求体不是合法 JSON。" }, { status: 400 });
+    return withCors(Response.json({ error: "请求体不是合法 JSON。" }, { status: 400 }), origin);
   }
 
   const text = (body.text ?? "").trim().slice(0, MAX_TEXT);
   if (!text) {
-    return Response.json({ error: "写点什么再提交吧。" }, { status: 400 });
+    return withCors(Response.json({ error: "写点什么再提交吧。" }, { status: 400 }), origin);
   }
 
   // 防刷:每 IP 每天有限次(dev 不限)
   const ip = getClientIp(req);
   const rl = checkAndConsume(ip, "feedback");
   if (!rl.ok) {
-    return Response.json(
-      { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
-      { status: 429 },
+    return withCors(
+      Response.json(
+        { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
+        { status: 429 },
+      ),
+      origin,
     );
   }
 
@@ -98,8 +105,8 @@ export async function POST(req: NextRequest): Promise<Response> {
     await fs.appendFile(LOG_FILE, JSON.stringify(entry) + "\n", "utf8");
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    return Response.json({ error: `保存失败 —— ${msg}` }, { status: 500 });
+    return withCors(Response.json({ error: `保存失败 —— ${msg}` }, { status: 500 }), origin);
   }
 
-  return Response.json({ ok: true });
+  return withCors(Response.json({ ok: true }), origin);
 }

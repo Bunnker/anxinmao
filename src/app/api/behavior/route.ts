@@ -3,6 +3,7 @@
 // 产品红线(CLAUDE.md):可以聊健康,但【绝不诊断】、【绝不开药】;红旗症状立即
 // 急停送医;健康边界按场景自然提醒。养育 / 行为问题正常聊。
 // 限流:per-IP + 全局日额度,保护试用期 API 额度。
+import { withCors, preflight } from "@/lib/cors";
 import {
   chat,
   chatStream,
@@ -123,12 +124,15 @@ function userQuery(messages: ChatMessage[], fallback = ""): string {
   return (lastUser ?? fallback).slice(0, 240);
 }
 
+export async function OPTIONS(req: Request) { return preflight(req); }
+
 export async function POST(req: Request): Promise<Response> {
+  const origin = req.headers.get("origin");
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return Response.json({ error: "请求格式不对。" }, { status: 400 });
+    return withCors(Response.json({ error: "请求格式不对。" }, { status: 400 }), origin);
   }
 
   const b = body as {
@@ -151,24 +155,27 @@ export async function POST(req: Request): Promise<Response> {
   };
   const parsed = parseHistory(b.messages);
   if (!parsed || parsed.length === 0) {
-    return Response.json({ error: "没有收到问题。" }, { status: 400 });
+    return withCors(Response.json({ error: "没有收到问题。" }, { status: 400 }), origin);
   }
   // 防御性上限:正常情况下前端已把更早的对话压成 memo 摘要传来,这里只是
   // 兜底,避免异常请求塞入过长上下文。
   const recent = parsed.slice(-24);
   if (recent[recent.length - 1].role !== "user") {
-    return Response.json(
-      { error: "最后一条应该是用户的问题。" },
-      { status: 400 },
+    return withCors(
+      Response.json({ error: "最后一条应该是用户的问题。" }, { status: 400 }),
+      origin,
     );
   }
 
   // 限流放在请求格式校验后、资料召回/模型调用前,避免无效请求消耗额度。
   const rl = checkAndConsume(getClientIp(req), "chat");
   if (!rl.ok) {
-    return Response.json(
-      { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
-      { status: 429 },
+    return withCors(
+      Response.json(
+        { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
+        { status: 429 },
+      ),
+      origin,
     );
   }
 
@@ -304,33 +311,36 @@ export async function POST(req: Request): Promise<Response> {
           })
         : null;
 
-    return Response.json({
-      dryRun: true,
-      systemPromptPreview: SYSTEM_PROMPT,
-      intentPreview: intent,
-      agentPlanPreview: agent.plan,
-      catProfilePreview: ctx ?? "",
-      episodeRecallPreview: episodeRecall ?? "",
-      memoryRecallPreview: memoryRecall ?? "",
-      careKnowledgePreview: agent.carePrompt.slice(0, 4000),
-      careCardIds: agent.careCardIds,
-      medicalCardIds: [...medical.cardIds, ...agent.medicalCardIds],
-      posterAttachmentPreview: posterAttachment,
-      evidence: {
-        claimIds: medical.claimIds,
-        cardIds: medical.cardIds,
-      },
-      medicalKnowledgePreview: medical.prompt.slice(0, 4000),
-      agentTools: agent.tools,
-      agentExecutionPreview: agent.prompt.slice(0, 4000),
-      agentRetrievalPreview: agent.retrievalPrompt.slice(0, 4000),
-      regionPreview: regionPrompt(region),
-      productBoundaryPreview: productBoundary,
-      medicinePolicyPreview: medicineProductPolicy,
-      responseSafetyPreview: behaviorReplySafetyPolicyPreview(),
-      responseSafetyProbe,
-      messageRoles: fullMessages.map((m) => m.role),
-    });
+    return withCors(
+      Response.json({
+        dryRun: true,
+        systemPromptPreview: SYSTEM_PROMPT,
+        intentPreview: intent,
+        agentPlanPreview: agent.plan,
+        catProfilePreview: ctx ?? "",
+        episodeRecallPreview: episodeRecall ?? "",
+        memoryRecallPreview: memoryRecall ?? "",
+        careKnowledgePreview: agent.carePrompt.slice(0, 4000),
+        careCardIds: agent.careCardIds,
+        medicalCardIds: [...medical.cardIds, ...agent.medicalCardIds],
+        posterAttachmentPreview: posterAttachment,
+        evidence: {
+          claimIds: medical.claimIds,
+          cardIds: medical.cardIds,
+        },
+        medicalKnowledgePreview: medical.prompt.slice(0, 4000),
+        agentTools: agent.tools,
+        agentExecutionPreview: agent.prompt.slice(0, 4000),
+        agentRetrievalPreview: agent.retrievalPrompt.slice(0, 4000),
+        regionPreview: regionPrompt(region),
+        productBoundaryPreview: productBoundary,
+        medicinePolicyPreview: medicineProductPolicy,
+        responseSafetyPreview: behaviorReplySafetyPolicyPreview(),
+        responseSafetyProbe,
+        messageRoles: fullMessages.map((m) => m.role),
+      }),
+      origin,
+    );
   }
 
   try {
@@ -361,7 +371,7 @@ export async function POST(req: Request): Promise<Response> {
         hasMedicineProductPolicy: Boolean(medicineProductPolicy),
         tier: upstreamTier,
       });
-      return new Response(checked.safeText, { headers });
+      return withCors(new Response(checked.safeText, { headers }), origin);
     }
 
     const stream = await chatStream(fullMessages, {
@@ -369,15 +379,15 @@ export async function POST(req: Request): Promise<Response> {
       // v4-flash 等推理模型:reasoning token 额外占用,留足余量(防正文被挤空)。
       maxTokens: 3000,
     });
-    return new Response(stream, { headers });
+    return withCors(new Response(stream, { headers }), origin);
   } catch (e) {
     if (e instanceof LLMError) {
       const status = e.code === "no_provider" ? 503 : 502;
-      return Response.json({ error: e.message, code: e.code }, { status });
+      return withCors(Response.json({ error: e.message, code: e.code }, { status }), origin);
     }
-    return Response.json(
-      { error: "出了点问题,请稍后重试。" },
-      { status: 500 },
+    return withCors(
+      Response.json({ error: "出了点问题,请稍后重试。" }, { status: 500 }),
+      origin,
     );
   }
 }

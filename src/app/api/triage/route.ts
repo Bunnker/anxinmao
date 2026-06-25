@@ -4,6 +4,7 @@
 // - route handler 只暴露给前端结构化结果;API key 和 docs/medical 文件都留在服务端。
 // - 红线规则仍以前端结构化分诊和 docs/medical/ai-cards 为准;LLM 负责语言理解和解释,
 //   不负责自由诊断或自由开药。
+import { withCors, preflight } from "@/lib/cors";
 import { chat, LLMError, parseHistory, type ChatMessage } from "@/lib/llm";
 import { buildAgentRetrievalContext } from "@/lib/agent-retrieval";
 import { catProfileContext } from "@/lib/cat-profile-context";
@@ -76,36 +77,42 @@ function userQuery(messages: ChatMessage[], fallback = ""): string {
   return (lastUser ?? fallback).slice(0, 240);
 }
 
+export async function OPTIONS(req: Request) { return preflight(req); }
+
 export async function POST(req: Request): Promise<Response> {
+  const origin = req.headers.get("origin");
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return Response.json({ error: "请求格式不对。" }, { status: 400 });
+    return withCors(Response.json({ error: "请求格式不对。" }, { status: 400 }), origin);
   }
 
   if (!body || typeof body !== "object") {
-    return Response.json({ error: "请求格式不对。" }, { status: 400 });
+    return withCors(Response.json({ error: "请求格式不对。" }, { status: 400 }), origin);
   }
 
   const b = body as Record<string, unknown>;
   const messages = messagesFromBody(b);
   if (!messages || messages.length === 0) {
-    return Response.json({ error: "没有收到要分诊的描述。" }, { status: 400 });
+    return withCors(Response.json({ error: "没有收到要分诊的描述。" }, { status: 400 }), origin);
   }
   if (messages[messages.length - 1].role !== "user") {
-    return Response.json(
-      { error: "最后一条应该是用户补充的情况。" },
-      { status: 400 },
+    return withCors(
+      Response.json({ error: "最后一条应该是用户补充的情况。" }, { status: 400 }),
+      origin,
     );
   }
 
   // 限流放在请求格式校验后、资料召回/模型调用前,避免无效请求消耗额度。
   const rl = checkAndConsume(getClientIp(req), "chat");
   if (!rl.ok) {
-    return Response.json(
-      { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
-      { status: 429 },
+    return withCors(
+      Response.json(
+        { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
+        { status: 429 },
+      ),
+      origin,
     );
   }
 
@@ -166,20 +173,23 @@ export async function POST(req: Request): Promise<Response> {
 
   // harness 专用:本地开发可验证医学资料上下文是否正确注入,不调用大模型、不消耗额度。
   if (b.dryRun === true && process.env.NODE_ENV !== "production") {
-    return Response.json({
-      dryRun: true,
-      evidence: {
-        claimIds: medical.claimIds,
-        cardIds: medical.cardIds,
-      },
-      promptPreview: medical.prompt.slice(0, 4000),
-      catProfilePreview: ctx ?? "",
-      agentTools: agent.tools,
-      agentRetrievalPreview: agent.prompt.slice(0, 4000),
-      regionPreview: regionPrompt(region),
-      productBoundaryPreview: productBoundary,
-      messageRoles: fullMessages.map((m) => m.role),
-    });
+    return withCors(
+      Response.json({
+        dryRun: true,
+        evidence: {
+          claimIds: medical.claimIds,
+          cardIds: medical.cardIds,
+        },
+        promptPreview: medical.prompt.slice(0, 4000),
+        catProfilePreview: ctx ?? "",
+        agentTools: agent.tools,
+        agentRetrievalPreview: agent.prompt.slice(0, 4000),
+        regionPreview: regionPrompt(region),
+        productBoundaryPreview: productBoundary,
+        messageRoles: fullMessages.map((m) => m.role),
+      }),
+      origin,
+    );
   }
 
   try {
@@ -189,21 +199,24 @@ export async function POST(req: Request): Promise<Response> {
       maxTokens: 3000,
       timeoutMs: 60000,
     });
-    return Response.json({
-      reply,
-      evidence: {
-        claimIds: medical.claimIds,
-        cardIds: medical.cardIds,
-      },
-    });
+    return withCors(
+      Response.json({
+        reply,
+        evidence: {
+          claimIds: medical.claimIds,
+          cardIds: medical.cardIds,
+        },
+      }),
+      origin,
+    );
   } catch (e) {
     if (e instanceof LLMError) {
       const status = e.code === "no_provider" ? 503 : 502;
-      return Response.json({ error: e.message, code: e.code }, { status });
+      return withCors(Response.json({ error: e.message, code: e.code }, { status }), origin);
     }
-    return Response.json(
-      { error: "分诊分析失败,请稍后重试。" },
-      { status: 500 },
+    return withCors(
+      Response.json({ error: "分诊分析失败,请稍后重试。" }, { status: 500 }),
+      origin,
     );
   }
 }

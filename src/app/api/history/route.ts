@@ -8,6 +8,7 @@
 //   和 feedback 同一个:docker run -v /opt/anxinmao/data:/app/.data ...
 //   （没挂卷的话容器重启就丢,云同步会失效。）
 // - 防刷走 ratelimit 的 history 额度(写本地文件、无外部成本,给得宽松)。
+import { withCors, preflight } from "@/lib/cors";
 import type { NextRequest } from "next/server";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -27,30 +28,34 @@ function fileFor(deviceId: string): string {
   return path.join(HISTORY_DIR, `${path.basename(deviceId)}.json`);
 }
 
+export async function OPTIONS(req: Request) { return preflight(req); }
+
 export async function GET(req: NextRequest): Promise<Response> {
+  const origin = req.headers.get("origin");
   const deviceId = req.nextUrl.searchParams.get("deviceId");
   if (!isValidDeviceId(deviceId)) {
-    return Response.json({ error: "deviceId 不合法。" }, { status: 400 });
+    return withCors(Response.json({ error: "deviceId 不合法。" }, { status: 400 }), origin);
   }
   try {
     const raw = await fs.readFile(fileFor(deviceId), "utf8");
-    return Response.json({ store: JSON.parse(raw) });
+    return withCors(Response.json({ store: JSON.parse(raw) }), origin);
   } catch {
     // 该设备还没有历史(首次)或读取失败 —— 返回空,不当错误。
-    return Response.json({ store: null });
+    return withCors(Response.json({ store: null }), origin);
   }
 }
 
 export async function POST(req: NextRequest): Promise<Response> {
+  const origin = req.headers.get("origin");
   let body: { deviceId?: string; store?: unknown };
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return Response.json({ error: "请求体不是合法 JSON。" }, { status: 400 });
+    return withCors(Response.json({ error: "请求体不是合法 JSON。" }, { status: 400 }), origin);
   }
 
   if (!isValidDeviceId(body.deviceId)) {
-    return Response.json({ error: "deviceId 不合法。" }, { status: 400 });
+    return withCors(Response.json({ error: "deviceId 不合法。" }, { status: 400 }), origin);
   }
 
   const store = body.store;
@@ -60,21 +65,21 @@ export async function POST(req: NextRequest): Promise<Response> {
     typeof store !== "object" ||
     !Array.isArray((store as { cats?: unknown }).cats)
   ) {
-    return Response.json({ error: "store 格式不对。" }, { status: 400 });
+    return withCors(Response.json({ error: "store 格式不对。" }, { status: 400 }), origin);
   }
 
   const json = JSON.stringify(store);
   if (json.length > MAX_BYTES) {
-    return Response.json({ error: "数据过大。" }, { status: 413 });
+    return withCors(Response.json({ error: "数据过大。" }, { status: 413 }), origin);
   }
 
   // 防刷(仅生产环境生效)
   const ip = getClientIp(req);
   const rl = checkAndConsume(ip, "history");
   if (!rl.ok) {
-    return Response.json(
-      { error: rateLimitMessage("history", rl.scope) },
-      { status: 429 },
+    return withCors(
+      Response.json({ error: rateLimitMessage("history", rl.scope) }, { status: 429 }),
+      origin,
     );
   }
 
@@ -85,8 +90,8 @@ export async function POST(req: NextRequest): Promise<Response> {
     const tmp = `${target}.${process.pid}.tmp`;
     await fs.writeFile(tmp, json, "utf8");
     await fs.rename(tmp, target);
-    return Response.json({ ok: true });
+    return withCors(Response.json({ ok: true }), origin);
   } catch {
-    return Response.json({ error: "保存失败。" }, { status: 500 });
+    return withCors(Response.json({ error: "保存失败。" }, { status: 500 }), origin);
   }
 }

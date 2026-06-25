@@ -4,6 +4,7 @@
 // 产品红线(违任一,该条直接丢弃,不信模型自觉,服务端后置过滤兜底):
 // - 绝不蒸馏疾病标签 / 诊断 / 慢性病史(只走结构化档案);短命症状不升格;判级评价不进记忆;
 //   越权指令不当事实;PII 不落库。过滤复用 lib/behavior-memory 的 filterMemoryText(单一源)。
+import { withCors, preflight } from "@/lib/cors";
 import {
   chat,
   LLMError,
@@ -104,12 +105,15 @@ function sanitizeExistingItems(raw: unknown): { kind: string; text: string }[] {
   return out;
 }
 
+export async function OPTIONS(req: Request) { return preflight(req); }
+
 export async function POST(req: Request): Promise<Response> {
+  const origin = req.headers.get("origin");
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return Response.json({ error: "请求格式不对。" }, { status: 400 });
+    return withCors(Response.json({ error: "请求格式不对。" }, { status: 400 }), origin);
   }
   const b = body as {
     messages?: unknown;
@@ -122,7 +126,7 @@ export async function POST(req: Request): Promise<Response> {
 
   const messages = parseHistory(b.messages);
   if (!messages || messages.length === 0) {
-    return Response.json({ error: "没有要蒸馏的内容。" }, { status: 400 });
+    return withCors(Response.json({ error: "没有要蒸馏的内容。" }, { status: 400 }), origin);
   }
 
   const existing = sanitizeExistingItems(b.items);
@@ -141,27 +145,36 @@ export async function POST(req: Request): Promise<Response> {
   // dryRun(仅非 production):可注入 rawModelOutput 走过滤,供 harness 确定性验证红线,不调真模型。
   if (b.dryRun === true && process.env.NODE_ENV !== "production") {
     if (typeof b.rawModelOutput === "string") {
-      return Response.json({
+      return withCors(
+        Response.json({
+          dryRun: true,
+          parsed: parseExtractOutput(b.rawModelOutput),
+          kept: distill(b.rawModelOutput),
+          systemPromptPreview: EXTRACT_SYSTEM,
+          userContentPreview: userContent,
+        }),
+        origin,
+      );
+    }
+    return withCors(
+      Response.json({
         dryRun: true,
-        parsed: parseExtractOutput(b.rawModelOutput),
-        kept: distill(b.rawModelOutput),
         systemPromptPreview: EXTRACT_SYSTEM,
         userContentPreview: userContent,
-      });
-    }
-    return Response.json({
-      dryRun: true,
-      systemPromptPreview: EXTRACT_SYSTEM,
-      userContentPreview: userContent,
-    });
+      }),
+      origin,
+    );
   }
 
   // 限流:复用 chat scope(蒸馏与问答同额度池);放在校验后、调模型前。
   const rl = checkAndConsume(getClientIp(req), "chat");
   if (!rl.ok) {
-    return Response.json(
-      { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
-      { status: 429 },
+    return withCors(
+      Response.json(
+        { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
+        { status: 429 },
+      ),
+      origin,
     );
   }
 
@@ -176,12 +189,15 @@ export async function POST(req: Request): Promise<Response> {
       timeoutMs: 30000,
     });
     const items = distill(raw);
-    return Response.json({ items });
+    return withCors(Response.json({ items }), origin);
   } catch (e) {
     if (e instanceof LLMError) {
       const status = e.code === "no_provider" ? 503 : 502;
-      return Response.json({ error: e.message, code: e.code }, { status });
+      return withCors(Response.json({ error: e.message, code: e.code }, { status }), origin);
     }
-    return Response.json({ error: "记忆蒸馏失败,请稍后重试。" }, { status: 500 });
+    return withCors(
+      Response.json({ error: "记忆蒸馏失败,请稍后重试。" }, { status: 500 }),
+      origin,
+    );
   }
 }

@@ -2,6 +2,7 @@
 // 非流式、轻量;独立于主问答提示词(不污染医疗安全规则)。任何失败都安静降级:
 // 返回空数组,前端不显示追问,不影响主流程。有效请求仍走 chat 限流,避免公开
 // LLM 接口被单独刷额度。
+import { withCors, preflight } from "@/lib/cors";
 import { chat, LLMError, parseHistory } from "@/lib/llm";
 import { checkAndConsume, getClientIp, rateLimitMessage } from "@/lib/ratelimit";
 
@@ -46,34 +47,40 @@ function parseFollowups(raw: string): string[] {
   return out;
 }
 
+export async function OPTIONS(req: Request) { return preflight(req); }
+
 export async function POST(req: Request): Promise<Response> {
+  const origin = req.headers.get("origin");
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return Response.json({ followups: [] });
+    return withCors(Response.json({ followups: [] }), origin);
   }
 
   const b = body as { messages?: unknown };
   const messages = parseHistory(b.messages);
-  if (!messages || messages.length === 0) return Response.json({ followups: [] });
+  if (!messages || messages.length === 0) return withCors(Response.json({ followups: [] }), origin);
 
   // 省 token:生成追问只需最近一两轮,不带猫档案 / 摘要(猫名等在对话正文里本来就有)。
   // 注:常在助手回答前就并行调用(末条是用户问题),所以不强制末条是助手,只要有用户消息即可。
   const recent = messages.slice(-4);
   if (!recent.some((m) => m.role === "user")) {
-    return Response.json({ followups: [] });
+    return withCors(Response.json({ followups: [] }), origin);
   }
 
   const rl = checkAndConsume(getClientIp(req), "chat");
   if (!rl.ok) {
-    return Response.json(
-      {
-        followups: [],
-        error: rateLimitMessage(rl.kind, rl.scope),
-        code: "RATE_LIMITED",
-      },
-      { status: 429 },
+    return withCors(
+      Response.json(
+        {
+          followups: [],
+          error: rateLimitMessage(rl.kind, rl.scope),
+          code: "RATE_LIMITED",
+        },
+        { status: 429 },
+      ),
+      origin,
     );
   }
 
@@ -90,10 +97,10 @@ export async function POST(req: Request): Promise<Response> {
       ],
       { temperature: 0.6, maxTokens: 1000 }, // 推理模型留余量;实际输出很短
     );
-    return Response.json({ followups: parseFollowups(out) });
+    return withCors(Response.json({ followups: parseFollowups(out) }), origin);
   } catch (e) {
     // 任何失败都安静降级:不显示追问。
     void (e instanceof LLMError);
-    return Response.json({ followups: [] });
+    return withCors(Response.json({ followups: [] }), origin);
   }
 }

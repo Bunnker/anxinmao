@@ -11,6 +11,7 @@
 // 输出统一:{ dataUrl: "data:image/...;base64,...", provider: "..." }
 // 边界:docs/product/AI生成形象-实施说明.md §二
 
+import { withCors, preflight } from "@/lib/cors";
 import type { NextRequest } from "next/server";
 import { checkAndConsume, getClientIp, rateLimitMessage } from "@/lib/ratelimit";
 
@@ -65,21 +66,24 @@ type VisionResult = {
 
 // ----- POST handler ----- //
 
+export async function OPTIONS(req: Request) { return preflight(req); }
+
 export async function POST(req: NextRequest): Promise<Response> {
+  const origin = req.headers.get("origin");
   let body: ReqBody;
   try {
     body = (await req.json()) as ReqBody;
   } catch {
-    return Response.json({ error: "请求体不是合法 JSON。" }, { status: 400 });
+    return withCors(Response.json({ error: "请求体不是合法 JSON。" }, { status: 400 }), origin);
   }
 
   const description = (body.description ?? "").trim().slice(0, 200);
   const photo = body.photoDataUrl?.trim();
 
   if (!photo && !description) {
-    return Response.json(
-      { error: "需要照片或文字描述至少一项。" },
-      { status: 400 },
+    return withCors(
+      Response.json({ error: "需要照片或文字描述至少一项。" }, { status: 400 }),
+      origin,
     );
   }
 
@@ -94,20 +98,26 @@ export async function POST(req: NextRequest): Promise<Response> {
       userDescription: description,
       stylePrompt: photo ? STYLE_SUFFIX_CN : STYLE_SUFFIX_EN,
     });
-    return Response.json({
-      providerPath: photo ? "ark-seedream-i2i" : "wanx-t2i",
-      promptPreview: prompt,
-      stylePromptPreview: photo ? STYLE_SUFFIX_CN : STYLE_SUFFIX_EN,
-    });
+    return withCors(
+      Response.json({
+        providerPath: photo ? "ark-seedream-i2i" : "wanx-t2i",
+        promptPreview: prompt,
+        stylePromptPreview: photo ? STYLE_SUFFIX_CN : STYLE_SUFFIX_EN,
+      }),
+      origin,
+    );
   }
 
   // 限流:生图是主要花费(~¥0.3/张),扣 image 额度。放在输入校验后、
   // 真正调用视觉检测 / Seedream 之前,避免无效请求白扣。
   const rl = checkAndConsume(getClientIp(req), "image");
   if (!rl.ok) {
-    return Response.json(
-      { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
-      { status: 429 },
+    return withCors(
+      Response.json(
+        { error: rateLimitMessage(rl.kind, rl.scope), code: "RATE_LIMITED" },
+        { status: 429 },
+      ),
+      origin,
     );
   }
 
@@ -116,29 +126,38 @@ export async function POST(req: NextRequest): Promise<Response> {
       // 视觉预检 —— 严格守门:必须是猫才生图
       const check = await visionCheckCat(photo);
       if (!check.is_cat || check.confidence < 0.6) {
-        return Response.json(
-          {
-            error: `上传的照片看着不像是猫(置信度 ${check.confidence.toFixed(2)})。换一张猫的照片再试,或者用默认头像。`,
-            code: "NOT_A_CAT",
-          },
-          { status: 422 },
+        return withCors(
+          Response.json(
+            {
+              error: `上传的照片看着不像是猫(置信度 ${check.confidence.toFixed(2)})。换一张猫的照片再试,或者用默认头像。`,
+              code: "NOT_A_CAT",
+            },
+            { status: 422 },
+          ),
+          origin,
         );
       }
       const dataUrl = await arkSeedreamI2I(photo, description, check.features);
-      return Response.json({
-        dataUrl,
-        provider: "ark-seedream-5.0-lite",
-        features: check.features, // 调试用,前端不展示
-      });
+      return withCors(
+        Response.json({
+          dataUrl,
+          provider: "ark-seedream-5.0-lite",
+          features: check.features, // 调试用,前端不展示
+        }),
+        origin,
+      );
     } else {
       const dataUrl = await wanxT2I(description);
-      return Response.json({ dataUrl, provider: "wanx-t2i" });
+      return withCors(Response.json({ dataUrl, provider: "wanx-t2i" }), origin);
     }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    return Response.json(
-      { error: `生成失败 —— ${msg}。再试一次或换张照片。` },
-      { status: 502 },
+    return withCors(
+      Response.json(
+        { error: `生成失败 —— ${msg}。再试一次或换张照片。` },
+        { status: 502 },
+      ),
+      origin,
     );
   }
 }
