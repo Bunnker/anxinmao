@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { TabBar } from "@/components/TabBar";
 import { SWRecovery } from "@/components/SWRecovery";
+import { IS_APP_SHELL } from "@/lib/app-env";
 import { GuideHost } from "@/components/GuideHost";
 import { StableTitle } from "@/components/StableTitle";
 
@@ -35,7 +36,8 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
   },
   // PWA —— Web App Manifest 路径(public/manifest.json)
-  manifest: "/manifest.json",
+  // App 壳本地加载、不走 PWA;manifest 只服务 Web 站。
+  manifest: IS_APP_SHELL ? undefined : "/manifest.json",
   // iOS Safari「添加到主屏」专用元数据
   appleWebApp: {
     capable: true,
@@ -63,7 +65,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" className="h-full antialiased">
       <body className="min-h-full">
-        <SWRecovery />
+        {!IS_APP_SHELL && <SWRecovery />}
         <StableTitle title={SITE_TITLE} />
         {children}
         <GuideHost />
