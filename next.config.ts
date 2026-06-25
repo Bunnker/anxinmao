@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 import withPWAInit from "@ducanh2912/next-pwa";
 import path from "path";
-import webpack from "webpack";
 
 // 两条构建线:
 // - Web(默认):server build,含 API 路由;生产挂 PWA。部署 www.whatsupkitty.cn(现状不变)。
@@ -21,7 +20,9 @@ const appConfig: NextConfig = {
   ...baseConfig,
   output: "export",
   images: { unoptimized: true },
-  webpack(config) {
+  // 用 Next 传入的 webpack 实例(而非顶层 import "webpack"),保证插件类与 Next 内部
+  // webpack 同一实例,且不依赖 webpack 被提升到顶层 node_modules(pnpm/严格 hoist 也稳)。
+  webpack(config, { webpack }) {
     const stubPath = path.resolve(
       __dirname,
       "src/app/api/_stub-for-app-build.ts"

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-// App 静态导出后:public/ 里现存的 sw.js / workbox-*.js 会被 next export 原样拷进 out/。
-// App 壳不注册 SW,这些是死文件且违反 PRD §4.4(不携带旧 SW 预缓存)→ 删掉。
+// App 静态导出后:public/ 里现存的 sw.js / workbox-*.js / manifest.json 会被 next export
+// 原样拷进 out/。App 壳不注册 SW、不挂 PWA manifest,这些是死文件且违反 PRD §4.4
+//(不携带旧 SW 预缓存 / PWA 残留)→ 删掉。
 import { readdir, rm, stat } from "node:fs/promises";
 import path from "node:path";
 
@@ -17,7 +18,7 @@ if (!(await exists(OUT))) {
 
 const removed = [];
 for (const name of await readdir(OUT)) {
-  if (name === "sw.js" || /^workbox-.*\.js$/.test(name) || name === "sw.js.map") {
+  if (name === "sw.js" || /^workbox-.*\.js$/.test(name) || name === "sw.js.map" || name === "manifest.json") {
     await rm(path.join(OUT, name), { force: true });
     removed.push(name);
   }

@@ -14,6 +14,9 @@ export function corsHeaders(origin: string | null): Record<string, string> {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
+    // 暴露自定义响应头给跨源(App)客户端读取 —— 否则浏览器/WebView 默认隐藏,
+    // /api/behavior 的 X-Knowledge-Poster(相关图解,含红档急症图)会静默丢失。
+    "Access-Control-Expose-Headers": "X-Knowledge-Poster",
     Vary: "Origin",
   };
 }
