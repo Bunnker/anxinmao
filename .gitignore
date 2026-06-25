@@ -80,3 +80,4 @@ skills-lock.json
 /android/app/build/
 /android/local.properties
 /android/capacitor-cordova-android-plugins/
+/android/keystore.properties
