@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     "prototype/**",
     "public/sw.js",
     "public/workbox-*.js",
+    // Capacitor 原生工程:cap sync 把 out/ 拷进 android assets,别 lint 这些构建产物。
+    "android/**",
   ]),
 ]);
 
