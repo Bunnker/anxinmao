@@ -259,10 +259,11 @@ export default function PetsPage() {
           background: "linear-gradient(180deg,#f6e7d6,#f3ddc6)",
         }}
       >
-        <div className="flex h-9 items-center">
+        <div className="flex h-9 items-center justify-between">
           <span className="font-serif text-title font-semibold tracking-wide text-ink">
             毛孩子
           </span>
+          <Link href="/settings" aria-label="设置" style={{ fontSize: 14, opacity: 0.8 }}>设置</Link>
         </div>
 
         {/* 多猫切换条 */}

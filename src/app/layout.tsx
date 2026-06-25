@@ -6,6 +6,7 @@ import { IS_APP_SHELL } from "@/lib/app-env";
 import { GuideHost } from "@/components/GuideHost";
 import { StableTitle } from "@/components/StableTitle";
 import { AppShellNotice } from "@/components/AppShellNotice";
+import { FloatingPetAutostart } from "@/components/FloatingPetAutostart";
 
 const SITE_URL = "https://www.whatsupkitty.cn";
 const SITE_TITLE = "小猫怎么了 · whatsupkitty.cn";
@@ -70,6 +71,7 @@ export default function RootLayout({
         <StableTitle title={SITE_TITLE} />
         {children}
         {IS_APP_SHELL && <AppShellNotice />}
+        {IS_APP_SHELL && <FloatingPetAutostart />}
         <GuideHost />
         <TabBar />
       </body>

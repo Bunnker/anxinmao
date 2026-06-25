@@ -13,7 +13,7 @@ const TABS = [
 ] as const;
 
 // /pets 是档案展示页(显 TabBar);/onboarding 是编辑/添加表单(全屏,不显 TabBar)。
-const SHOW_PATHS = ["/", "/symptoms", "/behavior", "/pets", "/knowledge"];
+const SHOW_PATHS = ["/", "/symptoms", "/behavior", "/pets", "/knowledge", "/settings"];
 
 function HomeIcon({ active }: { active: boolean }) {
   return (
