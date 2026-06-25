@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
+    "build:app": "BUILD_TARGET=app NEXT_PUBLIC_API_BASE=https://www.whatsupkitty.cn NEXT_PUBLIC_APP_SHELL=1 next build --webpack && node scripts/clean-app-export.mjs",
     "start": "next start",
     "lint": "eslint",
     "harness": "node scripts/harness-behavior.mjs",
