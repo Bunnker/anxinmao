@@ -72,3 +72,11 @@ skills-lock.json
 /tmp/
 /.superpowers/
 .DS_Store
+
+# Capacitor / 静态导出产物
+/android/app/src/main/assets/public/
+/android/.gradle/
+/android/build/
+/android/app/build/
+/android/local.properties
+/android/capacitor-cordova-android-plugins/
