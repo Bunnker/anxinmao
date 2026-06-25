@@ -15,6 +15,7 @@ import { createTriageHandoffId, saveTriageHandoff } from "@/lib/triage-handoff";
 import { SymptomIcon, iconForOption } from "@/lib/triage-icons";
 import { loadStore, saveStore } from "@/lib/storage";
 import type { CatRecord, RiskTier } from "@/types/cat";
+import { setRiskFlag } from "@/lib/risk-flag";
 
 function CheckIcon() {
   return (
@@ -53,6 +54,8 @@ function recordTriage(symptom: string, tier: RiskTier, claimIds: string[]) {
     summary: `${label} · ${tierShort}`,
   };
   saveStore({ ...store, records: [rec, ...store.records] });
+  // 红黄报告 → 置风险标志,供桌面悬浮宠收敛(PRD §5.10)。绿档不置、也不清(不影响既有窗口)。
+  if (tier === "red" || tier === "yellow") setRiskFlag(tier, Date.now());
 }
 
 function TriageSession({ symptom }: { symptom: string }) {

@@ -11,6 +11,7 @@ import { Disclaimer } from "@/components/Disclaimer";
 import { ReviewedNotice } from "@/components/ReviewedNotice";
 import { CatAvatar } from "@/components/CatAvatar";
 import { ShareReportButton } from "@/components/ShareReportButton";
+import { RiskAcknowledge } from "@/components/RiskAcknowledge";
 import type { RiskTier, Store } from "@/types/cat";
 
 // 报告文案、护理步骤、升级清单依据 docs/product/分诊证据-草稿-v0.2.md
@@ -1686,6 +1687,9 @@ function ReportContent() {
 
       {/* 兽医审阅与不替代面诊提示,紧跟分级结论。 */}
       <ReviewedNotice className="mt-3" />
+
+      {/* 红/黄档:显式"我知道了"按钮 —— 点击后解除桌宠收敛(PRD §5.10);绿档自动不渲染 */}
+      <RiskAcknowledge tier={shownTier} />
 
       <Link
         href={askHref}
