@@ -2,7 +2,7 @@
 // 写两处:① localStorage(persist,App 内用);② App 壳下经 FloatingPet 插件写进
 //   原生 SharedPreferences(WebView 的 localStorage 原生服务读不到,必须经插件桥)。
 import { readPersisted, writePersisted, removePersisted } from "@/lib/persist";
-import { IS_APP_SHELL } from "@/lib/app-env";
+import { isFloatingPetSupported } from "@/lib/floating-pet-bridge";
 
 const KEY = "riskFlag:v1";
 // 收敛窗口:红黄报告后这段时间内桌宠保持安静(即便用户没回 App)。
@@ -17,7 +17,7 @@ export interface RiskFlag {
 
 export function setRiskFlag(level: RiskLevel, nowMs: number): void {
   writePersisted(KEY, JSON.stringify({ level, ts: nowMs } satisfies RiskFlag));
-  if (IS_APP_SHELL) {
+  if (isFloatingPetSupported()) {
     void import("@/lib/floating-pet-bridge").then(({ FloatingPet }) =>
       FloatingPet.setRiskFlag({ level, ts: nowMs }).catch(() => {}),
     );
@@ -38,7 +38,7 @@ export function readRiskFlag(): RiskFlag | null {
 
 export function clearRiskFlag(): void {
   removePersisted(KEY);
-  if (IS_APP_SHELL) {
+  if (isFloatingPetSupported()) {
     void import("@/lib/floating-pet-bridge").then(({ FloatingPet }) =>
       FloatingPet.clearRiskFlag().catch(() => {}),
     );

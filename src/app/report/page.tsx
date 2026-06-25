@@ -1688,8 +1688,9 @@ function ReportContent() {
       {/* 兽医审阅与不替代面诊提示,紧跟分级结论。 */}
       <ReviewedNotice className="mt-3" />
 
-      {/* 红/黄档:显式"我知道了"按钮 —— 点击后解除桌宠收敛(PRD §5.10);绿档自动不渲染 */}
-      <RiskAcknowledge tier={shownTier} />
+      {/* 红/黄档:显式"我知道了"按钮 —— 点击后解除桌宠收敛(PRD §5.10);绿档自动不渲染。
+          仅实时分诊报告(URL 带 handoff)渲染;历史报告重开(无 handoff)不显示,避免误清活跃收敛 */}
+      {queryHandoffId && <RiskAcknowledge tier={shownTier} />}
 
       <Link
         href={askHref}

@@ -30,7 +30,14 @@ export default function SettingsPage() {
   async function toggleMain(next: boolean) {
     setHint(null);
     if (next) {
-      const { granted } = await FloatingPet.requestPermission();
+      let granted = false;
+      try {
+        ({ granted } = await FloatingPet.requestPermission());
+      } catch {
+        setOn(false);
+        setHint("没能请求权限,请重试。");
+        return;
+      }
       if (!granted) {
         setOn(false);
         setHint("需要「显示在其他应用上层」权限才能让桌宠出现。已为你保留在 App 院子里。");
@@ -71,6 +78,7 @@ export default function SettingsPage() {
           <>
             <Row
               label="点猫切回 App"
+              sub="桌宠浮在桌面时,点它回到 App"
               checked={tapBack}
               onChange={(v) => {
                 writePersisted(PREF_TAP_BACK, v ? "1" : "0");

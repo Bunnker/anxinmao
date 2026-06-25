@@ -54,8 +54,6 @@ function recordTriage(symptom: string, tier: RiskTier, claimIds: string[]) {
     summary: `${label} · ${tierShort}`,
   };
   saveStore({ ...store, records: [rec, ...store.records] });
-  // 红黄报告 → 置风险标志,供桌面悬浮宠收敛(PRD §5.10)。绿档不置、也不清(不影响既有窗口)。
-  if (tier === "red" || tier === "yellow") setRiskFlag(tier, Date.now());
 }
 
 function TriageSession({ symptom }: { symptom: string }) {
@@ -100,6 +98,9 @@ function TriageSession({ symptom }: { symptom: string }) {
   function toReport(tier: RiskTier) {
     const claimIds = selectedClaimIds(flow, answers);
     recordTriage(flow.symptom, tier, claimIds);
+    // 红/黄 → 置桌宠收敛标志(PRD §5.10)。与历史记录写入解耦:任何红/黄报告路径都必须置标志,
+    // 不受 store/catId 是否存在影响(微信 webview 清缓存 / 直达分诊未建猫时也要置)。
+    if (tier === "red" || tier === "yellow") setRiskFlag(tier, Date.now());
     const params = new URLSearchParams({ tier, symptom: flow.symptom });
     if (claimIds.length > 0) params.set("claims", claimIds.join(","));
     const qa = triageTranscript(flow, answers).slice(0, 800);
