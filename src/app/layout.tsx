@@ -7,6 +7,7 @@ import { GuideHost } from "@/components/GuideHost";
 import { StableTitle } from "@/components/StableTitle";
 import { AppShellNotice } from "@/components/AppShellNotice";
 import { FloatingPetAutostart } from "@/components/FloatingPetAutostart";
+import { ChromeGate } from "@/components/ChromeGate";
 
 const SITE_URL = "https://www.whatsupkitty.cn";
 const SITE_TITLE = "小猫怎么了 · whatsupkitty.cn";
@@ -68,12 +69,16 @@ export default function RootLayout({
     <html lang="zh-CN" className="h-full antialiased">
       <body className="min-h-full">
         {!IS_APP_SHELL && <SWRecovery />}
-        <StableTitle title={SITE_TITLE} />
+        <ChromeGate>
+          <StableTitle title={SITE_TITLE} />
+        </ChromeGate>
         {children}
-        {IS_APP_SHELL && <AppShellNotice />}
-        {IS_APP_SHELL && <FloatingPetAutostart />}
-        <GuideHost />
-        <TabBar />
+        <ChromeGate>
+          {IS_APP_SHELL && <AppShellNotice />}
+          {IS_APP_SHELL && <FloatingPetAutostart />}
+          <GuideHost />
+          <TabBar />
+        </ChromeGate>
       </body>
     </html>
   );

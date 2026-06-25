@@ -16,6 +16,7 @@ export default function SettingsPage() {
   const [tapBack, setTapBack] = useState(true);
   const [boot, setBoot] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     // 挂载后读 client-only 偏好(避免 SSR/导出期 hydration 不匹配)。
@@ -28,33 +29,39 @@ export default function SettingsPage() {
   }, []);
 
   async function toggleMain(next: boolean) {
+    if (busy) return;
+    setBusy(true);
     setHint(null);
-    if (next) {
-      let granted = false;
-      try {
-        ({ granted } = await FloatingPet.requestPermission());
-      } catch {
+    try {
+      if (next) {
+        let granted = false;
+        try {
+          ({ granted } = await FloatingPet.requestPermission());
+        } catch {
+          setOn(false);
+          setHint("没能请求权限,请重试。");
+          return;
+        }
+        if (!granted) {
+          setOn(false);
+          setHint("需要「显示在其他应用上层」权限才能让桌宠出现。已为你保留在 App 院子里。");
+          return;
+        }
+        try {
+          await FloatingPet.show();
+          writePersisted(PREF_ON, "1");
+          setOn(true);
+        } catch {
+          setOn(false);
+          setHint("没能放出桌宠,请重试。");
+        }
+      } else {
+        await FloatingPet.hide().catch(() => {});
+        writePersisted(PREF_ON, "0");
         setOn(false);
-        setHint("没能请求权限,请重试。");
-        return;
       }
-      if (!granted) {
-        setOn(false);
-        setHint("需要「显示在其他应用上层」权限才能让桌宠出现。已为你保留在 App 院子里。");
-        return;
-      }
-      try {
-        await FloatingPet.show();
-        writePersisted(PREF_ON, "1");
-        setOn(true);
-      } catch {
-        setOn(false);
-        setHint("没能放出桌宠,请重试。");
-      }
-    } else {
-      await FloatingPet.hide().catch(() => {});
-      writePersisted(PREF_ON, "0");
-      setOn(false);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -71,7 +78,7 @@ export default function SettingsPage() {
               : "小猫会浮在桌面漫游,点它切回 App"
           }
           checked={on}
-          disabled={!supported}
+          disabled={busy || !supported}
           onChange={toggleMain}
         />
         {supported && (
