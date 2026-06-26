@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { apiUrl } from "@/lib/api-base";
+import { isNativeApp, pickPhotoDataUrl } from "@/lib/native-photo";
 
 // 意见反馈 —— 文字(必填)+ 可选配图 + 可选联系方式,落服务端 /api/feedback。
 // 边界:不放赞赏 / 收款码(产品红线「不做电商 / 导流」)。
@@ -185,7 +186,14 @@ export default function FeedbackPage() {
           ) : (
             <button
               type="button"
-              onClick={() => fileRef.current?.click()}
+              onClick={async () => {
+                if (isNativeApp()) {
+                  const url = await pickPhotoDataUrl();
+                  if (url) setImage(url);
+                } else {
+                  fileRef.current?.click();
+                }
+              }}
               disabled={sending}
               className="flex items-center gap-2 rounded-xl border border-dashed border-[var(--line)] bg-surface px-4 py-3 text-footnote text-ink-soft shadow-[var(--shadow-control)] disabled:opacity-60"
             >

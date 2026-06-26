@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import { CatAvatar } from "@/components/CatAvatar";
 import { apiUrl } from "@/lib/api-base";
+import { isNativeApp, pickPhotoDataUrl } from "@/lib/native-photo";
 
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -75,13 +76,25 @@ export function AvatarPicker({
     };
   }, [open]);
 
+  // 公共终点:拿到 dataURL 后当头像
+  function applyAvatarDataUrl(dataUrl: string) {
+    onChange(dataUrl);
+    close();
+  }
+
+  // 公共终点:拿到 dataURL 后作为 AI 输入照片
+  function applyAiPhotoDataUrl(dataUrl: string) {
+    setPhoto(dataUrl);
+    setError(null);
+    setNotCat(false);
+  }
+
   async function onUploadAsAvatar(file: File | undefined) {
     if (!file) return;
     const bad = badImage(file);
     if (bad) return setError(bad);
     try {
-      onChange(await fileToDataUrl(file));
-      close();
+      applyAvatarDataUrl(await fileToDataUrl(file));
     } catch (e) {
       setError(e instanceof Error ? e.message : "图片读取失败。");
     }
@@ -92,9 +105,7 @@ export function AvatarPicker({
     const bad = badImage(file);
     if (bad) return setError(bad);
     try {
-      setPhoto(await fileToDataUrl(file));
-      setError(null);
-      setNotCat(false);
+      applyAiPhotoDataUrl(await fileToDataUrl(file));
     } catch (e) {
       setError(e instanceof Error ? e.message : "照片读取失败。");
     }
@@ -235,22 +246,36 @@ export function AvatarPicker({
             </p>
 
             {/* 上传真实照片 */}
-            <label
-              className="mt-4 flex h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl text-callout font-semibold text-white"
-              style={{ background: "var(--accent)" }}
-            >
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = "";
-                  onUploadAsAvatar(f);
+            {isNativeApp() ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  const url = await pickPhotoDataUrl();
+                  if (url) applyAvatarDataUrl(url);
                 }}
-              />
-              拍照 / 从相册选一张
-            </label>
+                className="mt-4 flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl text-callout font-semibold text-white"
+                style={{ background: "var(--accent)" }}
+              >
+                拍照 / 从相册选一张
+              </button>
+            ) : (
+              <label
+                className="mt-4 flex h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl text-callout font-semibold text-white"
+                style={{ background: "var(--accent)" }}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = "";
+                    onUploadAsAvatar(f);
+                  }}
+                />
+                拍照 / 从相册选一张
+              </label>
+            )}
 
             {/* AI 生成 */}
             <div className="mt-4 rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-3">
@@ -265,19 +290,32 @@ export function AvatarPicker({
                 className="mt-2 w-full resize-none rounded-xl border border-[var(--hairline)] bg-surface p-2.5 text-body text-ink outline-none placeholder:text-ink-faint"
               />
               <div className="mt-2 flex items-center gap-2">
-                <label className="cursor-pointer rounded-full border border-[rgba(176,90,80,0.3)] px-3 py-1.5 text-caption font-semibold text-[var(--accent-deep)]">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      e.target.value = "";
-                      onPickAiPhoto(f);
+                {isNativeApp() ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const url = await pickPhotoDataUrl();
+                      if (url) applyAiPhotoDataUrl(url);
                     }}
-                  />
-                  {photo ? "已选照片 · 换一张" : "传一张它的照片(可选)"}
-                </label>
+                    className="cursor-pointer rounded-full border border-[rgba(176,90,80,0.3)] px-3 py-1.5 text-caption font-semibold text-[var(--accent-deep)]"
+                  >
+                    {photo ? "已选照片 · 换一张" : "传一张它的照片(可选)"}
+                  </button>
+                ) : (
+                  <label className="cursor-pointer rounded-full border border-[rgba(176,90,80,0.3)] px-3 py-1.5 text-caption font-semibold text-[var(--accent-deep)]">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        e.target.value = "";
+                        onPickAiPhoto(f);
+                      }}
+                    />
+                    {photo ? "已选照片 · 换一张" : "传一张它的照片(可选)"}
+                  </label>
+                )}
                 {photo && (
                   <button
                     type="button"

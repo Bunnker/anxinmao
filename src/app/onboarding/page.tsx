@@ -11,6 +11,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { addCat, deleteCat, loadStore, saveStore } from "@/lib/storage";
 import { apiUrl } from "@/lib/api-base";
+import { isNativeApp, pickPhotoDataUrl } from "@/lib/native-photo";
 import { Disclaimer } from "@/components/Disclaimer";
 import { CatAvatar } from "@/components/CatAvatar";
 import { ageLabel, ageMonthsFromBirthday } from "@/lib/profile";
@@ -679,7 +680,16 @@ function OnboardingForm() {
                 </button>
               ))}
               {(draft.photos?.length ?? 0) < MAX_PROFILE_PHOTOS && (
-                <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-sm border-[1.5px] border-dashed border-[var(--line)] bg-white/60 text-ink-faint">
+                <label
+                  className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-sm border-[1.5px] border-dashed border-[var(--line)] bg-white/60 text-ink-faint"
+                  onClick={isNativeApp() ? async (e) => {
+                    e.preventDefault();
+                    const url = await pickPhotoDataUrl();
+                    if (url && draft) {
+                      set("photos", [...(draft.photos ?? []), url].slice(0, MAX_PROFILE_PHOTOS));
+                    }
+                  } : undefined}
+                >
                   <input
                     type="file"
                     accept="image/*"
@@ -918,15 +928,28 @@ function OnboardingForm() {
               <div className="min-w-0 flex-1">
                 <p className="text-footnote font-medium text-ink">用真实照片当头像</p>
                 <p className="mt-0.5 text-caption text-ink-faint">直接用你拍的猫照片</p>
-                <label className="mt-2.5 inline-flex cursor-pointer items-center gap-2 rounded-full bg-accent px-3.5 py-1.5 text-caption font-medium text-accent-fg">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={onAvatarUpload}
-                    className="hidden"
-                  />
-                  上传照片
-                </label>
+                {isNativeApp() ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const url = await pickPhotoDataUrl();
+                      if (url) { set("avatar", url); setAvatarError(null); }
+                    }}
+                    className="mt-2.5 inline-flex cursor-pointer items-center gap-2 rounded-full bg-accent px-3.5 py-1.5 text-caption font-medium text-accent-fg"
+                  >
+                    上传照片
+                  </button>
+                ) : (
+                  <label className="mt-2.5 inline-flex cursor-pointer items-center gap-2 rounded-full bg-accent px-3.5 py-1.5 text-caption font-medium text-accent-fg">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={onAvatarUpload}
+                      className="hidden"
+                    />
+                    上传照片
+                  </label>
+                )}
               </div>
               {draft.avatar && (
                 <button
@@ -965,6 +988,26 @@ function OnboardingForm() {
                     <span className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-black/60 text-micro text-white">
                       ×
                     </span>
+                  </button>
+                ) : isNativeApp() ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const url = await pickPhotoDataUrl();
+                      if (url) { setAvatarPhoto(url); setAvatarError(null); }
+                    }}
+                    className="flex size-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--line)] bg-white/55 text-ink-soft shadow-[var(--shadow-control)] transition-colors hover:bg-white"
+                  >
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d="M4 8a2 2 0 0 1 2-2h2l1.5-2h5L16 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8Z"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="12" cy="13" r="3.2" stroke="currentColor" strokeWidth="1.5" />
+                    </svg>
+                    <span className="text-caption">传照片</span>
                   </button>
                 ) : (
                   <label className="flex size-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-[var(--line)] bg-white/55 text-ink-soft shadow-[var(--shadow-control)] transition-colors hover:bg-white">

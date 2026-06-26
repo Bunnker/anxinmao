@@ -23,6 +23,7 @@ import {
   type CareStatus,
 } from "@/lib/profile";
 import type { Cat, CatRecord, Store } from "@/types/cat";
+import { isNativeApp, pickPhotoDataUrl } from "@/lib/native-photo";
 
 const MAX_PROFILE_PHOTOS = 6;
 
@@ -743,9 +744,19 @@ export default function PetsPage() {
             <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-[#e0dcd2]" />
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 setAddSheet(false);
-                cameraInputRef.current?.click();
+                if (isNativeApp()) {
+                  const url = await pickPhotoDataUrl();
+                  if (url && cat) {
+                    persistCat({
+                      ...cat,
+                      photos: [...(cat.photos ?? []), url].slice(0, MAX_PROFILE_PHOTOS),
+                    });
+                  }
+                } else {
+                  cameraInputRef.current?.click();
+                }
               }}
               className="flex w-full items-center gap-3 rounded-sm px-3.5 py-3.5 text-callout text-ink active:bg-black/5"
             >
@@ -767,9 +778,19 @@ export default function PetsPage() {
             </button>
             <button
               type="button"
-              onClick={() => {
+              onClick={async () => {
                 setAddSheet(false);
-                galleryInputRef.current?.click();
+                if (isNativeApp()) {
+                  const url = await pickPhotoDataUrl();
+                  if (url && cat) {
+                    persistCat({
+                      ...cat,
+                      photos: [...(cat.photos ?? []), url].slice(0, MAX_PROFILE_PHOTOS),
+                    });
+                  }
+                } else {
+                  galleryInputRef.current?.click();
+                }
               }}
               className="flex w-full items-center gap-3 rounded-sm px-3.5 py-3.5 text-callout text-ink active:bg-black/5"
             >
@@ -817,9 +838,22 @@ export default function PetsPage() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                replaceIdxRef.current = sheetIdx;
-                replaceInputRef.current?.click();
+              onClick={async () => {
+                if (isNativeApp()) {
+                  const url = await pickPhotoDataUrl();
+                  if (url && cat) {
+                    const old = (cat.photos ?? [])[sheetIdx];
+                    persistCat({
+                      ...cat,
+                      avatar: cat.avatar === old ? url : cat.avatar,
+                      photos: (cat.photos ?? []).map((p, i) => (i === sheetIdx ? url : p)),
+                    });
+                    setSheetIdx(null);
+                  }
+                } else {
+                  replaceIdxRef.current = sheetIdx;
+                  replaceInputRef.current?.click();
+                }
               }}
               className="flex w-full items-center rounded-sm px-3.5 py-3.5 text-callout text-ink active:bg-black/5"
             >
