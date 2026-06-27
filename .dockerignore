@@ -2,6 +2,11 @@
 node_modules
 .next
 .git
+# Capacitor 原生工程 / App 静态导出 / worktree —— Web 镜像用不到
+android
+ios
+out
+.claude
 .env.local
 .env*.local
 .knowledge-wanx-backup

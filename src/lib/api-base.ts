@@ -12,3 +12,10 @@ export const API_BASE: string = process.env.NEXT_PUBLIC_API_BASE ?? "";
 export function apiUrl(path: string): string {
   return API_BASE + path;
 }
+
+// 静态资源绝对化 —— App 壳下指向远端(让 App 不必本地打包大体积图,如知识图解),
+// Web 下相对不变。已是绝对 URL(http/https)则原样返回。<img> 跨源加载无需 CORS。
+export function assetUrl(path: string): string {
+  if (/^https?:\/\//.test(path)) return path;
+  return API_BASE + path;
+}

@@ -28,7 +28,7 @@ import {
   flushMemoryExtract,
   scheduleMemoryExtract,
 } from "@/lib/memory-extract";
-import { apiUrl } from "@/lib/api-base";
+import { apiUrl, assetUrl } from "@/lib/api-base";
 import {
   QUESTION_POOL,
   recommendQuestions,
@@ -74,7 +74,9 @@ function posterFromHeader(headers: Headers): KnowledgePosterAttachment | undefin
   if (!raw) return undefined;
   try {
     const parsed = JSON.parse(decodeURIComponent(raw));
-    return isKnowledgePosterAttachment(parsed) ? parsed : undefined;
+    if (!isKnowledgePosterAttachment(parsed)) return undefined;
+    // App 壳本地不打包知识图解(瘦身),改从远端加载;Web 下 assetUrl 相对不变。
+    return { ...parsed, image: assetUrl(parsed.image) };
   } catch {
     return undefined;
   }

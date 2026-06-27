@@ -24,3 +24,8 @@ for (const name of await readdir(OUT)) {
   }
 }
 console.log(removed.length ? `✅ 已清理 out/: ${removed.join(", ")}` : "✅ out/ 无 SW/workbox 残留。");
+
+// App 壳不本地打包知识图解(generated-style 127MB + detailed 17MB);改从远端 <img> 加载
+//(behavior 页 posterFromHeader 用 assetUrl 前缀)。整目录删掉,apk 大幅瘦身。
+await rm(path.join(OUT, "knowledge-posters"), { recursive: true, force: true });
+console.log("✅ 已从 App 产物移除 out/knowledge-posters(改远端加载)。");
