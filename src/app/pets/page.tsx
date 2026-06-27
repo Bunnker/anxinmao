@@ -24,6 +24,7 @@ import {
 } from "@/lib/profile";
 import type { Cat, CatRecord, Store } from "@/types/cat";
 import { isNativeApp, pickPhotoDataUrl } from "@/lib/native-photo";
+import { IS_APP_SHELL } from "@/lib/app-env";
 
 const MAX_PROFILE_PHOTOS = 6;
 
@@ -264,7 +265,10 @@ export default function PetsPage() {
           <span className="font-serif text-title font-semibold tracking-wide text-ink">
             毛孩子
           </span>
-          <Link href="/settings" aria-label="设置" style={{ fontSize: 14, opacity: 0.8 }}>设置</Link>
+          {/* 桌宠设置入口仅在 App 内显示(网页站不露半成品) */}
+          {IS_APP_SHELL && (
+            <Link href="/settings" aria-label="设置" style={{ fontSize: 14, opacity: 0.8 }}>设置</Link>
+          )}
         </div>
 
         {/* 多猫切换条 */}

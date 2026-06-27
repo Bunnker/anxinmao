@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FloatingPet, isFloatingPetSupported } from "@/lib/floating-pet-bridge";
 import { readPersisted, writePersisted } from "@/lib/persist";
+import { IS_APP_SHELL } from "@/lib/app-env";
 
 const PREF_ON = "floatingPet:on";
 const PREF_TAP_BACK = "floatingPet:tapBack"; // 点猫切回 App,默认开
@@ -63,6 +64,16 @@ export default function SettingsPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  // 网页站不暴露桌宠半成品设置(仅 App 构建可用)。IS_APP_SHELL 是构建期常量,无 hydration 抖动。
+  if (!IS_APP_SHELL) {
+    return (
+      <main style={{ maxWidth: 430, margin: "0 auto", padding: "40px 16px", textAlign: "center" }}>
+        <p style={{ fontSize: 14, opacity: 0.7 }}>桌面悬浮宠物设置仅在 App 内可用。</p>
+        <Link href="/pets" style={{ display: "inline-block", marginTop: 16, fontSize: 14 }}>← 返回毛孩子</Link>
+      </main>
+    );
   }
 
   return (
